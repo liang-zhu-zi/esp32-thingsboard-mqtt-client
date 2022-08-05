@@ -3,4 +3,4 @@
 
 ThingsBoard MQTT Client SDK based on esp-mqtt / ESP-IDF-v4.4.
 
-Tesging.
+The component template is based on `esp-idf-v4.4.1\components\esp_ipc`.
