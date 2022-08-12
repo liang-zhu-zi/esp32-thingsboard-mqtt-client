@@ -126,6 +126,8 @@ _onAttributesResponse(); //_attributesResponse()
 //_isDeserializationError()
 
 
+
+
 //===============================================
 tbmqttclient_init(config); //config: on_connected()+on_disconnected()
 tbmqttclient_destory();
