@@ -125,8 +125,108 @@ _onAttributesResponse(); //_attributesResponse()
 //_tbDecodeAttributesJsonPayload()
 //_isDeserializationError()
 
+//===tbmc===========================================================
+typedef int tbmc_err_t;
 
+/* Definitions for error constants. */
+#define TBMC_OK 0    /*!< tbmc_err_t value indicating success (no error) */
+#define TBMC_FAIL -1 /*!< Generic tbmc_err_t code indicating failure */
 
+//===key============================================================
+/**
+ * ThingsBoard MQTT Client key
+ */
+typdef struct
+{
+     char *key; /*!< key */
+     int size;  /*!< size of key */
+} tbmc_key_t;
+
+//===value==========================================================
+typedef long TBMC_LONG;
+typedef double TBMC_DOUBLE;
+typedef int TBMC_BOOLEAN;
+typedef char *TBMC_STRING;
+typedef char *TBMC_JSON;
+//#define TBMC_LONG long
+//#define TBMC_DOUBLE double
+//#define TBMC_BOOLEAN int
+//#define TBMC_STRING char *
+//#define TBMC_JSON char *
+
+/**
+ * ThingsBoard MQTT Client value type
+ */
+typedef enum
+{
+     TBMC_VALUE_TYPE_LONG = 0, /*!< long value  */
+     TBMC_VALUE_TYPE_DOUBLE,   /*!< double value */
+     TBMC_VALUE_TYPE_BOOLEAN,  /*!< boolean value */
+     TBMC_VALUE_TYPE_STRING,   /*!< string value */
+     TBMC_VALUE_TYPE_JSON      /*!< JSON value */
+} tbmc_value_type_t;
+
+/**
+ * ThingsBoard MQTT Client value
+ */
+typdef struct
+{
+     union
+     {
+          TBMC_LONG longV;
+          TBMC_DOUBLE doubleV;
+          TBMC_BOOLEAN boolV;
+          TBMC_STRING strV;
+          TBMC_JSON jsonV;
+     } value;
+     int size;               /*!< size of value */
+     tbmc_value_type_t type; /*!< type of value */
+} tbmc_value_t;
+
+/**
+ * ThingsBoard MQTT Client value context structure
+ */
+typdef struct
+{
+     void *context;                              /*!< Value context */
+     void *get_value(void *context);             /*!< Get value from context */
+     void set_value(void *context, void *value); /*!< Set value to context */
+} tbmc_value_context_t;
+
+typdef tbmc_err_t (*TBMC_GET_LONG_VALUE)(void *context, TBMC_LONG *value); /*!< Get TBMC_LONG value from context */
+typdef tbmc_err_t (*TBMC_GET_DOUBLE_VALUE)(void *context, TBMC_DBL *value);   /*!< Get TBMC_DOUBLE value from context */
+typdef tbmc_err_t (*TBMC_GET_BOOL_VALUE)(void *context, TBMC_BOOL *value); /*!< Get TBMC_BOOL value from context */
+typdef tbmc_err_t (*TBMC_GET_STR_VALUE)(void *context, TBMC_STR *value, int value_size);   /*!< Get TBMC_STR value from context */
+typdef tbmc_err_t (*TBMC_GET_JSON_VALUE)(void *context, TBMC_JSON *value, int value_size); /*!< Get TBMC_JSON value from context */
+
+typdef void (*TBMC_SET_LONG_VALUE)(void *context, TBMC_LONG value); /*!< Set TBMC_LONG value to context */
+typdef void (*TBMC_SET_DOUBLE_VALUE)(void *context, TBMC_DBL value);   /*!< Set TBMC_DOUBLE value to context */
+typdef void (*TBMC_SET_BOOL_VALUE)(void *context, TBMC_BOOL value); /*!< Set TBMC_BOOL value to context */
+typdef void (*TBMC_SET_STR_VALUE)(void *context, TBMC_STR value);   /*!< Set TBMC_STR value to context */
+typdef void (*TBMC_SET_STR_VALUE)(void *context, TBMC_JSON value);  /*!< Set TBMC_JSON value to context */
+
+//===key-value======================================================
+/**
+ * ThingsBoard MQTT Client key-value
+ */
+typdef struct
+{
+     tbmc_key_t key;
+     tbmc_value_t value;
+} tbmc_keyvalue_t;
+
+//===telemetry_datapoint============================================
+/**
+ * ThingsBoard MQTT Client telemetry datapoint
+ */
+typdef tbmc_keyvalue_t tbmc_datapoint_t;
+
+typedef tbmc_datapoint_t* tbmc_datapoint_handle_t;
+
+tbmc_datapoint_handle_t telemetry_datapoint_init(...);
+void telemetry_datapoint_destory(tbmc_datapoint_handle_t dp);
+//telemetry_datapoint_send();
+char *telemetry_datapoint_get_name(tbmc_datapoint_handle_t dp); // tbmc_keyvalue_get_key(), tbmc_key_t.key
 
 //===============================================
 tbmqttclient_init(config); //config: on_connected()+on_disconnected()
@@ -142,7 +242,7 @@ tbmqttclient_run(); //tb_mqtt_client_loop(), recv/parse/sendqueue/ack...
 tbmqttclient_isConnected();
 
 //1.Publish Telemetry datapoints: once-time
-tbmqttclient_telemetry_datapoints_send(datapoint1, 2, 3, ...);       //telemetry_datapoint_init()/_destory(),         _pack()/_send()!, _get_name()
+tbmc_err_t tbmc_telemetry_datapoints_send(tbmc_handle_t tbmc_handle, tbmc_datapoint_handle_t dp0, ...);
 //tbmqttclient_telemetry_datapoint_list_send(datapoint_list);   //telemetry_datapoint_list_init()/_destory(), _add(), _pack()/_send()!, _get_name()
 
 //2.Publish client-side device attributes to the server: once-time
