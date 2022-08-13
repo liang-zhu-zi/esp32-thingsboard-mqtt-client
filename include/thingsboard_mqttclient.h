@@ -264,6 +264,7 @@ tbmqttclient_attributes_request(context, on_..._success, on_..._timeout, attribu
 tbmqttlcient_shared_attributes_subscribe(shared_attribute1, 2, 3, ...); //tbmqttclient_addSubAttrEvent(); //shared_attribute_list[]
 tbmqttlcient_shared_attributes_unsubscribe(shared_attribute_name1, 2, 3, ...); //remove shared_attribute from shared_attribute_list[]
 
+
 //5.Server-side RPC: many-times deal.Call it before connect()
                                                                    //serverside_rpc_init()/_destory(), _unpacket()/_deal(), _pack()/(reply)_send()!, _get_name()
                                                                    //_on_request()???, _on_replay()???
