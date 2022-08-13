@@ -126,84 +126,68 @@ _onAttributesResponse(); //_attributesResponse()
 //_isDeserializationError()
 
 //===tbmc===========================================================
-typedef int tbmc_err_t;
-
 /* Definitions for error constants. */
 #define TBMC_OK 0    /*!< tbmc_err_t value indicating success (no error) */
 #define TBMC_FAIL -1 /*!< Generic tbmc_err_t code indicating failure */
 
-//===key============================================================
-/**
- * ThingsBoard MQTT Client key
- */
-typdef struct
-{
-     char *key; /*!< key */
-     int size;  /*!< size of key */
-} tbmc_key_t;
+typedef int tbmc_err_t;
 
 //===value==========================================================
-typedef long TBMC_LONG;
-typedef double TBMC_DOUBLE;
-typedef int TBMC_BOOLEAN;
 typedef char *TBMC_STRING;
+typedef int TBMC_BOOLEAN;
+typedef double TBMC_DOUBLE;
+typedef long TBMC_LONG;
 typedef char *TBMC_JSON;
-//#define TBMC_LONG long
-//#define TBMC_DOUBLE double
+//#define TBMC_STRING char*
 //#define TBMC_BOOLEAN int
-//#define TBMC_STRING char *
-//#define TBMC_JSON char *
+//#define TBMC_DOUBLE double
+//#define TBMC_LONG long
+//#define TBMC_JSON char*
 
 /**
  * ThingsBoard MQTT Client value type
  */
 typedef enum
 {
-     TBMC_VALUE_TYPE_LONG = 0, /*!< long value  */
-     TBMC_VALUE_TYPE_DOUBLE,   /*!< double value */
-     TBMC_VALUE_TYPE_BOOLEAN,  /*!< boolean value */
-     TBMC_VALUE_TYPE_STRING,   /*!< string value */
-     TBMC_VALUE_TYPE_JSON      /*!< JSON value */
+     TBMC_VALUE_TYPE_INVALID = 0,
+     TBMC_VALUE_TYPE_STRING,  /*!< string value */
+     TBMC_VALUE_TYPE_BOOLEAN, /*!< boolean value */
+     TBMC_VALUE_TYPE_DOUBLE,  /*!< double value */
+     TBMC_VALUE_TYPE_LONG,    /*!< long value  */
+     TBMC_VALUE_TYPE_JSON     /*!< JSON value */
 } tbmc_value_type_t;
 
 /**
  * ThingsBoard MQTT Client value
  */
-typdef struct
+typedef struct
 {
+     tbmc_value_type_t type; /*!< type of value */
+     int size;               /*!< size of value */
      union
      {
-          TBMC_LONG longV;
-          TBMC_DOUBLE doubleV;
+          TBMC_STRING stringV;
           TBMC_BOOLEAN boolV;
-          TBMC_STRING strV;
+          TBMC_DOUBLE doubleV;
+          TBMC_LONG longV;
           TBMC_JSON jsonV;
      } value;
-     int size;               /*!< size of value */
-     tbmc_value_type_t type; /*!< type of value */
 } tbmc_value_t;
 
-/**
- * ThingsBoard MQTT Client value context structure
- */
-typdef struct
-{
-     void *context;                              /*!< Value context */
-     void *get_value(void *context);             /*!< Get value from context */
-     void set_value(void *context, void *value); /*!< Set value to context */
-} tbmc_value_context_t;
+// typedef tbmc_err_t (*TBMC_GET_STRING_VALUE_CB)(void *context, TBMC_STRING *value, int value_size); /*!< Get TBMC_STRING value from context */
+// typedef tbmc_err_t (*TBMC_GET_BOOLEAN_VALUE_CB)(void *context, TBMC_BOOLEAN *value, int);          /*!< Get TBMC_BOOLEAN value from context */
+// typedef tbmc_err_t (*TBMC_GET_DOUBLE_VALUE_CB)(void *context, TBMC_DOUBLE *value, int);            /*!< Get TBMC_DOUBLE value from context */
+// typedef tbmc_err_t (*TBMC_GET_LONG_VALUE_CB)(void *context, TBMC_LONG *value, int);                /*!< Get TBMC_LONG value from context */
+// typedef tbmc_err_t (*TBMC_GET_JSON_VALUE_CB)(void *context, TBMC_JSON *value, int value_size);     /*!< Get TBMC_JSON value from context */
 
-typdef tbmc_err_t (*TBMC_GET_LONG_VALUE)(void *context, TBMC_LONG *value); /*!< Get TBMC_LONG value from context */
-typdef tbmc_err_t (*TBMC_GET_DOUBLE_VALUE)(void *context, TBMC_DBL *value);   /*!< Get TBMC_DOUBLE value from context */
-typdef tbmc_err_t (*TBMC_GET_BOOL_VALUE)(void *context, TBMC_BOOL *value); /*!< Get TBMC_BOOL value from context */
-typdef tbmc_err_t (*TBMC_GET_STR_VALUE)(void *context, TBMC_STR *value, int value_size);   /*!< Get TBMC_STR value from context */
-typdef tbmc_err_t (*TBMC_GET_JSON_VALUE)(void *context, TBMC_JSON *value, int value_size); /*!< Get TBMC_JSON value from context */
+// typedef tbmc_err_t (*TBMC_SET_STRING_VALUE_CB)(void *context, TBMC_STRING value);   /*!< Set TBMC_STRING value to context */
+// typedef tbmc_err_t (*TBMC_SET_BOOLEAN_VALUE_CB)(void *context, TBMC_BOOLEAN value); /*!< Set TBMC_BOOLEAN value to context */
+// typedef tbmc_err_t (*TBMC_SET_DOUBLE_VALUE_CB)(void *context, TBMC_DOUBLE value);   /*!< Set TBMC_DOUBLE value to context */
+// typedef tbmc_err_t (*TBMC_SET_LONG_VALUE_CB)(void *context, TBMC_LONG value);       /*!< Set TBMC_LONG value to context */
+// typedef tbmc_err_t (*TBMC_SET_JSON_VALUE_CB)(void *context, TBMC_JSON value);       /*!< Set TBMC_JSON value to context */
 
-typdef void (*TBMC_SET_LONG_VALUE)(void *context, TBMC_LONG value); /*!< Set TBMC_LONG value to context */
-typdef void (*TBMC_SET_DOUBLE_VALUE)(void *context, TBMC_DBL value);   /*!< Set TBMC_DOUBLE value to context */
-typdef void (*TBMC_SET_BOOL_VALUE)(void *context, TBMC_BOOL value); /*!< Set TBMC_BOOL value to context */
-typdef void (*TBMC_SET_STR_VALUE)(void *context, TBMC_STR value);   /*!< Set TBMC_STR value to context */
-typdef void (*TBMC_SET_STR_VALUE)(void *context, TBMC_JSON value);  /*!< Set TBMC_JSON value to context */
+typedef tbmc_err_t (*tbmc_value_get_callback_t)(void *context, tbmc_value_t *value);       /*!< Get tbmc_value from context */
+typedef tbmc_err_t (*tbmc_value_set_callback_t)(void *context, const tbmc_value_t *value); /*!< Set tbmc_value to context */
 
 //===key-value======================================================
 /**
@@ -211,22 +195,62 @@ typdef void (*TBMC_SET_STR_VALUE)(void *context, TBMC_JSON value);  /*!< Set TBM
  */
 typdef struct
 {
-     tbmc_key_t key;
-     tbmc_value_t value;
-} tbmc_keyvalue_t;
+     char *key;           /*!< Key */
+     tbmc_value_t *value; /*!< Value */
+
+     void *context;                          /*!< Context of getting/setting value*/
+     tbmc_value_get_callback_t get_value_cb; /*!< Callback of getting value from context */
+     tbmc_value_set_callback_t set_value_cb; /*!< Callback of setting value to context */
+} tbmc_kv_t;
+
+typdef tbmc_kv_t *tbmc_kv_handle_t;
+
+// tbmc_kv_handle_t tbmc_kv_of_string_init(const char *key, void *context, TBMC_GET_STRING_VALUE_CB get_value, TBMC_GET_STRING_VALUE_CB set_value);    /*!< Initialize tbmc_kv of TBMC_STRING */
+// tbmc_kv_handle_t tbmc_kv_of_boolean_init(const char *key, void *context, TBMC_GET_BOOLEAN_VALUE_CB get_value, TBMC_GET_BOOLEAN_VALUE_CB set_value); /*!< Initialize tbmc_kv of TBMC_BOOLEAN */
+// tbmc_kv_handle_t tbmc_kv_of_double_init(const char *key, void *context, TBMC_GET_DOUBLE_VALUE_CB get_value, TBMC_GET_DOUBLE_VALUE_CB set_value);    /*!< Initialize tbmc_kv of TBMC_DOUBLE */
+// tbmc_kv_handle_t tbmc_kv_of_long_init(const char *key, void *context, TBMC_GET_LONG_VALUE_CB get_value, TBMC_GET_LONG_VALUE_CB set_value);          /*!< Initialize tbmc_kv of TBMC_LONG */
+// tbmc_kv_handle_t tbmc_kv_of_json_init(const char *key, void *context, TBMC_GET_JSON_VALUE_CB get_value, TBMC_GET_JSON_VALUE_CB set_value);          /*!< Initialize tbmc_kv of TBMC_JSON */
+
+tbmc_kv_handle_t tbmc_kv_init(const char *key, tbmc_value_type_t type, void *context, tbmc_value_get_callback_t get_value_cb, tbmc_value_set_callback_t set_value_cb);          /*!< Initialize tbmc_kv of TBMC_JSON */
+tbmc_err_t tbmc_kv_destory(tbmc_kv_handle_t kv);
+
+const char *tbmc_kv_get_key(tbmc_kv_handle_t kv);              /*!< Get key of tbmc_kv */
+tbmc_value_type_t tbmc_kv_get_value_type(tbmc_kv_handle_t kv); /*!< Get value type of tbmc_kv */
+
+// tbmc_err_t tbmc_kv_of_string_get_value(tbmc_kv_handle_t kv, TBMC_STRING *value, int value_size); /*!< Get TBMC_STRING value from tbmc_kv */
+// tbmc_err_t tbmc_kv_of_boolean_get_value(tbmc_kv_handle_t kv, TBMC_BOOLEAN *value);               /*!< Get TBMC_BOOLEAN value from tbmc_kv */
+// tbmc_err_t tbmc_kv_of_double_get_value(tbmc_kv_handle_t kv, TBMC_DOUBLE *value);                 /*!< Get TBMC_DOUBLE value from tbmc_kv */
+// tbmc_err_t tbmc_kv_of_long_get_value(tbmc_kv_handle_t kv, TBMC_LONG *value);                     /*!< Get TBMC_LONG value from tbmc_kv */
+// tbmc_err_t tbmc_kv_of_json_get_value(tbmc_kv_handle_t kv, TBMC_JSON *value, int value_size);     /*!< Get TBMC_JSON value from tbmc_kv */
+
+// tbmc_err_t tbmc_kv_of_string_set_value(tbmc_kv_handle_t kv, TBMC_STRING value);   /*!< Set TBMC_STRING value to tbmc_kv */
+// tbmc_err_t tbmc_kv_of_boolean_set_value(tbmc_kv_handle_t kv, TBMC_BOOLEAN value); /*!< Set TBMC_BOOLEAN value to tbmc_kv */
+// tbmc_err_t tbmc_kv_of_double_set_value(tbmc_kv_handle_t kv, TBMC_DOUBLE value);   /*!< Set TBMC_DOUBLE value to tbmc_kv */
+// tbmc_err_t tbmc_kv_of_long_set_value(tbmc_kv_handle_t kv, TBMC_LONG value);       /*!< Set TBMC_LONG value to tbmc_kv */
+// tbmc_err_t tbmc_kv_of_json_set_value(tbmc_kv_handle_t kv, TBMC_JSON value);       /*!< Set TBMC_JSON value to tbmc_kv */
+
+tbmc_err_t tbmc_kv_get_value(tbmc_kv_handle_t kv, tbmc_value_t *value);       /*!< Get tbmc_value of tbmc_kv */
+tbmc_err_t tbmc_kv_set_value(tbmc_kv_handle_t kv, const tbmc_value_t *value); /*!< Set tbmc_value of tbmc_kv */
 
 //===telemetry_datapoint============================================
 /**
  * ThingsBoard MQTT Client telemetry datapoint
  */
-typdef tbmc_keyvalue_t tbmc_datapoint_t;
+typedef tbmc_kv_t tbmc_dp_t;
+typedef tbmc_dp_t *tbmc_dp_handle_t;
 
-typedef tbmc_datapoint_t* tbmc_datapoint_handle_t;
+char *tbmc_dp_get_name(tbmc_dp_handle_t dp); // tbmc_keyvalue_get_key(), tbmc_key_t.key
 
-tbmc_datapoint_handle_t telemetry_datapoint_init(...);
-void telemetry_datapoint_destory(tbmc_datapoint_handle_t dp);
-//telemetry_datapoint_send();
-char *telemetry_datapoint_get_name(tbmc_datapoint_handle_t dp); // tbmc_keyvalue_get_key(), tbmc_key_t.key
+tbmc_dp_handle_t tbmc_dp_init(const char *key, tbmc_value_type_t type, void *context, tbmc_value_get_callback_t get_value_cb, tbmc_value_set_callback_t set_value_cb);          /*!< Initialize tbmc_kv of TBMC_JSON */
+tbmc_err_t tbmc_dp_destory(tbmc_dp_handle_t dp);
+
+const char *tbmc_dp_get_key(tbmc_dp_handle_t dp);              /*!< Get key of tbmc_dp */
+tbmc_value_type_t tbmc_dp_get_value_type(tbmc_dp_handle_t dp); /*!< Get value type of tbmc_dp */
+
+tbmc_err_t tbmc_dp_get_value(tbmc_dp_handle_t dp, tbmc_value_t *value);       /*!< Get tbmc_value of tbmc_dp */
+tbmc_err_t tbmc_dp_set_value(tbmc_dp_handle_t dp, const tbmc_value_t *value); /*!< Set tbmc_value of tbmc_dp */
+
+//tbmc_dp_send();
 
 //===============================================
 tbmqttclient_init(config); //config: on_connected()+on_disconnected()
@@ -310,6 +334,8 @@ _onAttributesResponse(); //_attributesResponse()
 
 _on_subscribed()???
 _on_unsubscribed()???
+
+
 
 #ifdef __cplusplus
 }
