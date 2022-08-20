@@ -484,26 +484,45 @@ tbmqttclient_reconnect();
 tbmqttclient_run(); //tb_mqtt_client_loop(), recv/parse/sendqueue/ack...
 tbmqttclient_isConnected();
 
-//1.Publish Telemetry datapoints: once-time
-tbmc_err_t tbmc_telemetry_datapoints_send(tbmc_client_handle_t client, tbmc_dp_handle_t dp, ...);
+//==================1.Publish Telemetry datapoints: once-time===================================================================================
+tbmc_err_t tbmc_telemetry_helper_append(tbmc_client_handle_t client,
+                                        const char *key, tbmc_value_type_t type, void *context,
+                                        tbmc_value_get_callback_t get_value_cb,
+                                        tbmc_value_set_callback_t set_value_cb);
+tbmc_err_t tbmc_telemetry_helper_clear(tbmc_client_handle_t client, const char *key);
+tbmc_err_t tbmc_telemetry_helper_send(tbmc_client_handle_t client, const char *key, ...);
 //tbmc_telemetry_datapoint_list_send(datapoint_list);   //telemetry_datapoint_list_init()/_destory(), _add(), _pack()/_send()!, _get_name()
 
-//2.Publish client-side device attributes to the server: once-time
-tbmc_err_t tbmc_clientside_attributes_send(tbmc_client_handle_t client, tbmc_csa_handle_t csa, ...);
-//tbmc_clientside_attribute_list_send(clientside_attribute_list);//clientside_attribute_list_init()/_destory(), _add(), _pack()/_send()!,                    _get_name(), _get_keys()
-                                                                             //shared_attribute_list_init()/_destory(), _add(),                   _unpack()/_deal()?,_get_name(), _get_keys()
+//==================2.Publish client-side device attributes to the server: once-time=============================================================
+tbmc_err_t tbmc_clientattribute_helper_append_with_request(tbmc_client_handle_t client,
+                                                           const char *key, tbmc_value_type_t type, void *context,
+                                                           tbmc_value_get_callback_t get_value_cb,
+                                                           tbmc_value_set_callback_t set_value_cb); // tbmc_attribute_of_clientside_init()
+tbmc_err_t tbmc_clientattribute_helper_append(tbmc_client_handle_t client,
+                                              const char *key, tbmc_value_type_t type, void *context,
+                                              tbmc_value_get_callback_t get_value_cb); // tbmc_attribute_of_clientside_init()
+tbmc_err_t tbmc_clientattribute_helper_clear(tbmc_client_handle_t client, const char *key, ...);
+tbmc_err_t tbmc_clientattribute_send(tbmc_client_handle_t client, const char *key, ...);
+// tbmc_clientside_attribute_list_send(clientside_attribute_list);//clientside_attribute_list_init()/_destory(), _add(), _pack()/_send()!,                    _get_name(), _get_keys()
+// shared_attribute_list_init()/_destory(), _add(),                   _unpack()/_deal()?,_get_name(), _get_keys()
 
-//3.Request client-side or shared device attributes from the server: once-time
-tbmc_err_t tbmc_attributes_request(tbmc_client_handle_t client, tbmc_attributes_request_handle_t request, ...); ////return request_id on successful, otherwise return TBMC_FAIL
+//==================3.Subscribe to shared device attribute updates from the server: many-times deal. Call it before connect().=====================
+tbmc_err_t tbmc_shared_attribute_observer_append(tbmc_client_handle_t client, const char *key, tbmc_value_type_t type, void *context,
+                                                 /*tbmc_value_get_callback_t get_value_cb,*/
+                                                 tbmc_value_set_callback_t set_value_cb);      // tbmqttclient_addSubAttrEvent(); //tbmc_shared_attribute_list_t
+tbmc_err_t tbmc_shared_attribute_observer_clear(tbmc_client_handle_t client, const char *key, ...); // remove shared_attribute from tbmc_shared_attribute_list_t
+// tbmc_clientside_attribute_list_t
 
-//4.Subscribe to shared device attribute updates from the server: many-times deal. Call it before connect().
-tbmc_err_t tbmc_shared_attributes_observer_append(tbmc_client_handle_t client, tbmc_sa_t shared_attribute, ...); //tbmqttclient_addSubAttrEvent(); //tbmc_shared_attribute_list_t
-tbmc_err_t tbmc_shared_attributes_observer_clear(tbmc_client_handle_t client, tbmc_sa_t shared_attribute, ...); //remove shared_attribute from tbmc_shared_attribute_list_t
-//tbmc_clientside_attribute_list_t
+//==================4.Request client-side or shared device attributes from the server: once-time=================================================
+tbmc_err_t tbmc_attributes_request(tbmc_client_handle_t client,
+                                   void *context,
+                                   tbmc_attributes_request_success_callback_t success_cb,
+                                   tbmc_attributes_request_timeout_callback_t timeout_cb,
+                                   const char *key, ...); ////return request_id on successful, otherwise return TBMC_FAIL
 
-//======================5.Server-side RPC: many-times deal.Call it before connect()===========================
+//==================5.Server-side RPC: many-times deal.Call it before connect()===============================
 tbmc_err_t tbmc_serverrpc_observer_append(tbmc_client_handle_t client, const char* method, void *context, tbmc_serverrpc_request_callback_t on_request);
-tbmc_err_t tbmc_serverrpc_observer_clear(tbmc_client_handle_t client, const char* method); //remove from LIST_ENTRY(tbmc_serverrpc_) & delete
+tbmc_err_t tbmc_serverrpc_observer_clear(tbmc_client_handle_t client, const char* method, ...); //remove from LIST_ENTRY(tbmc_serverrpc_) & delete
 
 //const char *_tbmc_serverrpc_get_method(tbmc_serverrpc_handle_t serverrpc);
 
@@ -571,10 +590,14 @@ typedef struct tbmc_fw_observer_
      tbmc_fw_response_timeout_callback_t on_fw_timeout;     /*!< callback of F/W OTA timeout */
 
      // reset these below fields.
-     const char *fw_title;                                  /*!< OS fw, App fw, ... */
-     const char *fw_version;
-     const char *fw_checksum;
-     const char *fw_checksum_algorithm;
+     tbmc_attribute_handle_t fw_title;
+     tbmc_attribute_handle_t fw_version;
+     tbmc_attribute_handle_t fw_checksum;
+     tbmc_attribute_handle_t fw_checksum_algorithm;
+     // const char *fw_title;                                  /*!< OS fw, App fw, ... */
+     // const char *fw_version;
+     // const char *fw_checksum;
+     // const char *fw_checksum_algorithm;
 
      int request_id; /*!< default is 0 */
      int chunk;      /*!< default is zero, from 0 to  */
@@ -589,7 +612,7 @@ tbmc_err_t tbmc_fw_observer_append(tbmc_handle_client_t client,
                                    tbmc_fw_response_success_callback_t on_fw_success,
                                    tbmc_fw_response_timeout_callback_t on_fw_timeout);
 tbmc_err_t tbmc_fw_observer_clear(tbmc_handle_client_t client,
-                                  const char *fw_title);
+                                  const char *fw_title, ...);
 
 //0.  Subscribe topic: shared attribute updates: fw_title, fw_version, fw_checksum, fw_checksum_algorithm 
 //0.  Subscribe topic: f/w response: v2/fw/response/+/chunk/+
@@ -619,35 +642,35 @@ typedef struct
 {
      struct
      {
-          LIST_ENTRY(tbmc_attribute_) entries; /*!< client attributes entries */
-     } client_attributes;
+          LIST_ENTRY(tbmc_dp_) helper_entries; /*!< telemetry data point entries */
+     } telemetry;
      struct
      {
-          LIST_ENTRY(tbmc_attribute_) entries; /*!< shared attributes entries */
+          LIST_ENTRY(tbmc_attribute_) helper_entries; /*!< client attributes entries */
+     } client_attribute;
+     struct
+     {
+          LIST_ENTRY(tbmc_attribute_) observer_entries; /*!< shared attributes entries */
      } shared_attributes;
      struct
      {
-          LIST_ENTRY(tbmc_attributes_request_) entries; /*!< attributes request entries */
+          LIST_ENTRY(tbmc_attributes_request_) observer_entries; /*!< attributes request entries */
           int next_request_id;
      } attributes_request;
      struct
      {
-          LIST_ENTRY(tbmc_serverrpc_) entries; /*!< server side RPC entries */
+          LIST_ENTRY(tbmc_serverrpc_) observer_entries; /*!< server side RPC entries */
      } serverrpc;
      struct
      {
-          LIST_ENTRY(tbmc_clientrpc_) entries; /*!< client side RPC entries */
+          LIST_ENTRY(tbmc_clientrpc_) observer_entries; /*!< client side RPC entries */
           int next_request_id;
      } clientrpc;
      struct
      {
-          LIST_ENTRY(tbmc_fw_observer_) entries; /*!< A device may have multiple firmware */
+          LIST_ENTRY(tbmc_fw_observer_) observer_entries; /*!< A device may have multiple firmware */
           int next_request_id;
-          tbmc_attribute_handle_t fw_title;
-          tbmc_attribute_handle_t fw_version;
-          tbmc_attribute_handle_t fw_checksum;
-          tbmc_attribute_handle_t fw_checksum_algorithm;
-     } fw_observer;
+     } fw;
 
      // tbmqttclient_handle_t tbmqttclient;
 } tbmc_client_t;
