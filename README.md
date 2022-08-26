@@ -23,3 +23,5 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
 | esp_mqtt_client_register_event()  | √                            |                                             |                                                                                                                                                                                                                                        |
 | esp_mqtt_client_get_outbox_size() | √                            | *                                           |                                                                                                                                                                                                                                        |
 |                                   |                              |                                             | √:MUST, *:SHOULD, X:MUST NOT                                                                                                                                                                                                           |
+
+
