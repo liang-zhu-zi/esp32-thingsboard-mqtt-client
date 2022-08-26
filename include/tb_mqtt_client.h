@@ -126,6 +126,9 @@ extern "C" {
 
 typedef int tbmc_err_t;
 
+#define TBMC_MALLOC   malloc
+#define TBMC_FREE     free
+
 //====tbmqttlientesp32.h-low===============================================================================================
 typedef enum
 {
@@ -142,13 +145,19 @@ typedef tbmc_t *tbmc_handle_t;
 typedef void (*tbmc_on_connected_t)(void* context);                                                          //First receive
 typedef void (*tbmc_on_disconnected_t)(void* context);                                                       //First receive
 typedef void (*tbmc_on_sharedattr_received_t)(void* context, const char *payload, int len);                  //First receive
-typedef void (*tbmc_on_attrrequest_success_t)(void* context, int request_id, const char *payload, int len);  //First send
-typedef void (*tbmc_on_attrrequest_timeout_t)(void* context, int request_id);                                //First send
-typedef void (*tbmc_on_clientrpc_success_t)(void* context, int request_id, const char *payload, int len);    //First send
-typedef void (*tbmc_on_clientrpc_timeout_t)(void* context, int request_id);                                  //First send
 typedef void (*tbmc_on_serverrpc_request_t)(void* context, int request_id, const char *payload, int len);    //First receive
-typedef void (*tbmc_on_fwrequest_response_t)(void* context, int request_id, const char* payload, int len);   //First send
-typedef void (*tbmc_on_fwrequest_timeout_t)(void* context, int request_id);                                  //First send
+
+typedef void (*tbmc_on_request_success_t)(void* context, int request_id, const char *payload, int len);  //First send
+typedef void (*tbmc_on_request_timeout_t)(void* context, int request_id);                                //First send
+
+typedef tbmc_on_request_success_t tbmc_on_attrrequest_success_t;  //First send
+typedef tbmc_on_request_timeout_t tbmc_on_attrrequest_timeout_t;  //First send
+
+typedef tbmc_on_request_success_t tbmc_on_clientrpc_success_t;    //First send
+typedef tbmc_on_request_timeout_t tbmc_on_clientrpc_timeout_t;    //First send
+
+typedef tbmc_on_request_success_t tbmc_on_fwrequest_response_t;   //First send
+typedef tbmc_on_request_timeout_t tbmc_on_fwrequest_timeout_t;    //First send
 
 typedef struct
 {
@@ -189,43 +198,44 @@ bool tbmc_is_disconnected(tbmc_handle_t client);
 tbmc_state_t tbmc_get_state(tbmc_handle_t client);
 void tbmc_check_timeout(tbmc_handle_t client);  // Executes an event loop for PubSub client. //loop()==>checkTimeout()
 
-int tbmc_telemetry_publish(tbmc_handle_t client, const char *pyaload,
-                           int qos = 1, int retain = 0); // sendTelemetry()
-int tbmc_clientattributes_publish(tbmc_handle_t client, const char *pyaload,
-                                  int qos = 1, int retain = 0);        // sendAttributes() //publish client attributes
-int tbmc_attributes_request(tbmc_handle_t client, const char *payload,
+tbmc_err_t tbmc_telemetry_publish(tbmc_handle_t client, const char *payload,
+                           int qos/*= 1*/, int retain/*= 0*/); // sendTelemetry()
+tbmc_err_t tbmc_clientattributes_publish(tbmc_handle_t client, const char *payload,
+                                  int qos/*= 1*/, int retain/*= 0*/);        // sendAttributes() //publish client attributes
+tbmc_err_t tbmc_attributes_request(tbmc_handle_t client, const char *payload,
                             void *context,
                             tbmc_on_attrrequest_success_t on_attributesrequest_success,
                             tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
-                            int qos = 1, int retain = 0); // requestAttributes() //request client and shared attributes
-int tbmc_attributes_request_ex(tbmc_handle_t client, const char *client_keys, const char *shared_keys， void *context,
+                            int qos/*= 1*/, int retain/*= 0*/); // requestAttributes() //request client and shared attributes
+tbmc_err_t tbmc_attributes_request_ex(tbmc_handle_t client, const char *client_keys, const char *shared_keys， void *context,
                                tbmc_on_attrrequest_success_t on_attributesrequest_success,
                                tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
-                               int qos = 1, int retain = 0);
-int tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *response,
-                            int qos = 1, int retain = 0);             // sendServerRpcReply() //response server-side RPC
-int tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
+                               int qos/*= 1*/, int retain/*= 0*/);
+tbmc_err_t tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *response,
+                            int qos/*= 1*/, int retain/*= 0*/);             // sendServerRpcReply() //response server-side RPC
+tbmc_err_t tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
                            void *context,
                            tbmc_on_clientrpc_success_t on_clientrpc_success,
                            tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
-                           int qos = 1, int retain = 0);                 // sendClientRpcCall() //request client-side RPC
-int tbmc_clientrpc_request_ex(tbmc_handle_t client, const char *method, const char *params,
+                           int qos/*= 1*/, int retain/*= 0*/);                 // sendClientRpcCall() //request client-side RPC
+tbmc_err_t tbmc_clientrpc_request_ex(tbmc_handle_t client, const char *method, const char *params,
+                              void *context,
                               tbmc_on_clientrpc_success_t on_clientrpc_success,
                               tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
-                              int qos = 1, int retain = 0);
+                              int qos/*= 1*/, int retain/*= 0*/);
 
-int tbmc_fw_request_init(tbmc_handle_t client,
+tbmc_err_t tbmc_fw_request_init(tbmc_handle_t client,
                          void *context,
                          tbmc_on_fwrequest_response_t on_fwrequest_response,
                          tbmc_on_fwrequest_timeout_t on_fwrequest_timeout);
-int tbmc_fw_request_destory(tbmc_handle_t client, int request_id);
-int tbmc_fw_request_send(tbmc_handle_t client, int request_id, int chunk, const char *payload, //?payload
-                         int qos = 1, int retain = 0);
+tbmc_err_t tbmc_fw_request_destory(tbmc_handle_t client, int request_id);
+tbmc_err_t tbmc_fw_request_send(tbmc_handle_t client, int request_id, int chunk, const char *payload, //?payload
+                         int qos/*= 1*/, int retain/*= 0*/);
 
-#define TBMC_TELEMETRY_PUBLISH(client, pyaload) \
-          tbmc_telemetry_publish(client, pyaload, /*int qos =*/1, /*int retain =*/0)
+#define TBMC_TELEMETRY_PUBLISH(client, payload) \
+          tbmc_telemetry_publish(client, payload, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_CLIENTATTRIBUTES_PUBLISH(client, payloady) \
-          tbmc_clientattributes_publish(client, pyaload, /*int qos =*/1, /*int retain =*/0)
+          tbmc_clientattributes_publish(client, payload, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_ATTRIUTES_REQUEST(client, payload, context, on_attributesrequest_success, on_attributesrequest_timeout) \
           tbmc_attributes_request(client, payload, context, on_attributesrequest_success, on_attributesrequest_timeout, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_ATTRIUTES_REQUEST_EX(client, client_keys, shared_keys, context, on_attributesrequest_success, on_attributesrequest_timeout) \
@@ -234,8 +244,8 @@ int tbmc_fw_request_send(tbmc_handle_t client, int request_id, int chunk, const 
           tbmc_serverrpc_response(client, request_id, response, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_CLIENTRPC_REQUEST(client, payload, context, on_clientrpc_success, on_clientrpc_timeout) \
           tbmc_clientrpc_request(client, payload, context, on_clientrpc_success, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
-#define TBMC_CLIENTRPC_REQUEST_EX(client, method, params, on_clientrpc_success, on_clientrpc_timeout) \
-          tbmc_clientrpc_request_ex(client, method, params, on_clientrpc_success, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
+#define TBMC_CLIENTRPC_REQUEST_EX(client, method, params, context, on_clientrpc_success, on_clientrpc_timeout) \
+          tbmc_clientrpc_request_ex(client, method, params, context, on_clientrpc_success, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_FW_REQUEST_SEND(client, request_id, chunk, payload) \
           tbmc_fw_request_send(client, request_id, chunk, payload, /*int qos =*/1, /*int retain =*/0)
 

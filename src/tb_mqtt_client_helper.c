@@ -111,4 +111,6 @@ static void _tbmch_on_serverrpc_request(tbmch_handle_t client, int request_id,co
 static void _tbmch_on_fwrequest_response(tbmch_handle_t client, int request_id, const char* payload, int length);
 static void _tbmch_on_fwrequest_timeout(tbmch_handle_t client, int request_id);
 
-static void _timer(); //send msg to queue
+static void _timer_start();
+static void _timer_stop();
+static void _timer_timerout(); //send msg to queue
