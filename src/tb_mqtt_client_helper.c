@@ -107,8 +107,8 @@ static void _tbmch_on_attributesrequest_timeout(tbmch_handle_t client, int reque
 //~~static bool _attributesResponse(int request_id, const char* payload, int length); //merge to _tbmch_on_attributesrequest_success()
 static void _tbmch_on_clientrpc_success(tbmch_handle_t client, int request_id, const char* payload, int length); //onClientRpcResponse()
 static void _tbmch_on_clientrpc_timeout(tbmch_handle_t client, int request_id); //onClientRpcResponseTimeout()
-static void _tbmch_on_serverrpc_request(tbmch_handle_t client, int request_id,const char* payload, int length); ////onServerRpcRequest()
-static void _tbmch_on_fwrequest_response(tbmch_handle_t client, int request_id, const char* payload, int length);
+static void _tbmch_on_serverrpc_request(tbmch_handle_t client, int request_id, const char* payload, int length); ////onServerRpcRequest()
+static void _tbmch_on_fwrequest_response(tbmch_handle_t client, int request_id, int chunk, const char* payload, int length);
 static void _tbmch_on_fwrequest_timeout(tbmch_handle_t client, int request_id);
 
 static void _timer_start();

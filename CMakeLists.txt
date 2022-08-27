@@ -1,4 +1,4 @@
-set(srcs "src/thingsboard_mqttclient.c")
+set(srcs "src/tb_mqtt_client.c")
 
 set(includes "include")
 # set(priv_requires "interface")
