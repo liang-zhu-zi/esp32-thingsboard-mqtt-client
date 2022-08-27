@@ -156,15 +156,6 @@ void tbmc_destroy(tbmc_handle_t client_)
      }
 }
 
-// tbmqttclient_set_OnConnected(TBMQTT_ON_CONNECTED callback); //merge to tbmc_connect()
-// tbmqttclient_set_OnDisconnected(TBMQTT_ON_DISCONNECTED callback); //merge to tbmc_connect()
-// tbmqttclient_set_OnServerRpcRequest(TBMQTT_SERVER_RPC_CALLBACK callback); //merge to tbmc_connect()
-// tbmqttclient_set_OnAttrSubReply(TBMQTT_ATTR_SUB_CALLBACK callback); //merge to tbmc_connect()
-// tbmqttclient_get_OnConnected(void); //merge to tbmc_connect()
-// tbmqttclient_get_OnDisconnected(void); //merge to tbmc_connect()
-// tbmqttclient_get_OnServerRpcRequest(void); //merge to tbmc_connect()
-// tbmqttclient_get_OnAttrSubReply(void); //merge to tbmc_connect()
-
 // Connects to the specified ThingsBoard server and port.
 // Access token is used to authenticate a client.
 // Returns true on success, false otherwise.
