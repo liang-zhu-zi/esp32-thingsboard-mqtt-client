@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "timeseries_data_helper.h": "c"
+    }
+}

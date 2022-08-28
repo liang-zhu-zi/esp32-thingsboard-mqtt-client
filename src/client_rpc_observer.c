@@ -12,4 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbmc_help.c/.h.
+// This file is called by tb_mqtt_client_helper.c/.h.
+
+#include <string.h>
+
+#include "client_rpc_observer.h"

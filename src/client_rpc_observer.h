@@ -12,26 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbmc_help.c/.h.
+// This file is called by tb_mqtt_client_helper.c/.h.
 
 #ifndef _CLIENT_RPC_OBSERVER_H_
 #define _CLIENT_RPC_OBSERVER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //====6.Client-side RPC================================================================================================
-typedef tbmc_clientrpc_t* tbmc_clientrpc_handle_t;
+typedef tbmch_clientrpc_t* tbmch_clientrpc_handle_t;
 
 /**
  * ThingsBoard MQTT Client client-RPC
  */
-typedef struct tbmc_clientrpc_
+typedef struct tbmch_clientrpc
 {
      const char *method_value; /*!< method value */
      const char *method_key;   /*!< method key, default "method" */
@@ -39,31 +38,33 @@ typedef struct tbmc_clientrpc_
      const char *results_key;  /*!< results key, default "results" */
      void *context;            /*!< Context of callback */
 
-     tbmc_rpc_params_t *params;
-     tbmc_clientrpc_success_callback_t on_success; /*!< Callback of client-rpc response success */
-     tbmc_clientrpc_timeout_callback_t on_timeout; /*!< Callback of client-rpc response timeout */
-} tbmc_clientrpc_t;
+     tbmch_rpc_params_t *params;
+     tbmch_clientrpc_on_response_t on_response; /*!< Callback of client-rpc response success */
+     tbmch_clientrpc_on_timeout_t on_timeout; /*!< Callback of client-rpc response timeout */
 
-//const char *_tbmc_clientrpc_get_method(tbmc_clientrpc_handle_t clientrpc);
+     LIST_ENTRY(tbmch_clientrpc) entry;
+} tbmch_clientrpc_t;
+
+//const char *_tbmch_clientrpc_get_method(tbmch_clientrpc_handle_t clientrpc);
 
 //0.   Subscribe topic: client-side RPC response;
 
-//1.    tbmc_clientrpc_of_oneway_request(...)/tbmc_clientrpc_of_oneway_request(...)
-//1.1   tbmc_clientrpc_handle_t _tbmc_clientrpc_init(tbmc_client_handle_t client, const char* method, tbmc_rpc_params_t *params, void *context, tbmc_clientrpc_response_callback_t on_response);
+//1.    tbmch_clientrpc_of_oneway_request(...)/tbmch_clientrpc_of_oneway_request(...)
+//1.1   tbmch_clientrpc_handle_t _tbmch_clientrpc_init(tbmch_client_handle_t client, const char* method, tbmch_rpc_params_t *params, void *context, tbmch_clientrpc_response_callback_t on_response);
 //1.1  _tbmc.clientrpc_request_pack(...) 
 //1.2  _tbmc.clientrpc_request_send(...); //tbmqttclient_sendClientRpcRequest()
 
 //2    _tbmc.on_clientrpc_response()
 //2.1  _tbmc.on_clientrpc_response_unpack(): parse payload* to cJSON*, then push it to queue;
-//2.2  _tbmc.on_clientrpc_response_deal(on_response): call a server RPC's on_request callback by method name, then send a replay if on_request callback has a return value of tbmc_rpc_results_t.
+//2.2  _tbmc.on_clientrpc_response_deal(on_response): call a server RPC's on_request callback by method name, then send a replay if on_request callback has a return value of tbmch_rpc_results_t.
 
 //3.   _tbmc.on_clientrpc_timeout(on_timeout)
 //3.1  _tbmc.on_clientrpc_response_timeout(on_timeout)
 
-//2.f/3.f esp_err_t _tbmc_clientrpc_destory(tbmc_clientrpc_handle_t clientrpc)
+//2.f/3.f esp_err_t _tbmch_clientrpc_destory(tbmch_clientrpc_handle_t clientrpc)
 
-//4     tbmc_client_destory(...)
-//4.x   esp_err_t _tbmc_serverrpc_destory(tbmc_serverrpc_handle_t serverrpc)
+//4     tbmch_client_destory(...)
+//4.x   esp_err_t _tbmch_serverrpc_destory(tbmch_serverrpc_handle_t serverrpc)
 
 #ifdef __cplusplus
 }

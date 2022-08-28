@@ -164,17 +164,14 @@ typedef void (*tbmc_on_timeout_t)(void *context, int request_id);               
 
 typedef tbmc_on_response_t tbmc_on_attrrequest_response_t; // First send
 typedef tbmc_on_timeout_t  tbmc_on_attrrequest_timeout_t; // First send
-
 typedef tbmc_on_response_t tbmc_on_clientrpc_response_t; // First send
 typedef tbmc_on_timeout_t  tbmc_on_clientrpc_timeout_t; // First send
-
 typedef void (*tbmc_on_fwupdate_response_t)(void *context, int request_id, int chunk, const char *payload, int len); // First send
 typedef tbmc_on_timeout_t tbmc_on_fwupdate_timeout_t;                                                        // First send
 
 tbmc_handle_t tbmc_init(void);
 void tbmc_destroy(tbmc_handle_t client_);
-bool tbmc_connect(tbmc_handle_t client_,
-                  tbmc_config_t *config,
+bool tbmc_connect(tbmc_handle_t client_, tbmc_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disonnected,
