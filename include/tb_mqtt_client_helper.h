@@ -134,7 +134,7 @@ tbmch_err_t tbmch_sharedattribute_observer_clear(tbmch_handle_t client, const ch
 tbmch_err_t tbmch_attributes_request(tbmch_handle_t client, void *context,
                                    tbmch_attributesrequest_on_success_t success_cb,
                                    tbmch_attributesrequest_on_timeout_t timeout_cb,
-                                   const char *key, ...); ////tbmqttlink.h.tbmch_sendAttributesRequest(); ////return request_id on successful, otherwise return TBMC_FAIL
+                                   const char *key, ...); ////tbmqttlink.h.tbmch_sendAttributesRequest(); ////return request_id on successful, otherwise return -1
 
 //====5.Server-side RPC================================================================================================
 tbmch_err_t tbmch_serverrpc_observer_append(tbmch_handle_t client, const char *method, void *context,
@@ -261,7 +261,7 @@ tbmch_err_t tbmch_fw_observer_clear(tbmch_handle_client_t client,
 //  *
 //  * @param kv    tbmc key-value handle
 //  *
-//  * @return TBMC_OK
+//  * @return 0
 //  *         TBMC_ERR_INVALID_ARG on wrong initialization
 //  */
 // tbmch_err_t tbmch_kv_destroy(tbmch_kv_handle_t kv);

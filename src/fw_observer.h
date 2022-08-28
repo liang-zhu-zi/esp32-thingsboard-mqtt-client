@@ -71,7 +71,7 @@ typedef tbmc_fw_observer_t *tbmc_fw_observer_handle_t;
 //4.1  on_fw_timeout(...); _tbmc_fw_observer_reset(...);
 
 //5    tbmc_fw_observer_clear() / tbmc_client_destory(...)
-//5.x   tbmc_err_t _tbmc_fw_observer_destory(tbmc_fw_observer_handle_t fw_request)
+//5.x   esp_err_t _tbmc_fw_observer_destory(tbmc_fw_observer_handle_t fw_request)
 
 #ifdef __cplusplus
 }

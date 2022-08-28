@@ -45,13 +45,13 @@ typedef tbmc_tsdata_t *tbmc_tsdata_handle_t;
 tbmc_tsdata_handle_t _tbmc_tsdata_init(const char *key, tbmc_value_type_t type, void *context,
                                              tbmc_tsdata_get_callback_t get_value_cb,
                                              tbmc_tsdata_set_callback_t set_value_cb); /*!< Initialize tbmc_dp of TBMC_JSON */
-tbmc_err_t _tbmc_tsdata_destory(tbmc_tsdata_handle_t dp);                           /*!< Destroys the tbmc key-value handle */
+esp_err_t _tbmc_tsdata_destory(tbmc_tsdata_handle_t dp);                           /*!< Destroys the tbmc key-value handle */
 
 const char *_tbmc_tsdata_get_key(tbmc_tsdata_handle_t dp);              /*!< Get key of the tbmc time-series data handle */
 tbmc_value_type_t _tbmc_tsdata_get_value_type(tbmc_tsdata_handle_t dp); /*!< Get value type of tbmc_dp */
 
-tbmc_err_t _tbmc_tsdata_get_value(tbmc_tsdata_handle_t dp, tbmc_value_t *value);       /*!< Get tbmc_value of tbmc_dp */
-tbmc_err_t _tbmc_tsdata_set_value(tbmc_tsdata_handle_t dp, const tbmc_value_t *value); /*!< Set tbmc_value of tbmc_dp */
+esp_err_t _tbmc_tsdata_get_value(tbmc_tsdata_handle_t dp, tbmc_value_t *value);       /*!< Get tbmc_value of tbmc_dp */
+esp_err_t _tbmc_tsdata_set_value(tbmc_tsdata_handle_t dp, const tbmc_value_t *value); /*!< Set tbmc_value of tbmc_dp */
 
 //_dps_pack()?/_dps_send()?
 //tbmc_telemetry_tsdata_list_send(tsdata_list);   //telemetry_tsdata_list_init()/_destory(), _add(), _pack()/_send()!, _get_name()

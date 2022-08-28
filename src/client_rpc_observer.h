@@ -60,10 +60,10 @@ typedef struct tbmc_clientrpc_
 //3.   _tbmc.on_clientrpc_timeout(on_timeout)
 //3.1  _tbmc.on_clientrpc_response_timeout(on_timeout)
 
-//2.f/3.f tbmc_err_t _tbmc_clientrpc_destory(tbmc_clientrpc_handle_t clientrpc)
+//2.f/3.f esp_err_t _tbmc_clientrpc_destory(tbmc_clientrpc_handle_t clientrpc)
 
 //4     tbmc_client_destory(...)
-//4.x   tbmc_err_t _tbmc_serverrpc_destory(tbmc_serverrpc_handle_t serverrpc)
+//4.x   esp_err_t _tbmc_serverrpc_destory(tbmc_serverrpc_handle_t serverrpc)
 
 #ifdef __cplusplus
 }

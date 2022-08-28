@@ -56,10 +56,10 @@ typedef struct tbmc_serverrpc_
 //2.2    _tbmc.on_serverrpc_request_deal(): call a server RPC's on_request callback by method name, then send a replay if on_request callback has a return value of tbmc_rpc_results_t.
 //2.3   send serverrpc response, option:
 //2.3.1  _tbmc.serverrpc_response_pack(...);
-//2.3.2  _tbmc.serverrpc_response_send(...); //tbmc_err_t tbmc_serverrpc_response(tbmc_client_handle_t client, int request_id, const char* results); //tbmqttclient_sendServerRpcReply()
+//2.3.2  _tbmc.serverrpc_response_send(...); //esp_err_t tbmc_serverrpc_response(tbmc_client_handle_t client, int request_id, const char* results); //tbmqttclient_sendServerRpcReply()
 
 //3.    tbmc_client_destory(...)
-//3.x   tbmc_err_t _tbmc_serverrpc_destory(tbmc_serverrpc_handle_t serverrpc);
+//3.x   esp_err_t _tbmc_serverrpc_destory(tbmc_serverrpc_handle_t serverrpc);
 
 #ifdef __cplusplus
 }

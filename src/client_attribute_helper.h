@@ -46,7 +46,7 @@ typedef tbmc_clientattribute_t *tbmc_clientattribute_handle_t;
 tbmc_clientattribute_handle_t _tbmc_clientattribute_init(const char *key, tbmc_value_type_t type, void *context,
                                                           tbmc_clientattribute_get_callback_t get_value_cb,
                                                           tbmc_clientattribute_set_callback_t set_value_cb);
-tbmc_err_t _tbmc_clientattribute_destory(tbmc_clientattribute_handle_t attribute);               /*!< Destroys the tbmc key-value handle */
+esp_err_t _tbmc_clientattribute_destory(tbmc_clientattribute_handle_t attribute);               /*!< Destroys the tbmc key-value handle */
 
 // bool _tbmc_attribute_is_clientside(tbmc_clientattribute_handle_t attribute);                  /*!< Is it a client-side attribute? */
 bool _tbmc_clientattribute_has_set_value_cb(tbmc_clientattribute_handle_t attribute);            /*!< Has it a set value callback? A shared attribute is always true;
@@ -54,8 +54,8 @@ bool _tbmc_clientattribute_has_set_value_cb(tbmc_clientattribute_handle_t attrib
 const char *_tbmc_clientattribute_get_key(tbmc_clientattribute_handle_t attribute);              /*!< Get key of the tbmc tbmc_attribute handle */
 tbmc_value_type_t _tbmc_clientattribute_get_value_type(tbmc_clientattribute_handle_t attribute); /*!< Get value type of tbmc_attribute */
 
-tbmc_err_t _tbmc_clientattribute_get_value(tbmc_clientattribute_handle_t clientside_attribute, tbmc_value_t *value); /*!< Get tbmc_value of client-side attribute */
-tbmc_err_t _tbmc_clientattribute_set_value(tbmc_clientattribute_handle_t attribute, const tbmc_value_t *value);      /*!< Set tbmc_value of tbmc_attribute */
+esp_err_t _tbmc_clientattribute_get_value(tbmc_clientattribute_handle_t clientside_attribute, tbmc_value_t *value); /*!< Get tbmc_value of client-side attribute */
+esp_err_t _tbmc_clientattribute_set_value(tbmc_clientattribute_handle_t attribute, const tbmc_value_t *value);      /*!< Set tbmc_value of tbmc_attribute */
 
 //_csas_pack()/_csas_send()!, _as_unpack()/_as_deal()
 

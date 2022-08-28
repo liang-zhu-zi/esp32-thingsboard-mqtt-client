@@ -59,12 +59,12 @@ typedef tbmc_attributes_request_t *tbmc_attributes_request_handle_t;
 tbmc_attributes_request_handle_t _tbmc_attributes_request_init(void *context,
                                                               tbmc_attributes_request_success_callback_t success_cb,
                                                               tbmc_attributes_request_timeout_callback_t timeout_cb); /*!< Initialize tbmc_attributes_request */
-tbmc_err_t _tbmc_attributes_request_destory(tbmc_attributes_request_handle_t request);                                 /*!< Destroys the tbmc_attributes_request */
+esp_err_t _tbmc_attributes_request_destory(tbmc_attributes_request_handle_t request);                                 /*!< Destroys the tbmc_attributes_request */
 
-tbmc_err_t _tbmc_attributes_request_add(tbmc_attributes_request_handle_t request, tbmc_attribute_handle_t attribute, ...);
+esp_err_t _tbmc_attributes_request_add(tbmc_attributes_request_handle_t request, tbmc_attribute_handle_t attribute, ...);
 
-tbmc_err_t _tbmc_attributes_request_get_client_keys(tbmc_attributes_request_handle_t request, char *buffer, int size);
-tbmc_err_t _tbmc_attributes_request_get_shared_keys(tbmc_attributes_request_handle_t request, char *buffer, int size);
+esp_err_t _tbmc_attributes_request_get_client_keys(tbmc_attributes_request_handle_t request, char *buffer, int size);
+esp_err_t _tbmc_attributes_request_get_shared_keys(tbmc_attributes_request_handle_t request, char *buffer, int size);
 
 tbmc_attribute_handle_t _tbmc_attributes_request_search_clientattribute(tbmc_attributes_request_handle_t request, const char *clientside_attribute_name); /*!< Search the client-side attribute in request */
 tbmc_attribute_handle_t _tbmc_attributes_request_search_sharedattribute(tbmc_attributes_request_handle_t request, const char *clientside_attribute_name); /*!< Search the shared attribute in request */

@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,11 +110,11 @@ extern "C" {
 
 //====tbmc data========================================================================================================
 /* Definitions for error constants. */
-#define TBMC_OK    0 /*!< tbmc_err_t value indicating success (no error) */
-#define TBMC_FAIL -1 /*!< Generic tbmc_err_t code indicating failure */
+// #define TBMC_OK    0   /*!< tbmc_err_t value indicating success (no error) */
+// #define TBMC_FAIL -1   /*!< Generic tbmc_err_t code indicating failure */
 
-#define TBMC_ERR_NO_MEM                 0x101   /*!< Out of memory */
-#define TBMC_ERR_INVALID_ARG            0x102   /*!< Invalid argument */
+// #define TBMC_ERR_NO_MEM              0x101   /*!< Out of memory */
+// #define TBMC_ERR_INVALID_ARG         0x102   /*!< Invalid argument */
 // #define TBMC_ERR_INVALID_STATE       0x103   /*!< Invalid state */
 // #define TBMC_ERR_INVALID_SIZE        0x104   /*!< Invalid size */
 // #define TBMC_ERR_NOT_FOUND           0x105   /*!< Requested resource not found */
@@ -127,7 +126,7 @@ extern "C" {
 // #define TBMC_ERR_INVALID_MAC         0x10B   /*!< MAC address was invalid */
 // #define TBMC_ERR_NOT_FINISHED        0x10C   /*!< There are items remained to retrieve */
 
-typedef int tbmc_err_t;
+// typedef int tbmc_err_t;
 
 #define TBMC_MALLOC   malloc
 #define TBMC_FREE     free
@@ -182,39 +181,39 @@ bool tbmc_connect(tbmc_handle_t client_,
                   tbmc_on_sharedattr_received_t on_sharedattributes_received,
                   tbmc_on_serverrpc_request_t on_serverrpc_request);
 void tbmc_disconnect(tbmc_handle_t client_);
-bool tbmc_is_connected(tbmc_handle_t client);
-bool tbmc_is_connecting(tbmc_handle_t client);
-bool tbmc_is_disconnected(tbmc_handle_t client);
-tbmc_state_t tbmc_get_state(tbmc_handle_t client);
+bool tbmc_is_connected(tbmc_handle_t client_);
+bool tbmc_is_connecting(tbmc_handle_t client_);
+bool tbmc_is_disconnected(tbmc_handle_t client_);
+tbmc_state_t tbmc_get_state(tbmc_handle_t client_);
 void tbmc_check_timeout(tbmc_handle_t client_);
 
-int tbmc_telemetry_publish(tbmc_handle_t client, const char *telemetry,
+int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_clientattributes_publish(tbmc_handle_t client, const char *attributes,
+int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
                                   int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_attributes_request(tbmc_handle_t client, const char *payload,
+int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
                             void *context,
                             tbmc_on_attrrequest_success_t on_attributesrequest_success,
                             tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_attributes_request_ex(tbmc_handle_t client, const char *client_keys, const char *shared_keys,
+int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, const char *shared_keys,
                                void *context,
                                tbmc_on_attrrequest_success_t on_attributesrequest_success,
                                tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *response,
+int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
+int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
                            void *context,
                            tbmc_on_clientrpc_success_t on_clientrpc_success,
                            tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                            int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_clientrpc_request_ex(tbmc_handle_t client, const char *method, const char *params,
+int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const char *params,
                               void *context,
                               tbmc_on_clientrpc_success_t on_clientrpc_success,
                               tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                               int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_fwupdate_request(tbmc_handle_t client, int request_id_, int chunk, const char *payload, //?payload
+int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, const char *payload, //?payload
                           void *context,
                           tbmc_on_fwrequest_response_t on_fwrequest_response,
                           tbmc_on_fwrequest_timeout_t on_fwrequest_timeout,
@@ -236,7 +235,6 @@ int tbmc_fwupdate_request(tbmc_handle_t client, int request_id_, int chunk, cons
           tbmc_clientrpc_request_ex(client, method, params, context, on_clientrpc_success, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_FW_REQUEST_SEND(client, request_id, chunk, payload) \
           tbmc_fw_request_send(client, request_id, chunk, payload, /*int qos =*/1, /*int retain =*/0)
-          
 
 #ifdef __cplusplus
 }

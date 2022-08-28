@@ -14,11 +14,13 @@
 
 // ThingsBoard MQTT Client low layer API
 
+#include <string.h>
 #include <time.h>
 
 #include "tb_mqtt_client.h"
 
 //#define TBMCLOG_LONG
+
 #define TBMCLOG_LEVLE (4)               //ERR:1, WARN:2, INFO:3, DBG:4, OBSERVES:5
 
 #if (TBMCLOG_LEVLE>=1)
@@ -74,9 +76,7 @@ typedef struct tbmc_client_
 {
      esp_mqtt_client_handle_t mqtt_handle;
 
-     // char *uri;          /*!< ThingsBoard MQTT host uri */
-     // char *access_token; /*!< ThingsBoard MQTT token */
-     tbmc_config_t config; // esp_mqtt_client_config_t config;
+     tbmc_config_t config; /*!< ThingsBoard MQTT config */
      void *context;
      tbmc_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
      tbmc_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
@@ -91,13 +91,13 @@ typedef struct tbmc_client_
      LIST_HEAD(tbmc_request_list, tbmc_request) request_list; /*!< request list: attributes request, client side RPC & fw update request */ ////QueueHandle_t timeoutQueue;
 } tbmc_t;
 
-static int _tbmc_subscribe(tbmc_handle_t client, const char *topic, int qos /*=0*/);
-static int _tbmc_publish(tbmc_handle_t client, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
-static tbmc_err_t _on_MqttEventCallback(/*tbmc_handle_t client,*/ esp_mqtt_event_handle_t event);
-static tbmc_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
+static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
+static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
+static esp_err_t _on_MqttEventCallback(/*tbmc_handle_t client_,*/ esp_mqtt_event_handle_t event);
+static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
 static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
-static int _request_list_create_and_append(tbmc_handle_t client, tbmc_request_type_t type, int request_id,
+static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                            void *context,
                                            tbmc_on_request_success_t on_success,
                                            tbmc_on_request_timeout_t on_timeout);
@@ -109,7 +109,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
                                        void *context,
                                        tbmc_on_request_success_t on_success,
                                        tbmc_on_request_timeout_t on_timeout);
-static tbmc_err_t _request_destroy(tbmc_request_t *tbmc_request);
+static void _request_destroy(tbmc_request_t *tbmc_request);
 
 // Initializes tbmc_handle_t with network client.
 tbmc_handle_t tbmc_init(void)
@@ -143,6 +143,7 @@ void tbmc_destroy(tbmc_handle_t client_)
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
+          TBMCLOG_E("client is NULL!");
           return;
      }
 
@@ -154,6 +155,8 @@ void tbmc_destroy(tbmc_handle_t client_)
           vSemaphoreDelete(client->lock);
           client->lock = NULL;
      }
+
+     TBMC_FREE(client);
 }
 
 // Connects to the specified ThingsBoard server and port.
@@ -176,6 +179,7 @@ bool tbmc_connect(tbmc_handle_t client_,
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
      if (!client_ || !config || !config->access_token || !config->uri) {
+          TBMCLOG_W("one argument isn't NULL!");
           return false;
      }
 
@@ -208,9 +212,9 @@ bool tbmc_connect(tbmc_handle_t client_,
         .uri = config->uri,
         .client_id = NULL, ////"TbDev"
         .username = config->access_token,
-        //.client_cert_pem = config->client_cert_pem,
-        //.client_key_pem = config->client_key_pem,
-        //.cert_pem = config->server_cert_pem,
+        .client_cert_pem = config->client_cert_pem,
+        .client_key_pem = config->client_key_pem,
+        .cert_pem = config->server_cert_pem,
      };
      client->mqtt_handle = esp_mqtt_client_init(&mqtt_cfg);
      if (!client->mqtt_handle)
@@ -236,7 +240,7 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMCLOG_W("client is NULL!");
+          TBMCLOG_E("client is NULL!");
           return;
      }
      if (!client->mqtt_handle) {
@@ -260,8 +264,8 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 
      client->config.uri = NULL;
      client->config.access_token = NULL;
-     client->config.client_id = NULL;
-     client->config.username = NULL;
+     //client->config.client_id = NULL;
+     //client->config.username = NULL;
      client->config.cert_pem = NULL;
      client->config.client_cert_pem = NULL;
      client->config.client_key_pem = NULL;
@@ -281,8 +285,13 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 }
 
 // Returns true if connected, false otherwise.
-bool tbmc_is_connected(tbmc_handle_t client) // isConnected
+bool tbmc_is_connected(tbmc_handle_t client_) // isConnected
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return false;
+     }
      return client->state == TBMC_STATE_CONNECTED; 
 }
 
@@ -291,12 +300,17 @@ bool tbmc_is_connecting(tbmc_handle_t client)
      return client->state == TBMC_STATE_CONNECTING; 
 }
 
-bool tbmc_is_disconnected(tbmc_handle_t client)
+bool tbmc_is_disconnected(tbmc_handle_t client_)
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return false;
+     }
      return client->state == TBMC_STATE_DISCONNECTED; 
 }
 
-tbmc_state_t tbmc_get_state(tbmc_handle_t client)
+tbmc_state_t tbmc_get_state(tbmc_handle_t client_)
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
@@ -358,17 +372,18 @@ void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for Pub
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_telemetry_publish(tbmc_handle_t client, const char *telemetry,
+int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/) // sendTelemetry()
 {
-     /*TBMCLOG_XD(String("[Telemetry] Tx Telemetry:")
-          + "Length:" + strlen(telemetry)
-          + ", QoS:" + qos
-          + ", Retain:" + retain,
-          telemetry, strlen(telemetry));*/
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[Telemetry][Tx] QoS=%d, Retain=%d, Timestamp=%d, Length=%d\r\n\t\t%.*s",
-              qos, retain, millis(), strlen(telemetry),
+     TBMCLOG_D("[Telemetry][Tx] QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
+              qos, retain, (uint32_t)time(NULL), strlen(telemetry),
               strlen(telemetry), telemetry);
 #else
      TBMCLOG_D("[Telemetry][Tx] %.*s",
@@ -396,17 +411,18 @@ int tbmc_telemetry_publish(tbmc_handle_t client, const char *telemetry,
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_clientattributes_publish(tbmc_handle_t client, const char *attributes,
+int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
                                          int qos /*= 1*/, int retain /*= 0*/) // sendAttributes() //publish client attributes
 {
-     /*TBMCLOG_XD(String("[Client-Side Attributes] Tx Attributes:")
-          + " Length:" + strlen(attributes)
-          + ", QoS:" + qos
-          + ", Retain:" + retain,
-          attributes, strlen(attributes));*/
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[Client-Side Attributes][Tx] QoS=%d, Retain=%d, Timestamp=%d, Length=%d\r\n\t\t%.*s",
-              qos, retain, millis(), strlen(attributes),
+     TBMCLOG_D("[Client-Side Attributes][Tx] QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
+              qos, retain, (uint32_t)time(NULL), strlen(attributes),
               strlen(attributes), attributes);
 #else
      TBMCLOG_D("[Client-Side Attributes][Tx] %.*s",
@@ -433,14 +449,20 @@ int tbmc_clientattributes_publish(tbmc_handle_t client, const char *attributes,
  * @param retain         ratain flag
  *
  * @return request_id of the subscribe message on success
- *        -1/TBMC_FAIL if error
+ *        -1 if error
  */
-int tbmc_attributes_request(tbmc_handle_t client, const char *payload,
+int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
                             void *context,
                             tbmc_on_attrrequest_success_t on_attributesrequest_success,
                             tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/) // requestAttributes() //request client and shared attributes
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if (!client->mqtt_handle) {
           TBMCLOG_E("mqtt client is NULL");
           return -1;
@@ -466,24 +488,14 @@ int tbmc_attributes_request(tbmc_handle_t client, const char *payload,
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
-     /*TBMCLOG_XD(String("[Attributes Request] Tx Request: ")
-          + " Length:" + strlen(payload)
-          + ", RequestID:" + request_id
-          + ", Timestamp:" + millis() // + ", MsgID:" + message_id
-          + ", QoS:" + qos
-          + ", Retain:" + retain
-          + ", onAttrReqMap.size=" + this->onAttrReqMap.size(),   // + ", timestamp=" + millis()
-          payload, strlen(payload));*/
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[Attributes Request][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%d, Length=%d, onAttrReqMap.size=%d\r\n\t\t%.*s",
+     TBMCLOG_D("[Attributes Request][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
               request_id,
-              qos, retain, millis(), strlen(payload),
-              this->onAttrReqMap.size(),
+              qos, retain, (uint32_t)time(NULL), strlen(payload),
               strlen(payload), payload);
 #else
-     TBMCLOG_D("[Attributes Request][Tx] RequestID=%d, onAttrReqMap.size:%d %.*s",
+     TBMCLOG_D("[Attributes Request][Tx] RequestID=%d, %.*s",
               request_id,
-              this->onAttrReqMap.size(),
               strlen(payload), payload);
 #endif
 
@@ -511,30 +523,38 @@ int tbmc_attributes_request(tbmc_handle_t client, const char *payload,
  * @return request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_attributes_request_ex(tbmc_handle_t client, const char *client_keys, const char *shared_keys,
+int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, const char *shared_keys,
                                void *context,
                                tbmc_on_attrrequest_success_t on_attributesrequest_success,
                                tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if ((client_keys == NULL || strlen(client_keys) <= 0) && (shared_keys == NULL || strlen(shared_keys) <= 0)) {
           TBMCLOG_W("There are no keys to request");
           return -1;
      }
 
-     int size = strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS) + strlen(client_keys) + strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS) + strlen(shared_keys) + 20;
+     int size = strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS) + strlen(client_keys) 
+               + strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS) + strlen(shared_keys) + 20;
      char *payload = TBMC_MALLOC(size);
-     if (!payload) {
+     if (!payload)
+     {
           TBMCLOG_E("Unable to malloc memory");
           return -1;
      }
      memset(payload, 0x00, size);
      snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}", client_keys, shared_keys);
      int retult = tbmc_attributes_request(client, payload,
-                                                 context,
-                                                 on_attributesrequest_success,
-                                                 on_attributesrequest_timeout,
-                                                 qos, retain);
+                                          context,
+                                          on_attributesrequest_success,
+                                          on_attributesrequest_timeout,
+                                          qos, retain);
      TBMC_FREE(payload);
      return retult;
 }
@@ -557,9 +577,15 @@ int tbmc_attributes_request_ex(tbmc_handle_t client, const char *client_keys, co
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *response,
+int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *response,
                                    int qos /*= 1*/, int retain /*= 0*/) // sendServerRpcReply() //response server-side RPC
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+     
      if (!client->mqtt_handle) {
           TBMCLOG_E("MQTT client is NULL!");
           return -1;
@@ -574,20 +600,13 @@ int tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *re
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
-     /*TBMCLOG_XD(String("[Server-Side  RPC] Tx Response: ")
-          + " Length:" + strlen(response)
-          + ", RequestID:" + request_id
-          + ", Timestamp:" + millis() //+ ", MsgID:" + message_id
-          + ", QoS:" + qos
-          + ", Retain:" + retain,
-          response, strlen(response));*/
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[Server-Side RPC][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%d, Length=%d\r\n\t\t%.*s",
+     TBMCLOG_D("[Server-Side RPC][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
               request_id,
-              qos, retain, millis(), strlen(response),
+              qos, retain, (uint32_t)time(NULL), strlen(response),
               strlen(response), response);
 #else
-     TBMCLOG_D("[Server-Side  RPC][Tx] RequestID=%d %.*s",
+     TBMCLOG_D("[Server-Side RPC][Tx] RequestID=%d %.*s",
               request_id,
               strlen(response), response);
 #endif
@@ -616,12 +635,18 @@ int tbmc_serverrpc_response(tbmc_handle_t client, int request_id, const char *re
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
+int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
                                void *context,
                                tbmc_on_clientrpc_success_t on_clientrpc_success,
                                tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                                int qos /*= 1*/, int retain /*= 0*/) // sendClientRpcCall() //request client-side RPC
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if (!client->mqtt_handle) {
           TBMCLOG_E("mqtt client is NULL");
           return -1;
@@ -647,24 +672,14 @@ int tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
-     /*TBMCLOG_XD(String("[Client-Side RPC] Tx Request:")
-          + " Length:" + strlen(payload)
-          + ", RequestID:" + request_id
-          + ", Timestamp:" + millis() // + ", MsgID:" + message_id
-          + ", QoS:" + qos
-          + ", Retain:" + retain
-          + ", onClientRpcRspMap.size=" + this->onClientRpcRspMap.size(),
-          payload, strlen(payload));*/
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[Client-Side RPC][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%d, Length=%d, onClientRpcRspMap.size=%d\r\n\t\t%.*s",
+     TBMCLOG_D("[Client-Side RPC][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
               request_id,
-              qos, retain, millis(), strlen(payload),
-              this->onClientRpcRspMap.size(),
+              qos, retain, (uint32_t)time(NULL), strlen(payload),
               strlen(payload), payload);
 #else
-     TBMCLOG_D("[Client-Side RPC][Tx] RequestID=%d, onClientRpcRspMap.size=%d %.*s",
+     TBMCLOG_D("[Client-Side RPC][Tx] RequestID=%d %.*s",
               request_id,
-              this->onClientRpcRspMap.size(),
               strlen(payload), payload);
 #endif
 
@@ -692,12 +707,18 @@ int tbmc_clientrpc_request(tbmc_handle_t client, const char *payload,
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_clientrpc_request_ex(tbmc_handle_t client, const char *method, const char *params,
+int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const char *params,
                                      void *context,
                                      tbmc_on_clientrpc_success_t on_clientrpc_success,
                                      tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                                      int qos /*= 1*/, int retain /*= 0*/)
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      int size = strlen(TB_MQTT_TEXT_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_TEXT_RPC_PARAMS) + strlen(params) + 20;
      char *payload = TBMC_MALLOC(size);
      if (!payload) {
@@ -734,12 +755,18 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client, const char *method, const ch
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_fwupdate_request(tbmc_handle_t client, int request_id_, int chunk, const char *payload, //?payload
+int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, const char *payload, //?payload
                           void *context,
                           tbmc_on_fwrequest_response_t on_fwrequest_response,
                           tbmc_on_fwrequest_timeout_t on_fwrequest_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if (!client->mqtt_handle) {
           TBMCLOG_E("mqtt client is NULL");
           return -1;
@@ -765,23 +792,14 @@ int tbmc_fwupdate_request(tbmc_handle_t client, int request_id_, int chunk, cons
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, request_id, chunk);
 
-     /*TBMCLOG_XD(String("[FW update] Tx Request:")
-          + " Length:" + strlen(payload)
-          + ", RequestID:" + request_id
-          + ", Timestamp:" + millis() // + ", MsgID:" + message_id
-          + ", QoS:" + qos
-          + ", Retain:" + retain
-          + ", onClientRpcRspMap.size=" + this->onClientRpcRspMap.size(),
-          payload, strlen(payload));*/
 #ifdef TBMCLOG_LONG
-     TBMCLOG_D("[FW update][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%d, Length=%d, onClientRpcRspMap.size=%d\r\n\t\t%.*s",
+     TBMCLOG_D("[FW update][Tx] RequestID=%d, QoS=%d, Retain=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
               request_id,
-              qos, retain, millis(), strlen(payload), this->onClientRpcRspMap.size(),
+              qos, retain, (uint32_t)time(NULL), strlen(payload),
               strlen(payload), payload);
 #else
-     TBMCLOG_D("[FW update][Tx] RequestID=%d, onClientRpcRspMap.size=%d %.*s",
+     TBMCLOG_D("[FW update][Tx] RequestID=%d %.*s",
               request_id,
-              this->onClientRpcRspMap.size(),
               strlen(payload), payload);
 #endif
 
@@ -807,8 +825,14 @@ int tbmc_fwupdate_request(tbmc_handle_t client, int request_id_, int chunk, cons
  * @return message_id of the subscribe message on success
  *         -1 on failure
  */
-static int _tbmc_subscribe(tbmc_handle_t client, const char *topic, int qos /*=0*/) // subscribe()
+static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/) // subscribe()
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if (!client->mqtt_handle || !topic)
      {
           return -1;
@@ -834,8 +858,14 @@ static int _tbmc_subscribe(tbmc_handle_t client, const char *topic, int qos /*=0
  *         0 if cannot publish
  *        -1 if error
  */
-static int _tbmc_publish(tbmc_handle_t client, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/) // publish()
+static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/) // publish()
 {
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return -1;
+     }
+
      if (!client->mqtt_handle || !topic)
      {
           return -1;
@@ -846,27 +876,29 @@ static int _tbmc_publish(tbmc_handle_t client, const char *topic, const char *pa
 }
 
 // The callback for when a MQTT event is received.
-static tbmc_err_t _on_MqttEventCallback(/*tbmc_handle_t client,*/ esp_mqtt_event_handle_t event) //_onMqttEventCallback();
+static esp_err_t _on_MqttEventCallback(/*tbmc_handle_t client_,*/ esp_mqtt_event_handle_t event) //_onMqttEventCallback();
 {
      if (!event) {
-          return TBMC_FAIL;
+          return -1;
      }
 
      tbmc_handle_t *client = (tbmc_handle_t *)event->user_context;
      if (!client) {
-          return TBMC_FAIL;
+          return -1;
      }
 
      return _onMqttEventHandle(client, event);
 }
-static tbmc_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onMqttEventHandle();  //MQTT_EVENT_...
+static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onMqttEventHandle();  //MQTT_EVENT_...
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          return TBMC_FAIL;
+          TBMCLOG_E("client is NULL!");
+          return -1;
      }
      if (!event) {
-          return TBMC_FAIL;
+          TBMCLOG_E("event is NULL!");
+          return -1;
      }
 
      int msg_id;
@@ -944,19 +976,16 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          return; // -1;
+          TBMCLOG_E("client is NULL!");
+          return;
      }
 
      if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
           // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
 
-          /*TBMCLOG_XD(String("[Subscription Shared Attributes] Rx Attributes:")
-               + " Length:" + payload_len
-               + ", Timestamp:" + millis() ,
-               payload, payload_len);*/
 #ifdef TBMCLOG_LONG
-          TBMCLOG_D("[Subscribe Shared Attributes][Rx] Length=%d, Timestamp=%d\r\n\t\t%.*s",
-                   payload_len, millis(),
+          TBMCLOG_D("[Subscribe Shared Attributes][Rx] Length=%d, Timestamp=%u\r\n\t\t%.*s",
+                   payload_len, (uint32_t)time(NULL),
                    payload_len, payload);
 #else
           TBMCLOG_D("[Subscribe Shared Attributes][Rx] %.*s",
@@ -974,15 +1003,10 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 2.TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
-          /*TBMCLOG_XD(String("[Server-Side RPC] Rx Request:")
-               + " Length:" + payload_len
-               + ", RequestID:" + request_id
-               + ", Timestamp:" + millis() ,
-               payload, payload_len);*/
 #ifdef TBMCLOG_LONG
-          TBMCLOG_D("[Server-Side RPC][Rx] RequestID=%d, Timestamp=%d, Length=%d\r\n\t\t%.*s",
+          TBMCLOG_D("[Server-Side RPC][Rx] RequestID=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
                    request_id,
-                   millis(), payload_len,
+                   (uint32_t)time(NULL), payload_len,
                    payload_len, payload);
 #else
           TBMCLOG_D("[Server-Side RPC][Rx] RequestID=%d %.*s",
@@ -1001,22 +1025,14 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
-          /*TBMCLOG_XD(String("[Attributes Request] Rx Response:")
-               + " Length:" + payload_len
-               + ", RequestID:" + request_id
-               + ", Timestamp:" + millis()
-               + ", onAttrReqMap.size=" + client->onAttrReqMap.size(),
-               payload, payload_len);*/
 #ifdef TBMCLOG_LONG
-          TBMCLOG_D("[Attributes Request][Rx] RequestID=%d, Length=%d, Timestamp=%d, onAttrReqMap.size=%d\r\n\t\t%.*s",
+          TBMCLOG_D("[Attributes Request][Rx] RequestID=%d, Length=%d, Timestamp=%u\r\n\t\t%.*s",
                    request_id,
-                   payload_len, millis(),
-                   client->onAttrReqMap.size(),
+                   payload_len, (uint32_t)time(NULL),
                    payload_len, payload);
 #else
-          TBMCLOG_D("[Attributes Request][Rx] RequestID=%d onAttrReqMap.size=%d %.*s",
+          TBMCLOG_D("[Attributes Request][Rx] RequestID=%d %.*s",
                    request_id,
-                   client->onAttrReqMap.size(),
                    payload_len, payload);
 #endif
 
@@ -1037,22 +1053,14 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 4.TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
-          /*TBMCLOG_XD(String("[Client-Side RPC] Rx Response:")
-               + " Length:" + payload_len
-               + ", RequestID:" + request_id
-               + ", Timestamp:" + millis()
-               + ", onClientRpcRspMap.size=" + this->onClientRpcRspMap.size(),
-               payload, payload_len);*/
 #ifdef TBMCLOG_LONG
-          TBMCLOG_D("[Client-Side RPC][Rx] RequestID=%d, Timestamp=%d, Length=%d, onClientRpcRspMap.size=%d\r\n\t\t%.*s",
+          TBMCLOG_D("[Client-Side RPC][Rx] RequestID=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
                    request_id,
-                   millis(), payload_len,
-                   this->onClientRpcRspMap.size(),
+                   (uint32_t)time(NULL), payload_len,
                    payload_len, payload);
 #else
-          TBMCLOG_D("[Client-Side RPC][Rx] RequestID=%d, onClientRpcRspMap.size=%d %.*s",
+          TBMCLOG_D("[Client-Side RPC][Rx] RequestID=%d %.*s",
                    request_id,
-                   this->onClientRpcRspMap.size(),
                    payload_len, payload);
 #endif
 
@@ -1075,23 +1083,15 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           int chunk = 0;
           sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id, &chunk);
 
-          /*TBMCLOG_XD(String("[FW update] Rx Response:")
-               + " Length:" + payload_len
-               + ", RequestID:" + request_id
-               + ", Timestamp:" + millis()
-               + ", onClientRpcRspMap.size=" + this->onClientRpcRspMap.size(),
-               payload, payload_len);*/
 #ifdef TBMCLOG_LONG
-          TBMCLOG_D("[FW update][Rx] RequestID=%d, Timestamp=%d, Length=%d, onClientRpcRspMap.size=%d\r\n\t\t%.*s",
-                   request_id,
-                   millis(), payload_len,
-                   this->onClientRpcRspMap.size(),
-                   payload_len, payload);
+          TBMCLOG_D("[FW update][Rx] RequestID=%d, Timestamp=%u, Length=%d\r\n\t\t%.*s",
+                    request_id,
+                    (uint32_t)time(NULL), payload_len,
+                    payload_len, payload);
 #else
-          TBMCLOG_D("[FW update][Rx] RequestID=%d, onClientRpcRspMap.size=%d %.*s",
-                   request_id,
-                   this->onClientRpcRspMap.size(),
-                   payload_len, payload);
+          TBMCLOG_D("[FW update][Rx] RequestID=%d %.*s",
+                    request_id,
+                    payload_len, payload);
 #endif
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
@@ -1103,27 +1103,21 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
                _request_destroy(tbmc_request);
                tbmc_request = NULL;
           } else {
-               TBMCLOG_E("Unable to find FW update requset(%d), (%.*s, %.*s)", request_id,
-                       topic_len, topic, payload_len, payload);
+               TBMCLOG_E("Unable to find FW update requset(%d), (%.*s, %.*s)",
+                         request_id,
+                         topic_len, topic, payload_len, payload);
                return; // -1;
           }
 
      }  else {
-
-          /*TBMCLOG_XW(String("[Unkown-Msg] Rx Msg:")
-               + " Topic Length:" + topic_len
-               + ", Payload Length:" + payload_len,
-               topic, topic_len);
-          Serial.printf("\t\t%.*s\r\n", payload_len, payload);*/
           // Payload is too long, then Serial.*/
 #ifdef TBMCLOG_LONG
           TBMCLOG_W("[Unkown-Msg][Rx] Timestamp=%d, TopicLength=%d, PayloadLength=%d\r\n\t\t%.*s\r\n\t\t%.*s",
-                   millis(), topic_len, payload_len,
-                   topic_len, topic, payload_len, payload);
+                    (uint32_t)time(NULL), topic_len, payload_len,
+                    topic_len, topic, payload_len, payload);
 #else
           TBMCLOG_W("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s",
-                   millis(), topic_len, payload_len,
-                   topic_len, topic, payload_len, payload);
+                    topic_len, topic, payload_len, payload);
 #endif
      }
 }
@@ -1146,11 +1140,12 @@ static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
 }
 
 //return request_id on successful, otherwise return -1
-static int _request_list_create_and_append(tbmc_handle_t client, tbmc_request_type_t type, int request_id,
+static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                 void *context,
                                 tbmc_on_request_success_t on_success,
                                 tbmc_on_request_timeout_t on_timeout)
 {
+     tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
           TBMCLOG_E("client is NULL!");
           return -1;
@@ -1313,11 +1308,11 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
      return tbmc_request;
 }
 
-static tbmc_err_t _request_destroy(tbmc_request_t *tbmc_request)
+static void _request_destroy(tbmc_request_t *tbmc_request)
 {
      if (!tbmc_request) {
           TBMCLOG_E("Invalid argument!");
-          return TBMC_ERR_INVALID_ARG;
+          return; 
      }
 
      tbmc_request->type = 0;
@@ -1327,6 +1322,4 @@ static tbmc_err_t _request_destroy(tbmc_request_t *tbmc_request)
      tbmc_request->on_success = NULL;
      tbmc_request->on_timeout = NULL;
      TBMC_FREE(tbmc_request);
-
-     return TBMC_OK;
 }

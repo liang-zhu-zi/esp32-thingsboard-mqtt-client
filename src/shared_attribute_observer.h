@@ -46,7 +46,7 @@ typedef tbmc_sharedattribute_t *tbmc_sharedattribute_handle_t;
 
 tbmc_sharedattribute_handle_t _tbmc_sharedattribute_init(const char *key, tbmc_value_type_t type, void *context,
                                                          tbmc_sharedattribute_set_callback_t set_value_cb);
-tbmc_err_t _tbmc_sharedattributee_destory(tbmc_sharedattribute_handle_t attribute); /*!< Destroys the tbmc key-value handle */
+esp_err_t _tbmc_sharedattributee_destory(tbmc_sharedattribute_handle_t attribute); /*!< Destroys the tbmc key-value handle */
 
 //bool _tbmc_attribute_is_shared(tbmc_sharedattribute_handle_t attribute);                /*!< Is it a shared attribute? */
 //bool _tbmc_sharedattribute_has_set_value_cb(tbmc_sharedattribute_handle_t attribute);   /*!< Has it a set value callback? A shared attribute is always true;
@@ -54,8 +54,8 @@ tbmc_err_t _tbmc_sharedattributee_destory(tbmc_sharedattribute_handle_t attribut
 const char *_tbmc_sharedattribute_get_key(tbmc_sharedattribute_handle_t attribute);              /*!< Get key of the tbmc tbmc_attribute handle */
 tbmc_value_type_t _tbmc_sharedattribute_get_value_type(tbmc_sharedattribute_handle_t attribute); /*!< Get value type of tbmc_attribute */
 
-//tbmc_err_t _tbmc_sharedattribute_get_value(tbmc_sharedattribute_handle_t attribute, tbmc_value_t *value); /*!< Get tbmc_value of client-side attribute */
-tbmc_err_t _tbmc_sharedattribute_set_value(tbmc_sharedattribute_handle_t attribute, const tbmc_value_t *value);        /*!< Set tbmc_value of tbmc_attribute */
+//esp_err_t _tbmc_sharedattribute_get_value(tbmc_sharedattribute_handle_t attribute, tbmc_value_t *value); /*!< Get tbmc_value of client-side attribute */
+esp_err_t _tbmc_sharedattribute_set_value(tbmc_sharedattribute_handle_t attribute, const tbmc_value_t *value);        /*!< Set tbmc_value of tbmc_attribute */
 
 //                            _as_unpack()/_as_deal()
 
