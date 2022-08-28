@@ -19,7 +19,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
 
 #include "cJSON.h"
 
@@ -28,6 +27,8 @@ extern "C" {
 #endif
 
 //=====================================================================================================================
+typedef int tbmch_err_t;
+
 /**
  * ThingsBoard MQTT Client value, for example: data point, attribute
  */

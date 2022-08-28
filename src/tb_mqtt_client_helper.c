@@ -14,6 +14,8 @@
 
 // ThingsBoard MQTT Client high layer API
 
+#include <string.h>
+
 #include "tb_mqtt_client_helper.h"
 
 typedef enum
@@ -31,16 +33,17 @@ typedef enum
   TBMCH_MSGID_FWREQUEST_TIMEOUT,   //context, request_id
 } tbmch_msgid_t;
 
-typedef void (*tbmc_on_connected_t)(void* context);                                                          //First receive
+// TODO: h
+typedef void (*tbmh_on_connected_t)(void* context);                                                          //First receive
 typedef void (*tbmc_on_disconnected_t)(void* context);                                                       //First receive
 typedef void (*tbmc_on_sharedattr_received_t)(void* context, const char *payload, int len);                  //First receive
-typedef void (*tbmc_on_attrrequest_success_t)(void* context, int request_id, const char *payload, int len);  //First send
+typedef void (*tbmc_on_attrrequest_response_t)(void* context, int request_id, const char *payload, int len);  //First send
 typedef void (*tbmc_on_attrrequest_timeout_t)(void* context, int request_id);                                //First send
-typedef void (*tbmc_on_clientrpc_success_t)(void* context, int request_id, const char *payload, int len);    //First send
+typedef void (*tbmc_on_clientrpc_response_t)(void* context, int request_id, const char *payload, int len);    //First send
 typedef void (*tbmc_on_clientrpc_timeout_t)(void* context, int request_id);                                  //First send
 typedef void (*tbmc_on_serverrpc_request_t)(void* context, int request_id, const char *payload, int len);    //First receive
-typedef void (*tbmc_on_fwrequest_response_t)(void* context, int request_id, const char* payload, int len);   //First send
-typedef void (*tbmc_on_fwrequest_timeout_t)(void* context, int request_id);
+typedef void (*tbmc_on_fwupdate_response_t)(void* context, int request_id, const char* payload, int len);   //First send
+typedef void (*tbmc_on_fwupdate_timeout_t)(void* context, int request_id);
 
 /**
  * ThingsBoard MQTT Client

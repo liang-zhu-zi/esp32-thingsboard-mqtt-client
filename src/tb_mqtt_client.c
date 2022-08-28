@@ -63,8 +63,8 @@ typedef struct tbmc_request
 
      uint32_t timestamp; /*!< time stamp at sending request */
      void *context;
-     tbmc_on_request_success_t on_success;
-     tbmc_on_request_timeout_t on_timeout;
+     tbmc_on_response_t on_response;
+     tbmc_on_timeout_t on_timeout;
 
      LIST_ENTRY(tbmc_request) entry;
 } tbmc_request_t;
@@ -99,16 +99,16 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                            void *context,
-                                           tbmc_on_request_success_t on_success,
-                                           tbmc_on_request_timeout_t on_timeout);
+                                           tbmc_on_response_t on_response,
+                                           tbmc_on_timeout_t on_timeout);
 static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id);
 static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t timestamp,
                                              LIST_HEAD(tbmc_request_list, tbmc_request) * timeout_request_list);
 static tbmc_request_t *_request_create(tbmc_request_type_t type,
                                        uint32_t request_id,
                                        void *context,
-                                       tbmc_on_request_success_t on_success,
-                                       tbmc_on_request_timeout_t on_timeout);
+                                       tbmc_on_response_t on_response,
+                                       tbmc_on_timeout_t on_timeout);
 static void _request_destroy(tbmc_request_t *tbmc_request);
 
 // Initializes tbmc_handle_t with network client.
@@ -168,13 +168,13 @@ bool tbmc_connect(tbmc_handle_t client_,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disonnected,
                   tbmc_on_sharedattr_received_t on_sharedattributes_received,
-                  // tbmc_on_attrrequest_success_t on_attributesrequest_success,
-                  // tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
-                  // tbmc_on_clientrpc_success_t on_clientrpc_success,
+                  // tbmc_on_attrrequest_response_t on_attrrequest_response,
+                  // tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
+                  // tbmc_on_clientrpc_response_t on_clientrpc_response,
                   // tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                   tbmc_on_serverrpc_request_t on_serverrpc_request //,
-                  /* tbmc_on_fwrequest_response_t on_fwrequest_response, */
-                  /* tbmc_on_fwrequest_timeout_t on_fwrequest_timeout */) // connect()//...start()
+                  /* tbmc_on_fwupdate_response_t on_fwupdate_response, */
+                  /* tbmc_on_fwupdate_timeout_t on_fwupdate_timeout */) // connect()//...start()
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
@@ -443,8 +443,8 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
  *      Data:  '{"clientKeys":"attribute1,attribute2", "sharedKeys":"shared1,shared2"}'
  *
  * @param payload        payload
- * @param on_attributesrequest_success     Attributes response callback
- * @param on_attributesrequest_timeout  Attributes response timeout callback
+ * @param on_attrrequest_response     Attributes response callback
+ * @param on_attrrequest_timeout  Attributes response timeout callback
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
@@ -453,8 +453,8 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
  */
 int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
                             void *context,
-                            tbmc_on_attrrequest_success_t on_attributesrequest_success,
-                            tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
+                            tbmc_on_attrrequest_response_t on_attrrequest_response,
+                            tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/) // requestAttributes() //request client and shared attributes
 {
      tbmc_t *client = (tbmc_t*)client_;
@@ -473,7 +473,7 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
      }
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_ATTR, 0 /*request_id*/, context,
-                                           on_attributesrequest_success, on_attributesrequest_timeout);
+                                           on_attrrequest_response, on_attrrequest_timeout);
      if (request_id <= 0) {
           TBMCLOG_E("Unable to take semaphore");
           return -1;
@@ -515,8 +515,8 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
  *
  * @param client_keys   client attribute names. A ending char is '\0'. example: "attribute1,attribute2" (字符串要自带双引号,逗号分隔!!)
  * @param shared_keys   shared attribute names. A ending char is '\0'. example: "shared1,shared2"       (字符串要自带双引号,逗号分隔!!)
- * @param on_attributesrequest_success     Attributes response callback
- * @param on_attributesrequest_timeout  Attributes response timeout callback
+ * @param on_attrrequest_response     Attributes response callback
+ * @param on_attrrequest_timeout  Attributes response timeout callback
  * @param qos           qos of publish message
  * @param retain        ratain flag
  *
@@ -525,8 +525,8 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
  */
 int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, const char *shared_keys,
                                void *context,
-                               tbmc_on_attrrequest_success_t on_attributesrequest_success,
-                               tbmc_on_attrrequest_timeout_t on_attributesrequest_timeout,
+                               tbmc_on_attrrequest_response_t on_attrrequest_response,
+                               tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
      tbmc_t *client = (tbmc_t*)client_;
@@ -552,8 +552,8 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
      snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}", client_keys, shared_keys);
      int retult = tbmc_attributes_request(client, payload,
                                           context,
-                                          on_attributesrequest_success,
-                                          on_attributesrequest_timeout,
+                                          on_attrrequest_response,
+                                          on_attrrequest_timeout,
                                           qos, retain);
      TBMC_FREE(payload);
      return retult;
@@ -627,7 +627,7 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
  *
  * @param method        RPC method name.   A ending char is '\0'. example:　"getTime"   (字符串要自带双引号!!)
  * @param params        RPC method params. A ending char is '\0'. example:　{}          (字符串是 json 格式!!)
- * @param on_clientrpc_success      Client-RPC response callback
+ * @param on_clientrpc_response      Client-RPC response callback
  * @param on_clientrpc_timeout  Client-RPC response timeout callback
  * @param qos           qos of publish message
  * @param retain        ratain flag
@@ -637,7 +637,7 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
  */
 int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
                                void *context,
-                               tbmc_on_clientrpc_success_t on_clientrpc_success,
+                               tbmc_on_clientrpc_response_t on_clientrpc_response,
                                tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                                int qos /*= 1*/, int retain /*= 0*/) // sendClientRpcCall() //request client-side RPC
 {
@@ -657,7 +657,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
      }
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_CLIENTRPC, 0/*request_id*/, context,
-                                           on_clientrpc_success, on_clientrpc_timeout);
+                                           on_clientrpc_response, on_clientrpc_timeout);
      if (request_id <= 0) {
           TBMCLOG_E("Unable to take semaphore");
           return -1;
@@ -699,7 +699,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
  *
  * @param method        RPC method name.   A ending char is '\0'. example:　"getTime"   (字符串要自带双引号!!)
  * @param params        RPC method params. A ending char is '\0'. example:　{}          (字符串是 json 格式!!)
- * @param on_clientrpc_success      Client-RPC response callback
+ * @param on_clientrpc_response      Client-RPC response callback
  * @param on_clientrpc_timeout  Client-RPC response timeout callback
  * @param qos           qos of publish message
  * @param retain        ratain flag
@@ -709,7 +709,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
  */
 int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const char *params,
                                      void *context,
-                                     tbmc_on_clientrpc_success_t on_clientrpc_success,
+                                     tbmc_on_clientrpc_response_t on_clientrpc_response,
                                      tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                                      int qos /*= 1*/, int retain /*= 0*/)
 {
@@ -729,7 +729,7 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
      snprintf(payload, size - 1, "{\"method\":\"%s\",\"params\":{%s}}", method, params);
      int retult = tbmc_clientrpc_request(client, payload,
                                          context,
-                                         on_clientrpc_success,
+                                         on_clientrpc_response,
                                          on_clientrpc_timeout,
                                          qos, retain);
      TBMC_FREE(payload);
@@ -747,8 +747,8 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
  *
  * @param request_id_   0 on first f/w request(chunk is 0), otherwise if it is result of last tbmc_fwupdate_request()
  * @param chunk                    
- * @param on_fwrequest_response    f/w update response callback
- * @param on_fwrequest_timeout     f/w update response timeout callback
+ * @param on_fwupdate_response    f/w update response callback
+ * @param on_fwupdate_timeout     f/w update response timeout callback
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
@@ -757,8 +757,8 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
  */
 int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, const char *payload, //?payload
                           void *context,
-                          tbmc_on_fwrequest_response_t on_fwrequest_response,
-                          tbmc_on_fwrequest_timeout_t on_fwrequest_timeout,
+                          tbmc_on_fwupdate_response_t on_fwupdate_response,
+                          tbmc_on_fwupdate_timeout_t on_fwupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      tbmc_t *client = (tbmc_t*)client_;
@@ -777,7 +777,7 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
      }*/
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_FWUPDATE, request_id_, context,
-                                           on_fwrequest_response, on_fwrequest_timeout);
+                                           on_fwupdate_response, on_fwupdate_timeout);
      if (request_id <= 0) {
           TBMCLOG_E("Unable to take semaphore");
           return -1;
@@ -1038,8 +1038,8 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
-               if (tbmc_request->on_success) {
-                    tbmc_request->on_success(client->context, request_id, payload, payload_len);
+               if (tbmc_request->on_response) {
+                    tbmc_request->on_response(client->context, request_id, payload, payload_len);
                }
                _request_destroy(tbmc_request);
                tbmc_request = NULL;
@@ -1066,8 +1066,8 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
-               if (tbmc_request->on_success) {
-                    tbmc_request->on_success(client->context, request_id, payload, payload_len);
+               if (tbmc_request->on_response) {
+                    tbmc_request->on_response(client->context, request_id, payload, payload_len);
                }
                _request_destroy(tbmc_request);
                tbmc_request = NULL;
@@ -1096,9 +1096,9 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
-               tbmc_on_fwrequest_response_t on_fwrequest_response = (tbmc_on_fwrequest_response_t)tbmc_request->on_success;
-               if (on_fwrequest_response) {
-                    on_fwrequest_response(client->context, request_id, chunk, payload, payload_len);
+               tbmc_on_fwupdate_response_t on_fwupdate_response = (tbmc_on_fwupdate_response_t)tbmc_request->on_response;
+               if (on_fwupdate_response) {
+                    on_fwupdate_response(client->context, request_id, chunk, payload, payload_len);
                }
                _request_destroy(tbmc_request);
                tbmc_request = NULL;
@@ -1142,8 +1142,8 @@ static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
 //return request_id on successful, otherwise return -1
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                 void *context,
-                                tbmc_on_request_success_t on_success,
-                                tbmc_on_request_timeout_t on_timeout)
+                                tbmc_on_response_t on_response,
+                                tbmc_on_timeout_t on_timeout)
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
@@ -1170,7 +1170,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      }
 
      // Create request
-     tbmc_request_t *tbmc_request = _request_create(type, request_id, context, on_success, on_timeout);
+     tbmc_request_t *tbmc_request = _request_create(type, request_id, context, on_response, on_timeout);
      if (!tbmc_request) {
           // Give semaphore
           xSemaphoreGive(client->lock);
@@ -1288,8 +1288,8 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t tim
 static tbmc_request_t *_request_create(tbmc_request_type_t type,
                                        uint32_t request_id,
                                        void *context,
-                                       tbmc_on_request_success_t on_success,
-                                       tbmc_on_request_timeout_t on_timeout)
+                                       tbmc_on_response_t on_response,
+                                       tbmc_on_timeout_t on_timeout)
 {
      tbmc_request_t *tbmc_request = TBMC_MALLOC(sizeof(tbmc_request_t));
      if (!tbmc_request) {
@@ -1302,7 +1302,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
      tbmc_request->request_id = request_id;
      tbmc_request->ts = (uint32_t)time(NULL);
      tbmc_request->context = context;
-     tbmc_request->on_success = on_success;
+     tbmc_request->on_response = on_response;
      tbmc_request->on_timeout = on_timeout;
 
      return tbmc_request;
@@ -1319,7 +1319,7 @@ static void _request_destroy(tbmc_request_t *tbmc_request)
      tbmc_request->request_id = 0;
      tbmc_request->ts = 0;
      tbmc_request->context = NULL;
-     tbmc_request->on_success = NULL;
+     tbmc_request->on_response = NULL;
      tbmc_request->on_timeout = NULL;
      TBMC_FREE(tbmc_request);
 }
