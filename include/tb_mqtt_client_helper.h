@@ -30,6 +30,25 @@ extern "C" {
 typedef int tbmch_err_t;
 
 /**
+ * ThingsBoard MQTT Client Helper value type, for example: cJSON_Number, cJSON_String, ...
+ */
+typedef int tbmch_value_type_t;
+/*
+//cJSON Types:
+#define cJSON_Invalid (0)
+#define cJSON_False  (1 << 0)
+#define cJSON_True   (1 << 1)
+#define cJSON_NULL   (1 << 2)
+#define cJSON_Number (1 << 3)
+#define cJSON_String (1 << 4)
+#define cJSON_Array  (1 << 5)
+#define cJSON_Object (1 << 6)
+#define cJSON_Raw    (1 << 7) // raw json
+#define cJSON_IsReference 256
+#define cJSON_StringIsConst 512
+*/
+
+/**
  * ThingsBoard MQTT Client Helper value, for example: data point, attribute
  */
 typedef cJSON tbmch_value_t;
@@ -86,9 +105,9 @@ typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_client_t client,
 typedef bool (*tbmch_fwupdate_on_sharedattributes_t)(tbmch_handle_client_t client,
                                                      void *context, const char *fw_title, const char *fw_version, const char *fw_checksum, const char *fw_checksum_algorithm);
 typedef tbmch_err_t (*tbmch_fwupdate_on_response_t)(tbmch_handle_client_t client,
-                                                void *context, int request_id, int chunk /*current chunk*/, const void *fw_data, int data_size);
+                                                    void *context, int request_id, int chunk /*current chunk*/, const void *fw_data, int data_size);
 typedef void (*tbmch_fwupdate_on_done_t)(tbmch_handle_client_t client,
-                                             void *context, int request_id, int chunk /*total_size*/);
+                                         void *context, int request_id, int chunk /*total_size*/);
 typedef void (*tbmch_fwupdate_on_timeout_t)(tbmch_handle_client_t client,
                                             void *context, int request_id, int chunk /*current chunk*/);
 
@@ -101,8 +120,8 @@ void tbmch_destroy(tbmch_handle_t client_);
 bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
                    void *context,
                    tbmch_on_connected_t on_connected,
-                   tbmch_on_disconnected_t on_disconnected);                            //_begin();
-void tbmch_disconnect(tbmch_handle_t client_);                                           //_end();
+                   tbmch_on_disconnected_t on_disconnected); //_begin();
+void tbmch_disconnect(tbmch_handle_t client_);               //_end();
 bool tbmch_is_connected(tbmch_handle_t client_);
 bool tbmch_has_events(tbmch_handle_t client_); // new function
 void tbmch_run(tbmch_handle_t client_);        //_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
@@ -116,13 +135,13 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key);
 tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, const char *key, ...); ////tbmqttlink.h.tbmch_sendTelemetry();
 
 //====2.Publish client-side device attributes to the server============================================================
-tbmch_err_t tbmch_clientattribute_of_twoway_append(tbmch_handle_t client_,
-                                                   const char *key, tbmch_value_type_t type, void *context,
-                                                   tbmch_clientattribute_on_get_t on_get,
-                                                   tbmch_clientattribute_on_set_t on_set); // tbmch_attribute_of_clientside_init()
-tbmch_err_t tbmch_clientattribute_of_oneway_append(tbmch_handle_t client_,
-                                                   const char *key, tbmch_value_type_t type, void *context,
-                                                   tbmch_clientattribute_on_get_t on_get); // tbmch_attribute_of_clientside_init()
+tbmch_err_t tbmch_clientattribute_append(tbmch_handle_t client_,
+                                         const char *key, tbmch_value_type_t type, void *context,
+                                         tbmch_clientattribute_on_get_t on_get); // tbmch_attribute_of_clientside_init()
+tbmch_err_t tbmch_clientattribute_with_set_append(tbmch_handle_t client_,
+                                                  const char *key, tbmch_value_type_t type, void *context,
+                                                  tbmch_clientattribute_on_get_t on_get,
+                                                  tbmch_clientattribute_on_set_t on_set); // tbmch_attribute_of_clientside_init()
 tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key, ...);
 tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, const char *key, ...); ////tbmqttlink.h.tbmch_sendClientAttributes();
 
@@ -159,9 +178,9 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
 //====9.Firmware update================================================================================================
 tbmch_err_t tbmch_fwupdate_append(tbmch_handle_client_t client_, const char *fw_title,
                                   void *context,
-                                  tbmch_on_fwupdate_sharedattributes_t on_fw_attributes,
-                                  tbmch_fwupdate_on_done_t on_fw_chunk,
-                                  tbmch_fwupdate_on_response_t on_fw_success,
+                                  tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
+                                  tbmch_fwupdate_on_response_t on_fw_chunk,
+                                  tbmch_fwupdate_on_done_t on_fw_success,
                                   tbmch_fwupdate_on_timeout_t on_fw_timeout);
 tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_client_t client_,
                                  const char *fw_title, ...);

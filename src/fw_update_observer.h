@@ -28,21 +28,16 @@ extern "C" {
 typedef tbmch_fwupdate_t *tbmch_fwupdate_handle_t;
 
 /**
- * ThingsBoard MQTT Client F/W update OTA
+ * ThingsBoard MQTT Client Helper F/W update OTA
  */
 typedef struct tbmch_fwupdate
 {
-     void *context;
-     tbmch_fwupdate_on_sharedattributes_t on_sharedattributes; /*!< callback of F/W OTA attributes */
-     tbmch_fwupdate_on_response_t on_response;                 /*!< callback of F/W OTA doing */
-     tbmch_fwupdate_on_done_t on_done;                         /*!< callback of F/W OTA success */
-     tbmch_fwupdate_on_timeout_t on_timeout;                   /*!< callback of F/W OTA timeout */
-
+     char *fw_title;
      // reset these below fields.
-     tbmch_attribute_handle_t fw_title;
-     tbmch_attribute_handle_t fw_version;
-     tbmch_attribute_handle_t fw_checksum;
-     tbmch_attribute_handle_t fw_checksum_algorithm;
+     tbmch_attribute_handle_t fwattribute_title;
+     tbmch_attribute_handle_t fwattribute_version;
+     tbmch_attribute_handle_t fwattribute_checksum;
+     tbmch_attribute_handle_t fwattribute_checksum_algorithm;
      // const char *fw_title;                                  /*!< OS fw, App fw, ... */
      // const char *fw_version;
      // const char *fw_checksum;
@@ -51,8 +46,23 @@ typedef struct tbmch_fwupdate
      int request_id; /*!< default is 0 */
      int chunk;      /*!< default is zero, from 0 to  */
 
-     LIST_ENTRY(tbmch_fwupdate) entry;
+     void *context;
+     tbmch_fwupdate_on_sharedattributes_t on_fw_attributes; /*!< callback of F/W OTA attributes */
+     tbmch_fwupdate_on_response_t on_fw_response;           /*!< callback of F/W OTA doing */
+     tbmch_fwupdate_on_done_t on_fw_done;                   /*!< callback of F/W OTA success */
+     tbmch_fwupdate_on_timeout_t on_fw_timeout;             /*!< callback of F/W OTA timeout */
+
+     LIST_ENTRY(tbmch_fwupdate)
+     entry;
 } tbmch_fwupdate_t;
+
+tbmch_fwupdate_handle_t _tbmch_fwupdate_init(const char *fw_title,
+                                             void *context,
+                                             tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
+                                             tbmch_fwupdate_on_response_t on_fw_chunk,
+                                             tbmch_fwupdate_on_done_t on_fw_success,
+                                             tbmch_fwupdate_on_timeout_t on_fw_timeout); /*!< Initialize tbmch_fwupdate_t */
+esp_err_t _tbmch_fwupdate_destory(tbmch_fwupdate_handle_t fwupdate);                     /*!< Destroys the tbmch_fwupdate_t */
 
 //0.  Subscribe topic: shared attribute updates: fw_title, fw_version, fw_checksum, fw_checksum_algorithm 
 //0.  Subscribe topic: f/w response: v2/fw/response/+/chunk/+

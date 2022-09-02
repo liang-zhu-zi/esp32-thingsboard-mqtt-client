@@ -28,7 +28,7 @@ extern "C" {
 typedef tbmch_serverrpc_t *tbmch_serverrpc_handle_t;
 
 /**
- * ThingsBoard MQTT Client server-RPC
+ * ThingsBoard MQTT Client Helper server-RPC
  */
 typedef struct tbmch_serverrpc
 {
@@ -42,6 +42,12 @@ typedef struct tbmch_serverrpc
 
      LIST_ENTRY(tbmch_serverrpc) entry;
 } tbmch_serverrpc_t;
+
+typedef tbmch_serverrpc_t *tbmch_serverrpc_handle_t;
+
+tbmch_serverrpc_handle_t _tbmch_serverrpc_init(const char *method, void *context,
+                                               tbmch_serverrpc_request_callback_t on_request); /*!< Initialize tbmch_attributes_request */
+esp_err_t _tbmch_serverrpc_destory(tbmch_serverrpc_handle_t serverrpc);                        /*!< Destroys the tbmch_attributes_request */
 
 //const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_handle_t serverrpc);
 

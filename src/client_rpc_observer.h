@@ -32,18 +32,24 @@ typedef tbmch_clientrpc_t* tbmch_clientrpc_handle_t;
  */
 typedef struct tbmch_clientrpc
 {
-     const char *method_value; /*!< method value */
      const char *method_key;   /*!< method key, default "method" */
      const char *params_key;   /*!< params key, default "params" */
      const char *results_key;  /*!< results key, default "results" */
-     void *context;            /*!< Context of callback */
 
+     const char *method_value; /*!< method value */
      tbmch_rpc_params_t *params;
+     void *context;                             /*!< Context of callback */
      tbmch_clientrpc_on_response_t on_response; /*!< Callback of client-rpc response success */
-     tbmch_clientrpc_on_timeout_t on_timeout; /*!< Callback of client-rpc response timeout */
+     tbmch_clientrpc_on_timeout_t on_timeout;   /*!< Callback of client-rpc response timeout */
 
      LIST_ENTRY(tbmch_clientrpc) entry;
 } tbmch_clientrpc_t;
+
+tbmch_clientrpc_handle_t _tbmch_clientrpc_init(const char *method, tbmch_rpc_params_t *params,
+                                               void *context,
+                                               tbmch_clientrpc_on_response_t on_response,
+                                               tbmch_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbmch_clientrpc_t */
+esp_err_t _tbmch_clientrpc_destory(tbmch_clientrpc_handle_t clientrpc);                  /*!< Destroys the tbmch_clientrpc_t */
 
 //const char *_tbmch_clientrpc_get_method(tbmch_clientrpc_handle_t clientrpc);
 
