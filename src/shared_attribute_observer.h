@@ -47,7 +47,7 @@ typedef tbmch_sharedattribute_t *tbmch_sharedattribute_handle_t;
 
 tbmch_sharedattribute_handle_t _tbmch_sharedattribute_init(const char *key, tbmch_value_type_t type, void *context,
                                                            tbmch_sharedattribute_on_set_t on_set);
-esp_err_t _tbmch_sharedattributee_destory(tbmch_sharedattribute_handle_t attribute); /*!< Destroys the tbmc key-value handle */
+tbmch_err_t _tbmch_sharedattributee_destroy(tbmch_sharedattribute_handle_t attribute); /*!< Destroys the tbmc key-value handle */
 
 // bool _tbmch_attribute_is_shared(tbmch_sharedattribute_handle_t attribute);                /*!< Is it a shared attribute? */
 // bool _tbmch_sharedattribute_has_set_value_cb(tbmch_sharedattribute_handle_t attribute);   /*!< Has it a set value callback? A shared attribute is always true;

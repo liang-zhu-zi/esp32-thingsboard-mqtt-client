@@ -62,7 +62,7 @@ tbmch_fwupdate_handle_t _tbmch_fwupdate_init(const char *fw_title,
                                              tbmch_fwupdate_on_response_t on_fw_chunk,
                                              tbmch_fwupdate_on_done_t on_fw_success,
                                              tbmch_fwupdate_on_timeout_t on_fw_timeout); /*!< Initialize tbmch_fwupdate_t */
-esp_err_t _tbmch_fwupdate_destory(tbmch_fwupdate_handle_t fwupdate);                     /*!< Destroys the tbmch_fwupdate_t */
+tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_handle_t fwupdate);                     /*!< Destroys the tbmch_fwupdate_t */
 
 //0.  Subscribe topic: shared attribute updates: fw_title, fw_version, fw_checksum, fw_checksum_algorithm 
 //0.  Subscribe topic: f/w response: v2/fw/response/+/chunk/+
@@ -82,8 +82,8 @@ esp_err_t _tbmch_fwupdate_destory(tbmch_fwupdate_handle_t fwupdate);            
 //4.   response timeout
 //4.1  on_fw_timeout(...); _tbmch_fwupdate_reset(...);
 
-//5    tbmch_fwupdate_clear() / tbmch_client_destory(...)
-//5.x   esp_err_t _tbmch_fwupdate_destory(tbmch_fwupdate_handle_t fw_request)
+//5    tbmch_fwupdate_clear() / tbmch_client_destroy(...)
+//5.x   tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_handle_t fw_request)
 
 #ifdef __cplusplus
 }

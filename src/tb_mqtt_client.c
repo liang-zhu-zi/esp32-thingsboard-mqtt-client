@@ -116,7 +116,7 @@ tbmc_handle_t tbmc_init(void)
 {
      tbmc_t *client = TBMC_MALLOC(sizeof(tbmc_t));
      if (!client) {
-          TBMCLOG_E("client is NULL");
+          TBMCLOG_E("Unable to malloc memeory!");
           return NULL;
      }
 
@@ -1222,7 +1222,7 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
      }
 
      /// Remove form list
-     if (!tbmc_request) {
+     if (tbmc_request) {
           LIST_REMOVE(tbmc_request, entry);
      } else {
           TBMCLOG_W("Unable to remove request:%d!", request_id);

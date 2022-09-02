@@ -49,7 +49,7 @@ tbmch_clientrpc_handle_t _tbmch_clientrpc_init(const char *method, tbmch_rpc_par
                                                void *context,
                                                tbmch_clientrpc_on_response_t on_response,
                                                tbmch_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbmch_clientrpc_t */
-esp_err_t _tbmch_clientrpc_destory(tbmch_clientrpc_handle_t clientrpc);                  /*!< Destroys the tbmch_clientrpc_t */
+tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_handle_t clientrpc);                  /*!< Destroys the tbmch_clientrpc_t */
 
 //const char *_tbmch_clientrpc_get_method(tbmch_clientrpc_handle_t clientrpc);
 
@@ -67,10 +67,10 @@ esp_err_t _tbmch_clientrpc_destory(tbmch_clientrpc_handle_t clientrpc);         
 //3.   _tbmc.on_clientrpc_timeout(on_timeout)
 //3.1  _tbmc.on_clientrpc_response_timeout(on_timeout)
 
-//2.f/3.f esp_err_t _tbmch_clientrpc_destory(tbmch_clientrpc_handle_t clientrpc)
+//2.f/3.f tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_handle_t clientrpc)
 
-//4     tbmch_client_destory(...)
-//4.x   esp_err_t _tbmch_serverrpc_destory(tbmch_serverrpc_handle_t serverrpc)
+//4     tbmch_client_destroy(...)
+//4.x   tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_handle_t serverrpc)
 
 #ifdef __cplusplus
 }

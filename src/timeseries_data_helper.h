@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "tb_mqtt_client_helper.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,35 +29,24 @@ extern "C" {
 //====1.telemetry time-series data=====================================================================================
 
 /**
- * ThingsBoard MQTT Client telemetry time-series data
+ * ThingsBoard MQTT Client Helper Telemetry time-series data
  */
 typedef struct tbmch_tsdata
 {
-     char *key;            /*!< Key */
-     tbmch_value_t *value; /*!< Value */
+     char *key;              /*!< Key */
 
-     void *context;                /*!< Context of getting/setting value*/
-     tbmch_tsdata_on_get_t on_get; /*!< Callback of getting value from context */
-     tbmch_tsdata_on_set_t on_set; /*!< Callback of setting value to context */
+     void *context;                  /*!< Context of getting/setting value*/
+     tbmch_tsdata_on_get_t on_get;   /*!< Callback of getting value from context */
 
      LIST_ENTRY(tbmch_tsdata) entry;
 } tbmch_tsdata_t;
 
-typedef tbmch_tsdata_t *tbmch_tsdata_handle_t;
-
-tbmch_tsdata_handle_t _tbmch_tsdata_init(const char *key, tbmch_value_type_t type, void *context,
-                                         tbmch_tsdata_on_get_t on_get,
-                                         tbmch_tsdata_on_set_t on_set); /*!< Initialize tbmch_tsdata of TBMC_JSON */
-esp_err_t _tbmch_tsdata_destory(tbmch_tsdata_handle_t tsdata);          /*!< Destroys the tbmc key-value handle */
-
-const char *_tbmch_tsdata_get_key(tbmch_tsdata_handle_t tsdata);               /*!< Get key of the tbmc time-series data handle */
-tbmch_value_type_t _tbmch_tsdata_get_value_type(tbmch_tsdata_handle_t tsdata); /*!< Get value type of tbmch_tsdata */
-
-esp_err_t _tbmch_tsdata_get_value(tbmch_tsdata_handle_t tsdata, tbmch_value_t *value);       /*!< Get tbmch_value of tbmch_tsdata */
-esp_err_t _tbmch_tsdata_set_value(tbmch_tsdata_handle_t tsdata, const tbmch_value_t *value); /*!< Set tbmch_value of tbmch_tsdata */
-
-//_tsdata_pack()?/_tsdata_send()?
-//tbmch_telemetry_tsdata_list_send(tsdata_list);   //telemetry_tsdata_list_init()/_destory(), _add(), _pack()/_send()!, _get_name()
+tbmch_tsdata_t *_tbmch_tsdata_init(const char *key, void *context,
+                                   tbmch_tsdata_on_get_t on_get); /*!< Initialize tbmch_tsdata of TBMC_JSON */
+tbmch_err_t _tbmch_tsdata_destroy(tbmch_tsdata_t *tsdata);        /*!< Destroys the tbmc key-value handle */
+const char *_tbmch_tsdata_get_key(tbmch_tsdata_t *tsdata);        /*!< Get key of the tbmc time-series data handle */
+tbmch_err_t _tbmch_tsdata_value_to_pack(tbmch_handle_t client,
+                                                tbmch_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

@@ -26,14 +26,11 @@ extern "C" {
 
 //====2.client-side attribute==========================================================================================
 /**
- * ThingsBoard MQTT Client client-side attribute
+ * ThingsBoard MQTT Client Helper client-side attribute
  */
-// typedef tbmch_kv_t tbmch_attribute_t;
-//#define tbmch_attribute_ tbmch_kv_
 typedef struct tbmch_clientattribute
 {
      char *key;            /*!< Key */
-     tbmch_value_t *value; /*!< Value */
 
      void *context;                         /*!< Context of getting/setting value*/
      tbmch_clientattribute_on_get_t on_get; /*!< Callback of getting value from context */
@@ -42,26 +39,17 @@ typedef struct tbmch_clientattribute
      LIST_ENTRY(tbmch_clientattribute) entry;
 } tbmch_clientattribute_t;
 
-typedef tbmch_clientattribute_t *tbmch_clientattribute_handle_t;
+tbmch_clientattribute_t *_tbmch_clientattribute_init(const char *key, void *context,
+                                                    tbmch_clientattribute_on_get_t on_get,
+                                                    tbmch_clientattribute_on_set_t on_set);
+tbmch_err_t _tbmch_clientattribute_destroy(tbmch_clientattribute_t *clientattribute); /*!< Destroys the tbmc key-value handle */
 
-tbmch_clientattribute_handle_t _tbmch_clientattribute_init(const char *key, tbmch_value_type_t type, void *context,
-                                                           tbmch_clientattribute_on_get_t on_get,
-                                                           tbmch_clientattribute_on_set_t on_set);
-esp_err_t _tbmch_clientattribute_destory(tbmch_clientattribute_handle_t clientattribute);    /*!< Destroys the tbmc key-value handle */
-
-// bool _tbmch_attribute_is_clientside(tbmch_clientattribute_handle_t clientattribute);       /*!< Is it a client-side attribute? */
-bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_handle_t clientattribute); /*!< Has it a set value callback? A shared attribute is always true;
+bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattribute); /*!< Has it a set value callback? A shared attribute is always true;
                                                                                                  a client-side attribute is true or false. */
-const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_handle_t clientattribute);   /*!< Get key of the tbmc tbmch_attribute handle */
-tbmch_value_type_t/* cJSON Types: */ _tbmch_clientattribute_get_value_type(tbmch_clientattribute_handle_t clientattribute); /*!< Get value type of tbmch_attribute */
+const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattribute);   /*!< Get key of the tbmc tbmch_attribute handle */
 
-esp_err_t _tbmch_clientattribute_get_value(tbmch_clientattribute_handle_t clientattribute, tbmch_value_t *value);       /*!< Get tbmch_value of client-side attribute */
-esp_err_t _tbmch_clientattribute_set_value(tbmch_clientattribute_handle_t clientattribute, const tbmch_value_t *value); /*!< Set tbmch_value of tbmch_attribute */
-
-//_clientattribute_pack()/_clientattribute_send()!, _clientattribute_unpack()/_clientattribute_deal()
-
-// tbmch_clientside_attribute_list_send(clientside_attribute_list);//clientside_attribute_list_init()/_destory(), _add(), _pack()/_send()!,                    _get_name(), _get_keys()
-// shared_attribute_list_init()/_destory(), _add(),                   _unpack()/_deal()?,_get_name(), _get_keys()
+tbmch_err_t _tbmch_clientattribute_value_to_pack(tbmch_handle_t client, tbmch_clientattribute_t *clientattribute, cJSON *object);     /*!< add item value to json object */
+tbmch_err_t _tbmch_clientattribute_value_from_unpack(tbmch_handle_t client, tbmch_clientattribute_t *clientattribute, cJSON *object); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

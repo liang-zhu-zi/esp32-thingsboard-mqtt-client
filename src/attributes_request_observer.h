@@ -53,17 +53,17 @@ typedef tbmch_attributesrequest_t *tbmch_attributesrequest_handle_t;
 tbmch_attributesrequest_handle_t _tbmch_attributesrequest_init(void *context,
                                                               tbmch_attributesrequest_on_response_t on_response,
                                                               tbmch_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbmch_attributes_request */
-esp_err_t _tbmch_attributesrequest_destory(tbmch_attributesrequest_handle_t request);                                 /*!< Destroys the tbmch_attributes_request */
+tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_handle_t request);                                 /*!< Destroys the tbmch_attributes_request */
 
-esp_err_t _tbmch_attributesrequest_add(tbmch_attributesrequest_handle_t request, tbmch_attribute_handle_t attribute, ...);
+tbmch_err_t _tbmch_attributesrequest_add(tbmch_attributesrequest_handle_t request, tbmch_attribute_handle_t attribute, ...);
 
-esp_err_t _tbmch_attributesrequest_get_client_keys(tbmch_attributesrequest_handle_t request, char *buffer, int size);
-esp_err_t _tbmch_attributesrequest_get_shared_keys(tbmch_attributesrequest_handle_t request, char *buffer, int size);
+tbmch_err_t _tbmch_attributesrequest_get_client_keys(tbmch_attributesrequest_handle_t request, char *buffer, int size);
+tbmch_err_t _tbmch_attributesrequest_get_shared_keys(tbmch_attributesrequest_handle_t request, char *buffer, int size);
 
 tbmch_attribute_handle_t _tbmch_attributesrequest_search_clientattribute(tbmch_attributesrequest_handle_t request, const char *clientside_attribute_name); /*!< Search the client-side attribute in request */
 tbmch_attribute_handle_t _tbmch_attributesrequest_search_sharedattribute(tbmch_attributesrequest_handle_t request, const char *clientside_attribute_name); /*!< Search the shared attribute in request */
 //_pack()/_send()!, _unpack()/deal() //_onAttributesResponse()[unpack->queue], [queue->attribute deal], 
-//???_destory_all_attributes(),
+//???_destroy_all_attributes(),
 
 #ifdef __cplusplus
 }

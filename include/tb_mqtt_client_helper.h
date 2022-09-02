@@ -27,6 +27,9 @@ extern "C" {
 #endif
 
 //=====================================================================================================================
+#define TBMCH_MALLOC   malloc
+#define TBMCH_FREE     free
+
 typedef int tbmch_err_t;
 
 /**
@@ -73,12 +76,11 @@ typedef void (*tbmch_on_connected_t)(tbmch_handle_t client, void *context);    /
 typedef void (*tbmch_on_disconnected_t)(tbmch_handle_t client, void *context); /*!< Callback of disconnected ThingsBoard MQTT */
 
 //====1.telemetry time-series data=====================================================================================
-typedef tbmch_err_t (*tbmch_tsdata_on_get_t)(tbmch_handle_t client, void *context, tbmch_value_t *value); /*!< Get tbmch_value from context */
-typedef tbmch_err_t (*tbmch_tsdata_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
+typedef tbmch_value_t* (*tbmch_tsdata_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
 
 //====2.client-side attribute==========================================================================================
-typedef tbmch_err_t (*tbmch_clientattribute_on_get_t)(tbmch_handle_t client, void *context, tbmch_value_t *value); /*!< Get tbmch_value from context */
-typedef tbmch_err_t (*tbmch_clientattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
+typedef tbmch_value_t* (*tbmch_clientattribute_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
+typedef void (*tbmch_clientattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====3.shared attribute===============================================================================================
 typedef tbmch_err_t (*tbmch_sharedattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
@@ -127,23 +129,18 @@ bool tbmch_has_events(tbmch_handle_t client_); // new function
 void tbmch_run(tbmch_handle_t client_);        //_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
 
 //====1.Publish Telemetry time-series data==============================================================================
-tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_,
-                                   const char *key, tbmch_value_type_t type, void *context,
-                                   tbmch_tsdata_on_get_t on_get,
-                                   tbmch_tsdata_on_set_t on_set);
+tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void *context, tbmch_tsdata_on_get_t on_get);
 tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key);
-tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, const char *key, ...); ////tbmqttlink.h.tbmch_sendTelemetry();
+tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...); ////tbmqttlink.h.tbmch_sendTelemetry();
 
 //====2.Publish client-side device attributes to the server============================================================
-tbmch_err_t tbmch_clientattribute_append(tbmch_handle_t client_,
-                                         const char *key, tbmch_value_type_t type, void *context,
+tbmch_err_t tbmch_clientattribute_append(tbmch_handle_t client_, const char *key, void *context,
                                          tbmch_clientattribute_on_get_t on_get); // tbmch_attribute_of_clientside_init()
-tbmch_err_t tbmch_clientattribute_with_set_append(tbmch_handle_t client_,
-                                                  const char *key, tbmch_value_type_t type, void *context,
+tbmch_err_t tbmch_clientattribute_with_set_append(tbmch_handle_t client_, const char *key, void *context,
                                                   tbmch_clientattribute_on_get_t on_get,
                                                   tbmch_clientattribute_on_set_t on_set); // tbmch_attribute_of_clientside_init()
-tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key, ...);
-tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, const char *key, ...); ////tbmqttlink.h.tbmch_sendClientAttributes();
+tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key);
+tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...); ////tbmqttlink.h.tbmch_sendClientAttributes();
 
 //====3.Subscribe to shared device attribute updates from the server===================================================
 tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_,
