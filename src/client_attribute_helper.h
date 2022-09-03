@@ -30,7 +30,9 @@ extern "C" {
  */
 typedef struct tbmch_clientattribute
 {
-     char *key;            /*!< Key */
+     tbmch_handle_t client; /*!< ThingsBoard MQTT Client Helper */
+
+     char *key; /*!< Key */
 
      void *context;                         /*!< Context of getting/setting value*/
      tbmch_clientattribute_on_get_t on_get; /*!< Callback of getting value from context */
@@ -39,7 +41,7 @@ typedef struct tbmch_clientattribute
      LIST_ENTRY(tbmch_clientattribute) entry;
 } tbmch_clientattribute_t;
 
-tbmch_clientattribute_t *_tbmch_clientattribute_init(const char *key, void *context,
+tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, const char *key, void *context,
                                                     tbmch_clientattribute_on_get_t on_get,
                                                     tbmch_clientattribute_on_set_t on_set);
 tbmch_err_t _tbmch_clientattribute_destroy(tbmch_clientattribute_t *clientattribute); /*!< Destroys the tbmc key-value handle */
@@ -48,8 +50,8 @@ bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattr
                                                                                                  a client-side attribute is true or false. */
 const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattribute);   /*!< Get key of the tbmc tbmch_attribute handle */
 
-tbmch_err_t _tbmch_clientattribute_value_to_pack(tbmch_handle_t client, tbmch_clientattribute_t *clientattribute, cJSON *object);     /*!< add item value to json object */
-tbmch_err_t _tbmch_clientattribute_value_from_unpack(tbmch_handle_t client, tbmch_clientattribute_t *clientattribute, cJSON *object); /*!< add item value to json object */
+tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribute, cJSON *object);     /*!< add item value to json object */
+tbmch_err_t _tbmch_clientattribute_do_set(tbmch_clientattribute_t *clientattribute, cJSON *value); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

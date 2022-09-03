@@ -25,55 +25,60 @@ extern "C" {
 #endif
 
 //====9.Firmware update================================================================================================
-typedef tbmch_fwupdate_t *tbmch_fwupdate_handle_t;
-
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA
  */
 typedef struct tbmch_fwupdate
 {
-     char *fw_title;
-     // reset these below fields.
-     tbmch_attribute_handle_t fwattribute_title;
-     tbmch_attribute_handle_t fwattribute_version;
-     tbmch_attribute_handle_t fwattribute_checksum;
-     tbmch_attribute_handle_t fwattribute_checksum_algorithm;
-     // const char *fw_title;                                  /*!< OS fw, App fw, ... */
-     // const char *fw_version;
-     // const char *fw_checksum;
-     // const char *fw_checksum_algorithm;
-
-     int request_id; /*!< default is 0 */
-     int chunk;      /*!< default is zero, from 0 to  */
+     tbmch_handle_t client; /*!< ThingsBoard MQTT Client Helper */
+     const char *fw_title;
 
      void *context;
      tbmch_fwupdate_on_sharedattributes_t on_fw_attributes; /*!< callback of F/W OTA attributes */
      tbmch_fwupdate_on_response_t on_fw_response;           /*!< callback of F/W OTA doing */
-     tbmch_fwupdate_on_done_t on_fw_done;                   /*!< callback of F/W OTA success */
+     tbmch_fwupdate_on_success_t on_fw_success;             /*!< callback of F/W OTA success */
      tbmch_fwupdate_on_timeout_t on_fw_timeout;             /*!< callback of F/W OTA timeout */
 
-     LIST_ENTRY(tbmch_fwupdate)
-     entry;
+     // reset these below fields.
+     char *fw_version;
+     char *fw_checksum;
+     char *fw_checksum_algorithm;
+
+     int request_id; /*!< default is -1 */
+     int chunk;      /*!< default is zero, from 0 to  */
+     uint32_t checksum; 
+
+     LIST_ENTRY(tbmch_fwupdate) entry;
 } tbmch_fwupdate_t;
 
-tbmch_fwupdate_handle_t _tbmch_fwupdate_init(const char *fw_title,
-                                             void *context,
-                                             tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
-                                             tbmch_fwupdate_on_response_t on_fw_chunk,
-                                             tbmch_fwupdate_on_done_t on_fw_success,
-                                             tbmch_fwupdate_on_timeout_t on_fw_timeout); /*!< Initialize tbmch_fwupdate_t */
-tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_handle_t fwupdate);                     /*!< Destroys the tbmch_fwupdate_t */
+tbmch_fwupdate_t *_tbmch_fwupdate_init(tbmch_handle_t client, const char *fw_title,
+                                       void *context,
+                                       tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
+                                       tbmch_fwupdate_on_response_t on_fw_response,
+                                       tbmch_fwupdate_on_success_t on_fw_success,
+                                       tbmch_fwupdate_on_timeout_t on_fw_timeout); /*!< Initialize tbmch_fwupdate_t */
+tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_t *fwupdate);                   /*!< Destroys the tbmch_fwupdate_t */
+////tbmch_err_t __tbmch_fwupdate_reset(tbmch_fwupdate_t *fwupdate);
+
+bool _tbmch_fwupdate_do_sharedattributes(tbmch_fwupdate_t *fwupdate, const char *fw_title, const char *fw_version,
+                                         const char *fw_checksum, const char *fw_checksum_algorithm); //save fw_..., exec fw_update
+
+tbmch_err_t _tbmch_fwupdate_set_request_id(tbmch_fwupdate_t *fwupdate, int request_id);
+
+tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/, const void *fw_data, int data_size); //on_response or on_success or on_timeout(failure), and reset()
+////void _tbmch_fwupdate_do_success(tbmch_fwupdate_t *fwupdate, int chunk /*total_size*/);
+void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/); // on_timeout() and reset()
 
 //0.  Subscribe topic: shared attribute updates: fw_title, fw_version, fw_checksum, fw_checksum_algorithm 
 //0.  Subscribe topic: f/w response: v2/fw/response/+/chunk/+
 
 //1.   tbmch_fwupdate_append();
 //1.1  if (fw_title is not in list fw_observer_entries) 
-//     then tbmch_fwupdate_handle_t _tbmch_fwupdate_create(...);
+//     then tbmch_fwupdate_t *_tbmch_fwupdate_create(...);
 
 //2.   if (all of fw shared attributes updated)
 //2.1  if (on_fw_attributes() returns true)
-//2.2  tbmc._tbmch_fw_observer(tbmch_handle_client_t client, tbmch_fwupdate_handle_t fw_request, ...); //tbmqttclient_fw_request(...)
+//2.2  tbmc._tbmch_fw_observer(tbmch_handle_t client, tbmch_fwupdate_t *fw_request, ...); //tbmqttclient_fw_request(...)
 
 //3.   response success: tbmc._tbmch_on_fw_response(...)
 //3.1  if (chunk_size >0 ) on_fw_chunk(...): save fw chunk
@@ -83,7 +88,7 @@ tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_handle_t fwupdate);          
 //4.1  on_fw_timeout(...); _tbmch_fwupdate_reset(...);
 
 //5    tbmch_fwupdate_clear() / tbmch_client_destroy(...)
-//5.x   tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_handle_t fw_request)
+//5.x   tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_t *fw_request)
 
 #ifdef __cplusplus
 }

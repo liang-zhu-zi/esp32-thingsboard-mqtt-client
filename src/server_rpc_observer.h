@@ -25,36 +25,36 @@ extern "C" {
 #endif
 
 //====5.Server-side RPC================================================================================================
-typedef tbmch_serverrpc_t *tbmch_serverrpc_handle_t;
-
 /**
  * ThingsBoard MQTT Client Helper server-RPC
  */
 typedef struct tbmch_serverrpc
 {
-     const char *method_value; /*!< method value */
-     const char *method_key;   /*!< method key, default "method" */
-     const char *params_key;   /*!< params key, default "params" */
-     const char *results_key;  /*!< results key, default "results" */
+     tbmch_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
+
+     const char *method; /*!< method value */
+     ////const char *method_key;   /*!< method key, default "method" */
+     ////const char *params_key;   /*!< params key, default "params" */
+     ////const char *results_key;  /*!< results key, default "results" */
 
      void *context;                                 /*!< Context of callback */
-     tbmch_serverrpc_request_callback_t on_request; /*!< Callback of server-rpc request */
+     tbmch_serverrpc_on_request_t on_request; /*!< Callback of server-rpc request */
 
      LIST_ENTRY(tbmch_serverrpc) entry;
 } tbmch_serverrpc_t;
 
-typedef tbmch_serverrpc_t *tbmch_serverrpc_handle_t;
+tbmch_serverrpc_t *_tbmch_serverrpc_init(tbmch_handle_t client, const char *method, void *context,
+                                         tbmch_serverrpc_on_request_t on_request); /*!< Initialize tbmch_serverrpc */
+tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_t *serverrpc);                      /*!< Destroys the tbmch_serverrpc */
 
-tbmch_serverrpc_handle_t _tbmch_serverrpc_init(const char *method, void *context,
-                                               tbmch_serverrpc_request_callback_t on_request); /*!< Initialize tbmch_attributes_request */
-tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_handle_t serverrpc);                        /*!< Destroys the tbmch_attributes_request */
+const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_t *serverrpc);
 
-//const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_handle_t serverrpc);
+tbmch_rpc_results_t *_tbmch_serverrpc_do_request(tbmch_serverrpc_t *serverrpc, int request_id, tbmch_rpc_params_t *params);
 
 //0.   Subscribe topic: server-side RPC request;
 
 //1.   tbmch_serverrpc_observer_append(...);
-//1.1  tbmch_serverrpc_handle_t _tbmch_serverrpc_init(const char* method, void *context, tbmch_serverrpc_request_callback_t on_request);
+//1.1  tbmch_serverrpc_t *_tbmch_serverrpc_init(const char* method, void *context, tbmch_serverrpc_request_callback_t on_request);
 //1.2  create to add to LIST_ENTRY(tbmch_serverrpc_)
 //1.3  tbmqttclient_addServerRpcEvent()???
 
@@ -66,7 +66,7 @@ tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_handle_t serverrpc);       
 //2.3.2  _tbmc.serverrpc_response_send(...); //tbmch_err_t tbmch_serverrpc_response(tbmch_client_handle_t client, int request_id, const char* results); //tbmqttclient_sendServerRpcReply()
 
 //3.    tbmch_client_destroy(...)
-//3.x   tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_handle_t serverrpc);
+//3.x   tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_t *serverrpc);
 
 #ifdef __cplusplus
 }

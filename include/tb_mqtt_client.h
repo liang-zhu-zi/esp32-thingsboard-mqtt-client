@@ -106,6 +106,11 @@ extern "C" {
 #define TB_MQTT_TEXT_RPC_PARAMS     "params"
 #define TB_MQTT_TEXT_RPC_RESULTS    "results"
 
+#define TB_MQTT_SHAREDATTRBUTE_FW_TITLE "fw_title"
+#define TB_MQTT_SHAREDATTRBUTE_FW_VERSION "fw_version"
+#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM "fw_checksum"
+#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG "fw_checksum_algorithm"
+
 #define TB_MQTT_TIMEOUT (60) //second, Client-Side RPC timeout, or Attributes Request timeout
 
 //====tbmc data========================================================================================================

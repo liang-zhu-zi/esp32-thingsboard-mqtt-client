@@ -35,7 +35,7 @@ typedef int tbmch_err_t;
 /**
  * ThingsBoard MQTT Client Helper value type, for example: cJSON_Number, cJSON_String, ...
  */
-typedef int tbmch_value_type_t;
+//typedef int tbmch_value_type_t;
 /*
 //cJSON Types:
 #define cJSON_Invalid (0)
@@ -86,32 +86,32 @@ typedef void (*tbmch_clientattribute_on_set_t)(tbmch_handle_t client, void *cont
 typedef tbmch_err_t (*tbmch_sharedattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====4.attributes request for client-side_attribute & shared_attribute================================================
-typedef void (*tbmch_attributesrequest_on_response_t)(tbmch_handle_t client, void *context); //(none/resend/destroy/_destroy_all_attributes)?
-typedef void (*tbmch_attributesrequest_on_timeout_t)(tbmch_handle_t client, void *context); //(none/resend/destroy/_destroy_all_attributes)?
+typedef void (*tbmch_attributesrequest_on_response_t)(tbmch_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
+typedef void (*tbmch_attributesrequest_on_timeout_t)(tbmch_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
 
 //====5.Server-side RPC================================================================================================
-typedef tbmch_rpc_results_t *(*tbmch_serverrpc_on_request_t)(tbmch_handle_client_t client,
-                                                             void *context, int request_id, const char *method, tbmch_rpc_params_t *params);
+typedef tbmch_rpc_results_t *(*tbmch_serverrpc_on_request_t)(tbmch_handle_t client, void *context,
+                                                             int request_id, const char *method, tbmch_rpc_params_t *params);
 
 //====6.Client-side RPC================================================================================================
-typedef void (*tbmch_clientrpc_on_response_t)(tbmch_handle_client_t client,
-                                             void *context, int request_id, const char *method, tbmch_rpc_params_t *params, tbmch_rpc_results_t *results);
-typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_client_t client,
-                                             void *context, int request_id, const char *method, tbmch_rpc_params_t *params);
+typedef void (*tbmch_clientrpc_on_response_t)(tbmch_handle_t client, void *context,
+                                              int request_id, const char *method/*, tbmch_rpc_params_t *params*/, tbmch_rpc_results_t *results);
+typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *context,
+                                             int request_id, const char *method/*, tbmch_rpc_params_t *params*/);
 
 //====7.Claiming device using device-side key scenario: Not implemented yet============================================
 
 //====8.Device provisioning: Not implemented yet=======================================================================
 
 //====9.Firmware update================================================================================================
-typedef bool (*tbmch_fwupdate_on_sharedattributes_t)(tbmch_handle_client_t client,
-                                                     void *context, const char *fw_title, const char *fw_version, const char *fw_checksum, const char *fw_checksum_algorithm);
-typedef tbmch_err_t (*tbmch_fwupdate_on_response_t)(tbmch_handle_client_t client,
-                                                    void *context, int request_id, int chunk /*current chunk*/, const void *fw_data, int data_size);
-typedef void (*tbmch_fwupdate_on_done_t)(tbmch_handle_client_t client,
-                                         void *context, int request_id, int chunk /*total_size*/);
-typedef void (*tbmch_fwupdate_on_timeout_t)(tbmch_handle_client_t client,
-                                            void *context, int request_id, int chunk /*current chunk*/);
+typedef bool (*tbmch_fwupdate_on_sharedattributes_t)(tbmch_handle_t client, void *context,
+                                                     const char *fw_title, const char *fw_version, const char *fw_checksum, const char *fw_checksum_algorithm);
+typedef tbmch_err_t (*tbmch_fwupdate_on_response_t)(tbmch_handle_t client, void *context,
+                                                    int request_id, int chunk /*current chunk*/, const void *fw_data, int data_size);
+typedef void (*tbmch_fwupdate_on_success_t)(tbmch_handle_t client, void *context,
+                                         int request_id, int chunk /*total_size*/);
+typedef void (*tbmch_fwupdate_on_timeout_t)(tbmch_handle_t client, void *context,
+                                            int request_id, int chunk /*current chunk*/);
 
 //====0.tbmc client====================================================================================================
 tbmch_handle_t tbmch_init(void);
@@ -143,23 +143,22 @@ tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
 tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...); ////tbmqttlink.h.tbmch_sendClientAttributes();
 
 //====3.Subscribe to shared device attribute updates from the server===================================================
-tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_,
-                                         const char *key, tbmch_value_type_t type, void *context,
+tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key, void *context,
                                          tbmch_sharedattribute_on_set_t on_set); ////tbmqttlink.h.tbmch_addSubAttrEvent(); //Call it before connect() //tbmch_shared_attribute_list_t
-tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key, ...); // remove shared_attribute from tbmch_shared_attribute_list_t
+tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key); // remove shared_attribute from tbmch_shared_attribute_list_t
 
 //====4.Request client-side or shared device attributes from the server================================================
-tbmch_err_t tbmch_attributes_request(tbmch_handle_t client_,
-                                     void *context,
-                                     tbmch_attributesrequest_on_response_t on_response,
-                                     tbmch_attributesrequest_on_timeout_t on_timeout,
-                                     const char *key, ...); ////tbmqttlink.h.tbmch_sendAttributesRequest(); ////return request_id on successful, otherwise return -1
+int tbmch_attributesrequest_send(tbmch_handle_t client_,
+                                 void *context,
+                                 tbmch_attributesrequest_on_response_t on_response,
+                                 tbmch_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...); ////tbmqttlink.h.tbmch_sendAttributesRequest(); ////return request_id on successful, otherwise return -1
 
 //====5.Server-side RPC================================================================================================
 tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
                                    void *context,
-                                   tbmch_serverrpc_on_request_t on_request);        ////tbmqttlink.h.tbmch_addServerRpcEvent(evtServerRpc); //Call it before connect()
-tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method, ...); // remove from LIST_ENTRY(tbmch_serverrpc_) & delete
+                                   tbmch_serverrpc_on_request_t on_request);   ////tbmqttlink.h.tbmch_addServerRpcEvent(evtServerRpc); //Call it before connect()
+tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method); // remove from LIST_ENTRY(tbmch_serverrpc_) & delete
 
 //====6.Client-side RPC================================================================================================
 tbmch_clientrpc_handle_t tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method, tbmch_rpc_params_t *params); ////tbmqttlink.h.tbmch_sendClientRpcRequest(); //add list
@@ -173,14 +172,13 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
 //====8.Device provisioning: Not implemented yet=======================================================================
 
 //====9.Firmware update================================================================================================
-tbmch_err_t tbmch_fwupdate_append(tbmch_handle_client_t client_, const char *fw_title,
+tbmch_err_t tbmch_fwupdate_append(tbmch_handle_t client_, const char *fw_title,
                                   void *context,
                                   tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
                                   tbmch_fwupdate_on_response_t on_fw_chunk,
-                                  tbmch_fwupdate_on_done_t on_fw_success,
+                                  tbmch_fwupdate_on_success_t on_fw_success,
                                   tbmch_fwupdate_on_timeout_t on_fw_timeout);
-tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_client_t client_,
-                                 const char *fw_title, ...);
+tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_t client_, const char *fw_title);
 
 //====end==============================================================================================================
 

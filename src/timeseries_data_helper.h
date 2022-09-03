@@ -33,20 +33,21 @@ extern "C" {
  */
 typedef struct tbmch_tsdata
 {
-     char *key;              /*!< Key */
+     tbmch_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
-     void *context;                  /*!< Context of getting/setting value*/
-     tbmch_tsdata_on_get_t on_get;   /*!< Callback of getting value from context */
+     char *key; /*!< Key */
+
+     void *context;                /*!< Context of getting/setting value*/
+     tbmch_tsdata_on_get_t on_get; /*!< Callback of getting value from context */
 
      LIST_ENTRY(tbmch_tsdata) entry;
 } tbmch_tsdata_t;
 
-tbmch_tsdata_t *_tbmch_tsdata_init(const char *key, void *context,
+tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void *context,
                                    tbmch_tsdata_on_get_t on_get); /*!< Initialize tbmch_tsdata of TBMC_JSON */
 tbmch_err_t _tbmch_tsdata_destroy(tbmch_tsdata_t *tsdata);        /*!< Destroys the tbmc key-value handle */
 const char *_tbmch_tsdata_get_key(tbmch_tsdata_t *tsdata);        /*!< Get key of the tbmc time-series data handle */
-tbmch_err_t _tbmch_tsdata_value_to_pack(tbmch_handle_t client,
-                                                tbmch_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
+tbmch_err_t _tbmch_tsdata_go_get(tbmch_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

@@ -18,7 +18,7 @@
 
 #include "client_attribute_helper.h"
 
-tbmch_clientattribute_t *_tbmch_clientattribute_init(const char *key, void *context,
+tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, const char *key, void *context,
                                                     tbmch_clientattribute_on_get_t on_get,
                                                     tbmch_clientattribute_on_set_t on_set)
 {
@@ -38,6 +38,7 @@ tbmch_clientattribute_t *_tbmch_clientattribute_init(const char *key, void *cont
     }
 
     memset(clientattribute, 0x00, sizeof(tbmch_clientattribute_t));
+    clientattribute->client = client;
     clientattribute->key = TBMCH_MALLOC(strlen(key)+1);
     if (clientattribute->key) {
         strcpy(clientattribute->key, key);
@@ -83,7 +84,7 @@ const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattrib
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_clientattribute_value_to_pack(tbmch_handle_t client, tbmch_clientattribute_t *clientattribute, cJSON *object)
+tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribute, cJSON *object)
 {
     if (!clientattribute) {
         TBMCHLOG_E("clientattribute is NULL");
@@ -94,7 +95,7 @@ tbmch_err_t _tbmch_clientattribute_value_to_pack(tbmch_handle_t client, tbmch_cl
         return ESP_FAIL;
     }
 
-    cJSON *value = clientattribute->on_get(client, clientattribute->context);
+    cJSON *value = clientattribute->on_get(clientattribute->client, clientattribute->context);
     if (!value) {
         TBMCHLOG_W("value is NULL! key=%s", clientattribute->key);
         return ESP_FAIL;
@@ -105,23 +106,23 @@ tbmch_err_t _tbmch_clientattribute_value_to_pack(tbmch_handle_t client, tbmch_cl
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_clientattribute_value_from_unpack(tbmch_handle_t client, tbmch_tclientattribute_t *clientattribute, cJSON *object)
+tbmch_err_t _tbmch_clientattribute_do_set(tbmch_tclientattribute_t *clientattribute, cJSON *value)
 {
     if (!clientattribute) {
         TBMCHLOG_E("clientattribute is NULL");
         return ESP_FAIL;
     }
-    if (!object) {
-        TBMCHLOG_E("object is NULL");
+    if (!value) {
+        TBMCHLOG_E("value is NULL");
         return ESP_FAIL;
     }
 
-    cJSON *value = cJSON_GetObjectItem(object, clientattribute->key);;
+    /*cJSON *value = cJSON_GetObjectItem(object, clientattribute->key);;
     if (!value) {
         TBMCHLOG_W("value is NULL! key=%s", clientattribute->key);
         return ESP_FAIL;
-    }
+    }*/
 
-    clientattribute->on_set(client, clientattribute->context, value);
+    clientattribute->on_set(clientattribute->client, clientattribute->context, value);
     return ESP_OK;
 }

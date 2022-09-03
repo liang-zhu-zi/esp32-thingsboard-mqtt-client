@@ -19,7 +19,7 @@
 #include "timeseries_data_helper.h"
 
 /*!< Initialize tbmch_tsdata of TBMC_JSON */
-tbmch_tsdata_t *_tbmch_tsdata_init(const char *key, void *context, tbmch_tsdata_on_get_t on_get)
+tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void *context, tbmch_tsdata_on_get_t on_get)
 {
     if (!key) {
         TBMCHLOG_E("key is NULL");
@@ -37,6 +37,7 @@ tbmch_tsdata_t *_tbmch_tsdata_init(const char *key, void *context, tbmch_tsdata_
     }
 
     memset(tsdata, 0x00, sizeof(tbmch_tsdata_t));
+    tsdata->client = client;
     tsdata->key = TBMCH_MALLOC(strlen(key)+1);
     if (tsdata->key) {
         strcpy(tsdata->key, key);
@@ -70,7 +71,7 @@ const char *_tbmch_tsdata_get_key(tbmch_tsdata_t *tsdata)
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_tsdata_value_to_pack(tbmch_handle_t client, tbmch_tsdata_t *tsdata, cJSON *object)
+tbmch_err_t _tbmch_tsdata_go_get(tbmch_tsdata_t *tsdata, cJSON *object)
 {
     if (!tsdata) {
         TBMCHLOG_E("tsdata is NULL");
@@ -81,7 +82,7 @@ tbmch_err_t _tbmch_tsdata_value_to_pack(tbmch_handle_t client, tbmch_tsdata_t *t
         return ESP_FAIL;
     }
 
-    cJSON *value = tsdata->on_get(client, tsdata->context);
+    cJSON *value = tsdata->on_get(tsdata->client, tsdata->context);
     if (!value) {
         TBMCHLOG_W("value is NULL! key=%s", tsdata->key);
         return ESP_FAIL;
