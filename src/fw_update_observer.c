@@ -168,7 +168,6 @@ tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk/*cu
         return ESP_FAIL;
     }
     
-    fwupdate->chunk = chunk;
     tbmch_err_t result = true;
     if (fw_data && data_size) {
         result = fwupdate->on_fw_response(fwupdate->client, fwupdate->context,
@@ -187,6 +186,7 @@ tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk/*cu
             __tbmch_fwupdate_reset(fwupdate);
         }
     }
+    fwupdate->chunk = chunk+data_size; // TODO:...
     return ESP_OK;
 
 fwupdate_fail:
@@ -196,7 +196,7 @@ fwupdate_fail:
     return ESP_FAIL;
 }
 
-void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/)
+void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk/*? current chunk*/)
 {
     if (!fwupdate) {
         TBMCHLOG_E("fwupdate is NULL");

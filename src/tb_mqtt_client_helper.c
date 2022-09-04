@@ -60,27 +60,90 @@
  * ThingsBoard MQTT Client Helper message id
  */
 typedef enum
-{                                  //param1   param2        param3    param4
-  TBMCH_MSGID_TIMEOUT = 0,         //context
+{                                  //context   param1        param1    param3    param4
+  TBMCH_MSGID_TIMER_TIMEOUT = 1,   //context
+  TBMCH_MSGID_CONNECTED,           //context
   TBMCH_MSGID_DISCONNECTED,        //context
-  TBMCH_MSGID_CONNECTED,           //context     
-  TBMCH_MSGID_ATTRREQUEST_SUCCESS, //context, request_id,   cJSON
+  TBMCH_MSGID_SHAREDATTR_RECEIVED, //context,                         cJSON
+  TBMCH_MSGID_ATTRREQUEST_RESPONSE,//context, request_id,             cJSON
   TBMCH_MSGID_ATTRREQUEST_TIMEOUT, //context, request_id
-  TBMCH_MSGID_SHAREDATTR,          //context, request_id,   cJSON
-  TBMCH_MSGID_CLIENTRPC_SUCCESS,   //context, request_id,   cJSON
+  TBMCH_MSGID_SERVERRPC_REQUSET,   //context, request_id,             cJSON
+  TBMCH_MSGID_CLIENTRPC_RESPONSE,  //context, request_id,             cJSON
   TBMCH_MSGID_CLIENTRPC_TIMEOUT,   //context, request_id
-  TBMCH_MSGID_SERVERRPC_REQUSET,   //context, request_id,   cJSON
-  TBMCH_MSGID_FWREQUEST_SUCCESS,   //context, request_id,   payload,  len
-  TBMCH_MSGID_FWREQUEST_TIMEOUT,   //context, request_id
+  TBMCH_MSGID_FWUPDATE_RESPONSE,   //context, request_id,   chunk,    payload,  len
+  TBMCH_MSGID_FWUPDATE_TIMEOUT,    //context, request_id
 } tbmch_msgid_t;
+
+typedef struct tbmch_msg_easy {
+     void *context; /*!< tbmch_handle_t */
+} tbmch_msg_easy_t;
+
+typedef struct tbmch_msg_sharedattr_received {
+     void *context; /*!< tbmch_handle_t */
+     cJSON *object; /*!< received palyload. free memory by msg receiver */
+} tbmch_msg_sharedattr_received_t;
+
+typedef struct tbmch_msg_response {
+     void *context; /*!< tbmch_handle_t */
+     uint32_t requestId;
+     cJSON *object; /*!< received palyload. free memory by msg receiver */
+} tbmch_msg_response_t;
+
+typedef struct tbmch_msg_fwupdate_response {
+     void *context; /*!< tbmch_handle_t */
+     uint32_t requestId;
+     int chunk;
+     const char *payload; /*!< received palyload. free memory by msg receiver */
+     int length;
+} tbmch_msg_fwupdate_response_t;
+
+typedef struct tbmch_msg_timeout {
+     void *context; /*!< tbmch_handle_t */
+     uint32_t requestId;
+} tbmch_msg_timeout_t;
+
+typedef union tbmch_msgbody {
+     tbmch_msg_easy_t timer_timeout; // context
+
+     tbmch_msg_easy_t connected;    // context
+     tbmch_msg_easy_t disconnected; // context
+
+     tbmch_msg_sharedattr_received_t sharedattr_received; // context, cJSON
+
+     tbmch_msg_response_t attrrequest_response; // context, request_id, cJSON
+     tbmch_msg_timeout_t attrrequest_timeout    // context, request_id
+
+     tbmch_msg_response_t serverrpc_request; // context, request_id, cJSON
+
+     tbmch_msg_response_t clientrpc_response; // context, request_id, cJSON
+     tbmch_msg_timeout_t clientrpc_timeout;   // context, request_id
+
+     tbmch_msg_fwupdate_response_t fwupdate_response; // context, request_id, chunk, payload, len
+     tbmch_msg_timeout_t fwupdate_timeout;            // context, request_id
+} tbmch_msgbody_t;
+
+typedef struct tbmch_msg {
+	tbmch_msgid_t   id;
+	tbmch_msgbody_t body;
+} tbmch_msg_t;
+
+static void _tbmch_on_connected(tbmch_handle_t client_);
+static void _tbmch_on_disonnected(tbmch_handle_t client_);
+static void _tbmch_on_sharedattr_received(tbmch_handle_t client_, const char* payload, int length);
+static void _tbmch_on_attrrequest_response(tbmch_handle_t client_, int request_id, const char* payload, int length);
+static void _tbmch_on_attrrequest_timeout(tbmch_handle_t client_, int request_id);
+static void _tbmch_on_serverrpc_request(tbmch_handle_t client_, int request_id, const char* payload, int length);
+static void _tbmch_on_clientrpc_response(tbmch_handle_t client_, int request_id, const char* payload, int length);
+static void _tbmch_on_clientrpc_timeout(tbmch_handle_t client_, int request_id);
+static void _tbmch_on_fwupdate_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length);
+static void _tbmch_on_fwupdate_timeout(tbmch_handle_t client_, int request_id);
 
 /**
  * ThingsBoard MQTT Client Helper 
  */
 typedef struct tbmch_client_
 {
-     struct
-     {
+     struct {
           char *uri;          /*!< ThingsBoard MQTT host uri */
           char *access_token; /*!< ThingsBoard MQTT token */
 
@@ -104,7 +167,7 @@ typedef struct tbmch_client_
 
 //~~static int _tbmch_sendServerRpcReply(tbmch_handle_t client_, int request_id, const char* response, int qos=1, int retain=0); //sendServerRpcReply()
 
-static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, TbmqttInnerMsgType type, cJSON *payload); //_sendTbmqttInnerMsg2Queue()
+static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg); //_sendTbmqttInnerMsg2Queue()
 //static bool _tbmch_tbDecodeAttributesJsonPayload(JsonObject& attr_kvs); //_tbDecodeAttributesJsonPayload()
 
 static void _tbmch_on_connected(tbmch_handle_t client_); //onConnected()
@@ -128,6 +191,7 @@ static void _timer_timerout(); //send msg to queue
 tbmch_handle_t tbmch_init(void)
 {
      // TODO:
+     // INIT all of list headers
 }
 void tbmch_destroy(tbmch_handle_t client_)
 {
@@ -139,11 +203,12 @@ void tbmch_destroy(tbmch_handle_t client_)
 bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
                    void *context,
                    tbmch_on_connected_t on_connected,
-                   tbmch_on_disconnected_t on_disconnected) //_begin();
+                   tbmch_on_disconnected_t on_disconnected) //_begin()
 {
      // TODO:
 }
-void tbmch_disconnect(tbmch_handle_t client_)               //_end();
+//_end()
+void tbmch_disconnect(tbmch_handle_t client_)               
 {
      // TODO:
 }
@@ -151,13 +216,73 @@ bool tbmch_is_connected(tbmch_handle_t client_)
 {
      // TODO:
 }
-bool tbmch_has_events(tbmch_handle_t client_) // new function
+// new function
+bool tbmch_has_event(tbmch_handle_t client_)
 {
      // TODO:
 }
-void tbmch_run(tbmch_handle_t client_)        //_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
+
+//_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
+void tbmch_run(tbmch_handle_t client_)
+{
+     // TODO: recv msg from queue
+
+     // TODO: deal msg
+     switch (msgid) {
+     case TBMCH_MSGID_TIMER_TIMEOUT: // context
+          //TODO: tbmc_check_timeout(tbmc_handle_t client_);
+          break;
+     case TBMCH_MSGID_CONNECTED:            // context
+          //TODO: _tbmch_connected(tbmc_handle_t client_);
+          break;
+     case TBMCH_MSGID_DISCONNECTED:         // context
+          //TODO: _tbmch_disonnected(tbmc_handle_t client_);
+          break;
+     case TBMCH_MSGID_SHAREDATTR_RECEIVED:  // context,                         cJSON
+          //TODO: _tbmch_sharedattribute_on_received(tbmc_handle_t client_, const cJSON *object);
+          //free cJSON
+          break;
+     case TBMCH_MSGID_ATTRREQUEST_RESPONSE: // context, request_id,             cJSON
+          //TODO: _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object);
+          //free cJSON
+          break;
+     case TBMCH_MSGID_ATTRREQUEST_TIMEOUT:  // context, request_id
+          //TODO: _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int request_id)
+          break;
+     case TBMCH_MSGID_SERVERRPC_REQUSET:    // context, request_id,             cJSON
+          //TODO:_tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const cJSON *object)
+          //free cJSON
+          break;
+     case TBMCH_MSGID_CLIENTRPC_RESPONSE:   // context, request_id,             cJSON
+          //TODO: _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
+          //free cJSON
+          break;
+     case TBMCH_MSGID_CLIENTRPC_TIMEOUT:    // context, request_id
+          //TODO: _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
+          break;
+     case TBMCH_MSGID_FWUPDATE_RESPONSE:    // context, request_id,   chunk,    payload,  len
+          //TODO: _tbmch_fwupdate_on_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length)
+          //free payload
+          break;
+     case TBMCH_MSGID_FWUPDATE_TIMEOUT:     // context, request_id
+          //TODO: _tbmch_fwupdate_on_timeout(tbmch_handle_t client_, int request_id)
+          break;
+     default:
+          //TODO: ...
+          break;
+     }
+}
+static void _tbmch_connected(tbmch_handle_t client_) //onConnected() // First receive
 {
      // TODO:
+     // clone parameter in lock/unlock
+     // client_->config.on_connected(client_->config.context, ...);       /*!< Callback of connected ThingsBoard MQTT */
+}
+static void _tbmch_disonnected(tbmch_handle_t client_) //onDisonnected() // First receive
+{
+     // TODO:
+     // clone parameter in lock/unlock
+     // client_->config.on_disconnected(client_->config.context, ...); /*!< Callback of disconnected ThingsBoard MQTT */
 }
 
 //====1.Publish Telemetry time-series data==============================================================================
@@ -239,7 +364,8 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
      return ESP_OK;
 }
 
-tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...) ////tbmqttlink.h.tbmch_sendTelemetry();
+////tbmqttlink.h.tbmch_sendTelemetry();
+tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
@@ -440,9 +566,9 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
 }
 
 //unpack & deal
-static void !_tbmch_clientattribute_on_received(void)
+static void !_tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJSON *object)
 {
-     // TODO:
+     // TODO: foreach itme to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
 }
 
 //====3.Subscribe to shared device attribute updates from the server===================================================
@@ -531,9 +657,21 @@ tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
 
 //unpack & deal
 //onAttrOfSubReply()
-static void !_tbmch_sharedattribute_on_received(tbmch_handle_t client_, const char* payload, int length)
+static void !_tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJSON *object)
 {
-     // TODO:
+     // TODO: foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     
+     // TODO: special process for fwupdate:  
+     // if (have all {fw_title, fw_version, fw_checksum, fw_checksum_algorithm}) {
+     //      clone four fw_xx & fwupdate_item
+     //      xSemaphoreGive(lock);
+     //      _tbmch_fwupdate_on_sharedattributes(tbmch_handle_t client, 
+     //                                             const char *fw_title, const char *fw_version,
+     //                                             const char *fw_checksum, const char *fw_checksum_algorithm)
+     //      free four fw_xx & fwupdate_item
+     //      return;
+     // }
+     // xSemaphoreGive(lock);
 }
 
 //====4.Request client-side or shared device attributes from the server================================================
@@ -664,16 +802,22 @@ attributesrequest_fail:
 }
 
 // onAttributesResponse()=>_attributesResponse()
-static void !_tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const char *payload, int length)
+static void !_tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
-     // TODO:
-     // _tbmch_attributesrequest_destroy()
+     // TODO: 
+     // temp cache attributesrequest
+     // _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
+     // clientattr: _tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJSON *object)
+     // sharedattr: _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJSON *object)
+     // _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesrequest)
 }
 // onAttributesResponseTimeout()
 static void !_tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int request_id)
 {
      // TODO:
-     // _tbmch_attributesrequest_destroy()
+     // temp cache attributesrequest
+     // _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
+     // _tbmch_attributesrequest_do_timeout(tbmch_attributesrequest_t *attributesrequest)
 }
 
 //====5.Server-side RPC================================================================================================
@@ -760,9 +904,15 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
      return ESP_OK;
 }
 
-static void !_tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const char* payload, int length) ////onServerRpcRequest()
+////onServerRpcRequest()
+static void !_tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
      // TODO:
+     // temp cache serverrpc in lock/unlock
+     // tbmch_rpc_results_t *result = _tbmch_serverrpc_do_request(tbmch_serverrpc_t *serverrpc, int request_id, tbmch_rpc_params_t *params);
+     // if (result) {
+     //      int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *response, 1/*qos*/, 0/*retain*/)
+     // }
 }
 
 //====6.Client-side RPC================================================================================================
@@ -875,17 +1025,22 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
      return request_id;
 }
 
-static void !_tbmch_clientrpc_on_success(tbmch_handle_t client_, int request_id, const char* payload, int length) //onClientRpcResponse()
-{
-     // TODO:
-     // _tbmch_clientrpc_destroy()
-}
-static void !_tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id) //onClientRpcResponseTimeout()
+//onClientRpcResponse()
+static void !_tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
      // TODO: 
-     // _tbmch_clientrpc_destroy()
+     // temp cache clientrpc
+     // _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
+     // _tbmch_clientrpc_do_response(tbmch_attributesrequest_t *clientrpc)
 }
-
+//onClientRpcResponseTimeout()
+static void !_tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
+{
+     // TODO:
+     // temp cache clientrpc
+     // _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
+     // _tbmch_clientrpc_do_timeout(tbmch_clientrpc_t *clientrpc)
+}
 
 //====7.Claiming device using device-side key scenario: Not implemented yet============================================
 
@@ -981,7 +1136,7 @@ static void !_tbmch_fwupdate_on_sharedattributes(tbmch_handle_t client, void *co
                                                  const char *fw_title, const char *fw_version,
                                                  const char *fw_checksum, const char *fw_checksum_algorithm)
 {
-     // TODO:
+     // TODO: these is in lock/unlock
      // search _tbmch_fwupdate;
      // if (search ok) {}
      //   bool _tbmch_fwupdate_do_sharedattributes(tbmch_fwupdate_t *fwupdate, const char *fw_title, const char *fw_version,
@@ -993,74 +1148,85 @@ static void !_tbmch_fwupdate_on_sharedattributes(tbmch_handle_t client, void *co
 
 static void !_tbmch_fwupdate_on_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length)
 {
-     // TODO:
+     // TODO: these is in lock/unlock
      //tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/, const void *fw_data, int data_size); //update or done or failure
 }
 static void !_tbmch_fwupdate_on_timeout(tbmch_handle_t client_, int request_id)
 {
-     // TODO:
-     //void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/);
+     // TODO: these is in lock/unlock
+     // _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/);
 }
 
 //=====================================================================================================================
 //~~static int _tbmch_sendServerRpcReply(tbmch_handle_t client_, int request_id, const char* response, int qos=1, int retain=0); //sendServerRpcReply()
 
-static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, TbmqttInnerMsgType type, cJSON *payload) //_sendTbmqttInnerMsg2Queue()
+static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg) //_sendTbmqttInnerMsg2Queue()
 {
-     // TODO:
+     // TODO: send msg to queue
 }
 //static bool _tbmch_tbDecodeAttributesJsonPayload(JsonObject& attr_kvs); //_tbDecodeAttributesJsonPayload()
 
-static void _tbmch_on_connected(tbmch_handle_t client_) //onConnected()
+static void _tbmch_on_connected(tbmch_handle_t client_) //onConnected() // First receive
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_CONNECTED, body.connected{context}});
 }
-static void _tbmch_on_disonnected(tbmch_handle_t client_) //onDisonnected()
+static void _tbmch_on_disonnected(tbmch_handle_t client_) //onDisonnected() // First receive
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_DISCONNECTED, body.disconnected{context}});
 }
-//onAttrOfSubReply();
-static void _tbmch_on_sharedattributes_received(tbmch_handle_t client_, const char* payload, int length)
+//onAttrOfSubReply(); // First receive
+static void _tbmch_on_sharedattr_received(tbmch_handle_t client_, const char* payload, int length)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_SHAREDATTR_RECEIVED, body.sharedattr_received{context, cJSON}});
+}
 
-     // special process:  {fw_title, fw_version, fw_checksum, fw_checksum_algorithm} ==> ...?
-}
-
-//onAttributesResponse()=>_attributesResponse()
+//onAttributesResponse()=>_attributesResponse() // First send
 //~~static bool _attributesResponse(int request_id, const char* payload, int length); //merge to _tbmch_on_attributesrequest_success()
-static void _tbmch_on_attributesrequest_response(tbmch_handle_t client_, int request_id, const char* payload, int length)
+static void _tbmch_on_attrrequest_response(tbmch_handle_t client_, int request_id, const char* payload, int length)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_ATTRREQUEST_RESPONSE, body.attrrequest_response{context, request_id, cJSON}});
 } 
- //onAttributesResponseTimeout()
-static void _tbmch_on_attributesrequest_timeout(tbmch_handle_t client_, int request_id)
+//onAttributesResponseTimeout() // First send
+static void _tbmch_on_attrrequest_timeout(tbmch_handle_t client_, int request_id)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_ATTRREQUEST_TIMEOUT, body.attrrequest_timeout{context, request_id}});
 }
-
-//onClientRpcResponse()
-static void _tbmch_on_clientrpc_response(tbmch_handle_t client_, int request_id, const char* payload, int length)
-{
-     // TODO:
-}
-//onClientRpcResponseTimeout()
-static void _tbmch_on_clientrpc_timeout(tbmch_handle_t client_, int request_id);
-{
-     // TODO:
-}
-////onServerRpcRequest()
+          
+////onServerRpcRequest() // First receive
 static void _tbmch_on_serverrpc_request(tbmch_handle_t client_, int request_id, const char* payload, int length)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_SERVERRPC_REQUSET, body.serverrpc_request{context, request_id, cJSON}});
 }
-static void _tbmch_on_fwrequest_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length)
+
+//onClientRpcResponse() // First send
+static void _tbmch_on_clientrpc_response(tbmch_handle_t client_, int request_id, const char* payload, int length)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_CLIENTRPC_RESPONSE, body.clientrpc_response{context, request_id, cJSON}});
 }
-static void _tbmch_on_fwrequest_timeout(tbmch_handle_t client_, int request_id)
+//onClientRpcResponseTimeout() // First send
+static void _tbmch_on_clientrpc_timeout(tbmch_handle_t client_, int request_id)
 {
      // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_CLIENTRPC_TIMEOUT, body.clientrpc_timeout{context, request_id}});
+} 
+// First send
+static void _tbmch_on_fwupdate_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length)
+{
+     // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_FWUPDATE_RESPONSE, body.fwupdate_response{context, request_id, chunk, payload, len}});
+}
+// First send
+static void _tbmch_on_fwupdate_timeout(tbmch_handle_t client_, int request_id)
+{
+     // TODO:
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_FWUPDATE_TIMEOUT, body.fwupdate_timeout{context, request_id}});
 }
 
 static void _timer_start()
@@ -1073,5 +1239,6 @@ static void _timer_stop()
 }
 static void _timer_timerout() //send msg to queue
 {
-     // TODO:
+     // TODO: 
+     // _tbmch_sendTbmqttMsg2Queue({TBMCH_MSGID_TIMER_TIMEOUT, body.timer_timeout{context}});
 }

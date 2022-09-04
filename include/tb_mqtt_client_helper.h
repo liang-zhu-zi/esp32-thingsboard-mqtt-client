@@ -76,13 +76,16 @@ typedef void (*tbmch_on_connected_t)(tbmch_handle_t client, void *context);    /
 typedef void (*tbmch_on_disconnected_t)(tbmch_handle_t client, void *context); /*!< Callback of disconnected ThingsBoard MQTT */
 
 //====1.telemetry time-series data=====================================================================================
+//Don't call TBMCH API in this callback!
 typedef tbmch_value_t* (*tbmch_tsdata_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
 
 //====2.client-side attribute==========================================================================================
+//Don't call TBMCH API in these callback!
 typedef tbmch_value_t* (*tbmch_clientattribute_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
 typedef void (*tbmch_clientattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====3.shared attribute===============================================================================================
+//Don't call TBMCH API in this callback!
 typedef tbmch_err_t (*tbmch_sharedattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====4.attributes request for client-side_attribute & shared_attribute================================================
@@ -104,6 +107,7 @@ typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *contex
 //====8.Device provisioning: Not implemented yet=======================================================================
 
 //====9.Firmware update================================================================================================
+//Don't call TBMCH API in these callback!
 typedef bool (*tbmch_fwupdate_on_sharedattributes_t)(tbmch_handle_t client, void *context,
                                                      const char *fw_title, const char *fw_version, const char *fw_checksum, const char *fw_checksum_algorithm);
 typedef tbmch_err_t (*tbmch_fwupdate_on_response_t)(tbmch_handle_t client, void *context,
