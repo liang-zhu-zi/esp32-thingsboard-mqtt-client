@@ -37,7 +37,7 @@ typedef struct tbmch_serverrpc
      ////const char *params_key;   /*!< params key, default "params" */
      ////const char *results_key;  /*!< results key, default "results" */
 
-     void *context;                                 /*!< Context of callback */
+     void *context;                           /*!< Context of callback */
      tbmch_serverrpc_on_request_t on_request; /*!< Callback of server-rpc request */
 
      LIST_ENTRY(tbmch_serverrpc) entry;
@@ -45,7 +45,8 @@ typedef struct tbmch_serverrpc
 
 tbmch_serverrpc_t *_tbmch_serverrpc_init(tbmch_handle_t client, const char *method, void *context,
                                          tbmch_serverrpc_on_request_t on_request); /*!< Initialize tbmch_serverrpc */
-tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_t *serverrpc);                      /*!< Destroys the tbmch_serverrpc */
+tbmch_serverrpc_t *_tbmch_serverrpc_clone_wo_listentry(tbmch_serverrpc_t *src);
+tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_t *serverrpc); /*!< Destroys the tbmch_serverrpc */
 
 const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_t *serverrpc);
 

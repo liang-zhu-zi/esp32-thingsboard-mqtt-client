@@ -50,6 +50,7 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
                                          void *context,
                                          tbmch_clientrpc_on_response_t on_response,
                                          tbmch_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbmch_clientrpc_t */
+tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src);
 tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc);                /*!< Destroys the tbmch_clientrpc_t */
 
 void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, tbmch_rpc_results_t *results);

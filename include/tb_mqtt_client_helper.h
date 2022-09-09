@@ -93,6 +93,8 @@ typedef void (*tbmch_attributesrequest_on_response_t)(tbmch_handle_t client, voi
 typedef void (*tbmch_attributesrequest_on_timeout_t)(tbmch_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
 
 //====5.Server-side RPC================================================================================================
+// return NULL or cJSON* of object
+// free return-value by caller
 typedef tbmch_rpc_results_t *(*tbmch_serverrpc_on_request_t)(tbmch_handle_t client, void *context,
                                                              int request_id, const char *method, tbmch_rpc_params_t *params);
 

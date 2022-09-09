@@ -53,6 +53,32 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
     return clientrpc;
 }
 
+tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src)
+{
+    if (!src) {
+        TBMCHLOG_E("src is NULL");
+        return NULL;
+    }
+    
+    tbmch_clientrpc_t *clientrpc = TBMCH_MALLOC(sizeof(tbmch_clientrpc_t));
+    if (!clientrpc) {
+        TBMCHLOG_E("Unable to malloc memeory!");
+        return NULL;
+    }
+
+    memset(clientrpc, 0x00, sizeof(tbmch_clientrpc_t));
+    clientrpc->client = src->client;
+    clientrpc->method = TBMCH_MALLOC(strlen(src->method)+1);
+    if (clientrpc->method) {
+        strcpy(clientrpc->method, src->method);
+    }
+    clientrpc->request_id = src->request_id;
+    clientrpc->context = src->context;
+    clientrpc->on_response = src->on_response;
+    clientrpc->on_timeout = src->on_timeout;
+    return clientrpc;
+}
+
 /*!< Destroys the tbmch_clientrpc_t */
 tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
 {

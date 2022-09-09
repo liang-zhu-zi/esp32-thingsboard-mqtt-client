@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "tb_mqtt_client.h"
 #include "tb_mqtt_client_helper.h"
 #include "timeseries_data_helper.h"
 #include "client_attribute_helper.h"
@@ -71,7 +72,7 @@ typedef enum
   TBMCH_MSGID_CLIENTRPC_RESPONSE,  //context, request_id,             cJSON
   TBMCH_MSGID_CLIENTRPC_TIMEOUT,   //context, request_id
   TBMCH_MSGID_FWUPDATE_RESPONSE,   //context, request_id,   chunk,    payload,  len
-  TBMCH_MSGID_FWUPDATE_TIMEOUT,    //context, request_id
+  TBMCH_MSGID_FWUPDATE_TIMEOUT     //context, request_id
 } tbmch_msgid_t;
 
 typedef struct tbmch_msg_easy {
@@ -85,13 +86,13 @@ typedef struct tbmch_msg_sharedattr_received {
 
 typedef struct tbmch_msg_response {
      void *context; /*!< tbmch_handle_t */
-     uint32_t requestId;
+     int32_t request_id;
      cJSON *object; /*!< received palyload. free memory by msg receiver */
 } tbmch_msg_response_t;
 
 typedef struct tbmch_msg_fwupdate_response {
      void *context; /*!< tbmch_handle_t */
-     uint32_t requestId;
+     int32_t request_id;
      int chunk;
      const char *payload; /*!< received palyload. free memory by msg receiver */
      int length;
@@ -99,7 +100,7 @@ typedef struct tbmch_msg_fwupdate_response {
 
 typedef struct tbmch_msg_timeout {
      void *context; /*!< tbmch_handle_t */
-     uint32_t requestId;
+     int32_t request_id;
 } tbmch_msg_timeout_t;
 
 typedef union tbmch_msgbody {
@@ -111,7 +112,7 @@ typedef union tbmch_msgbody {
      tbmch_msg_sharedattr_received_t sharedattr_received; // context, cJSON
 
      tbmch_msg_response_t attrrequest_response; // context, request_id, cJSON
-     tbmch_msg_timeout_t attrrequest_timeout    // context, request_id
+     tbmch_msg_timeout_t attrrequest_timeout;   // context, request_id
 
      tbmch_msg_response_t serverrpc_request; // context, request_id, cJSON
 
@@ -192,6 +193,10 @@ tbmch_handle_t tbmch_init(void)
 {
      // TODO:
      // INIT all of list headers
+
+    // Create a queue capable of containing 40 tbmch_msg_t structures.
+    // These should be passed by pointer as they contain a lot of data.
+    ...->_xQueue = xQueueCreate(40, sizeof(tbmch_msg_t));
 }
 void tbmch_destroy(tbmch_handle_t client_)
 {
@@ -222,67 +227,166 @@ bool tbmch_has_event(tbmch_handle_t client_)
      // TODO:
 }
 
+static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
+{
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return ESP_FAIL;
+     }
+     if (!msg) {
+          TBMCLOG_E("msg is NULL!");
+          return ESP_FAIL;
+     }
+
+     // deal msg
+     switch (msg->id) {
+     case TBMCH_MSGID_TIMER_TIMEOUT:       // context
+          tbmc_check_timeout(client_);
+          break;
+
+     case TBMCH_MSGID_CONNECTED:            // context
+          TBMCHLOG_I("TBMCH_RECV: Connected to TBMQTT Server!");
+          _tbmch_connected_on(client_);
+          break;
+     case TBMCH_MSGID_DISCONNECTED:         // context
+          TBMCHLOG_I("TBMCH_RECV: Disconnected from TBMQTT Server!");
+          _tbmch_disonnected_on(client_);
+          break;
+
+     case TBMCH_MSGID_SHAREDATTR_RECEIVED:  // context,                         cJSON
+          _tbmch_sharedattribute_on_received(client_, msg->body.sharedattr_received.object);
+          cJSON_Delete(msg->body.sharedattr_received.object); //free cJSON
+          break;
+
+     case TBMCH_MSGID_ATTRREQUEST_RESPONSE: // context, request_id,             cJSON
+          _tbmch_attributesrequest_on_response(client_, msg->body.attrrequest_response.request_id,
+                                               msg->body.attrrequest_response.object);
+          cJSON_Delete(msg->body.attrrequest_response.object); // free cJSON
+          break;
+     case TBMCH_MSGID_ATTRREQUEST_TIMEOUT:  // context, request_id
+          _tbmch_attributesrequest_on_timeout(client_, msg->body.attrrequest_timeout.request_id);
+          break;
+
+     case TBMCH_MSGID_SERVERRPC_REQUSET:    // context, request_id,             cJSON
+          _tbmch_serverrpc_on_request(client_, msg->body.serverrpc_request.request_id, 
+                                      msg->body.serverrpc_request.object);
+          cJSON_Delete(msg->body.serverrpc_request.object); //free cJSON
+          break;
+
+     case TBMCH_MSGID_CLIENTRPC_RESPONSE:   // context, request_id,             cJSON
+          _tbmch_clientrpc_on_response(client_, msg->body.clientrpc_response.request_id, 
+                                       msg->body.clientrpc_response.object);
+          cJSON_Delete(msg->body.clientrpc_response.object); //free cJSON
+          break;
+     case TBMCH_MSGID_CLIENTRPC_TIMEOUT:    // context, request_id
+          _tbmch_clientrpc_on_timeout(client_, msg->body.clientrpc_response.request_id);
+          break;
+
+     case TBMCH_MSGID_FWUPDATE_RESPONSE:    // context, request_id,   chunk,    payload,  len
+          _tbmch_fwupdate_on_response(client_, msg->body.fwupdate_response.request_id, 
+               msg->body.fwupdate_response.chunk, 
+               msg->body.fwupdate_response.payload,
+               msg->body.fwupdate_response.length);
+          TBMCH_FREE(msg->body.fwupdate_response.payload); //free payload
+          break;
+     case TBMCH_MSGID_FWUPDATE_TIMEOUT:     // context, request_id
+          _tbmch_fwupdate_on_timeout(client_, msg->body.fwupdate_timeout.request_id);
+          break;
+
+     default:
+          TBMCHLOG_D("msg->type(%d) is error!\r\n", msg->type);
+          return ESP_FAIL;
+     }
+
+     return ESP_OK;
+}
+
+//recv & deal msg from queue
 //_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
 void tbmch_run(tbmch_handle_t client_)
 {
-     // TODO: recv msg from queue
-
-     // TODO: deal msg
-     switch (msgid) {
-     case TBMCH_MSGID_TIMER_TIMEOUT: // context
-          //TODO: tbmc_check_timeout(tbmc_handle_t client_);
-          break;
-     case TBMCH_MSGID_CONNECTED:            // context
-          //TODO: _tbmch_connected(tbmc_handle_t client_);
-          break;
-     case TBMCH_MSGID_DISCONNECTED:         // context
-          //TODO: _tbmch_disonnected(tbmc_handle_t client_);
-          break;
-     case TBMCH_MSGID_SHAREDATTR_RECEIVED:  // context,                         cJSON
-          //TODO: _tbmch_sharedattribute_on_received(tbmc_handle_t client_, const cJSON *object);
-          //free cJSON
-          break;
-     case TBMCH_MSGID_ATTRREQUEST_RESPONSE: // context, request_id,             cJSON
-          //TODO: _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object);
-          //free cJSON
-          break;
-     case TBMCH_MSGID_ATTRREQUEST_TIMEOUT:  // context, request_id
-          //TODO: _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int request_id)
-          break;
-     case TBMCH_MSGID_SERVERRPC_REQUSET:    // context, request_id,             cJSON
-          //TODO:_tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const cJSON *object)
-          //free cJSON
-          break;
-     case TBMCH_MSGID_CLIENTRPC_RESPONSE:   // context, request_id,             cJSON
-          //TODO: _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
-          //free cJSON
-          break;
-     case TBMCH_MSGID_CLIENTRPC_TIMEOUT:    // context, request_id
-          //TODO: _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
-          break;
-     case TBMCH_MSGID_FWUPDATE_RESPONSE:    // context, request_id,   chunk,    payload,  len
-          //TODO: _tbmch_fwupdate_on_response(tbmch_handle_t client_, int request_id, int chunk, const char* payload, int length)
-          //free payload
-          break;
-     case TBMCH_MSGID_FWUPDATE_TIMEOUT:     // context, request_id
-          //TODO: _tbmch_fwupdate_on_timeout(tbmch_handle_t client_, int request_id)
-          break;
-     default:
-          //TODO: ...
-          break;
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCHLOG_E("client is NULL!");
+          return; // false;
      }
+
+     // TODO: whether to insert lock?
+     // Take semaphore
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBMCLOG_E("Unable to take semaphore!");
+     //      return false;
+     // }
+
+     // read event from queue()
+     tbmch_msg_t msg;
+     int i = 0;
+     if (client->_xQueue != 0) {
+          // Receive a message on the created queue.  Block for 0(10) ticks if a message is not immediately available.
+          while (i < 10 && xQueueReceive(client->_xQueue, &(msg), (TickType_t)0)) { // 10
+               // pcRxedMessage now points to the struct AMessage variable posted by vATask.
+               _tbmch_deal_msg(&msg);
+               i++;
+          }
+     }
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+     return;// sendResult == pdTRUE ? true : false;
 }
-static void _tbmch_connected(tbmch_handle_t client_) //onConnected() // First receive
+
+static void _tbmch_connected_on(tbmch_handle_t client_) //onConnected() // First receive
 {
-     // TODO:
+     tbmch_t *client = (tbmch_t*)client_;
+     if (!client) {
+          TBMCHLOG_E("client is NULL");
+          return;
+     }
+
+     // TODO: ???
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCHLOG_E("Unable to take semaphore!");
+          return;
+     }
+
      // clone parameter in lock/unlock
-     // client_->config.on_connected(client_->config.context, ...);       /*!< Callback of connected ThingsBoard MQTT */
+     void *context = client->config.context;
+     tbmch_on_connected_t on_connected = client->config.on_connected; /*!< Callback of connected ThingsBoard MQTT */
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+  
+     // do callback
+     on_connected(client, context);
+     return;
 }
-static void _tbmch_disonnected(tbmch_handle_t client_) //onDisonnected() // First receive
+static void _tbmch_disonnected_on(tbmch_handle_t client_) //onDisonnected() // First receive
 {
-     // TODO:
+     tbmch_t *client = (tbmch_t*)client_;
+     if (!client) {
+          TBMCHLOG_E("client is NULL");
+          return;
+     }
+
+     // TODO: ???
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCHLOG_E("Unable to take semaphore!");
+          return;
+     }
+
      // clone parameter in lock/unlock
-     // client_->config.on_disconnected(client_->config.context, ...); /*!< Callback of disconnected ThingsBoard MQTT */
+     void *context = client->config.context;
+     tbmch_on_disconnected_t on_disconnected = client->config.on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+  
+     // do callback
+     on_disconnected(client, context);
+     return;
 }
 
 //====1.Publish Telemetry time-series data==============================================================================
@@ -295,7 +399,7 @@ tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -304,7 +408,7 @@ tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void
      tbmch_tsdata_t *tsdata = _tbmch_tsdata_init(client_, key/*, type*/, context, on_get/*, on_set*/);
      if (!tsdata) {
           // Give semaphore
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           TBMCHLOG_E("Init tsdata failure! key=%s", key);
           return ESP_FAIL;
      }
@@ -326,7 +430,7 @@ tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
@@ -338,7 +442,7 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -360,7 +464,7 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
@@ -378,7 +482,7 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -413,7 +517,7 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
      cJSON_Delete(object); // delete json object
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
@@ -445,7 +549,7 @@ static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, cons
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -454,7 +558,7 @@ static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, cons
      tbmch_clientattribute_t *clientattribute = _tbmch_clientattribute_init(client_, key, context, on_get, on_set);
      if (!clientattribute) {
           // Give semaphore
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           TBMCHLOG_E("Init clientattribute failure! key=%s", key);
           return ESP_FAIL;
      }
@@ -476,7 +580,7 @@ static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, cons
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
@@ -488,7 +592,7 @@ tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -510,7 +614,7 @@ tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*const char *key,*/ ...) ////tbmqttlink.h.tbmch_sendClientAttributes();
@@ -526,7 +630,7 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -561,14 +665,40 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
      cJSON_Delete(object); // delete json object
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
 //unpack & deal
-static void !_tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJSON *object)
+static void _tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJSON *object)
 {
-     // TODO: foreach itme to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCLOG_E("client or object is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     tbmch_clientattribute_t *clientattribute = NULL;
+     const char* key = NULL;
+     LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
+          if (clientattribute) {
+               key = _tbmch_clientattribute_get_key(clientattribute);
+               if (cJSON_HasObjectItem(object, key)) {
+                    _tbmch_clientattribute_do_set(clientattribute, cJSON_GetObjectItem(object, key));
+               }
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return;// ESP_OK;
 }
 
 //====3.Subscribe to shared device attribute updates from the server===================================================
@@ -583,7 +713,7 @@ tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -592,7 +722,7 @@ tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key
      tbmch_sharedattribute_t *sharedattribute = _tbmch_sharedattribute_init(key, context, on_set);
      if (!sharedattribute) {
           // Give semaphore
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           TBMCHLOG_E("Init sharedattribute failure! key=%s", key);
           return ESP_FAIL;
      }
@@ -614,14 +744,13 @@ tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
 // remove shared_attribute from tbmch_shared_attribute_list_t
 tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
 {
-     // TODO:
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !key) {
           TBMCLOG_E("client or key is NULL!");
@@ -629,7 +758,7 @@ tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -651,39 +780,67 @@ tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
 //unpack & deal
 //onAttrOfSubReply()
-static void !_tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJSON *object)
+static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJSON *object)
 {
-     // TODO: foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
-     
-     // TODO: special process for fwupdate:  
-     // if (have all {fw_title, fw_version, fw_checksum, fw_checksum_algorithm}) {
-     //      clone four fw_xx & fwupdate_item
-     //      xSemaphoreGive(lock);
-     //      _tbmch_fwupdate_on_sharedattributes(tbmch_handle_t client, 
-     //                                             const char *fw_title, const char *fw_version,
-     //                                             const char *fw_checksum, const char *fw_checksum_algorithm)
-     //      free four fw_xx & fwupdate_item
-     //      return;
-     // }
-     // xSemaphoreGive(lock);
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCLOG_E("client or object is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     tbmch_sharedattribute_t *sharedattribute = NULL;
+     const char* key = NULL;
+     LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
+          if (sharedattribute) {
+               key = _tbmch_sharedattribute_get_key(sharedattribute);
+               if (cJSON_HasObjectItem(object, key)) {
+                    _tbmch_sharedattribute_do_set(sharedattribute, cJSON_GetObjectItem(object, key));
+               }
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // special process for fwupdate
+     if (cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_TITLE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_VERSION) &&
+         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM) &&
+         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG))
+     {
+          char *fw_title = cJSON_GetStringValue(cJSON_GetObjectItem(const object, TB_MQTT_SHAREDATTRBUTE_FW_TITLE));
+          char *fw_version = cJSON_GetStringValue(cJSON_GetObjectItem(const object, TB_MQTT_SHAREDATTRBUTE_FW_VERSION));
+          char *fw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(const object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM));
+          char *fw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(const object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG));
+          _tbmch_fwupdate_on_sharedattributes(client, fw_title, fw_version, fw_checksum, fw_checksum_algorithm);
+     }
+
+     return;// ESP_OK;
 }
 
 //====4.Request client-side or shared device attributes from the server================================================
 ////tbmqttlink.h.tbmch_sendAttributesRequest();
 ////return request_id on successful, otherwise return -1/ESP_FAIL
 int tbmch_attributesrequest_send(tbmch_handle_t client_,
-                             void *context,
-                             tbmch_attributesrequest_on_response_t on_response,
-                             tbmch_attributesrequest_on_timeout_t on_timeout,
-                             int count, /*const char *key,*/...)
+                                 void *context,
+                                 tbmch_attributesrequest_on_response_t on_response,
+                                 tbmch_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...)
 {
-     #define MAX_KEYS_LEN (256)
+#define MAX_KEYS_LEN (256)
 
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
@@ -696,7 +853,7 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
      }
 
      // Take semaphore, malloc client_keys & shared_keys
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -785,13 +942,13 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      TBMCH_FREE(client_keys);
      TBMCH_FREE(shared_keys);
      return request_id;
 
 attributesrequest_fail:
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      if (!client_keys) {
           TBMCH_FREE(client_keys);
      }
@@ -802,22 +959,99 @@ attributesrequest_fail:
 }
 
 // onAttributesResponse()=>_attributesResponse()
-static void !_tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
+static void _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
-     // TODO: 
-     // temp cache attributesrequest
-     // _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
-     // clientattr: _tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJSON *object)
-     // sharedattr: _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJSON *object)
-     // _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesrequest)
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCLOG_E("client or object is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // Search attributesrequest
+     tbmch_attributesrequest_t *attributerequest = NULL;
+     LIST_FOREACH(attributerequest, &client->attributerequest_list, entry) {
+          if (attributerequest && (_tbmch_attributesrequest_get_request_id(attributerequest)==request_id)) {
+               break;
+          }
+     }
+     if (!attributerequest) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCLOG_W("Unable to find attribute request:%d!", request_id);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove attributesrequest
+     tbmch_attributesrequest_t *cache = _tbmch_attributesrequest_clone_wo_listentry(attributerequest);
+     LIST_REMOVE(attributerequest, entry);
+     _tbmch_attributerequest_destroy(attributerequest);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT)) {
+          _tbmch_clientattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT));
+     }
+     // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED)) {
+          _tbmch_sharedattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED));
+     }
+
+     // Do response
+     _tbmch_attributesrequest_do_response(cache);
+     // Free cache
+     _tbmch_attributerequest_destroy(cache);
+
+     return;// ESP_OK;
 }
 // onAttributesResponseTimeout()
-static void !_tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int request_id)
+static void _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int request_id)
 {
-     // TODO:
-     // temp cache attributesrequest
-     // _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
-     // _tbmch_attributesrequest_do_timeout(tbmch_attributesrequest_t *attributesrequest)
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // Search attributesrequest
+     tbmch_attributesrequest_t *attributerequest = NULL;
+     LIST_FOREACH(attributerequest, &client->attributerequest_list, entry) {
+          if (attributerequest && (_tbmch_attributesrequest_get_request_id(attributerequest)==request_id)) {
+               break;
+          }
+     }
+     if (!attributerequest) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCLOG_W("Unable to find attribute request:%d!", request_id);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove attributesrequest
+     tbmch_attributesrequest_t *cache = _tbmch_attributesrequest_clone_wo_listentry(attributerequest);
+     LIST_REMOVE(attributerequest, entry);
+     _tbmch_attributerequest_destroy(attributerequest);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do timeout
+     _tbmch_attributesrequest_do_timeout(cache);
+     // Free attributesrequest
+     _tbmch_attributerequest_destroy(cache);
+
+     return;// ESP_OK;
 }
 
 //====5.Server-side RPC================================================================================================
@@ -833,7 +1067,7 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -842,7 +1076,7 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
      tbmch_serverrpc_t *serverrpc = _tbmch_serverrpc_init(client, method, context, on_request);
      if (!serverrpc) {
           // Give semaphore
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           TBMCHLOG_E("Init serverrpc failure! key=%s", key);
           return ESP_FAIL;
      }
@@ -864,7 +1098,7 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
@@ -878,7 +1112,7 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -886,7 +1120,7 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
      // Search item
      tbmch_serverrpc_t *serverrpc = NULL;
      LIST_FOREACH(serverrpc, &client->serverrpc_list, entry) {
-          if (serverrpc && strcmp(_tbmch_serverrpc_get_key(serverrpc), method)==0) {
+          if (serverrpc && strcmp(_tbmch_serverrpc_get_method(serverrpc), method)==0) {
                break;
           }
      }
@@ -900,19 +1134,72 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
-////onServerRpcRequest()
-static void !_tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const cJSON *object)
+////parseServerSideRpc(msg)
+static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
-     // TODO:
-     // temp cache serverrpc in lock/unlock
-     // tbmch_rpc_results_t *result = _tbmch_serverrpc_do_request(tbmch_serverrpc_t *serverrpc, int request_id, tbmch_rpc_params_t *params);
-     // if (result) {
-     //      int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *response, 1/*qos*/, 0/*retain*/)
-     // }
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCLOG_E("client or object is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     const char *method = NULL;
+     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_RPC_METHOD)) {
+          cJSON *methodItem = cJSON_GetObjectItem(object, TB_MQTT_TEXT_RPC_METHOD)
+          method = cJSON_GetStringValue(methodItem);
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // Search item
+     tbmch_serverrpc_t *serverrpc = NULL;
+     LIST_FOREACH(serverrpc, &client->serverrpc_list, entry) {
+          if (serverrpc && strcmp(_tbmch_serverrpc_get_method(serverrpc), method)==0) {
+               break;
+          }
+     }
+     if (!serverrpc) {
+          TBMCLOG_W("Unable to deal server-rpc:%s!", method);
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          return;// ESP_OK;
+     }
+
+     // Clone serverrpc
+     tbmch_serverrpc_t *cache = _tbmch_serverrpc_clone_wo_listentry(serverrpc);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do request
+     tbmch_rpc_results_t *result = _tbmch_serverrpc_do_request(cache, request_id,
+                                                               cJSON_GetObjectItem(object, TB_MQTT_TEXT_RPC_PARAMS));
+     // Send reply
+     if (result) {
+          #if 0
+          cJSON* reply = cJSON_CreateObject();
+          cJSON_AddStringToObject(reply, TB_MQTT_TEXT_RPC_METHOD, method);
+          cJSON_AddItemToObject(reply, TB_MQTT_TEXT_RPC_RESULTS, result);
+          const char *response = cJSON_Print(reply);
+          tbmc_serverrpc_response(client_, request_id, response, 1/*qos*/, 0/*retain*/)
+          cJSON_Delete(reply);
+          #else
+          const char *response = cJSON_Print(result);
+          tbmc_serverrpc_response(client_, request_id, response, 1/*qos*/, 0/*retain*/)
+          cJSON_Delete(result);
+          #endif
+     }
+     // Free serverrpc
+     _tbmch_serverrpc_destroy(cache);
+
+     return;// ESP_OK;
 }
 
 //====6.Client-side RPC================================================================================================
@@ -933,10 +1220,11 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_oneway_request(tbmch_handle_t client
      // Send msg to server
      cJSON *object = cJSON_CreateObject(); // create json object
      cJSON_AddStringToObject(object, TB_MQTT_TEXT_RPC_METHOD, method);
-     if (params)
+     if (params) {
           cJSON_AddItemReferenceToObject(object, TB_MQTT_TEXT_RPC_PARAMS, params);
-     else 
+     } else  {
           cJSON_AddNullToObject(object, TB_MQTT_TEXT_RPC_PARAMS);
+     }
      char *params_str = cJSON_Print(object);
      // TODO: replace real parameter!
      int request_id = tbmc_clientrpc_request_ex(client->tbmqttclient, method, params_str,
@@ -970,7 +1258,7 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -992,7 +1280,7 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
      cJSON_Delete(object); // delete json object
      if (request_id<0) {
           TBMCHLOG_E("Init tbmc_clientrpc_request failure!");
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
 
@@ -1000,7 +1288,7 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
      tbmch_clientrpc_t *clientrpc = _tbmch_clientrpc_init(client, request_id, method, context, on_response, on_timeout);
      if (!clientrpc) {
           TBMCHLOG_E("Init clientrpc failure!");
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
 
@@ -1021,25 +1309,95 @@ tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return request_id;
 }
 
 //onClientRpcResponse()
-static void !_tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
+static void _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
 {
-     // TODO: 
-     // temp cache clientrpc
-     // _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
-     // _tbmch_clientrpc_do_response(tbmch_attributesrequest_t *clientrpc)
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCLOG_E("client or object is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // Search clientrpc
+     tbmch_clientrpc_t *clientrpc = NULL;
+     LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
+          if (clientrpc && (_tbmch_clientrpc_get_request_id(clientrpc)==request_id)) {
+               break;
+          }
+     }
+     if (!clientrpc) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCLOG_W("Unable to find client-rpc:%d!", request_id);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove clientrpc
+     tbmch_clientrpc_t *cache = _tbmch_clientrpc_clone_wo_listentry(clientrpc);
+     LIST_REMOVE(clientrpc, entry);
+     _tbmch_clientrpc_destroy(clientrpc);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do response
+     _tbmch_clientrpc_do_response(cache);
+     // Free cache
+     _tbmch_clientrpc_destroy(cache);
+
+     return;// ESP_OK;
 }
 //onClientRpcResponseTimeout()
-static void !_tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
+static void _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
 {
-     // TODO:
-     // temp cache clientrpc
-     // _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
-     // _tbmch_clientrpc_do_timeout(tbmch_clientrpc_t *clientrpc)
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCLOG_E("client is NULL!");
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCLOG_E("Unable to take semaphore!");
+          return;// ESP_FAIL;
+     }
+
+     // Search clientrpc
+     tbmch_clientrpc_t *clientrpc = NULL;
+     LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
+          if (clientrpc && (_tbmch_clientrpc_get_request_id(clientrpc)==request_id)) {
+               break;
+          }
+     }
+     if (!clientrpc) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCLOG_W("Unable to find attribute request:%d!", request_id);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove clientrpc
+     tbmch_clientrpc_t *cache = _tbmch_clientrpc_clone_wo_listentry(clientrpc);
+     LIST_REMOVE(clientrpc, entry);
+     _tbmch_clientrpc_destroy(clientrpc);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do timeout
+     _tbmch_clientrpc_do_timeout(cache);
+     // Free clientrpc
+     _tbmch_clientrpc_destroy(cache);
+
+     return;// ESP_OK;
 }
 
 //====7.Claiming device using device-side key scenario: Not implemented yet============================================
@@ -1061,7 +1419,7 @@ tbmch_err_t tbmch_fwupdate_append(tbmch_handle_t client_, const char *fw_title,
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCHLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -1072,7 +1430,7 @@ tbmch_err_t tbmch_fwupdate_append(tbmch_handle_t client_, const char *fw_title,
                                                        on_fw_success, on_fw_timeout);
      if (!fwupdate) {
           // Give semaphore
-          xSemaphoreGive(client->lock);
+          xSemaphoreGive(client->_lock);
           TBMCHLOG_E("Init fwupdate failure! key=%s", key);
           return ESP_FAIL;
      }
@@ -1094,7 +1452,7 @@ tbmch_err_t tbmch_fwupdate_append(tbmch_handle_t client_, const char *fw_title,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_t client_, const char *fw_title)
@@ -1106,7 +1464,7 @@ tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_t client_, const char *fw_title)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBMCLOG_E("Unable to take semaphore!");
           return ESP_FAIL;
      }
@@ -1128,7 +1486,7 @@ tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_t client_, const char *fw_title)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->lock);
+     xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
@@ -1160,10 +1518,44 @@ static void !_tbmch_fwupdate_on_timeout(tbmch_handle_t client_, int request_id)
 //=====================================================================================================================
 //~~static int _tbmch_sendServerRpcReply(tbmch_handle_t client_, int request_id, const char* response, int qos=1, int retain=0); //sendServerRpcReply()
 
-static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg) //_sendTbmqttInnerMsg2Queue()
+//send msg to queue
+//true if the item was successfully posted, otherwise false. //pdTRUE if the item was successfully posted, otherwise errQUEUE_FULL.
+//It runs in MQTT thread.
+static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg)
 {
-     // TODO: send msg to queue
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !msg) {
+          TBMCLOG_E("client or msg is NULL!");
+          return false;
+     }
+
+     // TODO: whether to insert lock?
+     // Take semaphore
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBMCLOG_E("Unable to take semaphore!");
+     //      return false;
+     // }
+
+     // Send a pointer to a struct AMessage object.  Don't block if the queue is already full.
+     int i = 0;
+     BaseType_t sendResult;
+     do {
+          sendResult = xQueueSend(client->_xQueue, (void *)msg, (TickType_t)10);
+          i++;
+
+          if (sendResult != pdTRUE) {
+               TBMCLOG_W("_xQueue is full!");
+          }
+     } while (i < 20 && sendResult != pdTRUE);
+     if (i >= 20) {
+          TBMCLOG_W("send innermsg timeout!");
+     }
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+     return sendResult == pdTRUE ? true : false;
 }
+
 //static bool _tbmch_tbDecodeAttributesJsonPayload(JsonObject& attr_kvs); //_tbDecodeAttributesJsonPayload()
 
 static void _tbmch_on_connected(tbmch_handle_t client_) //onConnected() // First receive

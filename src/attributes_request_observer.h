@@ -52,6 +52,7 @@ typedef struct tbmch_attributesrequest
 tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, int request_id, void *context,
                                                                tbmch_attributesrequest_on_response_t on_response,
                                                                tbmch_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbmch_attributesrequest */
+tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_attributesrequest_t *src);
 tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbmch_attributesrequest */
 
 int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attributesrequest);

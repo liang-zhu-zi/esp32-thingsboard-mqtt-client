@@ -43,6 +43,28 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
     return attributesrequest;
 }
 
+tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_attributesrequest_t *src)
+{
+    if (!src) {
+        TBMCHLOG_E("src is NULL");
+        return NULL;
+    }
+    
+    tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
+    if (!attributesrequest) {
+        TBMCHLOG_E("Unable to malloc memeory!");
+        return NULL;
+    }
+
+    memset(attributesrequest, 0x00, sizeof(tbmch_attributesrequest_t));
+    attributesrequest->client = src->client;
+    attributesrequest->request_id = src->request_id;
+    attributesrequest->context = src->context;
+    attributesrequest->on_response = src->on_response;
+    attributesrequest->on_timeout = src->on_timeout;
+    return attributesrequest;
+}
+
 /*!< Destroys the tbmch_attributesrequest */
 tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
 {
