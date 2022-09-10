@@ -95,13 +95,20 @@ static void __tbmch_fwupdate_reset(tbmch_fwupdate_t *fwupdate)
         return;
     }
 
-    TBMC_FREE(fwupdate->fw_version);
-    TBMC_FREE(fwupdate->fw_checksum);
-    TBMC_FREE(fwupdate->fw_checksum_algorithm);
+    
+    if (fwupdate->fw_version) {
+        TBMCH_FREE(fwupdate->fw_version);
+        fwupdate->fw_version = NULL;
+    }
+    if (fwupdate->fw_checksum) {
+        TBMCH_FREE(fwupdate->fw_checksum);
+        fwupdate->fw_tfw_checksumitle = NULL;
+    }
+    if (fwupdate->fw_checksum_algorithm) {
+        TBMCH_FREE(fwupdate->fw_checksum_algorithm);
+        fwupdate->fw_checksum_algorithm = NULL;
+    }
 
-    fwupdate->fw_version = NULL;
-    fwupdate->fw_checksum = NULL;
-    fwupdate->fw_checksum_algorithm = NULL;
     fwupdate->request_id = -1;
     fwupdate->chunk = 0;
     fwupdate->checksum = 0;
@@ -115,32 +122,21 @@ bool _tbmch_fwupdate_do_sharedattributes(tbmch_fwupdate_t *fwupdate, const char 
         return false;
     }
 
+    __tbmch_fwupdate_reset(fwupdate);
     bool result = fwupdate->on_fw_attributes(fwupdate->client, fwupdate->context,
                                              fw_title, fw_version, fw_checksum, fw_checksum_algorithm);
     if (result) {
         // cache fw_version
-        if (fwupdate->fw_version) {
-            TBMCH_FREE(fwupdate->fw_version);
-            fwupdate->fw_version = NULL;
-        }
         fwupdate->fw_version = TBMCH_MALLOC(strlen(fw_version)+1);
         if (fwupdate->fw_version) {
             strcpy(fwupdate->fw_version, fw_version);
         }
         // cache fw_checksum
-        if (fwupdate->fw_checksum) {
-            TBMCH_FREE(fwupdate->fw_checksum);
-            fwupdate->fw_tfw_checksumitle = NULL;
-        }
         fwupdate->fw_checksum = TBMCH_MALLOC(strlen(fw_checksum)+1);
         if (fwupdate->fw_checksum) {
             strcpy(fwupdate->fw_checksum, fw_checksum);
         }
         // cache fw_checksum_algorithm
-        if (fwupdate->fw_checksum_algorithm) {
-            TBMCH_FREE(fwupdate->fw_checksum_algorithm);
-            fwupdate->fw_checksum_algorithm = NULL;
-        }
         fwupdate->fw_checksum_algorithm = TBMCH_MALLOC(strlen(fw_checksum_algorithm)+1);
         if (fwupdate->fw_checksum_algorithm) {
             strcpy(fwupdate->fw_checksum_algorithm, fw_checksum_algorithm);
@@ -148,6 +144,26 @@ bool _tbmch_fwupdate_do_sharedattributes(tbmch_fwupdate_t *fwupdate, const char 
     }
 
     return result;
+}
+
+const char *_tbmch_fwupdate_get_title(tbmch_fwupdate_t *fwupdate)
+{
+    if (!fwupdate) {
+        TBMCHLOG_E("fwupdate is NULL");
+        return NULL;
+    }
+
+    return fwupdate->fw_title;
+}
+
+int _tbmch_fwupdate_get_request_id(tbmch_fwupdate_t *fwupdate)
+{
+    if (!fwupdate) {
+        TBMCHLOG_E("fwupdate is NULL");
+        return -1;
+    }
+
+    return fwupdate->request_id;
 }
 
 tbmch_err_t _tbmch_fwupdate_set_request_id(tbmch_fwupdate_t *fwupdate, int request_id)
@@ -161,11 +177,12 @@ tbmch_err_t _tbmch_fwupdate_set_request_id(tbmch_fwupdate_t *fwupdate, int reque
     return ESP_OK;
 }
 
-tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk/*current chunk*/, const void *fw_data, int data_size)
+//return -1: end & failure;  0: end & success;  1: go on, get next package
+int _tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk/*current chunk*/, const void *fw_data, int data_size)
 {
     if (!fwupdate) {
         TBMCHLOG_E("fwupdate is NULL");
-        return ESP_FAIL;
+        return -1; //end & failure
     }
     
     tbmch_err_t result = true;
@@ -176,27 +193,28 @@ tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk/*cu
             goto fwupdate_fail;
         } else {
             // TODO:  calc checksum: fwupdate->checksum = {fw_checksum_algorithm, fw_data, data_size};
+            fwupdate->chunk = chunk+data_size; // TODO:...
+            return 1; //go on
         }
     } else {
         // TODO: verify checksum: result = (fwupdate->checksum == fwupdate->fw_checksum{string});
         if (!result) {
             goto fwupdate_fail;
         } else {
-            fwupdate->on_fw_success_t(fwupdate->client, fwupdate->context, fwupdate->request_id, chunk/*total_size*/);
+            fwupdate->on_fw_success(fwupdate->client, fwupdate->context, fwupdate->request_id, chunk/*total_size*/);
             __tbmch_fwupdate_reset(fwupdate);
+            return 0; //end & success
         }
     }
-    fwupdate->chunk = chunk+data_size; // TODO:...
-    return ESP_OK;
 
 fwupdate_fail:
     // on_timeout() and reset()
     fwupdate->on_fw_timeout(fwupdate->client, fwupdate->context, fwupdate->request_id, chunk /*current chunk*/);
     __tbmch_fwupdate_reset(fwupdate);
-    return ESP_FAIL;
+    return -1; //end & failure
 }
 
-void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk/*? current chunk*/)
+void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate)
 {
     if (!fwupdate) {
         TBMCHLOG_E("fwupdate is NULL");
@@ -204,6 +222,6 @@ void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk/*? current
     }
 
     // on_timeout() and reset()
-    fwupdate->on_fw_timeout(fwupdate->client, fwupdate->context, fwupdate->request_id, chunk /*current chunk*/);
+    fwupdate->on_fw_timeout(fwupdate->client, fwupdate->context, fwupdate->request_id, fwupdate->chunk/*current chunk*/);
     __tbmch_fwupdate_reset(fwupdate);
 }

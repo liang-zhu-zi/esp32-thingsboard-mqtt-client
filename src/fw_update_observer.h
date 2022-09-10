@@ -60,14 +60,18 @@ tbmch_fwupdate_t *_tbmch_fwupdate_init(tbmch_handle_t client, const char *fw_tit
 tbmch_err_t _tbmch_fwupdate_destroy(tbmch_fwupdate_t *fwupdate);                   /*!< Destroys the tbmch_fwupdate_t */
 ////tbmch_err_t __tbmch_fwupdate_reset(tbmch_fwupdate_t *fwupdate);
 
+const char *_tbmch_fwupdate_get_title(tbmch_fwupdate_t *fwupdate);  
+int _tbmch_fwupdate_get_request_id(tbmch_fwupdate_t *fwupdate);
+
 bool _tbmch_fwupdate_do_sharedattributes(tbmch_fwupdate_t *fwupdate, const char *fw_title, const char *fw_version,
                                          const char *fw_checksum, const char *fw_checksum_algorithm); //save fw_..., exec fw_update
 
 tbmch_err_t _tbmch_fwupdate_set_request_id(tbmch_fwupdate_t *fwupdate, int request_id);
 
-tbmch_err_t tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/, const void *fw_data, int data_size); //on_response or on_success or on_timeout(failure), and reset()
+//return -1: end & failure;  0: end & success;  1: go on, get next package
+tbmch_err_t _tbmch_fwupdate_do_response(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/, const void *fw_data, int data_size); //on_response or on_success or on_timeout(failure), and reset()
 ////void _tbmch_fwupdate_do_success(tbmch_fwupdate_t *fwupdate, int chunk /*total_size*/);
-void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate, int chunk /*current chunk*/); // on_timeout() and reset()
+void _tbmch_fwupdate_do_timeout(tbmch_fwupdate_t *fwupdate); // on_timeout() and reset()
 
 //0.  Subscribe topic: shared attribute updates: fw_title, fw_version, fw_checksum, fw_checksum_algorithm 
 //0.  Subscribe topic: f/w response: v2/fw/response/+/chunk/+

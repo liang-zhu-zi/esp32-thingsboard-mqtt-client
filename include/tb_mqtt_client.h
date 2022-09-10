@@ -111,7 +111,7 @@ extern "C" {
 #define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM "fw_checksum"
 #define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG "fw_checksum_algorithm"
 
-#define TB_MQTT_TIMEOUT (60) //second, Client-Side RPC timeout, or Attributes Request timeout
+#define TB_MQTT_TIMEOUT (30) //second, Client-Side RPC timeout, Attributes Request timeout or fwupdate Request timeout
 
 //====tbmc data========================================================================================================
 /* Definitions for error constants. */

@@ -189,11 +189,11 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false; //!!
      }
 
-     client->config.uri = config->uri;
-     client->config.access_token = config->access_token;
-     client->config.cert_pem = config->cert_pem;
-     client->config.client_cert_pem = config->client_cert_pem;
-     client->config.client_key_pem = config->client_key_pem;
+     free(client->config.uri);               client->config.uri = strdup(config->uri);
+     free(client->config.access_token);      client->config.access_token = strdup(config->access_token);
+     free(client->config.cert_pem);          client->config.cert_pem = strdup(config->cert_pem);
+     free(client->config.client_cert_pem);   client->config.client_cert_pem = strdup(config->client_cert_pem);
+     free(client->config.client_key_pem);    client->config.client_key_pem = strdup(config->client_key_pem);
 
      client->context = context;
      client->on_connected = on_connected;
@@ -262,13 +262,13 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 
      client->mqtt_handle = NULL;
 
-     client->config.uri = NULL;
-     client->config.access_token = NULL;
-     //client->config.client_id = NULL;
-     //client->config.username = NULL;
-     client->config.cert_pem = NULL;
-     client->config.client_cert_pem = NULL;
-     client->config.client_key_pem = NULL;
+     free(client->config.uri);               client->config.uri = NULL;
+     free(client->config.access_toke);       client->config.access_token = NULL;
+     //free(client->config.client_id);       client->config.client_id = NULL;
+     //free(client->config.username);        client->config.username = NULL;
+     free(client->config.cert_pem);          client->config.cert_pem = NULL;
+     free(client->config.client_cert_pem);   client->config.client_cert_pem = NULL;
+     free(client->config.client_key_pem);    client->config.client_key_pem = NULL;
 
      client->context = NULL;
      client->on_connected = NULL;
