@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "sys/queue.h"
 #include "tb_mqtt_client_helper.h"
 
 #ifdef __cplusplus

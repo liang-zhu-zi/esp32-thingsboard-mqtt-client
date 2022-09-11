@@ -147,17 +147,18 @@ typedef enum
 
 typedef struct
 {
-  const char *uri;             /*!< Complete MQTT broker URI */
-  const char *access_token;    /*!< Access Token */
-  const char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-  const char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-  const char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+  char *uri;             /*!< Complete MQTT broker URI */
+  char *access_token;    /*!< Access Token */
+  char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+  char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+  char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
 } tbmc_config_t;
 
 /**
  * ThingsBoard MQTT Client handle
  */
-typedef tbmc_t *tbmc_handle_t;
+//typedef tbmc_t *tbmc_handle_t;
+typedef struct tbmc_client *tbmc_handle_t;
 
 typedef void (*tbmc_on_connected_t)(void *context);                                                       // First receive
 typedef void (*tbmc_on_disconnected_t)(void *context);                                                    // First receive
@@ -179,7 +180,7 @@ void tbmc_destroy(tbmc_handle_t client_);
 bool tbmc_connect(tbmc_handle_t client_, tbmc_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
-                  tbmc_on_disconnected_t on_disonnected,
+                  tbmc_on_disconnected_t on_disconnected,
                   tbmc_on_sharedattr_received_t on_sharedattributes_received,
                   tbmc_on_serverrpc_request_t on_serverrpc_request);
 void tbmc_disconnect(tbmc_handle_t client_);

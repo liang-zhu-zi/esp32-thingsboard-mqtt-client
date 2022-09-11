@@ -14,6 +14,7 @@
 
 // ThingsBoard MQTT Client high layer API
 
+#include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 

@@ -14,14 +14,20 @@
 
 // ThingsBoard MQTT Client low layer API
 
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+#include "freertos/FreeRTOS.h"
+#include "sys/queue.h"
+#include "esp_err.h"
+#include "mqtt_client.h"
 
 #include "tb_mqtt_client.h"
 
 //#define TBMCLOG_LONG
 
-#define TBMCLOG_LEVLE (4)               //ERR:1, WARN:2, INFO:3, DBG:4, OBSERVES:5
+#define TBMCLOG_LEVLE (5)               //ERR:1, WARN:2, INFO:3, DBG:4, OBSERVES:5
 
 #if (TBMCLOG_LEVLE>=1)
 #define TBMCLOG_E(format, ...)  printf("[TBMC][E] " format "\r\n", ##__VA_ARGS__)
@@ -72,7 +78,7 @@ typedef struct tbmc_request
 /**
  * ThingsBoard MQTT Client
  */
-typedef struct tbmc_client_
+typedef struct tbmc_client
 {
      esp_mqtt_client_handle_t mqtt_handle;
 
@@ -93,9 +99,10 @@ typedef struct tbmc_client_
 
 static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
 static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
-static esp_err_t _on_MqttEventCallback(/*tbmc_handle_t client_,*/ esp_mqtt_event_handle_t event);
-static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
+
+static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
+
 static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                            void *context,
@@ -103,7 +110,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
                                            tbmc_on_timeout_t on_timeout);
 static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id);
 static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t timestamp,
-                                             LIST_HEAD(tbmc_request_list, tbmc_request) * timeout_request_list);
+                                             LIST_HEAD(tbmc_request_list, tbmc_request) *timeout_request_list);
 static tbmc_request_t *_request_create(tbmc_request_type_t type,
                                        uint32_t request_id,
                                        void *context,
@@ -147,7 +154,7 @@ void tbmc_destroy(tbmc_handle_t client_)
           return;
      }
 
-     if (client->mqtt_client) {
+     if (client->mqtt_handle) {
           tbmc_disconnect(client);
           client->mqtt_client = NULL;
      }
@@ -166,8 +173,8 @@ bool tbmc_connect(tbmc_handle_t client_,
                   tbmc_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
-                  tbmc_on_disconnected_t on_disonnected,
-                  tbmc_on_sharedattr_received_t on_sharedattributes_received,
+                  tbmc_on_disconnected_t on_disconnected,
+                  tbmc_on_sharedattr_received_t on_sharedattr_received,
                   // tbmc_on_attrrequest_response_t on_attrrequest_response,
                   // tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
                   // tbmc_on_clientrpc_response_t on_clientrpc_response,
@@ -189,18 +196,16 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false; //!!
      }
 
-     free(client->config.uri);               client->config.uri = strdup(config->uri);
-     free(client->config.access_token);      client->config.access_token = strdup(config->access_token);
-     free(client->config.cert_pem);          client->config.cert_pem = strdup(config->cert_pem);
-     free(client->config.client_cert_pem);   client->config.client_cert_pem = strdup(config->client_cert_pem);
-     free(client->config.client_key_pem);    client->config.client_key_pem = strdup(config->client_key_pem);
-
-     client->context = context;
-     client->on_connected = on_connected;
-     client->on_disonnected = on_disonnected;
-     client->on_sharedattributes_received = on_sharedattributes_received;
-     client->on_serverrpc_request = on_serverrpc_request;
-
+     free(client->config.uri);               client->config.uri = NULL;
+     free(client->config.access_token);      client->config.access_token = NULL;
+     free(client->config.cert_pem);          client->config.cert_pem = NULL;
+     free(client->config.client_cert_pem);   client->config.client_cert_pem = NULL;
+     free(client->config.client_key_pem);    client->config.client_key_pem = NULL;
+     client->context = NULL;
+     client->on_connected = NULL;           /*!< Callback of connected ThingsBoard MQTT */
+     client->on_disconnected = NULL;        /*!< Callback of disconnected ThingsBoard MQTT */
+     client->on_sharedattr_received = NULL; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
+     client->on_serverrpc_request = NULL;   /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
      client->state = TBMC_STATE_DISCONNECTED;
 
      // SemaphoreHandle_t lock;
@@ -214,14 +219,17 @@ bool tbmc_connect(tbmc_handle_t client_,
         .username = config->access_token,
         .client_cert_pem = config->client_cert_pem,
         .client_key_pem = config->client_key_pem,
-        .cert_pem = config->server_cert_pem,
+        .cert_pem = config->cert_pem, //server_cert_pem
      };
+
      client->mqtt_handle = esp_mqtt_client_init(&mqtt_cfg);
      if (!client->mqtt_handle)
      {
           TBMCLOG_W("unable to init mqtt client");
           return false;
      }
+     /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
+     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_MqttEventHandle, client->mqtt_handle);
      int32_t result = esp_mqtt_client_start(client->mqtt_handle);
      if (result != ESP_OK)
      {
@@ -231,6 +239,26 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false;
      }
 
+     if (config->uri && strlen(config->uri > 0)) {
+          client->config.uri = strdup(config->uri);
+     }
+     if (config->access_token && strlen(config->access_token > 0)) {
+          client->config.access_token = strdup(config->access_token);
+     }
+     if (config->cert_pemi && strlen(config->cert_pem > 0)) {
+          client->config.cert_pem = strdup(config->cert_pem);
+     }
+     if (config->client_cert_pem && strlen(config->client_cert_pem > 0)) {
+          client->config.client_cert_pem = strdup(config->client_cert_pem);
+     }
+     if (config->client_key_pem && strlen(config->client_key_pem > 0)) {
+          client->config.client_key_pem = strdup(config->client_key_pem);
+     }
+     client->context = context;
+     client->on_connected = on_connected;
+     client->on_disconnected = on_disconnected;
+     client->on_sharedattr_received = on_sharedattr_received;
+     client->on_serverrpc_request = on_serverrpc_request;
      client->state = TBMC_STATE_CONNECTING;
      return true;
 }
@@ -263,7 +291,7 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
      client->mqtt_handle = NULL;
 
      free(client->config.uri);               client->config.uri = NULL;
-     free(client->config.access_toke);       client->config.access_token = NULL;
+     free(client->config.access_token);      client->config.access_token = NULL;
      //free(client->config.client_id);       client->config.client_id = NULL;
      //free(client->config.username);        client->config.username = NULL;
      free(client->config.cert_pem);          client->config.cert_pem = NULL;
@@ -272,8 +300,8 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 
      client->context = NULL;
      client->on_connected = NULL;
-     client->on_disonnected = NULL;
-     client->on_sharedattributes_received = NULL;
+     client->on_disconnected = NULL;
+     client->on_sharedattr_received = NULL;
      client->on_serverrpc_request = NULL;
 
      client->state = TBMC_STATE_DISCONNECTED;
@@ -499,7 +527,7 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
               strlen(payload), payload);
 #endif
 
-     int message_id = _tbmc_publish(client, topic, payload, qos, retain);
+     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
      return request_id; /*return message_id;*/
 }
@@ -683,7 +711,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
               strlen(payload), payload);
 #endif
 
-     int message_id = _tbmc_publish(client, topic, payload, qos, retain);
+     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
      return request_id; /*return message_id;*/
 }
@@ -777,7 +805,7 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
      }*/
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_FWUPDATE, request_id_, context,
-                                           on_fwupdate_response, on_fwupdate_timeout);
+                                           (tbmc_on_response_t)on_fwupdate_response, on_fwupdate_timeout);
      if (request_id <= 0) {
           TBMCLOG_E("Unable to take semaphore");
           return -1;
@@ -803,7 +831,7 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
               strlen(payload), payload);
 #endif
 
-     int message_id = _tbmc_publish(client, topic, payload, qos, retain);
+     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
      return request_id; /*return message_id;*/
 }
@@ -876,29 +904,17 @@ static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *p
 }
 
 // The callback for when a MQTT event is received.
-static esp_err_t _on_MqttEventCallback(/*tbmc_handle_t client_,*/ esp_mqtt_event_handle_t event) //_onMqttEventCallback();
+static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-     if (!event) {
-          return -1;
-     }
-
-     tbmc_handle_t *client = (tbmc_handle_t *)event->user_context;
-     if (!client) {
-          return -1;
-     }
-
-     return _onMqttEventHandle(client, event);
-}
-static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onMqttEventHandle();  //MQTT_EVENT_...
-{
-     tbmc_t *client = (tbmc_t*)client_;
+     tbmc_t *client = (tbmc_t*)handler_args;
+     esp_mqtt_event_handle_t event = event_data;
      if (!client) {
           TBMCLOG_E("client is NULL!");
-          return -1;
+          return;// -1;
      }
      if (!event) {
           TBMCLOG_E("event is NULL!");
-          return -1;
+          return;// -1;
      }
 
      int msg_id;
@@ -954,7 +970,7 @@ static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handl
           TBMCLOG_V("MQTT_EVENT_DATA");
           ////TBMCLOG_D("TOPIC=%.*s", event->topic_len, event->topic);
           ////TBMCLOG_D("DATA=%.*s", event->data_len, event->data);
-          client->_on_DataEventProcess(client, event);
+          _on_DataEventProcess(client, event);
           break;
 
      case MQTT_EVENT_ERROR:
@@ -964,7 +980,7 @@ static esp_err_t _on_MqttEventHandle(tbmc_handle_t client_, esp_mqtt_event_handl
           TBMCLOG_W("Other event id:%d", event->event_id);
           break;
      }
-     return ESP_OK;
+     return;// ESP_OK;
 }
 // Processes MQTT_EVENT_DATA message
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onDataEventProcess(); //MQTT_EVENT_DATA
@@ -1122,6 +1138,7 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
      }
 }
 
+/*
 static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
 {
      if (!a & !b) {
@@ -1134,15 +1151,15 @@ static bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
           return false;
      } else if (a->request_id != b->request_id) {
           return false;
-     } else { // if (a->ts != b->ts)
-          return a->ts == b->ts;
+     } else { // if (a->timestamp != b->timestamp)
+          return a->timestamp == b->timestamp;
      }
-}
+}*/
 
 //return request_id on successful, otherwise return -1
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                 void *context,
-                                tbmc_on_response_t on_response,
+                                tbmc_on_response_t on_response, 
                                 tbmc_on_timeout_t on_timeout)
 {
      tbmc_t *client = (tbmc_t*)client_;
@@ -1166,7 +1183,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
                     client->next_request_id++;
           } while (client->next_request_id <= 0);
 
-          request_id = this->next_request_id;
+          request_id = client->next_request_id;
      }
 
      // Create request
@@ -1179,7 +1196,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      }
 
      // Insert request to list
-     tbmc_request_t *it, last = NULL;
+     tbmc_request_t *it, *last = NULL;
      if (LIST_FIRST(&client->request_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->request_list, tbmc_request, entry);
@@ -1257,12 +1274,12 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t tim
      int count = 0;
      tbmc_request_t *tbmc_request = NULL, *next;
      LIST_FOREACH_SAFE(tbmc_request, &client->request_list, entry, next) {
-          if (tbmc_request && tbmc_request->ts + TB_MQTT_TIMEOUT <= timestamp) {
+          if (tbmc_request && tbmc_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                // remove from request list
                LIST_REMOVE(tbmc_request, entry);
 
                // append to timeout list
-               tbmc_request_t *it, last = NULL;
+               tbmc_request_t *it, *last = NULL;
                if (LIST_FIRST(timeout_request_list) == NULL) {
                     LIST_INSERT_HEAD(timeout_request_list, tbmc_request, entry);
                     count++;
@@ -1300,7 +1317,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
      memset(tbmc_request, 0x00, sizeof(tbmc_request_t));
      tbmc_request->type = type;
      tbmc_request->request_id = request_id;
-     tbmc_request->ts = (uint32_t)time(NULL);
+     tbmc_request->timestamp = (uint32_t)time(NULL);
      tbmc_request->context = context;
      tbmc_request->on_response = on_response;
      tbmc_request->on_timeout = on_timeout;
@@ -1317,7 +1334,7 @@ static void _request_destroy(tbmc_request_t *tbmc_request)
 
      tbmc_request->type = 0;
      tbmc_request->request_id = 0;
-     tbmc_request->ts = 0;
+     tbmc_request->timestamp = 0;
      tbmc_request->context = NULL;
      tbmc_request->on_response = NULL;
      tbmc_request->on_timeout = NULL;

@@ -1,0 +1,10 @@
+menu "ThingsBoard MQTT Client library (TBMQTTClient)"
+
+    config TB_MQTT_CLIENT_HELPER_ENABLE
+        bool "Enable TBMQTTClient Helper"
+        default y
+        # depends on json
+        help
+            Use a more simplified API with cJSON.
+
+endmenu # "ThingsBoard MQTT Client library (TBMQTTClient)
