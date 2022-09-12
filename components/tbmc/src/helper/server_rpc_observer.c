@@ -16,24 +16,29 @@
 
 #include <string.h>
 
+#include "esp_err.h"
+
 #include "server_rpc_observer.h"
+#include "tb_mqtt_client_helper_log.h"
+
+const static char *TAG = "server_rpc_observer";
 
 /*!< Initialize tbmch_serverrpc */
 tbmch_serverrpc_t *_tbmch_serverrpc_init(tbmch_handle_t client, const char *method, void *context,
-                                         tbmch_serverrpc_request_callback_t on_request)
+                                         tbmch_serverrpc_on_request_t on_request)
 {
     if (!method) {
-        TBMCHLOG_E("method is NULL");
+        TBMCH_LOGE("method is NULL");
         return NULL;
     }
     if (!on_request) {
-        TBMCHLOG_E("on_request is NULL");
+        TBMCH_LOGE("on_request is NULL");
         return NULL;
     }
     
     tbmch_serverrpc_t *serverrpc = TBMCH_MALLOC(sizeof(tbmch_serverrpc_t));
     if (!serverrpc) {
-        TBMCHLOG_E("Unable to malloc memeory!");
+        TBMCH_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -51,13 +56,13 @@ tbmch_serverrpc_t *_tbmch_serverrpc_init(tbmch_handle_t client, const char *meth
 tbmch_serverrpc_t * _tbmch_serverrpc_clone_wo_listentry(tbmch_serverrpc_t *src)
 {
     if (!src) {
-        TBMCHLOG_E("src is NULL");
+        TBMCH_LOGE("src is NULL");
         return NULL;
     }
 
     tbmch_serverrpc_t *serverrpc = TBMCH_MALLOC(sizeof(tbmch_serverrpc_t));
     if (!serverrpc) {
-        TBMCHLOG_E("Unable to malloc memeory!");
+        TBMCH_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -75,19 +80,19 @@ tbmch_serverrpc_t * _tbmch_serverrpc_clone_wo_listentry(tbmch_serverrpc_t *src)
 tbmch_err_t _tbmch_serverrpc_destroy(tbmch_serverrpc_t *serverrpc)
 {
     if (!serverrpc) {
-        TBMCHLOG_E("serverrpc is NULL");
+        TBMCH_LOGE("serverrpc is NULL");
         return ESP_FAIL;
     }
 
-    TBMC_FREE(serverrpc->method);
-    TBMC_FREE(serverrpc);
+    TBMCH_FREE(serverrpc->method);
+    TBMCH_FREE(serverrpc);
     return ESP_OK;
 }
 
 const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_t *serverrpc)
 {
     if (!serverrpc) {
-        TBMCHLOG_E("serverrpc is NULL");
+        TBMCH_LOGE("serverrpc is NULL");
         return NULL;
     }
     return serverrpc->method;
@@ -96,7 +101,7 @@ const char *_tbmch_serverrpc_get_method(tbmch_serverrpc_t *serverrpc)
 tbmch_rpc_results_t *_tbmch_serverrpc_do_request(tbmch_serverrpc_t *serverrpc, int request_id, tbmch_rpc_params_t *params)
 {
     if (!serverrpc) {
-        TBMCHLOG_E("serverrpc is NULL");
+        TBMCH_LOGE("serverrpc is NULL");
         return NULL;
     }
 

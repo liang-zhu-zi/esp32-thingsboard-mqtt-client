@@ -46,7 +46,7 @@ typedef struct tbmch_sharedattribute
 
 tbmch_sharedattribute_t *_tbmch_sharedattribute_init(tbmch_handle_t client, const char *key, void *context,
                                                     tbmch_sharedattribute_on_set_t on_set);
-tbmch_err_t _tbmch_sharedattributee_destroy(tbmch_sharedattribute_t *sharedattribute); /*!< Destroys the tbmc key-value handle */
+tbmch_err_t _tbmch_sharedattribute_destroy(tbmch_sharedattribute_t *sharedattribute); /*!< Destroys the tbmc key-value handle */
 
 const char *_tbmch_sharedattribute_get_key(tbmch_sharedattribute_t *sharedattribute); /*!< Get key of the tbmc tbmch_attribute handle */
 tbmch_err_t _tbmch_sharedattribute_do_set(tbmch_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */

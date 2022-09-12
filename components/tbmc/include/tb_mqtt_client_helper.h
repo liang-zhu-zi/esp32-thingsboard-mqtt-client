@@ -70,22 +70,26 @@ typedef cJSON tbmch_rpc_results_t;
 /**
  * ThingsBoard MQTT Client Helper handle
  */
-typedef tbmch_t *tbmch_handle_t;
+typedef struct tbmch_client *tbmch_handle_t;
 
 typedef void (*tbmch_on_connected_t)(tbmch_handle_t client, void *context);    /*!< Callback of connected ThingsBoard MQTT */
 typedef void (*tbmch_on_disconnected_t)(tbmch_handle_t client, void *context); /*!< Callback of disconnected ThingsBoard MQTT */
 
 //====1.telemetry time-series data=====================================================================================
 //Don't call TBMCH API in this callback!
+//Free return value by caller/(tbmch library)!
 typedef tbmch_value_t* (*tbmch_tsdata_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
 
 //====2.client-side attribute==========================================================================================
 //Don't call TBMCH API in these callback!
+//Free return value by caller/(tbmch library)!
 typedef tbmch_value_t* (*tbmch_clientattribute_on_get_t)(tbmch_handle_t client, void *context); /*!< Get tbmch_value from context */
+//Free value by caller/(tbmch library)!
 typedef void (*tbmch_clientattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====3.shared attribute===============================================================================================
 //Don't call TBMCH API in this callback!
+//Free value by caller/(tbmch library)!
 typedef tbmch_err_t (*tbmch_sharedattribute_on_set_t)(tbmch_handle_t client, void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
 
 //====4.attributes request for client-side_attribute & shared_attribute================================================
@@ -94,13 +98,15 @@ typedef void (*tbmch_attributesrequest_on_timeout_t)(tbmch_handle_t client, void
 
 //====5.Server-side RPC================================================================================================
 // return NULL or cJSON* of object
-// free return-value by caller
+// free return-value by caller/(tbmch library)!
+// free params by caller/(tbmch library)!
 typedef tbmch_rpc_results_t *(*tbmch_serverrpc_on_request_t)(tbmch_handle_t client, void *context,
-                                                             int request_id, const char *method, tbmch_rpc_params_t *params);
+                                                             int request_id, const char *method, const tbmch_rpc_params_t *params);
 
 //====6.Client-side RPC================================================================================================
+// free results by caller/(tbmch library)!
 typedef void (*tbmch_clientrpc_on_response_t)(tbmch_handle_t client, void *context,
-                                              int request_id, const char *method/*, tbmch_rpc_params_t *params*/, tbmch_rpc_results_t *results);
+                                              int request_id, const char *method/*, tbmch_rpc_params_t *params*/, const tbmch_rpc_results_t *results);
 typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *context,
                                              int request_id, const char *method/*, tbmch_rpc_params_t *params*/);
 
@@ -125,7 +131,7 @@ void tbmch_destroy(tbmch_handle_t client_);
 //~~tbmch_config(); //move to tbmch_connect()
 //~~tbmch_set_ConnectedEvent(evtConnected); //move to tbmch_init()
 //~~tbmch_set_DisconnectedEvent(evtDisconnected); //move to tbmch_init()
-bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
+bool tbmch_connect(tbmch_handle_t client_, char *uri, char *token,
                    void *context,
                    tbmch_on_connected_t on_connected,
                    tbmch_on_disconnected_t on_disconnected); //_begin();
@@ -167,8 +173,10 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
 tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method); // remove from LIST_ENTRY(tbmch_serverrpc_) & delete
 
 //====6.Client-side RPC================================================================================================
-tbmch_clientrpc_handle_t tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method, tbmch_rpc_params_t *params); ////tbmqttlink.h.tbmch_sendClientRpcRequest(); //add list
-tbmch_clientrpc_handle_t tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method, tbmch_rpc_params_t *params,
+// free params by caller/(user code)!
+int tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method, /*const*/ tbmch_rpc_params_t *params); ////tbmqttlink.h.tbmch_sendClientRpcRequest(); //add list
+// free params by caller/(user code)!
+int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method, /*const*/ tbmch_rpc_params_t *params,
                                                            void *context,
                                                            tbmch_clientrpc_on_response_t on_response,
                                                            tbmch_clientrpc_on_timeout_t on_timeout); ////tbmqttlink.h.tbmch_sendClientRpcRequest(); //create to add to LIST_ENTRY(tbmch_clientrpc_)

@@ -1,5 +1,12 @@
 {
     "files.associations": {
-        "timeseries_data_helper.h": "c"
+        "timeseries_data_helper.h": "c",
+        "attributes_request_observer.h": "c",
+        "client_attribute_helper.h": "c",
+        "client_rpc_observer.h": "c",
+        "fw_update_observer.h": "c",
+        "server_rpc_observer.h": "c",
+        "tb_mqtt_client_helper_log.h": "c",
+        "shared_attribute_observer.h": "c"
     }
 }

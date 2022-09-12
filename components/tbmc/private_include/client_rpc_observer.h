@@ -39,8 +39,9 @@ typedef struct tbmch_clientrpc
      ////const char *params_key;   /*!< params key, default "params" */
      ////const char *results_key;  /*!< results key, default "results" */
 
-     const char *method; /*!< method value */
+     char *method; /*!< method value */
      ////tbmch_rpc_params_t *params;
+     int request_id;
      void *context;                             /*!< Context of callback */
      tbmch_clientrpc_on_response_t on_response; /*!< Callback of client-rpc response success */
      tbmch_clientrpc_on_timeout_t on_timeout;   /*!< Callback of client-rpc response timeout */
@@ -56,7 +57,8 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
 tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src);
 tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc);                /*!< Destroys the tbmch_clientrpc_t */
 
-void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, tbmch_rpc_results_t *results);
+int _tbmch_clientrpc_get_request_id(tbmch_clientrpc_t *clientrpc);
+void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, const tbmch_rpc_results_t *results);
 void _tbmch_clientrpc_do_timeout(tbmch_clientrpc_t *clientrpc);
 
 //const char *_tbmch_clientrpc_get_method(tbmch_clientrpc_t *clientrpc);

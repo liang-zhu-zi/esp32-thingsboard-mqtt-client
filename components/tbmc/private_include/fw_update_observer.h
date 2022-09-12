@@ -34,7 +34,7 @@ extern "C" {
 typedef struct tbmch_fwupdate
 {
      tbmch_handle_t client; /*!< ThingsBoard MQTT Client Helper */
-     const char *fw_title;
+     char *fw_title;
 
      void *context;
      tbmch_fwupdate_on_sharedattributes_t on_fw_attributes; /*!< callback of F/W OTA attributes */

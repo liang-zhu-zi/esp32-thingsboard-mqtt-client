@@ -21,6 +21,7 @@
 #include <stdbool.h>
 
 #include "sys/queue.h"
+
 #include "tb_mqtt_client_helper.h"
 
 #ifdef __cplusplus
@@ -35,10 +36,10 @@ typedef struct tbmch_serverrpc
 {
      tbmch_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
-     const char *method; /*!< method value */
-     ////const char *method_key;   /*!< method key, default "method" */
-     ////const char *params_key;   /*!< params key, default "params" */
-     ////const char *results_key;  /*!< results key, default "results" */
+     char *method; /*!< method value */
+     ////char *method_key;   /*!< method key, default "method" */
+     ////char *params_key;   /*!< params key, default "params" */
+     ////char *results_key;  /*!< results key, default "results" */
 
      void *context;                           /*!< Context of callback */
      tbmch_serverrpc_on_request_t on_request; /*!< Callback of server-rpc request */

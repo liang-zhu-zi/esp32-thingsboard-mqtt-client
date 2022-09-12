@@ -16,7 +16,12 @@
 
 #include <string.h>
 
+#include "esp_err.h"
+
 #include "attributes_request_observer.h"
+#include "tb_mqtt_client_helper_log.h"
+
+const static char *TAG = "attributes_request_observer";
 
 /*!< Initialize tbmch_attributesrequest */
 tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, int request_id, void *context,
@@ -24,13 +29,13 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
                                                          tbmch_attributesrequest_on_timeout_t on_timeout)
 {
     if (!on_response) {
-        TBMCHLOG_E("on_response is NULL");
+        TBMCH_LOGE("on_response is NULL");
         return NULL;
     }
     
     tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
     if (!attributesrequest) {
-        TBMCHLOG_E("Unable to malloc memeory!");
+        TBMCH_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -46,13 +51,13 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
 tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_attributesrequest_t *src)
 {
     if (!src) {
-        TBMCHLOG_E("src is NULL");
+        TBMCH_LOGE("src is NULL");
         return NULL;
     }
     
     tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
     if (!attributesrequest) {
-        TBMCHLOG_E("Unable to malloc memeory!");
+        TBMCH_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -69,34 +74,34 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_att
 tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCHLOG_E("attributesrequest is NULL");
+        TBMCH_LOGE("attributesrequest is NULL");
         return ESP_FAIL;
     }
 
-    TBMC_FREE(attributesrequest);
+    TBMCH_FREE(attributesrequest);
     return ESP_OK;
 }
 
 int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCHLOG_E("attributesrequest is NULL");
-        return NULL;
+        TBMCH_LOGE("attributesrequest is NULL");
+        return -1;
     }
-    return attributesrequest->key;
+    return attributesrequest->request_id;
 }
 
 //(none/resend/destroy/_destroy_all_attributes)?
 void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCHLOG_E("attributesrequest is NULL");
+        TBMCH_LOGE("attributesrequest is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, attributesrequest->key);;
     if (!value) {
-        TBMCHLOG_W("value is NULL! key=%s", attributesrequest->key);
+        TBMCH_LOGW("value is NULL! key=%s", attributesrequest->key);
         return; // ESP_FAIL;
     }*/
 
@@ -108,16 +113,18 @@ void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesr
 void _tbmch_attributesrequest_do_timeout(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCHLOG_E("attributesrequest is NULL");
+        TBMCH_LOGE("attributesrequest is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, attributesrequest->key);;
     if (!value) {
-        TBMCHLOG_W("value is NULL! key=%s", attributesrequest->key);
+        TBMCH_LOGW("value is NULL! key=%s", attributesrequest->key);
         return; // ESP_FAIL;
     }*/
 
-    attributesrequest->on_timeout(attributesrequest->client, attributesrequest->context, attributesrequest->request_id); //(none/resend/destroy/_destroy_all_attributes)?
+    if (attributesrequest->on_timeout) {
+        attributesrequest->on_timeout(attributesrequest->client, attributesrequest->context, attributesrequest->request_id); //(none/resend/destroy/_destroy_all_attributes)?
+    }
     return; // ESP_OK;
 }
