@@ -120,7 +120,7 @@ typedef struct tbmch_client
           char *uri;          /*!< ThingsBoard MQTT host uri */
           char *access_token; /*!< ThingsBoard MQTT token */
 
-          void *context;
+          void *context;                           /*!< Context parameter of the below two callbacks */
           tbmch_on_connected_t on_connected;       /*!< Callback of connected ThingsBoard MQTT */
           tbmch_on_disconnected_t on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
      } config;
