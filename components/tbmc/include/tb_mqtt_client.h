@@ -147,11 +147,11 @@ typedef enum
 
 typedef struct
 {
-  char *uri;             /*!< Complete MQTT broker URI */
-  char *access_token;    /*!< Access Token */
-  char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-  char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-  char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+  const char *uri;             /*!< Complete MQTT broker URI */
+  const char *access_token;    /*!< Access Token */
+  const char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+  const char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+  const char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
 } tbmc_config_t;
 
 /**
@@ -177,7 +177,7 @@ typedef tbmc_on_timeout_t tbmc_on_fwupdate_timeout_t;                           
 
 tbmc_handle_t tbmc_init(void);
 void tbmc_destroy(tbmc_handle_t client_);
-bool tbmc_connect(tbmc_handle_t client_, tbmc_config_t *config,
+bool tbmc_connect(tbmc_handle_t client_, const tbmc_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disconnected,

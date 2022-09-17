@@ -50,13 +50,25 @@ typedef struct tbmc_request
 typedef LIST_HEAD(tbmc_request_list, tbmc_request) tbmc_request_list_t;
 
 /**
+ * Reference tbmc_config_t
+ */
+typedef struct
+{
+  char *uri;             /*!< Complete MQTT broker URI */
+  char *access_token;    /*!< Access Token */
+  char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+  char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+  char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+} tbmc_config_storage_t;
+
+/**
  * ThingsBoard MQTT Client
  */
 typedef struct tbmc_client
 {
      esp_mqtt_client_handle_t mqtt_handle;
 
-     tbmc_config_t config; /*!< ThingsBoard MQTT config */
+     tbmc_config_storage_t config; /*!< ThingsBoard MQTT config */
      void *context;
      tbmc_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
      tbmc_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
@@ -146,7 +158,7 @@ void tbmc_destroy(tbmc_handle_t client_)
 // Access token is used to authenticate a client.
 // Returns true on success, false otherwise.
 bool tbmc_connect(tbmc_handle_t client_,
-                  tbmc_config_t *config,
+                  const tbmc_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disconnected,
