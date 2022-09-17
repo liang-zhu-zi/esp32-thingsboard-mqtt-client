@@ -249,7 +249,7 @@ void tbmch_destroy(tbmch_handle_t client_)
 //~~tbmch_config(); //move to tbmch_connect()
 //~~tbmch_set_ConnectedEvent(evtConnected); //move to tbmch_init()
 //~~tbmch_set_DisconnectedEvent(evtDisconnected); //move to tbmch_init()
-bool tbmch_connect(tbmch_handle_t client_, char *uri, char *token,
+bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
                    void *context,
                    tbmch_on_connected_t on_connected,
                    tbmch_on_disconnected_t on_disconnected) //_begin()
