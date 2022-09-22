@@ -21,7 +21,7 @@
 #include "timeseries_data_helper.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "timeseries_data_helper";
+const static char *TAG = "timeseries_data";
 
 /*!< Initialize tbmch_tsdata of TBMC_JSON */
 tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void *context, tbmch_tsdata_on_get_t on_get)

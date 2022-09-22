@@ -147,6 +147,8 @@ typedef enum
 
 typedef struct
 {
+  const bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
+
   const char *uri;             /*!< Complete MQTT broker URI */
   const char *access_token;    /*!< Access Token */
   const char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */

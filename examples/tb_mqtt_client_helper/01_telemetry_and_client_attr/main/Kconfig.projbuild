@@ -6,8 +6,19 @@ menu "Example Configuration"
         help
             URL of the broker to connect to
 
+    config ACCESS_TOKEN
+        string "Access Token"
+        default ""
+        help
+            Access token to connect to broker
+
     config BROKER_URL_FROM_STDIN
         bool
         default y if BROKER_URL = "FROM_STDIN"
+
+
+    config ACCESS_TOKEN_FROM_STDIN
+        bool
+        default y if ACCESS_TOKEN = "FROM_STDIN"
 
 endmenu

@@ -23,11 +23,11 @@
 extern "C" {
 #endif
 
-#define TBMC_LOGE(format, ...)  ESP_LOGE(TAG, "[TBMC][E] " format, ##__VA_ARGS__)
-#define TBMC_LOGW(format, ...)  ESP_LOGE(TAG, "[TBMC][W] " format, ##__VA_ARGS__)
-#define TBMC_LOGI(format, ...)  ESP_LOGE(TAG, "[TBMC][I] " format, ##__VA_ARGS__)
-#define TBMC_LOGD(format, ...)  ESP_LOGE(TAG, "[TBMC][D] " format, ##__VA_ARGS__)
-#define TBMC_LOGV(format, ...)  ESP_LOGE(TAG, "[TBMC][V] " format, ##__VA_ARGS__)
+#define TBMC_LOGE(format, ...)  ESP_LOGE(TAG, format, ##__VA_ARGS__) //"[TBMC][E] "
+#define TBMC_LOGW(format, ...)  ESP_LOGW(TAG, format, ##__VA_ARGS__) //"[TBMC][W] "
+#define TBMC_LOGI(format, ...)  ESP_LOGI(TAG, format, ##__VA_ARGS__) //"[TBMC][I] "
+#define TBMC_LOGD(format, ...)  ESP_LOGD(TAG, format, ##__VA_ARGS__) //"[TBMC][D] "
+#define TBMC_LOGV(format, ...)  ESP_LOGV(TAG, format, ##__VA_ARGS__) //"[TBMC][V] "
 
 #ifdef __cplusplus
 }

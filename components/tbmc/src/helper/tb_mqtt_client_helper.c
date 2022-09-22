@@ -105,6 +105,24 @@ typedef struct tbmch_msg {
 } tbmch_msg_t;
 
 /**
+ * Reference tbmch_config_t
+ */
+typedef struct
+{
+    bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
+    
+    char *uri;             /*!< Complete ThingsBoard MQTT broker URI */
+    char *access_token;    /*!< ThingsBoard Access Token */
+    char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+    char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+    char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+    
+    void *context;                           /*!< Context parameter of the below two callbacks */
+    tbmch_on_connected_t on_connected;       /*!< Callback of connected ThingsBoard MQTT */
+    tbmch_on_disconnected_t on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+} tbmch_config_storage_t;
+
+/**
  * ThingsBoard MQTT Client Helper 
  */
 typedef struct tbmch_client
@@ -115,15 +133,8 @@ typedef struct tbmch_client
      QueueHandle_t _xQueue;
      esp_timer_handle_t respone_timer;   // /*!< timer for checking response timeout */
 
-     // connect & disconnect
-     struct {
-          char *uri;          /*!< ThingsBoard MQTT host uri */
-          char *access_token; /*!< ThingsBoard MQTT token */
-
-          void *context;                           /*!< Context parameter of the below two callbacks */
-          tbmch_on_connected_t on_connected;       /*!< Callback of connected ThingsBoard MQTT */
-          tbmch_on_disconnected_t on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
-     } config;
+     // modify at connect & disconnect
+     tbmch_config_storage_t config;
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
@@ -187,8 +198,12 @@ tbmch_handle_t tbmch_init(void)
      }
      _response_timer_create(client);
 
+     client->config.log_rxtx_package = false;
      client->config.uri = NULL;
      client->config.access_token = NULL;
+     client->config.cert_pem = NULL;
+     client->config.client_cert_pem = NULL;
+     client->config.client_key_pem = NULL;
      client->config.context = NULL;
      client->config.on_connected = NULL; 
      client->config.on_disconnected = NULL;
@@ -249,14 +264,15 @@ void tbmch_destroy(tbmch_handle_t client_)
 //~~tbmch_config(); //move to tbmch_connect()
 //~~tbmch_set_ConnectedEvent(evtConnected); //move to tbmch_init()
 //~~tbmch_set_DisconnectedEvent(evtDisconnected); //move to tbmch_init()
-bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
-                   void *context,
-                   tbmch_on_connected_t on_connected,
-                   tbmch_on_disconnected_t on_disconnected) //_begin()
+bool tbmch_connect(tbmch_handle_t client_, const tbmch_config_t *config) //_begin()
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
           TBMCH_LOGE("client is NULL!");
+          return false;
+     }
+     if (!config) {
+          TBMCH_LOGE("config is NULL!");
           return false;
      }
      if (!client->tbmqttclient) {
@@ -264,20 +280,22 @@ bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
           return false;
      }
      if (!tbmc_is_disconnected(client->tbmqttclient)) {
-          TBMCH_LOGE("client->tbmqttclient is NOT disconnected!");
+          TBMCH_LOGI("It already connected to thingsboard MQTT server!");
           return false;
      }
 
      // connect
-     TBMCH_LOGD("connecting to %s...", uri);
-     tbmc_config_t config = {
-         .uri = uri,                   /*!< Complete MQTT broker URI */
-         .access_token = token,        /*!< Access Token */
-         .cert_pem = NULL,             /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-         .client_cert_pem = NULL,      /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-         .client_key_pem = NULL        /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+     TBMCH_LOGI("connecting to %s...", config->uri);
+     tbmc_config_t tbmc_config = {
+         .uri = config->uri,                            /*!< Complete MQTT broker URI */
+         .access_token = config->access_token,          /*!< Access Token */
+         .cert_pem = config->cert_pem,                  /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+         .client_cert_pem = config->client_cert_pem,    /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+         .client_key_pem = config->client_key_pem,      /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+
+         .log_rxtx_package = config->log_rxtx_package   /*!< print Rx/Tx MQTT package */
      };
-     bool result = tbmc_connect(client->tbmqttclient, &config,
+     bool result = tbmc_connect(client->tbmqttclient, &tbmc_config,
                                 client,
                                 _tbmch_on_connected,
                                 _tbmch_on_disonnected,
@@ -289,17 +307,45 @@ bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
      }
 
      // cache config & callback
+     client->config.log_rxtx_package = config->log_rxtx_package; /*!< print Rx/Tx MQTT package */
      if (client->config.uri) {
           free(client->config.uri);
+          client->config.uri = NULL;
      }
-     client->config.uri = strdup(uri);          /*!< ThingsBoard MQTT host uri */
+     if (config->uri && strlen(config->uri)>0) {
+          client->config.uri = strdup(config->uri); /*!< ThingsBoard MQTT host uri */
+     }
      if (client->config.access_token) {
           free(client->config.access_token);
+          client->config.access_token = NULL;
      }
-     client->config.access_token = strdup(token); /*!< ThingsBoard MQTT token */
-     client->config.context = context;
-     client->config.on_connected = on_connected;       /*!< Callback of connected ThingsBoard MQTT */
-     client->config.on_disconnected = on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+     if (config->access_token && strlen(config->access_token)>0) {
+          client->config.access_token = strdup(config->access_token); /*!< ThingsBoard MQTT token */
+     }
+     if (client->config.cert_pem) {
+          free(client->config.cert_pem);
+          client->config.cert_pem = NULL;
+     }
+     if (config->cert_pem && strlen(config->cert_pem)>0) {
+          client->config.cert_pem = strdup(config->cert_pem); /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+     }
+     if (client->config.client_cert_pem) {
+          free(client->config.client_cert_pem);
+          client->config.client_cert_pem = NULL;
+     }
+     if (config->client_cert_pem && strlen(config->client_cert_pem)>0) {
+          client->config.client_cert_pem = strdup(config->client_cert_pem); /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+     }
+     if (client->config.client_key_pem) {
+          free(client->config.client_key_pem);
+          client->config.client_key_pem = NULL;
+     }
+     if (config->client_key_pem && strlen(config->client_key_pem)>0) {
+          client->config.client_key_pem = strdup(config->client_key_pem); /*!< ThingsBoard MQTT token */
+     }
+     client->config.context = config->context;
+     client->config.on_connected = config->on_connected;       /*!< Callback of connected ThingsBoard MQTT */
+     client->config.on_disconnected = config->on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
 
      return true;
 }
@@ -316,9 +362,11 @@ void tbmch_disconnect(tbmch_handle_t client_)
           return;
      }
      if (tbmc_is_disconnected(client->tbmqttclient)) {
-          TBMCH_LOGE("client->tbmqttclient is disconnected!");
+          TBMCH_LOGI("It already disconnected from thingsboard MQTT server!");
           return;
      }
+
+     TBMCH_LOGI("disconnecting from %s...", client->config.uri);
 
      // empty msg queue
      while (tbmch_has_events(client_)) {
@@ -331,6 +379,7 @@ void tbmch_disconnect(tbmch_handle_t client_)
      }
 
      // clear config & callback
+     client->config.log_rxtx_package = false;
      if (client->config.uri) {
           free(client->config.uri);
      }
@@ -339,6 +388,18 @@ void tbmch_disconnect(tbmch_handle_t client_)
           free(client->config.access_token);
      }
      client->config.access_token = NULL;
+     if (client->config.cert_pem) {
+          free(client->config.cert_pem);
+     }
+     client->config.cert_pem = NULL;
+     if (client->config.client_cert_pem) {
+          free(client->config.client_cert_pem);
+     }
+     client->config.client_cert_pem = NULL;
+     if (client->config.client_key_pem) {
+          free(client->config.client_key_pem);
+     }
+     client->config.client_key_pem = NULL;
      client->config.context = NULL;
      client->config.on_connected = NULL;
      client->config.on_disconnected = NULL;
@@ -566,7 +627,7 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
      va_end(ap);
 
      // send package...
-     char *pack = cJSON_Print(object);
+     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
      int result = tbmc_telemetry_publish(client->tbmqttclient, pack, 1/*qos*/, 0/*retain*/);
      cJSON_free(pack); // free memory
      cJSON_Delete(object); // delete json object
@@ -745,7 +806,7 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
      va_end(ap);
 
      // send package...
-     char *pack = cJSON_Print(object);
+     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
      int result = tbmc_clientattributes_publish(client->tbmqttclient, pack, 1/*qos*/, 0/*retain*/);
      cJSON_free(pack); // free memory
      cJSON_Delete(object); // delete json object
@@ -1365,12 +1426,12 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
           cJSON* reply = cJSON_CreateObject();
           cJSON_AddStringToObject(reply, TB_MQTT_TEXT_RPC_METHOD, method);
           cJSON_AddItemToObject(reply, TB_MQTT_TEXT_RPC_RESULTS, result);
-          const char *response = cJSON_Print(reply);
+          const char *response = cJSON_PrintUnformatted(reply); //cJSON_Print()
           tbmc_serverrpc_response(client_->tbmqttclient, request_id, response, 1/*qos*/, 0/*retain*/);
           cJSON_free(response); // free memory
           cJSON_Delete(reply); // delete json object
           #else
-          char *response = cJSON_Print(result);
+          char *response = cJSON_PrintUnformatted(result); //cJSON_Print(result);
           tbmc_serverrpc_response(client_->tbmqttclient, request_id, response, 1/*qos*/, 0/*retain*/);
           cJSON_free(response); // free memory
           cJSON_Delete(result); // delete json object
@@ -1437,7 +1498,7 @@ int tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method
      } else  {
           cJSON_AddNullToObject(object, TB_MQTT_TEXT_RPC_PARAMS);
      }
-     char *params_str = cJSON_Print(object);
+     char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      int request_id = tbmc_clientrpc_request_ex(client->tbmqttclient, method, params_str,
                               client,
                               _tbmch_on_clientrpc_response,
@@ -1482,7 +1543,7 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
           cJSON_AddItemReferenceToObject(object, TB_MQTT_TEXT_RPC_PARAMS, params);
      else 
           cJSON_AddNullToObject(object, TB_MQTT_TEXT_RPC_PARAMS);
-     char *params_str = cJSON_Print(object);
+     char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      int request_id = tbmc_clientrpc_request_ex(client->tbmqttclient, method, params_str,
                               client,
                               _tbmch_on_clientrpc_response,
@@ -1906,11 +1967,11 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
           break;
 
      case TBMCH_MSGID_CONNECTED:            //
-          TBMCH_LOGI("TBMCH_RECV: Connected to TBMQTT Server!");
+          TBMCH_LOGI("Connected to thingsboard MQTT server!");
           _tbmch_connected_on(client_);
           break;
      case TBMCH_MSGID_DISCONNECTED:         //
-          TBMCH_LOGI("TBMCH_RECV: Disconnected from TBMQTT Server!");
+          TBMCH_LOGI("Disconnected to thingsboard MQTT server!");
           _tbmch_disonnected_on(client_);
           break;
 
@@ -1955,7 +2016,7 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
           break;
 
      default:
-          TBMCH_LOGD("msg->type(%d) is error!\r\n", msg->id);
+          TBMCH_LOGE("msg->type(%d) is error!\r\n", msg->id);
           return ESP_FAIL;
      }
 

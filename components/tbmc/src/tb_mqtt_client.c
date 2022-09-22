@@ -54,6 +54,8 @@ typedef LIST_HEAD(tbmc_request_list, tbmc_request) tbmc_request_list_t;
  */
 typedef struct
 {
+  bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
+
   char *uri;             /*!< Complete MQTT broker URI */
   char *access_token;    /*!< Access Token */
   char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
@@ -184,6 +186,7 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false; //!!
      }
 
+     client->config.log_rxtx_package = false;
      free(client->config.uri);               client->config.uri = NULL;
      free(client->config.access_token);      client->config.access_token = NULL;
      free(client->config.cert_pem);          client->config.cert_pem = NULL;
@@ -217,7 +220,7 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false;
      }
      /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_MqttEventHandle, client->mqtt_handle);
+     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_MqttEventHandle, client);
      int32_t result = esp_mqtt_client_start(client->mqtt_handle);
      if (result != ESP_OK)
      {
@@ -227,19 +230,20 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false;
      }
 
-     if (config->uri && strlen(config->uri) > 0) {
+     client->config.log_rxtx_package = config->log_rxtx_package;
+     if (config->uri && strlen(config->uri)>0) {
           client->config.uri = strdup(config->uri);
      }
-     if (config->access_token && strlen(config->access_token) > 0) {
+     if (config->access_token && strlen(config->access_token)>0) {
           client->config.access_token = strdup(config->access_token);
      }
-     if (config->cert_pem && strlen(config->cert_pem) > 0) {
+     if (config->cert_pem && strlen(config->cert_pem)>0) {
           client->config.cert_pem = strdup(config->cert_pem);
      }
-     if (config->client_cert_pem && strlen(config->client_cert_pem) > 0) {
+     if (config->client_cert_pem && strlen(config->client_cert_pem)>0) {
           client->config.client_cert_pem = strdup(config->client_cert_pem);
      }
-     if (config->client_key_pem && strlen(config->client_key_pem) > 0) {
+     if (config->client_key_pem && strlen(config->client_key_pem)>0) {
           client->config.client_key_pem = strdup(config->client_key_pem);
      }
      client->context = context;
@@ -264,12 +268,14 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
           return;
      }
 
+     //TBMC_LOGI("call esp_mqtt_client_stop()...");
      int32_t result = esp_mqtt_client_stop(client->mqtt_handle);
      if (result != ESP_OK) {
           TBMC_LOGE("unable to stop mqtt client");
           return;
      }
 
+     //TBMC_LOGI("call esp_mqtt_client_destroy()...");
      result = esp_mqtt_client_destroy(client->mqtt_handle);
      if (result != ESP_OK) {
           TBMC_LOGE("unable to stop mqtt client");
@@ -277,6 +283,8 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
      }
 
      client->mqtt_handle = NULL;
+
+     client->config.log_rxtx_package = false;
 
      free(client->config.uri);               client->config.uri = NULL;
      free(client->config.access_token);      client->config.access_token = NULL;
@@ -411,7 +419,9 @@ int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
           return -1;
      }
 
-     TBMC_LOGD("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
+     }
 
      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
      return message_id;
@@ -443,8 +453,9 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
           return -1;
      }
 
-     TBMC_LOGD("[Client-Side Attributes][Tx] %.*s",
-              strlen(attributes), attributes);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[Client-Side Attributes][Tx] %.*s", strlen(attributes), attributes);
+     }
 
      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH, attributes, qos, retain);
      return message_id;
@@ -505,9 +516,10 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
-     TBMC_LOGD("[Attributes Request][Tx] RequestID=%d, %.*s",
-              request_id,
-              strlen(payload), payload);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[Attributes Request][Tx] RequestID=%d, %.*s",
+              request_id, strlen(payload), payload);
+     }
 
      /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
@@ -610,9 +622,10 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
-     TBMC_LOGD("[Server-Side RPC][Tx] RequestID=%d %.*s",
-              request_id,
-              strlen(response), response);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[Server-Side RPC][Tx] RequestID=%d %.*s",
+              request_id, strlen(response), response);
+     }
 
      int message_id = _tbmc_publish(client, topic, response, qos, retain);
      TBMC_FREE(topic);
@@ -675,9 +688,10 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
-     TBMC_LOGD("[Client-Side RPC][Tx] RequestID=%d %.*s",
-              request_id,
-              strlen(payload), payload);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[Client-Side RPC][Tx] RequestID=%d %.*s",
+              request_id, strlen(payload), payload);
+     }
 
      /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
@@ -788,9 +802,10 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, request_id, chunk);
 
-     TBMC_LOGD("[FW update][Tx] RequestID=%d %.*s",
-              request_id,
-              strlen(payload), payload);
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+              request_id, strlen(payload), payload);
+     }
 
      /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
      TBMC_FREE(topic);
@@ -881,29 +896,32 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
      int msg_id;
      switch (event->event_id) {
      case MQTT_EVENT_BEFORE_CONNECT:
-          TBMC_LOGD("MQTT_EVENT_BEFORE_CONNECT, msg_id=%d, topic_len=%d, data_len=%d",
-                  event->msg_id, event->topic_len, event->data_len);
+          TBMC_LOGI("MQTT_EVENT_BEFORE_CONNECT, msg_id=%d, topic_len=%d, data_len=%d",
+              event->msg_id, event->topic_len, event->data_len);
           break;
 
      case MQTT_EVENT_CONNECTED:
           TBMC_LOGI("MQTT_EVENT_CONNECTED");
+          TBMC_LOGI("client->mqtt_handle = %p", client->mqtt_handle);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-          TBMC_LOGV("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
-          TBMC_LOGV("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
+          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
-          TBMC_LOGV("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
-          TBMC_LOGV("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
-          TBMC_LOGV("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
           client->state = TBMC_STATE_CONNECTED;
+          TBMC_LOGI("before call on_connected()...");
           ////if(xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) == pdTRUE) {
           if (client->on_connected) {
                client->on_connected(client->context);
           }
           ////xSemaphoreGive(client->lock);
           ////}
+          TBMC_LOGI("after call on_connected()");
           break;
 
      case MQTT_EVENT_DISCONNECTED:
@@ -918,19 +936,19 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
           break;
 
      case MQTT_EVENT_SUBSCRIBED:
-          TBMC_LOGV("MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+          TBMC_LOGI("MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
           break;
      case MQTT_EVENT_UNSUBSCRIBED:
-          TBMC_LOGV("MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+          TBMC_LOGI("MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
           break;
      case MQTT_EVENT_PUBLISHED:
-          TBMC_LOGV("MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+          TBMC_LOGI("MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
           break;
 
      case MQTT_EVENT_DATA:
-          TBMC_LOGV("MQTT_EVENT_DATA");
-          ////TBMC_LOGD("TOPIC=%.*s", event->topic_len, event->topic);
-          ////TBMC_LOGD("DATA=%.*s", event->data_len, event->data);
+          TBMC_LOGI("MQTT_EVENT_DATA");
+          ////TBMC_LOGI("TOPIC=%.*s", event->topic_len, event->topic);
+          ////TBMC_LOGI("DATA=%.*s", event->data_len, event->data);
           _on_DataEventProcess(client, event);
           break;
 
@@ -960,8 +978,9 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
      if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
           // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
 
-          TBMC_LOGD("[Subscribe Shared Attributes][Rx] %.*s",
-                   payload_len, payload);
+          if (client->config.log_rxtx_package) {
+              TBMC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
+          }
 
           if (client->on_sharedattr_received) {
                client->on_sharedattr_received(client->context, payload, payload_len);
@@ -974,9 +993,10 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 2.TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
-          TBMC_LOGD("[Server-Side RPC][Rx] RequestID=%d %.*s",
-                   request_id,
-                   payload_len, payload);
+          if (client->config.log_rxtx_package) {
+              TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d %.*s",
+                   request_id, payload_len, payload);
+          }
 
           if (client->on_serverrpc_request) {
                client->on_serverrpc_request(client->context, request_id, payload, payload_len);
@@ -989,9 +1009,10 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
-          TBMC_LOGD("[Attributes Request][Rx] RequestID=%d %.*s",
-                   request_id,
-                   payload_len, payload);
+          if (client->config.log_rxtx_package) {
+              TBMC_LOGI("[Attributes Request][Rx] RequestID=%d %.*s",
+                   request_id, payload_len, payload);
+          }
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
@@ -1011,9 +1032,10 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           // 4.TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
-          TBMC_LOGD("[Client-Side RPC][Rx] RequestID=%d %.*s",
-                   request_id,
-                   payload_len, payload);
+          if (client->config.log_rxtx_package) {
+              TBMC_LOGI("[Client-Side RPC][Rx] RequestID=%d %.*s",
+                   request_id, payload_len, payload);
+          }
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
@@ -1034,9 +1056,10 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           int request_id = 0;
           int chunk = 0;
           sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id, &chunk);
-          TBMC_LOGD("[FW update][Rx] RequestID=%d %.*s",
-                    request_id,
-                    payload_len, payload);
+          if (client->config.log_rxtx_package) {
+              TBMC_LOGI("[FW update][Rx] RequestID=%d %.*s",
+                    request_id, payload_len, payload);
+          }
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {

@@ -21,7 +21,7 @@
 #include "client_attribute_helper.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "client_attribute_helper";
+const static char *TAG = "client_attribute";
 
 tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, const char *key, void *context,
                                                     tbmch_clientattribute_on_get_t on_get,

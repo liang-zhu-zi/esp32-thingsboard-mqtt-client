@@ -21,7 +21,7 @@
 #include "server_rpc_observer.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "server_rpc_observer";
+const static char *TAG = "server_rpc";
 
 /*!< Initialize tbmch_serverrpc */
 tbmch_serverrpc_t *_tbmch_serverrpc_init(tbmch_handle_t client, const char *method, void *context,

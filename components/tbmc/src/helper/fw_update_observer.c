@@ -21,7 +21,7 @@
 #include "fw_update_observer.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "fw_update_observer";
+const static char *TAG = "fw_update";
 
 /*!< Initialize tbmch_fwupdate_t */
 tbmch_fwupdate_t *_tbmch_fwupdate_init(tbmch_handle_t client, const char *fw_title,

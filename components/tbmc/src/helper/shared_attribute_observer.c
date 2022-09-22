@@ -21,7 +21,7 @@
 #include "shared_attribute_observer.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "shared_attribute_observer";
+const static char *TAG = "shared_attribute";
 
 tbmch_sharedattribute_t *_tbmch_sharedattribute_init(tbmch_handle_t client, const char *key, void *context,
                                                      tbmch_sharedattribute_on_set_t on_set)

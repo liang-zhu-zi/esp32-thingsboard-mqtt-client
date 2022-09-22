@@ -23,11 +23,11 @@ extern "C" {
 
 #include "esp_log.h"
 
-#define TBMCH_LOGE(format, ...)  ESP_LOGE(TAG, "[TBMCH][E] " format, ##__VA_ARGS__)
-#define TBMCH_LOGW(format, ...)  ESP_LOGE(TAG, "[TBMCH][W] " format, ##__VA_ARGS__)
-#define TBMCH_LOGI(format, ...)  ESP_LOGE(TAG, "[TBMCH][I] " format, ##__VA_ARGS__)
-#define TBMCH_LOGD(format, ...)  ESP_LOGE(TAG, "[TBMCH][D] " format, ##__VA_ARGS__)
-#define TBMCH_LOGV(format, ...)  ESP_LOGE(TAG, "[TBMCH][V] " format, ##__VA_ARGS__)
+#define TBMCH_LOGE(format, ...)  ESP_LOGE(TAG, format, ##__VA_ARGS__) //"[TBMCH][E] "
+#define TBMCH_LOGW(format, ...)  ESP_LOGW(TAG, format, ##__VA_ARGS__) //"[TBMCH][W] "
+#define TBMCH_LOGI(format, ...)  ESP_LOGI(TAG, format, ##__VA_ARGS__) //"[TBMCH][I] "
+#define TBMCH_LOGD(format, ...)  ESP_LOGD(TAG, format, ##__VA_ARGS__) //"[TBMCH][D] "
+#define TBMCH_LOGV(format, ...)  ESP_LOGV(TAG, format, ##__VA_ARGS__) //"[TBMCH][V] "
 
 #ifdef __cplusplus
 }

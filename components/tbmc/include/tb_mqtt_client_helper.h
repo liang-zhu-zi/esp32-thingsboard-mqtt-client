@@ -126,15 +126,31 @@ typedef void (*tbmch_fwupdate_on_timeout_t)(tbmch_handle_t client, void *context
                                             int request_id, int chunk /*current chunk*/);
 
 //====0.tbmc client====================================================================================================
+/**
+ * ThingsBoard MQTT Client Helper config.
+ *
+ */
+typedef struct
+{
+  bool log_rxtx_package;       /*!< print Rx/Tx MQTT package */
+
+  const char *uri;             /*!< Complete ThingsBoard MQTT broker URI */
+  const char *access_token;    /*!< ThingsBoard Access Token */
+  const char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
+  const char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
+  const char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+
+  void *context;                           /*!< Context parameter of the below two callbacks */
+  tbmch_on_connected_t on_connected;       /*!< Callback of connected ThingsBoard MQTT */
+  tbmch_on_disconnected_t on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+} tbmch_config_t;
+
 tbmch_handle_t tbmch_init(void);
 void tbmch_destroy(tbmch_handle_t client_);
 //~~tbmch_config(); //move to tbmch_connect()
 //~~tbmch_set_ConnectedEvent(evtConnected); //move to tbmch_init()
 //~~tbmch_set_DisconnectedEvent(evtDisconnected); //move to tbmch_init()
-bool tbmch_connect(tbmch_handle_t client_, const char *uri, const char *token,
-                   void *context,
-                   tbmch_on_connected_t on_connected,
-                   tbmch_on_disconnected_t on_disconnected); //_begin();
+bool tbmch_connect(tbmch_handle_t client_, const tbmch_config_t *config); //_begin();
 void tbmch_disconnect(tbmch_handle_t client_);               //_end();
 bool tbmch_is_connected(tbmch_handle_t client_);
 bool tbmch_has_events(tbmch_handle_t client_); // new function

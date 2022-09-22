@@ -21,7 +21,7 @@
 #include "attributes_request_observer.h"
 #include "tb_mqtt_client_helper_log.h"
 
-const static char *TAG = "attributes_request_observer";
+const static char *TAG = "attributes_request";
 
 /*!< Initialize tbmch_attributesrequest */
 tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, int request_id, void *context,
