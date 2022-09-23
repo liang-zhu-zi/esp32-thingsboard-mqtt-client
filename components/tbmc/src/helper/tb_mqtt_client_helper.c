@@ -2066,8 +2066,8 @@ void tbmch_run(tbmch_handle_t client_)
 static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg)
 {
      tbmch_t *client = (tbmch_t *)client_;
-     if (!client || !msg) {
-          TBMCH_LOGE("client or msg is NULL!");
+     if (!client || !client->_xQueue || !msg) {
+          TBMCH_LOGE("client, client->_xQueue or msg is NULL!");
           return false;
      }
 

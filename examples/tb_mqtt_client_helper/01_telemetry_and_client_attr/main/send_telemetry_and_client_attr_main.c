@@ -337,15 +337,19 @@ static void mqtt_app_start(void)
 
     ESP_LOGI(TAG, "connect tbmch ...");
     int i = 0;
-    while (i<50) {
+    while (i<20) {
         if (tbmch_has_events(client)) {
             tbmch_run(client);
         }
 
         i++;
-        if (i%5 == 0){
-            tb_telemetry_send(client);
-            tb_clientattribute_send(client);
+        if (tbmch_is_connected(client)) {
+            if (i%5 == 0){
+                tb_telemetry_send(client);
+                tb_clientattribute_send(client);
+            }
+        } else {
+            ESP_LOGI(TAG, "Still NOT connected to server!");
         }
         sleep(1);
     }
