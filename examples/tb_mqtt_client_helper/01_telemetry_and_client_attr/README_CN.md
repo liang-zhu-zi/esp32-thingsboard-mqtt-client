@@ -7,7 +7,7 @@
 
 本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
-本示例实现了 telemetry 与 client-side attributes 相关功能:
+本示例实现了 telemetry 与 client-side attributes 相关功能：
 
 * 发送 telemetry: temprature, humidity
 * 发送 client-side attributes: model, fw_version, setpoint
