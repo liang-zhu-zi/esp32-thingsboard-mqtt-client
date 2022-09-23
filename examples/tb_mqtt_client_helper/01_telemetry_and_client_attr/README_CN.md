@@ -1,31 +1,31 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Send Telemetry and Client-side Attributes - ThingBoard MQTT Client Example
+# 发送 Telemetry 和 Client-side Attributes - ThingBoard MQTT Client Example
 
-* [中文版](./README_CN.md)
+* [English Version](./README.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
+本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
-This example implements telemetry and client-side attributes related functions:
+本示例实现了 telemetry 与 client-side attributes 相关功能:
 
-* Send telemetry: temprature, humidity
-* Send client-side attributes: model, fw_version, setpoint
+* 发送 telemetry: temprature, humidity
+* 发送 client-side attributes: model, fw_version, setpoint
 
-## Hardware Required
+## 硬件需求
 
-* A development board with ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
-* A USB cable for Power supply and programming
+* 一个载有 ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC 的开发板(例如, ESP32-DevKitC, ESP-WROVER-KIT 等等)
+* 一条用于供电与编程的 USB 线
 
-See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
+参考 [Development Boards](https://www.espressif.com/en/products/devkits) 获得更多信息.
 
-## How to Use Example
+## 如何使用例子
 
-1. Get a device token
+1. 获取 Access token
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> Click a device --> `Details` --> `Copy Access Token`.
 
-2. set-targe (optional)
+2. 设定 Target (optional)
 
    Before project configuration and build, be sure to set the correct chip target using:
 
@@ -33,7 +33,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    idf.py set-target <chip_name>
    ```
 
-3. menuconfig
+3. 编译配置 menuconfig
 
    Then project configuration:
 
@@ -56,7 +56,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
            [*] Enable TBMQTTClient Helper
    ```
 
-4. build, flash and monitor
+4. 编译与运行 build, flash and monitor
 
    Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
@@ -64,7 +64,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-## Example Output
+## 日志输出
 
 ```none
 ...
@@ -280,12 +280,12 @@ I (61843) TELE_CLI_ATTR_EXAMPLE: Destroy tbmch ...
 I (61843) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## ThingsBoard Data
+## ThingsBoard 输出
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click your device --> `Attributes` --> `Client attributesn`, your can find `fw_version`, `model` and `setpoint`.
+* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择你的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `fw_version`, `model` 和 `setpoint` 三个 Client-side attributes.
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click your device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择你的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
-## Troubleshooting
+## 故障排除
 
-For any technical queries, please open an [issue](https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt/issues) on GitHub. We will get back to you soon.
+如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt/issues)。 我们会尽快回复您。
