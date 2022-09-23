@@ -23,11 +23,11 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click a device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
 
 2. 设定 Target (optional)
 
-   Before project configuration and build, be sure to set the correct chip target using:
+   在项目 configuration 与 build 之前, 请务必使用设置正确的芯片目标:
 
    ```bash
    idf.py set-target <chip_name>
@@ -35,13 +35,13 @@
 
 3. 编译配置 menuconfig
 
-   Then project configuration:
+   项目 configuration:
 
    ```bash
    idf.py menuconfig
    ```
 
-   Configuration: ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
+   配置以下选项 ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
 
    ```menuconfig
    Example Configuration  --->
@@ -58,11 +58,11 @@
 
 4. 编译与运行 build, flash and monitor
 
-   Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
+   运行 `idf.py -p PORT flash monitor` 来编译、烧录、监控项目.
 
-   (To exit the serial monitor, type ``Ctrl-]``.)
+   (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
-   See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
+   有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
 ## 日志输出
 
@@ -282,9 +282,9 @@ I (61843) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择你的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `fw_version`, `model` 和 `setpoint` 三个 Client-side attributes.
+* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `fw_version`, `model` 和 `setpoint` 三个 Client-side attributes.
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择你的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
 ## 故障排除
 
