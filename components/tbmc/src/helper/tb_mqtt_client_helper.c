@@ -800,7 +800,7 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
           if (clientattribute) {
                _tbmch_clientattribute_do_get(clientattribute, object); // add item to json object
           } else {
-               TBMCH_LOGW("Unable to remove time-series data:%s!", key);
+               TBMCH_LOGW("Unable to find client-side attribute:%s!", key);
           }
      }
      va_end(ap);
@@ -1075,10 +1075,12 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
      memset(shared_keys, 0x00, 256);
 
      // Get client_keys & shared_keys
-     int i;
+     int i = 0;
      va_list ap;
      va_start(ap, count);
-     for (i=0; i<count; i++) {
+next_attribute_key:
+     while (i<count) {
+          i++;
           const char *key = va_arg(ap, const char*);
 
           // Search item in clientattribute
@@ -1092,7 +1094,7 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
                          strncat(client_keys, ",", MAX_KEYS_LEN-1);                         
                          strncat(client_keys, key, MAX_KEYS_LEN-1);
                     }
-                    continue;
+                    goto next_attribute_key;
                }
           }
 
@@ -1107,11 +1109,11 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
                          strncat(shared_keys, ",", MAX_KEYS_LEN-1);                         
                          strncat(shared_keys, key, MAX_KEYS_LEN-1);
                     }
-                    continue;
+                    goto next_attribute_key;
                }
           }
 
-          TBMCH_LOGW("Unable to remove time-series data:%s!", key);
+          TBMCH_LOGW("Unable to find attribute in request:%s!", key);
      }
      va_end(ap);
 

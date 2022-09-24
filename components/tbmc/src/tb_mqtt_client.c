@@ -975,7 +975,8 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
           return;
      }
 
-     if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
+     //if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
+     if (strcmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES) == 0) {
           // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
 
           if (client->config.log_rxtx_package) {
