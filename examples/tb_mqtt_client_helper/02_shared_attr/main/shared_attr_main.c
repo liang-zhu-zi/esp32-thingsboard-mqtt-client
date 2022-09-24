@@ -24,18 +24,6 @@ static const char *TAG = "SHARED_ATTR_EXAMPLE";
 
 #define SHAREDATTRIBUTE_SNTP_SERVER     "sntp_server"
 
-/*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
-{
-    ESP_LOGI(TAG, "Connected to thingsboard server!");
-}
-
-/*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
-{
-    ESP_LOGI(TAG, "Disconnected from thingsboard server!");
-}
-
 //Don't call TBMCH API in this callback!
 //Free value by caller/(tbmch library)!
 tbmch_err_t tb_sharedattribute_on_set_sntp_server(tbmch_handle_t client, void *context, const tbmch_value_t *value)
@@ -52,6 +40,18 @@ tbmch_err_t tb_sharedattribute_on_set_sntp_server(tbmch_handle_t client, void *c
     }
 
     return ESP_OK;
+}
+
+/*!< Callback of connected ThingsBoard MQTT */
+void tb_on_connected(tbmch_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Connected to thingsboard server!");
+}
+
+/*!< Callback of disconnected ThingsBoard MQTT */
+void tb_on_disconnected(tbmch_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)

@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Subscribe and receive Shared Attributes - ThingBoard MQTT Client Example
+# Subscribe and receive Shared Attributes - ThingsBoard MQTT Client Example
 
 * [中文版](./README_CN.md)
 

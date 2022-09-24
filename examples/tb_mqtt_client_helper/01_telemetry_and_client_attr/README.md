@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Send Telemetry and Client-side Attributes - ThingBoard MQTT Client Example
+# Send Telemetry and Client-side Attributes - ThingsBoard MQTT Client Example
 
 * [中文版](./README_CN.md)
 
@@ -9,8 +9,8 @@ This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github
 
 This example implements telemetry and client-side attributes related functions:
 
-* Send telemetry: temprature, humidity
-* Send client-side attributes: model, fw_version, setpoint
+* Publish telemetry: temprature, humidity
+* Publish client-side attributes: model, fw_version, setpoint
 
 ## Hardware Required
 

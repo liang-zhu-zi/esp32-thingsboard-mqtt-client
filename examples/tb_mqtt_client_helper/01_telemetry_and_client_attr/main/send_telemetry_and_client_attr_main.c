@@ -22,23 +22,11 @@
 
 static const char *TAG = "TELE_CLI_ATTR_EXAMPLE";
 
-#define TELEMETYR_TEMPRATUE         "temprature"
-#define TELEMETYR_HUMIDITY          "humidity"
-#define CLIENTATTRIBUTE_MODEL       "model"
-#define CLIENTATTRIBUTE_FW_VERSION  "fw_version"
-#define CLIENTATTRIBUTE_SETPOINT    "setpoint"
-
-/*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
-{
-    ESP_LOGI(TAG, "Connected to thingsboard server!");
-}
-
-/*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
-{
-    ESP_LOGI(TAG, "Disconnected from thingsboard server!");
-}
+#define TELEMETYR_TEMPRATUE         	"temprature"
+#define TELEMETYR_HUMIDITY          	"humidity"
+#define CLIENTATTRIBUTE_MODEL       	"model"
+#define CLIENTATTRIBUTE_FW_VERSION  	"fw_version"
+#define CLIENTATTRIBUTE_SETPOINT    	"setpoint"
 
 //Don't call TBMCH API in this callback!
 //Free return value by caller/(tbmch library)!
@@ -113,8 +101,21 @@ void tb_clientattribute_send(tbmch_handle_t client)
                                 CLIENTATTRIBUTE_FW_VERSION, CLIENTATTRIBUTE_SETPOINT);
 }
 
+/*!< Callback of connected ThingsBoard MQTT */
+void tb_on_connected(tbmch_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Connected to thingsboard server!");
+}
+
+/*!< Callback of disconnected ThingsBoard MQTT */
+void tb_on_disconnected(tbmch_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Disconnected from thingsboard server!");
+}
+
 static void mqtt_app_start(void)
 {
+	tbmch_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -188,7 +189,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append telemetry: temprature...");
-    tbmch_err_t err = tbmch_telemetry_append(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
+    err = tbmch_telemetry_append(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_TEMPRATUE);
         goto exit_destroy;
@@ -199,6 +200,7 @@ static void mqtt_app_start(void)
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_HUMIDITY);
         goto exit_destroy;
     }
+
     ESP_LOGI(TAG, "Append client attribute: model...");
     err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
     if (err != ESP_OK) {
@@ -212,7 +214,8 @@ static void mqtt_app_start(void)
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL, tb_clientattribute_on_get_setpoint);
+    err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL,
+                            tb_clientattribute_on_get_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
         goto exit_destroy;

@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# 发送 Telemetry 和 Client-side Attributes - ThingBoard MQTT Client Example
+# 发送 Telemetry 和 Client-side Attributes - ThingsBoard MQTT Client Example
 
 * [English Version](./README.md)
 
