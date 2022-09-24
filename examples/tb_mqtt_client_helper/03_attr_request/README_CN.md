@@ -30,11 +30,11 @@
 
 1. 在 ThingsBoard 上添加或更新 shared attribute
 
-   * Shared attributes `sntp_server`: 
+   * Shared attributes `sntp_server`:
      * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
      * Or update: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "uk.pool.ntp.org" --> `Update`.
 
-2. 设定 Target (optional)
+1. 设定 Target (optional)
 
    在项目 configuration 与 build 之前, 请务必使用设置正确的芯片目标:
 
@@ -42,7 +42,7 @@
    idf.py set-target <chip_name>
    ```
 
-3. 编译配置 menuconfig
+1. 编译配置 menuconfig
 
    项目 configuration:
 
@@ -65,7 +65,7 @@
            [*] Enable TBMQTTClient Helper
    ```
 
-4. 编译与运行 build, flash and monitor
+1. 编译与运行 build, flash and monitor
 
    运行 `idf.py -p PORT flash monitor` 来编译、烧录、监控项目.
 
@@ -73,7 +73,7 @@
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
-5. 在 ThingsBoard 上添加并修改 shared attribute
+1. 在 ThingsBoard 上添加并修改 shared attribute
 
    * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
 
