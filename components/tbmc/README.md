@@ -1,12 +1,14 @@
-# thingsboard-mqttclient-basedon-espmqtt
+# esp-idf-thingsboard-mqtt
 
-[中文](README_CN.md)
+[中文](./README_CN.md)
 
-ThingsBoard MQTT Client SDK based on esp-mqtt / ESP-IDF-v4.4.
+<https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt>
+
+A library based on ESP-IDF-v4.4.1 to connect to ThingsBoard CE/PE using MQTT protocol.
 
 This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`.
 
-## esp-mqtt API
+## supported esp-mqtt API
 
 | esp-mqtt API                      | User context<br/>(User task) | MQTT event handler<br/>(Internal MQTT task) | Memo                                                                                                                                                                                                                                   |
 |-----------------------------------|------------------------------|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -25,5 +27,3 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
 | esp_mqtt_client_register_event()  | √                            |                                             |                                                                                                                                                                                                                                        |
 | esp_mqtt_client_get_outbox_size() | √                            | *                                           |                                                                                                                                                                                                                                        |
 |                                   |                              |                                             | √:MUST, *:SHOULD, X:MUST NOT                                                                                                                                                                                                           |
-
-
