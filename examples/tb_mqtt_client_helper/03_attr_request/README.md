@@ -30,7 +30,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. add or update a shared attribute in ThingsBoard
 
-   * Shared attributes `sntp_server`: 
+   * Shared attributes `sntp_server`:
      * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
      * Or update: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "uk.pool.ntp.org" --> `Update`.
 
