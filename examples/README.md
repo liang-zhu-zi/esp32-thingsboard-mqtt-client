@@ -1,4 +1,4 @@
-# ThingsBoard MQTT Client Example
+# Examples
 
 * Hello world: [00_hello_world](./tb_mqtt_client_helper/00_hello_world/README.md)
 * Using low-level API -- tb_mqtt_client.h
