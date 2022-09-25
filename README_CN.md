@@ -1,13 +1,8 @@
-# thingsboard-mqttclient-basedon-espmqtt
+# esp-idf-thingsboard-mqtt
 
 [English](README.md)
 
-ThingsBoard MQTT Client SDK based on esp-mqtt / ESP-IDF-v4.4.
+一个 ESP-IDF-v4.4.1 代码库，采用 MQTT 协议连接到 ThingsBoard CE/PE.
 
-This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`.
-
-components
-
-examples
-
-tools
+* [代码说明](.\components\tbmc\README_CN.md)
+* [示例说明](.\examples\README_CN.md)
