@@ -623,7 +623,7 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Server-Side RPC][Tx] RequestID=%d %.*s",
+        TBMC_LOGI("[Server-Side RPC][Tx] RequestID=%d Payload=%.*s",
               request_id, strlen(response), response);
      }
 
@@ -995,7 +995,7 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
           int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
           if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d %.*s",
+              TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d Payload=%.*s",
                    request_id, payload_len, payload);
           }
 
