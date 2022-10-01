@@ -231,8 +231,7 @@ static void mqtt_app_start(void)
         goto exit_destroy;
     }
 
-
-    ESP_LOGI(TAG, "connect tbmch ...");
+    // Do...
     int i = 0;
     while (i<20) {
         if (tbmch_has_events(client)) {
