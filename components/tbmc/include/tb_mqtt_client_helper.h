@@ -106,9 +106,9 @@ typedef tbmch_rpc_results_t *(*tbmch_serverrpc_on_request_t)(tbmch_handle_t clie
 //====6.Client-side RPC================================================================================================
 // free results by caller/(tbmch library)!
 typedef void (*tbmch_clientrpc_on_response_t)(tbmch_handle_t client, void *context,
-                                              int request_id, const char *method/*, tbmch_rpc_params_t *params*/, const tbmch_rpc_results_t *results);
+                                              int request_id, const char *method, const tbmch_rpc_results_t *results); /*, tbmch_rpc_params_t *params*/
 typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *context,
-                                             int request_id, const char *method/*, tbmch_rpc_params_t *params*/);
+                                             int request_id, const char *method); /*, tbmch_rpc_params_t *params*/
 
 //====7.Claiming device using device-side key scenario: Not implemented yet============================================
 

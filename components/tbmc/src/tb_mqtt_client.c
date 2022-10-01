@@ -39,7 +39,7 @@ typedef struct tbmc_request
      tbmc_request_type_t type;
      int request_id;
 
-     uint32_t timestamp; /*!< time stamp at sending request */
+     uint64_t timestamp; /*!< time stamp at sending request */
      void *context;
      void *on_response; /*!< tbmc_on_response_t or tbmc_on_fwupdate_response_t */
      void *on_timeout; /*!< tbmc_on_timeout_t */
@@ -81,7 +81,7 @@ typedef struct tbmc_client
 
      SemaphoreHandle_t lock;
      int next_request_id;
-     uint32_t last_check_timestamp;
+     uint64_t last_check_timestamp;
      tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & fw update request */ ////QueueHandle_t timeoutQueue;
 } tbmc_t;
 
@@ -97,7 +97,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
                                            void *on_response, /*tbmc_on_response_t*/
                                            void *on_timeout); /*tbmc_on_timeout_t*/
 static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id);
-static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t timestamp,
+static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t timestamp,
                                              tbmc_request_list_t *timeout_request_list);
 static tbmc_request_t *_request_create(tbmc_request_type_t type,
                                        uint32_t request_id,
@@ -129,7 +129,7 @@ tbmc_handle_t tbmc_init(void)
 
      client->lock = xSemaphoreCreateMutex();
      client->next_request_id = 0;
-     client->last_check_timestamp = (uint32_t)time(NULL);
+     client->last_check_timestamp = (uint64_t)time(NULL);
      memset(&client->request_list, 0x00, sizeof(client->request_list));//client->request_list = LIST_HEAD_INITIALIZER(client->request_list);
 
      return client;
@@ -201,7 +201,7 @@ bool tbmc_connect(tbmc_handle_t client_,
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
-     // uint32_t last_check_timestamp;
+     // uint64_t last_check_timestamp;
      // tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & fw update request */ ////QueueHandle_t timeoutQueue;
 
      const esp_mqtt_client_config_t mqtt_cfg = {
@@ -267,25 +267,23 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
           TBMC_LOGW("unable to disconnect mqtt client: mqtt client is NULL!");
           return;
      }
+     void *context = client->context;
 
-     //TBMC_LOGI("call esp_mqtt_client_stop()...");
+     TBMC_LOGI("tbmc_disconnect(): call esp_mqtt_client_stop()...");
      int32_t result = esp_mqtt_client_stop(client->mqtt_handle);
      if (result != ESP_OK) {
           TBMC_LOGE("unable to stop mqtt client");
           return;
      }
-
-     //TBMC_LOGI("call esp_mqtt_client_destroy()...");
+     TBMC_LOGI("tbmc_disconnect(): call esp_mqtt_client_destroy()...");
      result = esp_mqtt_client_destroy(client->mqtt_handle);
      if (result != ESP_OK) {
           TBMC_LOGE("unable to stop mqtt client");
           return;
      }
-
      client->mqtt_handle = NULL;
 
      client->config.log_rxtx_package = false;
-
      free(client->config.uri);               client->config.uri = NULL;
      free(client->config.access_token);      client->config.access_token = NULL;
      //free(client->config.client_id);       client->config.client_id = NULL;
@@ -304,14 +302,14 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
-     // uint32_t last_check_timestamp;
+     // uint64_t last_check_timestamp;
      // remove all item in request_list
      tbmc_request_t *tbmc_request = NULL, *next;
      LIST_FOREACH_SAFE(tbmc_request, &client->request_list, entry, next) {
           // exec timeout callback
           if (tbmc_request->on_timeout) {
                tbmc_on_timeout_t on_timeout = tbmc_request->on_timeout;
-               on_timeout(client->context, tbmc_request->request_id);
+               on_timeout(context, tbmc_request->request_id);
           }
 
           // remove from request list
@@ -366,7 +364,7 @@ void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for Pub
      }
 
      // Too early
-     uint32_t timestamp = (uint32_t)time(NULL);
+     uint64_t timestamp = (uint64_t)time(NULL);
      if (timestamp < client->last_check_timestamp + TB_MQTT_TIMEOUT + 2) {
           return;
      }
@@ -664,11 +662,11 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
      }
 
      if (!client->mqtt_handle) {
-          TBMC_LOGE("mqtt client is NULL");
+          TBMC_LOGE("mqtt client is NULL!");
           return -1;
      }
      if (!payload) {
-          TBMC_LOGW("There are no payload to request");
+          TBMC_LOGW("There are no payload to request!");
           return -1;
      }
 
@@ -736,7 +734,7 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
           return -1;
      }
      memset(payload, 0x00, size);
-     snprintf(payload, size - 1, "{\"method\":\"%s\",\"params\":{%s}}", method, params);
+     snprintf(payload, size - 1, "{\"method\":\"%s\",\"params\":%s}", method, params); //{%s}
      int retult = tbmc_clientrpc_request(client, payload,
                                          context,
                                          on_clientrpc_response,
@@ -1131,6 +1129,14 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
           request_id = client->next_request_id;
      }
 
+     // If no response & no timeout, then it doesn't append to request list!
+     if (!on_response && !on_timeout) {
+          // Give semaphore
+          xSemaphoreGive(client->lock);
+          TBMC_LOGI("Don't append to request list if no response & no timeout!");
+          return request_id;
+     }
+
      // Create request
      tbmc_request_t *tbmc_request = _request_create(type, request_id, context, on_response, on_timeout);
      if (!tbmc_request) {
@@ -1196,7 +1202,7 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
 }
 
 // return  count of timeout_request_list
-static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint32_t timestamp,
+static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t timestamp,
                               tbmc_request_list_t *timeout_request_list)
 {
      tbmc_t *client = (tbmc_t *)client_;
@@ -1262,7 +1268,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
      memset(tbmc_request, 0x00, sizeof(tbmc_request_t));
      tbmc_request->type = type;
      tbmc_request->request_id = request_id;
-     tbmc_request->timestamp = (uint32_t)time(NULL);
+     tbmc_request->timestamp = (uint64_t)time(NULL);
      tbmc_request->context = context;
      tbmc_request->on_response = on_response;
      tbmc_request->on_timeout = on_timeout;
