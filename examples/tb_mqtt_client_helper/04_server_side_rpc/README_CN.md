@@ -22,53 +22,58 @@
 
 ## 如何使用例子
 
-
 1. 获取 Access token
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
 
 1. 在 ThingsBoard 上使用 Rule Engine 周期发送 Server-side RPC
 
-   参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine)
+   参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
-   * Generator 1: rpcChangeSetpoint
-     * Name: RPC
-     * Period in seconds: 20
-     * Originator Type: Device
-     * Device: *My Device*
-     * Generate:
+   * 修改 Root Rule Chain:
 
-       ```json
-       var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
+      ![image](./Root-Rule-Chain_4_Server-RPC.png)
 
-       var metadata = {
-          expirationTime: new Date().getTime() + 60000,
-          oneway: true,
-          persistent: false
-       };
-       var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+     * Generator rpcChangeSetpoint:
+       * Name: rpcChangeSetpoint
+       * Type: Action - generator
+       * Period in seconds: 20
+       * Originator Type: Device
+       * Device: *My Device*
+       * Generate:
 
-       return { msg: msg, metadata: metadata, msgType: msgType };
-       ```
+         ```json
+         var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
 
-   * Generator 2: rpcQuerySetpoint
-     * Name: RPC
-     * Period in seconds: 20
-     * Originator Type: Device
-     * Device: *My Device*
-     * Generate:
+         var metadata = {
+            expirationTime: new Date().getTime() + 60000,
+            oneway: true,
+            persistent: false
+         };
+         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-       ```json
-       var msg = { method: "rpcQuerySetpoint", params: { } };
-       var metadata = { 
-           expirationTime: new Date().getTime() + 60000,
-           oneway: false,
-           persistent: false
-       };
-       var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+         return { msg: msg, metadata: metadata, msgType: msgType };
+         ```
 
-       return { msg: msg, metadata: metadata, msgType: msgType };
-       ```
+     * Generator rpcQuerySetpoint:
+       * Name: rpcQuerySetpoint
+       * Type: Action - generator
+       * Period in seconds: 20
+       * Originator Type: Device
+       * Device: *My Device*
+       * Generate:
+
+         ```json
+         var msg = { method: "rpcQuerySetpoint", params: { } };
+         var metadata = { 
+             expirationTime: new Date().getTime() + 60000,
+             oneway: false,
+             persistent: false
+         };
+         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+         return { msg: msg, metadata: metadata, msgType: msgType };
+         ```
 
 1. 设定 Target (optional)
 

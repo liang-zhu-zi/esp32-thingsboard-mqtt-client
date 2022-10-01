@@ -28,46 +28,52 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. `Sending server-side RPC` `Using the Rule Engine` in ThingsBoard
 
-   Referece [here](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine)
+   Referece [here](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
-   * Generator 1: rpcChangeSetpoint
-     * Name: RPC
-     * Period in seconds: 20
-     * Originator Type: Device
-     * Device: *My Device*
-     * Generate:
+   * Modify Root Rule Chain:
 
-       ```json
-       var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
+      ![image](./Root-Rule-Chain_4_Server-RPC.png)
 
-       var metadata = {
-          expirationTime: new Date().getTime() + 60000,
-          oneway: true,
-          persistent: false
-       };
-       var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+     * Generator rpcChangeSetpoint:
+       * Name: rpcChangeSetpoint
+       * Type: Action - generator
+       * Period in seconds: 20
+       * Originator Type: Device
+       * Device: *My Device*
+       * Generate:
 
-       return { msg: msg, metadata: metadata, msgType: msgType };
-       ```
+         ```json
+         var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
 
-   * Generator 2: rpcQuerySetpoint
-     * Name: RPC
-     * Period in seconds: 20
-     * Originator Type: Device
-     * Device: *My Device*
-     * Generate:
+         var metadata = {
+            expirationTime: new Date().getTime() + 60000,
+            oneway: true,
+            persistent: false
+         };
+         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-       ```json
-       var msg = { method: "rpcQuerySetpoint", params: { } };
-       var metadata = { 
-           expirationTime: new Date().getTime() + 60000,
-           oneway: false,
-           persistent: false
-       };
-       var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+         return { msg: msg, metadata: metadata, msgType: msgType };
+         ```
 
-       return { msg: msg, metadata: metadata, msgType: msgType };
-       ```
+     * Generator rpcQuerySetpoint:
+       * Name: rpcQuerySetpoint
+       * Type: Action - generator
+       * Period in seconds: 20
+       * Originator Type: Device
+       * Device: *My Device*
+       * Generate:
+
+         ```json
+         var msg = { method: "rpcQuerySetpoint", params: { } };
+         var metadata = { 
+             expirationTime: new Date().getTime() + 60000,
+             oneway: false,
+             persistent: false
+         };
+         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+
+         return { msg: msg, metadata: metadata, msgType: msgType };
+         ```
 
 1. set-targe (optional)
 
