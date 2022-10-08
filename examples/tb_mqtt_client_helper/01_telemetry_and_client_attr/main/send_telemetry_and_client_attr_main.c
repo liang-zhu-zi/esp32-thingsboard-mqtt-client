@@ -25,7 +25,6 @@ static const char *TAG = "TELE_CLI_ATTR_EXAMPLE";
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
 #define CLIENTATTRIBUTE_MODEL       	"model"
-#define CLIENTATTRIBUTE_FW_VERSION  	"fw_version"
 #define CLIENTATTRIBUTE_SETPOINT    	"setpoint"
 
 //Don't call TBMCH API in this callback!
@@ -77,15 +76,6 @@ tbmch_value_t* tb_clientattribute_on_get_model(tbmch_handle_t client, void *cont
 
 //Don't call TBMCH API in these callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_clientattribute_on_get_fw_version(tbmch_handle_t client, void *context)
-{
-    ESP_LOGI(TAG, "Get local F/W version (a client attribute)");
-    
-    return cJSON_CreateString("1.0.1");
-}
-
-//Don't call TBMCH API in these callback!
-//Free return value by caller/(tbmch library)!
 tbmch_value_t* tb_clientattribute_on_get_setpoint(tbmch_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get setpoint (a client attribute)");
@@ -95,10 +85,8 @@ tbmch_value_t* tb_clientattribute_on_get_setpoint(tbmch_handle_t client, void *c
 
 void tb_clientattribute_send(tbmch_handle_t client)
 {
-    ESP_LOGI(TAG, "Send client attributes: %s, %s, %s",CLIENTATTRIBUTE_MODEL, 
-                                CLIENTATTRIBUTE_FW_VERSION, CLIENTATTRIBUTE_SETPOINT);
-    tbmch_clientattribute_send(client, 3, CLIENTATTRIBUTE_MODEL, 
-                                CLIENTATTRIBUTE_FW_VERSION, CLIENTATTRIBUTE_SETPOINT);
+    ESP_LOGI(TAG, "Send client attributes: %s, %s",CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
+    tbmch_clientattribute_send(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -207,12 +195,6 @@ static void mqtt_app_start(void)
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;
     }
-    ESP_LOGI(TAG, "Append client attribute: fw_version...");
-    err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_FW_VERSION, NULL, tb_clientattribute_on_get_fw_version);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_FW_VERSION);
-        goto exit_destroy;
-    }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
     err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL,
                             tb_clientattribute_on_get_setpoint);
@@ -291,7 +273,7 @@ void app_main(void)
     esp_log_level_set("attributes_reques", ESP_LOG_VERBOSE);
     esp_log_level_set("client_attribute", ESP_LOG_VERBOSE);
     esp_log_level_set("client_rpc", ESP_LOG_VERBOSE);
-    esp_log_level_set("fw_update", ESP_LOG_VERBOSE);
+    esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
     esp_log_level_set("timeseries_data", ESP_LOG_VERBOSE);

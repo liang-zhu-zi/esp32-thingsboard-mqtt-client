@@ -56,6 +56,7 @@ void tb_on_disconnected(tbmch_handle_t client, void *context)
 
 static void mqtt_app_start(void)
 {
+	//tbmch_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -155,8 +156,7 @@ static void mqtt_app_start(void)
         goto exit_destroy;
     }
 
-
-    ESP_LOGI(TAG, "connect tbmch ...");
+    // Do...
     int i = 0;
     while (i<20) {
         if (tbmch_has_events(client)) {
@@ -169,7 +169,6 @@ static void mqtt_app_start(void)
         }
         sleep(1);
     }
-
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
     tbmch_disconnect(client);
@@ -200,7 +199,7 @@ void app_main(void)
     esp_log_level_set("attributes_reques", ESP_LOG_VERBOSE);
     esp_log_level_set("client_attribute", ESP_LOG_VERBOSE);
     esp_log_level_set("client_rpc", ESP_LOG_VERBOSE);
-    esp_log_level_set("fw_update", ESP_LOG_VERBOSE);
+    esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
     esp_log_level_set("timeseries_data", ESP_LOG_VERBOSE);

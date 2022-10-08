@@ -7,7 +7,8 @@
         "fw_update_observer.h": "c",
         "server_rpc_observer.h": "c",
         "tb_mqtt_client_helper_log.h": "c",
-        "shared_attribute_observer.h": "c"
+        "shared_attribute_observer.h": "c",
+        "tb_mqtt_client_helper.h": "c"
     },
     "cmake.configureOnOpen": false
 }

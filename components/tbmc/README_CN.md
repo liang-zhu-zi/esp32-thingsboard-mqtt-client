@@ -1,8 +1,8 @@
-# esp-idf-thingsboard-mqtt
+# esp32-thingsboard-mqtt-client
 
 [English](./README.md)
 
-<https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt>
+<https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client>
 
 一个 ESP-IDF-v4.4.1 代码库，采用 MQTT 协议连接到 ThingsBoard CE/PE.
 

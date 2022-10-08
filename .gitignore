@@ -55,4 +55,4 @@ dkms.conf
 build/
 
 # Visual Studio Code
-.vscode
+.vscode/

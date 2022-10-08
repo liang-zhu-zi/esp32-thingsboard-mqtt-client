@@ -10,7 +10,7 @@
 本示例实现了 telemetry 与 client-side attributes 相关功能：
 
 * 发送 telemetry: temprature, humidity
-* 发送 client-side attributes: model, fw_version, setpoint
+* 发送 client-side attributes: model, setpoint
 
 ## 硬件需求
 
@@ -141,7 +141,6 @@ I (6163) TELE_CLI_ATTR_EXAMPLE: Init tbmch ...
 I (6173) TELE_CLI_ATTR_EXAMPLE: Append telemetry: temprature...
 I (6173) TELE_CLI_ATTR_EXAMPLE: Append telemetry: humidity...
 I (6183) TELE_CLI_ATTR_EXAMPLE: Append client attribute: model...
-I (6193) TELE_CLI_ATTR_EXAMPLE: Append client attribute: fw_version...
 I (6193) TELE_CLI_ATTR_EXAMPLE: Append client attribute: setpoint...
 I (6203) TELE_CLI_ATTR_EXAMPLE: Connect tbmch ...
 I (6203) tb_mqtt_client_helper: connecting to mqtt://192.168.0.187...
@@ -167,111 +166,111 @@ I (10633) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (10633) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (10633) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (10643) tb_mqtt_client: [Telemetry][Tx] {"temprature":25,"humidity":26}
-I (10653) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (10653) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (10653) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (10663) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (10673) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
 I (10663) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=55579
-I (10683) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (10683) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (10703) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=65152
 I (16193) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (16193) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (16193) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (16203) tb_mqtt_client: [Telemetry][Tx] {"temprature":25.5,"humidity":27}
-I (16213) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (16213) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (16223) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=61674
 I (16223) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (16223) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (16233) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (16243) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (16243) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (16263) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=50986
 I (21753) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (21753) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (21753) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (21763) tb_mqtt_client: [Telemetry][Tx] {"temprature":26,"humidity":28}
-I (21773) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (21773) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (21783) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=64837
 I (21783) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (21783) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (21793) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (21803) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (21803) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (21823) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=61716
 I (27313) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (27313) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (27313) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (27323) tb_mqtt_client: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
-I (27333) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (27333) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (27333) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (27343) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (27343) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=24466
 I (27353) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (27363) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (27363) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (27383) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=52614
 I (32873) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (32873) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (32873) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (32883) tb_mqtt_client: [Telemetry][Tx] {"temprature":27,"humidity":30}
-I (32893) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (32893) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (32893) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (32903) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (32903) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=51643
 I (32913) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (32923) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (32923) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (32943) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=61266
 I (38333) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (38333) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (38333) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (38343) tb_mqtt_client: [Telemetry][Tx] {"temprature":27.5,"humidity":31}
-I (38353) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (38353) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (38363) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=58923
 I (38363) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (38363) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (38373) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (38383) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (38383) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (38403) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=6811
 I (43893) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (43893) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (43893) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (43903) tb_mqtt_client: [Telemetry][Tx] {"temprature":28,"humidity":32}
-I (43913) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (43913) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (43913) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=56451
 I (43923) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (43923) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (43933) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (43943) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (43943) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (43963) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=11067
 I (49453) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (49453) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (49453) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (49463) tb_mqtt_client: [Telemetry][Tx] {"temprature":27.5,"humidity":31}
-I (49473) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (49473) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (49483) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=11894
 I (49483) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (49483) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (49493) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (49503) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (49503) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (49523) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=31117
 I (55013) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (55013) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (55013) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (55023) tb_mqtt_client: [Telemetry][Tx] {"temprature":27,"humidity":30}
-I (55033) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (55033) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (55033) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (55043) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (55043) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=11883
 I (55053) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (55063) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (55063) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (55083) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=8388
 I (60573) TELE_CLI_ATTR_EXAMPLE: Send telemetry: temprature, humidity
 I (60573) TELE_CLI_ATTR_EXAMPLE: Get temperature (a time-series data)
 I (60573) TELE_CLI_ATTR_EXAMPLE: Get humidity (a time-series data)
 I (60583) tb_mqtt_client: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
-I (60593) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, fw_version, setpoint
+I (60593) TELE_CLI_ATTR_EXAMPLE: Send client attributes: model, setpoint
 I (60603) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=16018
 I (60603) TELE_CLI_ATTR_EXAMPLE: Get model (a client attribute)
 I (60603) TELE_CLI_ATTR_EXAMPLE: Get local F/W version (a client attribute)
 I (60613) TELE_CLI_ATTR_EXAMPLE: Get setpoint (a client attribute)
-I (60623) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","fw_version":"1.0.1","setpoint":25.5}
+I (60623) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (60643) tb_mqtt_client: MQTT_EVENT_PUBLISHED, msg_id=7408
 I (61633) TELE_CLI_ATTR_EXAMPLE: Disconnect tbmch ...
 I (61633) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.187...
@@ -282,10 +281,10 @@ I (61843) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `fw_version`, `model` 和 `setpoint` 三个 Client-side attributes.
+* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `model` 和 `setpoint` 两个 Client-side attributes.
 
 * Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
 ## 故障排除
 
-如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt/issues)。 我们会尽快回复您。
+如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues)。 我们会尽快回复您。

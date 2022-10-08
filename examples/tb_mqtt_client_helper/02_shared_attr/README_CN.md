@@ -183,4 +183,4 @@ I (28222) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## 故障排除
 
-如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp-idf-thingsboard-mqtt/issues)。 我们会尽快回复您。
+如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues)。 我们会尽快回复您。
