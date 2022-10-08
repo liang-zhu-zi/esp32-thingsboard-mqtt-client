@@ -1,8 +1,8 @@
-# esp32-thingsboard-mqtt-client
+# ESP32 ThingsBoard MQTT Client library
 
 [中文](README_CN.md)
 
-ESP32 ThingsBoard MQTT client library for C/C++ developers.
+ESP32 ThingsBoard MQTT Client library for C/C++ developers.
 
 It is packaged into an ESP-IDF component, which can be used under ESP-IDF and ESP-ADF, and can also be easily ported to Arduino-ESP32.
 

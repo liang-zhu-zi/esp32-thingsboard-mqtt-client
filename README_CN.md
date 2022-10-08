@@ -1,4 +1,4 @@
-# esp32-thingsboard-mqtt-client
+# ESP32 ThingsBoard MQTT Client library
 
 [English](README.md)
 
