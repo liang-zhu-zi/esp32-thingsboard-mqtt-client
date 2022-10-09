@@ -9,7 +9,7 @@ if(CONFIG_TB_MQTT_CLIENT_HELPER_ENABLE)
                     "src/helper/attributes_request_observer.c"
                     "src/helper/client_attribute_helper.c"
                     "src/helper/client_rpc_observer.c"
-                    "src/helper/fw_update_observer.c"
+                    "src/helper/ota_update_observer.c"
                     "src/helper/server_rpc_observer.c"
                     "src/helper/shared_attribute_observer.c"
                     "src/helper/timeseries_data_helper.c")

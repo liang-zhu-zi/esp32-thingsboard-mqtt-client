@@ -1,10 +1,15 @@
 # TODO List
 
-1. A new example of F/W OTA;
-2. A new examples of all in one;
-3. Append supported ThingsBoard MQTT API in commonents/README.md;
-4. Append some pictures of ThingsBoard in examples/.../README.md;
-5. Support Claiming devices API; append an example;
-6. Support Device provisioning API; append an example;
-7. Append some example of low-level API (tb-mqtt-client.h);
-8. Append some testing case;
+1. OTA: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
+1. A new Full example of F/W OTA.
+
+1. Append supported ThingsBoard MQTT API in commonents/README.md.
+1. Append some pictures of ThingsBoard in examples/.../README.md.
+1. A new examples of all in one.
+
+1. Support Claiming devices API; append an example. !!!
+1. Support Device provisioning API; append an example. !!!
+
+1. Append some example of low-level API (tb-mqtt-client.h).
+
+1. Append some testing case.

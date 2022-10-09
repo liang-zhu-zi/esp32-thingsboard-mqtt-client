@@ -41,7 +41,7 @@ typedef struct tbmc_request
 
      uint64_t timestamp; /*!< time stamp at sending request */
      void *context;
-     void *on_response; /*!< tbmc_on_response_t or tbmc_on_fwupdate_response_t */
+     void *on_response; /*!< tbmc_on_response_t or tbmc_on_otaupdate_response_t */
      void *on_timeout; /*!< tbmc_on_timeout_t */
 
      LIST_ENTRY(tbmc_request) entry;
@@ -82,7 +82,7 @@ typedef struct tbmc_client
      SemaphoreHandle_t lock;
      int next_request_id;
      uint64_t last_check_timestamp;
-     tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & fw update request */ ////QueueHandle_t timeoutQueue;
+     tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 } tbmc_t;
 
 static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
@@ -170,8 +170,8 @@ bool tbmc_connect(tbmc_handle_t client_,
                   // tbmc_on_clientrpc_response_t on_clientrpc_response,
                   // tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                   tbmc_on_serverrpc_request_t on_serverrpc_request //,
-                  /* tbmc_on_fwupdate_response_t on_fwupdate_response, */
-                  /* tbmc_on_fwupdate_timeout_t on_fwupdate_timeout */) // connect()//...start()
+                  /* tbmc_on_otaupdate_response_t on_otaupdate_response, */
+                  /* tbmc_on_otaupdate_timeout_t on_otaupdate_timeout */) // connect()//...start()
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
@@ -202,7 +202,7 @@ bool tbmc_connect(tbmc_handle_t client_,
      // SemaphoreHandle_t lock;
      // int next_request_id;
      // uint64_t last_check_timestamp;
-     // tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & fw update request */ ////QueueHandle_t timeoutQueue;
+     // tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 
      const esp_mqtt_client_config_t mqtt_cfg = {
         .uri = config->uri,
@@ -753,20 +753,21 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
  *      Topic: 'v1/devices/me/rpc/request/$request_id'
  *      Data:  '{"method":"getTime","params":{}}'
  *
- * @param request_id_   0 on first f/w request(chunk is 0), otherwise if it is result of last tbmc_fwupdate_request()
- * @param chunk                    
- * @param on_fwupdate_response    f/w update response callback
- * @param on_fwupdate_timeout     f/w update response timeout callback
+ * @param request_id_   0 on first f/w request(chunk_id is 0), otherwise if it is result of last tbmc_otaupdate_request()
+ * @param chunk_id      0,1,2,3,...           
+ * @param on_otaupdate_response    f/w update response callback
+ * @param on_otaupdate_timeout     f/w update response timeout callback
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, const char *payload, //?payload
+int tbmc_otaupdate_request(tbmc_handle_t client_,
+                          int request_id_, int chunk_id, const char *payload, //?payload
                           void *context,
-                          tbmc_on_fwupdate_response_t on_fwupdate_response,
-                          tbmc_on_fwupdate_timeout_t on_fwupdate_timeout,
+                          tbmc_on_otaupdate_response_t on_otaupdate_response,
+                          tbmc_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      tbmc_t *client = (tbmc_t*)client_;
@@ -785,7 +786,7 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
      }*/
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_FWUPDATE, request_id_, context,
-                                           on_fwupdate_response, on_fwupdate_timeout);
+                                           on_otaupdate_response, on_otaupdate_timeout);
      if (request_id <= 0) {
           TBMC_LOGE("Unable to take semaphore");
           return -1;
@@ -798,7 +799,7 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
           return -1;
      }
      memset(topic, 0x00, size);
-     snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, request_id, chunk);
+     snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
         TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
@@ -874,7 +875,7 @@ static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *p
      }
 
      int len = (payload == NULL) ? 0 : strlen(payload); //// +1
-     return esp_mqtt_client_publish(client->mqtt_handle, topic, payload, len, qos, retain);
+     return esp_mqtt_client_publish(client->mqtt_handle, topic, payload, len, qos, retain); ////return msg_id or -1(failure)
 }
 
 // The callback for when a MQTT event is received.
@@ -1053,8 +1054,8 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
      } else if (strncmp(topic, TB_MQTT_TOPIC_FW_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_FW_RESPONSE_PREFIX)) == 0) {
           // 5.TB_MQTT_TOPIC_FW_RESPONSE_PREFIX
           int request_id = 0;
-          int chunk = 0;
-          sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id, &chunk);
+          int chunk_id = 0;
+          sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id, &chunk_id);
           if (client->config.log_rxtx_package) {
               TBMC_LOGI("[FW update][Rx] RequestID=%d %.*s",
                     request_id, payload_len, payload);
@@ -1062,9 +1063,9 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
           tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
           if (tbmc_request) {
-               tbmc_on_fwupdate_response_t on_fwupdate_response = tbmc_request->on_response;
-               if (on_fwupdate_response) {
-                    on_fwupdate_response(client->context, request_id, chunk, payload, payload_len);
+               tbmc_on_otaupdate_response_t on_otaupdate_response = tbmc_request->on_response;
+               if (on_otaupdate_response) {
+                    on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
                }
                _request_destroy(tbmc_request);
                tbmc_request = NULL;

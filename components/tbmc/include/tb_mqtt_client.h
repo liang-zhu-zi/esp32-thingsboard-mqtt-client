@@ -64,54 +64,99 @@ extern "C" {
 //====ThingsBoard MQTT topic===========================================================================================
 // Publish Telemetry data
 #define TB_MQTT_TOPIC_TELEMETRY_PUBLISH               "v1/devices/me/telemetry"   //publish
+
 // Publish client-side device attributes to the server
 #define TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH       "v1/devices/me/attributes"  //publish
+
 // Request client-side or shared device attributes from the server
 #define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN      "v1/devices/me/attributes/request/%d"  //publish, $request_id
 #define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX       "v1/devices/me/attributes/request/"    //publish
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PATTERN     "v1/devices/me/attributes/response/%d" //receive, $request_id
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX      "v1/devices/me/attributes/response/"   //receive
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE  "v1/devices/me/attributes/response/+"  //subscribe
+
+#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS    "clientKeys"
+#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS    "sharedKeys"
+#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT        "client"
+#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED        "shared"
+
 // Subscribe to shared device attribute updates from the server
 #define TB_MQTT_TOPIC_SHARED_ATTRIBUTES               "v1/devices/me/attributes"      //subscribe, receive
+
 // Server-side RPC
 #define TB_MQTT_TOPIC_SERVERRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%d"  //receive, $request_id
 #define TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX        "v1/devices/me/rpc/request/"    //receive
 #define TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE     "v1/devices/me/rpc/request/+"   //subscribe
 #define TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%d" //publish, $request_id
 #define TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX       "v1/devices/me/rpc/response/"   //publish
+
 // Client-side RPC
 #define TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%d"  //publish, $request_id
 #define TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX        "v1/devices/me/rpc/request/"    //publish
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%d" //receive, $request_id
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX       "v1/devices/me/rpc/response/"   //receive
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE    "v1/devices/me/rpc/response/+"  //subscribe
-// Claiming device using device-side key scenario: Not implemented yet
-//#define TB_MQTT_TOPIC_DEVICE_CLAIM         "v1/devices/me/claim" //publish
-// Device provisioning: Not implemented yet
-//#define TB_MQTT_TOPIC_PROVISION_REQUESTC   "/provision/request"  //publish
-//#define TB_MQTT_TOPIC_PROVISION_RESPONSE   "/provision/response" //subscribe, receive
-// Firmware update
-// receive fw_title, fw_version, fw_checksum, fw_checksum_algorithm shared attributes after the device subscribes to "v1/devices/me/attributes/response/+".
-#define TB_MQTT_TOPIC_FW_REQUEST_PATTERN          "v2/fw/request/%d/chunk/%d"   //publish, ${requestId}, ${chunk}
-#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN         "v2/fw/response/%d/chunk/%d"  //receive, ${requestId}, ${chunk}
-#define TB_MQTT_TOPIC_FW_RESPONSE_PREFIX          "v2/fw/response/"             //receive, ${requestId}, ${chunk}
-#define TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE       "v2/fw/response/+/chunk/+"    //subsribe
 
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS  "clientKeys"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS  "sharedKeys"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT      "client"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED      "shared"
 #define TB_MQTT_TEXT_RPC_METHOD     "method"
 #define TB_MQTT_TEXT_RPC_PARAMS     "params"
 #define TB_MQTT_TEXT_RPC_RESULTS    "results"
 
-#define TB_MQTT_SHAREDATTRBUTE_FW_TITLE "fw_title"
-#define TB_MQTT_SHAREDATTRBUTE_FW_VERSION "fw_version"
-#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM "fw_checksum"
-#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG "fw_checksum_algorithm"
+// Claiming device using device-side key scenario: Not implemented yet
+//#define TB_MQTT_TOPIC_DEVICE_CLAIM         "v1/devices/me/claim" //publish
 
-#define TB_MQTT_TIMEOUT (30) //second, Client-Side RPC timeout, Attributes Request timeout or fwupdate Request timeout
+// Device provisioning: Not implemented yet
+//#define TB_MQTT_TOPIC_PROVISION_REQUESTC   "/provision/request"  //publish
+//#define TB_MQTT_TOPIC_PROVISION_RESPONSE   "/provision/response" //subscribe, receive
+
+// Firmware update
+// receive some shared attributes after the device subscribes to "v1/devices/me/attributes/response/+":
+//         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm,
+//         sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm
+#define TB_MQTT_TOPIC_FW_REQUEST_PATTERN        "v2/fw/request/%d/chunk/%d"   //publish, ${requestId}, ${chunkId}
+#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN       "v2/fw/response/%d/chunk/%d"  //receive, ${requestId}, ${chunkId}
+#define TB_MQTT_TOPIC_FW_RESPONSE_PREFIX        "v2/fw/response/"             //receive, ${requestId}, ${chunkId}
+#define TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE     "v2/fw/response/+/chunk/+"    //subsribe
+
+#define TB_MQTT_SHAREDATTRBUTE_FW_TITLE         "fw_title"
+#define TB_MQTT_SHAREDATTRBUTE_FW_VERSION       "fw_version"
+#define TB_MQTT_SHAREDATTRBUTE_FW_SIZE          "fw_size"
+#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM      "fw_checksum"
+#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG  "fw_checksum_algorithm"
+
+#define TB_MQTT_SHAREDATTRBUTE_SW_TITLE         "sw_title"
+#define TB_MQTT_SHAREDATTRBUTE_SW_VERSION       "sw_version"
+#define TB_MQTT_SHAREDATTRBUTE_SW_SIZE          "sw_size"
+#define TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM      "sw_checksum"
+#define TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG  "sw_checksum_algorithm"
+
+#define TB_MQTT_TELEMETRY_CURRENT_FW_TITLE      "current_fw_title"
+#define TB_MQTT_TELEMETRY_CURRENT_FW_VERSION    "current_fw_version"
+#define TB_MQTT_TELEMETRY_FW_STATE              "fw_state"
+#define TB_MQTT_TELEMETRY_FW_ERROR              "fw_error"
+
+#define TB_MQTT_TELEMETRY_CURRENT_SW_TITLE      "current_sw_title"
+#define TB_MQTT_TELEMETRY_CURRENT_SW_VERSION    "current_sw_version"
+#define TB_MQTT_TELEMETRY_SW_STATE              "sw_state"
+#define TB_MQTT_TELEMETRY_SW_ERROR              "sw_error"
+
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADING "DOWNLOADING" // - notification about new firmware/software update was received and device started downloading the update package.
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADED  "DOWNLOADED"  // - device completed downloading of the update package.
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_VERIFIED    "VERIFIED"    // - device verified the checksum of the downloaded package.
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATING    "UPDATING"    // - device started the firmware/software update. Typically is sent before reboot of the device or restart of the service.
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATED     "UPDATED"     // - the firmware was successfully updated to the next version.
+#define TB_MQTT_TELEMETRY_FW_SW_STATE_FAILED      "FAILED"      // - checksum wasn’t verified, or the device failed to update. See “Device failed” tab on the Firmware dashboard for more details.
+
+// only support CRC32
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA256      "sha256"
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA384      "sha384"
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA512      "sha512"
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHAMD5      "md5"
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_MURMUR3_32  "murmur3_32"
+//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_MURMUR3_128 "murmur3_128"
+#define TB_MQTTT_FW_SW_CHECKSUM_ALG_CRC32       "crc32"
+
+//second, Client-Side RPC timeout, Attributes Request timeout or otaupdate Request timeout
+#define TB_MQTT_TIMEOUT (30) 
 
 //====tbmc data========================================================================================================
 /* Definitions for error constants. */
@@ -174,8 +219,8 @@ typedef tbmc_on_response_t tbmc_on_attrrequest_response_t; // First send
 typedef tbmc_on_timeout_t  tbmc_on_attrrequest_timeout_t; // First send
 typedef tbmc_on_response_t tbmc_on_clientrpc_response_t; // First send
 typedef tbmc_on_timeout_t  tbmc_on_clientrpc_timeout_t; // First send
-typedef void (*tbmc_on_fwupdate_response_t)(void *context, int request_id, int chunk, const char *payload, int len); // First send
-typedef tbmc_on_timeout_t tbmc_on_fwupdate_timeout_t;                                                        // First send
+typedef void (*tbmc_on_otaupdate_response_t)(void *context, int request_id, int chunk_id, const char *payload, int len); // First send
+typedef tbmc_on_timeout_t tbmc_on_otaupdate_timeout_t;                                                        // First send
 
 tbmc_handle_t tbmc_init(void);
 void tbmc_destroy(tbmc_handle_t client_);
@@ -218,10 +263,11 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
                               tbmc_on_clientrpc_response_t on_clientrpc_response,
                               tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                               int qos /*= 1*/, int retain /*= 0*/);
-int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, const char *payload, //?payload
+int tbmc_otaupdate_request(tbmc_handle_t client_,
+                          int request_id_, int chunk_id, const char *payload, //?payload
                           void *context,
-                          tbmc_on_fwupdate_response_t on_fwupdate_response,
-                          tbmc_on_fwupdate_timeout_t on_fwupdate_timeout,
+                          tbmc_on_otaupdate_response_t on_otaupdate_response,
+                          tbmc_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/);
 
 #define TBMC_TELEMETRY_PUBLISH(client, payload) \
@@ -238,8 +284,8 @@ int tbmc_fwupdate_request(tbmc_handle_t client_, int request_id_, int chunk, con
           tbmc_clientrpc_request(client, payload, context, on_clientrpc_response, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
 #define TBMC_CLIENTRPC_REQUEST_EX(client, method, params, context, on_clientrpc_response, on_clientrpc_timeout) \
           tbmc_clientrpc_request_ex(client, method, params, context, on_clientrpc_response, on_clientrpc_timeout, /*int qos =*/1, /*int retain =*/0)
-#define TBMC_FW_REQUEST_SEND(client, request_id, chunk, payload) \
-          tbmc_fw_request_send(client, request_id, chunk, payload, /*int qos =*/1, /*int retain =*/0)
+#define TBMC_OTA_REQUEST_SEND(client, request_id, chunk_id, payload) \
+          tbmc_ota_request_send(client, request_id, chunk_id, payload, /*int qos =*/1, /*int retain =*/0)
 
 #ifdef __cplusplus
 }

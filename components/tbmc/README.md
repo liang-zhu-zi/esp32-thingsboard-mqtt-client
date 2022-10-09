@@ -50,7 +50,6 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
       * Topic: `v1/devices/me/attributes/request/{request_id}`
       * Payload: `{"sharedKeys": "fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version"}`
 
-
 * If receiving *fw_title* & *fw_version* in `v1/devices/me/attributes` or `v1/devices/me/attributes/response/{request_id}`, and they are not the same as *current_fw_title* & *current_fw_version*, then
    1. chunk_id = 0;
    2. Send telemetry: *current firmware info*
@@ -59,7 +58,7 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
 
       Replace `Initial` and `v0` with your F/W title and version.
 
-   3. Send telemetry: *getting firmware*
+   3. Send f/w request: *getting firmware*
       * Topic: `v2/fw/request/{request_id}/chunk/{chunk_id}`
       * Payload: `chunk_size`
 
@@ -71,7 +70,7 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
    1. Saves *msg.payload*.
    2. chunk_id++;
    3. If *accumulated received firmware data length* is less than `fw_size`, then
-      1. Send telemetry: *getting firmware*
+      1. Send f/w request: *getting firmware*
          * Topic: `v2/fw/request/{request_id}/chunk/{chunk_id}`
          * Payload: `chunk_size`
 

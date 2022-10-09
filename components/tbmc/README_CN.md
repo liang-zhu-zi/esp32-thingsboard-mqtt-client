@@ -12,7 +12,7 @@ ESP32 ThingsBoard MQTT Client 适用于 C/C++ 开发人员。
 
 当前客户端版本基于 ESP-IDF-v4.4.1，兼容 ThingsBoard 3.4.0 及更新版本。
 
-本组件模板基于 `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`.
+本组件模板基于 `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`。
 
 ## 支持的 esp-mqtt API
 

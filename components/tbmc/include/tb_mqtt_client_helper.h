@@ -114,16 +114,30 @@ typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *contex
 
 //====8.Device provisioning: Not implemented yet=======================================================================
 
-//====9.Firmware update================================================================================================
+//====9.Firmware/Software update=======================================================================================
+/**
+ * ThingsBoard MQTT Client Helper OTA update type
+ */
+typedef enum
+{
+     TBMCH_OTAUPDATE_TYPE_FW = 0,  /*!< F/W OTA update */
+     TBMCH_OTAUPDATE_TYPE_SW       /*!< S/W OTA update */
+} tbmch_otaupdate_type_t;
+
 //Don't call TBMCH API in these callback!
-typedef bool (*tbmch_fwupdate_on_sharedattributes_t)(tbmch_handle_t client, void *context,
-                                                     const char *fw_title, const char *fw_version, const char *fw_checksum, const char *fw_checksum_algorithm);
-typedef tbmch_err_t (*tbmch_fwupdate_on_response_t)(tbmch_handle_t client, void *context,
-                                                    int request_id, int chunk /*current chunk*/, const void *fw_data, int data_size);
-typedef void (*tbmch_fwupdate_on_success_t)(tbmch_handle_t client, void *context,
-                                         int request_id, int chunk /*total_size*/);
-typedef void (*tbmch_fwupdate_on_timeout_t)(tbmch_handle_t client, void *context,
-                                            int request_id, int chunk /*current chunk*/);
+typedef const char* (*tbmch_otaupdate_on_get_current_ota_title_t)(tbmch_handle_t client, void *context);
+typedef const char* (*tbmch_otaupdate_on_get_current_ota_version_t)(tbmch_handle_t client, void *context);
+typedef tbmch_err_t (*tbmch_otaupdate_on_negotiate_t)(tbmch_handle_t client, void *context,
+                  const char *ota_title, const char *ota_version, int ota_size, const char *ota_checksum, const char *ota_checksum_algorithm,
+                  char *ota_error, int error_size);
+typedef tbmch_err_t (*tbmch_otaupdate_on_write_t)(tbmch_handle_t client, void *context,
+                  int request_id, int chunk_id/*current chunk_id*/, const void *ota_data, int data_size,
+                  char *ota_error, int error_size);
+typedef tbmch_err_t (*tbmch_otaupdate_on_end_t)(tbmch_handle_t client, void *context,
+                                         int request_id, int chunk_id,
+                                         char *ota_error, int error_size);
+typedef void (*tbmch_otaupdate_on_abort_t)(tbmch_handle_t client, void *context,
+                                            int request_id, int chunk_id/*current chunk_id*/);
 
 //====0.tbmc client====================================================================================================
 /**
@@ -202,161 +216,28 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
 //====8.Device provisioning: Not implemented yet=======================================================================
 
 //====9.Firmware update================================================================================================
-tbmch_err_t tbmch_fwupdate_append(tbmch_handle_t client_, const char *fw_title,
-                                  void *context,
-                                  tbmch_fwupdate_on_sharedattributes_t on_fw_attributes,
-                                  tbmch_fwupdate_on_response_t on_fw_chunk,
-                                  tbmch_fwupdate_on_success_t on_fw_success,
-                                  tbmch_fwupdate_on_timeout_t on_fw_timeout);
-tbmch_err_t tbmch_fwupdate_clear(tbmch_handle_t client_, const char *fw_title);
+/**
+ * ThingsBoard MQTT Client Helper F/W update OTA config
+ */
+typedef struct tbmch_otaupdate_config
+{
+     tbmch_otaupdate_type_t ota_type; /*!< FW/TBMCH_OTAUPDATE_TYPE_FW or SW/TBMCH_OTAUPDATE_TYPE_SW  */
+     int chunk_size;                  /*!< chunk_size, eg: 2048. 0 to get all F/W or S/W by request  */
+
+     void *context;
+     tbmch_otaupdate_on_get_current_ota_title_t   on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
+     tbmch_otaupdate_on_get_current_ota_version_t on_get_current_ota_version;   /*!< callback of getting current F/W or S/W OTA version */
+
+     tbmch_otaupdate_on_negotiate_t on_ota_negotiate;         /*!< callback of F/W or S/W OTA attributes */
+     tbmch_otaupdate_on_write_t on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
+     tbmch_otaupdate_on_end_t on_ota_end;                     /*!< callback of F/W or S/W OTA success & end*/
+     tbmch_otaupdate_on_abort_t on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
+} tbmch_otaupdate_config_t;
+
+tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_description, const tbmch_otaupdate_config_t *config);
+tbmch_err_t tbmch_otaupdate_clear(tbmch_handle_t client_, const char *ota_description);
 
 //====end==============================================================================================================
-
-//LIST_ENTRY, LIST_HEAD
-
-//===value==========================================================
-// typedef char *TBMC_STRING;
-// typedef bool TBMC_BOOLEAN;
-// typedef double TBMC_DOUBLE;
-// typedef long TBMC_LONG;
-// // typedef char *TBMC_JSON; //object or array
-// typedef char *TBMC_ARRAY;
-// typedef char *TBMC_OBJECT;
-// typedef char *TBMC_RAW;
-// // typedef char *TBMC_NULL;
-
-// /**
-//  * ThingsBoard MQTT Client Helper value type
-//  */
-// typedef enum
-// {
-//      TBMC_VALUE_TYPE_INVALID = 0,
-//      TBMC_VALUE_TYPE_STRING,  /*!< string value */
-//      TBMC_VALUE_TYPE_BOOLEAN, /*!< boolean value */
-//      TBMC_VALUE_TYPE_DOUBLE,  /*!< double value */
-//      TBMC_VALUE_TYPE_LONG,    /*!< long value  */
-//      // TBMC_VALUE_TYPE_JSON, /*!< JSON value */
-//      TBMC_VALUE_TYPE_ARRAY,   /*!< array value */
-//      TBMC_VALUE_TYPE_OBJECT,  /*!< object value */
-//      TBMC_VALUE_TYPE_RAW,     /*!< raw value */
-//      // TBMC_VALUE_TYPE_NULL, /*!< null value */
-// } tbmch_value_type_t;
-
-// /**
-//  * ThingsBoard MQTT Client Helper value
-//  */
-// typedef struct
-// {
-//      tbmch_value_type_t type; /*!< type of value */
-//      //int size;               /*!< size of value?? */
-//      union
-//      {
-//           TBMC_STRING stringV;
-//           TBMC_BOOLEAN boolV;
-//           TBMC_DOUBLE doubleV;
-//           TBMC_LONG longV;
-//           TBMC_JSON jsonV;
-//      } value;
-// } tbmch_value_t;
-
-// typedef tbmch_err_t (*TBMC_GET_STRING_VALUE_CB)(void *context, TBMC_STRING *value, int value_size); /*!< Get TBMC_STRING value from context */
-// typedef tbmch_err_t (*TBMC_GET_BOOLEAN_VALUE_CB)(void *context, TBMC_BOOLEAN *value, int);          /*!< Get TBMC_BOOLEAN value from context */
-// typedef tbmch_err_t (*TBMC_GET_DOUBLE_VALUE_CB)(void *context, TBMC_DOUBLE *value, int);            /*!< Get TBMC_DOUBLE value from context */
-// typedef tbmch_err_t (*TBMC_GET_LONG_VALUE_CB)(void *context, TBMC_LONG *value, int);                /*!< Get TBMC_LONG value from context */
-// typedef tbmch_err_t (*TBMC_GET_JSON_VALUE_CB)(void *context, TBMC_JSON *value, int value_size);     /*!< Get TBMC_JSON value from context */
-
-// typedef tbmch_err_t (*TBMC_SET_STRING_VALUE_CB)(void *context, TBMC_STRING value);   /*!< Set TBMC_STRING value to context */
-// typedef tbmch_err_t (*TBMC_SET_BOOLEAN_VALUE_CB)(void *context, TBMC_BOOLEAN value); /*!< Set TBMC_BOOLEAN value to context */
-// typedef tbmch_err_t (*TBMC_SET_DOUBLE_VALUE_CB)(void *context, TBMC_DOUBLE value);   /*!< Set TBMC_DOUBLE value to context */
-// typedef tbmch_err_t (*TBMC_SET_LONG_VALUE_CB)(void *context, TBMC_LONG value);       /*!< Set TBMC_LONG value to context */
-// typedef tbmch_err_t (*TBMC_SET_JSON_VALUE_CB)(void *context, TBMC_JSON value);       /*!< Set TBMC_JSON value to context */
-
-//typedef tbmch_err_t (*tbmch_value_get_callback_t)(void *context, tbmch_value_t *value);       /*!< Get tbmch_value from context */
-//typedef tbmch_err_t (*tbmch_value_set_callback_t)(void *context, const tbmch_value_t *value); /*!< Set tbmch_value to context */
-
-//===key-value======================================================
-// /**
-//  * ThingsBoard MQTT Client Helper key-value
-//  */
-// typedef struct
-// {
-//      char *key;           /*!< Key */
-//      tbmch_value_t *value; /*!< Value */
-
-//      void *context;                          /*!< Context of getting/setting value*/
-//      tbmch_value_get_callback_t on_get; /*!< Callback of getting value from context */
-//      tbmch_value_set_callback_t on_set; /*!< Callback of setting value to context */
-// } tbmch_kv_t;
-
-// typedef tbmch_kv_t *tbmch_kv_handle_t;
-
-// /**
-//  * @brief Creates tbmc key-value handle
-//  *
-//  * @param key
-//  * @param type           context of getting/setting value
-//  * @param context        contex of value for callback
-//  * @param on_get   callback of getting value from context
-//  * @param on_set   callback of setting value to context
-//  *
-//  * @return tbmch_kv_handle_t if successfully created, NULL on error
-//  */
-// tbmch_kv_handle_t tbmch_kv_init(const char *key, tbmch_value_type_t type, void *context, tbmch_value_get_callback_t on_get, tbmch_value_set_callback_t on_set);
-
-// /**
-//  * @brief Destroys the tbmc key-value handle
-//  *
-//  * Notes:
-//  *  - Cannot be called from the tbmc event handler
-//  *
-//  * @param kv    tbmc key-value handle
-//  *
-//  * @return 0
-//  *         TBMC_ERR_INVALID_ARG on wrong initialization
-//  */
-// tbmch_err_t tbmch_kv_destroy(tbmch_kv_handle_t kv);
-
-// /**
-//  * @brief Get key of the tbmc key-value handle
-//  *
-//  * @param kv    tbmc key-value handle
-//  *
-//  * @return key of the tbmc key-value handle if successfully created, NULL on error
-//  */
-// const char *tbmch_kv_get_key(tbmch_kv_handle_t kv);
-
-// /**
-//  * @brief Get value type of tbmch_kv
-//  *
-//  * @param kv    tbmc key-value handle
-//  *
-//  * @return vale type of the tbmc key-value handle if successfully created, TBMC_VALUE_TYPE_INVALID on error
-//  */
-// tbmch_value_type_t tbmch_kv_get_value_type(tbmch_kv_handle_t kv);
-
-// /**
-//  * @brief Get tbmch_value of tbmch_kv
-//  *
-//  * @param kv    tbmc key-value handle
-//  * @param value result, fan-out parameter
-//  *
-//  * @return ESP_OK on success
-//  *         ESP_ERR_INVALID_ARG on wrong initialization
-//  *         ESP_FAIL if client is in invalid state
-//  */
-// tbmch_err_t tbmch_kv_get_value(tbmch_kv_handle_t kv, tbmch_value_t *value);
-
-// /**
-//  * @brief Set tbmch_value of tbmch_kv
-//  *
-//  * @param kv    tbmc key-value handle
-//  * @param value
-//  *
-//  * @return ESP_OK on success
-//  *         ESP_ERR_INVALID_ARG on wrong initialization
-//  *         ESP_FAIL if client is in invalid state
-//  */
-// tbmch_err_t tbmch_kv_set_value(tbmch_kv_handle_t kv, const tbmch_value_t *value);
 
 #ifdef __cplusplus
 }
