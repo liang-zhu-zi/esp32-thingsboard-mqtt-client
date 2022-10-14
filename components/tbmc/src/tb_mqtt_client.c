@@ -555,13 +555,21 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
           return -1;
      }
 
-     if ((client_keys == NULL || strlen(client_keys) <= 0) && (shared_keys == NULL || strlen(shared_keys) <= 0)) {
+     int client_len = 0;
+     int shared_len = 0;
+     if (client_keys && strlen(client_keys) > 0) {
+          client_len = strlen(client_keys);
+     }
+     if (shared_keys && strlen(shared_keys) > 0) {
+          shared_len = strlen(shared_keys);
+     }
+     if ((client_len>0) && (shared_len>0)) {
           TBMC_LOGW("There are no keys to request");
           return -1;
      }
 
-     int size = strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS) + strlen(client_keys) 
-               + strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS) + strlen(shared_keys) + 20;
+     int size = strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS) + client_len 
+               + strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS) + shared_len + 20;
      char *payload = TBMC_MALLOC(size);
      if (!payload)
      {
@@ -569,7 +577,14 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
           return -1;
      }
      memset(payload, 0x00, size);
-     snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}", client_keys, shared_keys);
+
+     if ((client_len>0) && (shared_len>0)) {
+         snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}", client_keys, shared_keys);
+     } else if (client_len>0) {
+         snprintf(payload, size - 1, "{\"clientKeys\":\"%s\"}", client_keys);
+     } else if (shared_len>0) {
+         snprintf(payload, size - 1, "{\"sharedKeys\":\"%s\"}", shared_keys);
+     }
      int retult = tbmc_attributes_request(client, payload,
                                           context,
                                           on_attrrequest_response,
