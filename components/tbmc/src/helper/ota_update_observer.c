@@ -18,6 +18,7 @@
 
 #include "esp_err.h"
 #include "esp32/rom/crc.h"
+#include <unistd.h>
 
 #include "ota_update_observer.h"
 #include "tb_mqtt_client_helper_log.h"
@@ -88,6 +89,7 @@ tbmch_otaupdate_t *_tbmch_otaupdate_init(tbmch_handle_t client,  const char *ota
     otaupdate->config.on_ota_write = config->on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
     otaupdate->config.on_ota_end = config->on_ota_end;                     /*!< callback of F/W or S/W OTA success & end */
     otaupdate->config.on_ota_abort = config->on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
+    ////otaupdate->config.is_first_boot = config->is_first_boot;               /*!< whether first boot after ota update  */
   
     otaupdate->attribute.ota_title = NULL;
     otaupdate->attribute.ota_version = NULL;
@@ -126,7 +128,8 @@ tbmch_err_t _tbmch_otaupdate_destroy(tbmch_otaupdate_t *otaupdate)
     otaupdate->config.on_ota_write = NULL;          /*!< callback of F/W or S/W OTA doing */
     otaupdate->config.on_ota_end = NULL;            /*!< callback of F/W or S/W OTA success & end*/
     otaupdate->config.on_ota_abort = NULL;          /*!< callback of F/W or S/W OTA failure & abort */
-  
+    ////otaupdate->config.is_first_boot = false;
+    
     if (otaupdate->attribute.ota_title) {
         TBMCH_FREE(otaupdate->attribute.ota_title);
         otaupdate->attribute.ota_title = NULL;
@@ -173,14 +176,18 @@ const char *_tbmch_otaupdate_get_description(tbmch_otaupdate_t *otaupdate)
     return otaupdate->ota_description;
 }
 
-const char *_tbmch_otaupdate_get_title(tbmch_otaupdate_t *otaupdate)
+const char *_tbmch_otaupdate_get_current_title(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
         TBMCH_LOGE("otaupdate is NULL");
         return NULL;
     }
+    if (!otaupdate->config.on_get_current_ota_title) {
+        TBMCH_LOGE("otaupdate->config.on_get_current_ota_title is NULL");
+        return NULL;
+    }
 
-    return otaupdate->attribute.ota_title;
+    return otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
 }
 
 int _tbmch_otaupdate_get_request_id(tbmch_otaupdate_t *otaupdate)
@@ -193,7 +200,7 @@ int _tbmch_otaupdate_get_request_id(tbmch_otaupdate_t *otaupdate)
     return otaupdate->state.request_id;
 }
 
-static void __tbmch_otaupdate_reset(tbmch_otaupdate_t *otaupdate)
+void _tbmch_otaupdate_reset(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
         TBMCH_LOGE("otaupdate is NULL");
@@ -252,8 +259,10 @@ tbmch_err_t _tbmch_otaupdate_request_chunk(tbmch_otaupdate_t *otaupdate,
     // First OTA request
     if ((otaupdate->state.request_id<0) && (request_id>0)) {
          otaupdate->state.request_id = request_id;
-    } else {
-        TBMCH_LOGW("Request OTA chunk(%d) failure! %s()", otaupdate->state.chunk_id, __FUNCTION__);
+    }
+
+    if (request_id<0){
+        TBMCH_LOGW("Request OTA chunk(%d) failure! request_id=%d %s()", otaupdate->state.chunk_id, request_id, __FUNCTION__);
     }
 
     return (request_id<0)?-1:0;
@@ -284,16 +293,64 @@ bool _tbmch_otaupdate_checksum_verification(tbmch_otaupdate_t *otaupdate)
     // TODO: support multi-ALG! 
 
     //received all f/w or s/w
-    char checksum[20] = {0};
-    sprintf(checksum, "%d", otaupdate->state.checksum);
+    char checksum_str[20] = {0};
+    uint32_t checksum_int = otaupdate->state.checksum;
+    uint32_t a, b, c, d;
+    a = (checksum_int & 0xFF000000) >> 24;
+    b = (checksum_int & 0x00FF0000) >> 16;
+    c = (checksum_int & 0x0000FF00) >> 8;
+    d = (checksum_int & 0x000000FF) >> 0;
+    checksum_int = (d<<24) | (c<<16) | (b<<8) | a;
+    sprintf(checksum_str, "%x", checksum_int);
+
+    uint32_t ota_checksum = 0;
+    if (otaupdate->attribute.ota_checksum) {
+        sscanf(otaupdate->attribute.ota_checksum, "%x", &ota_checksum);
+    }
+    
     // CRC32 verify checksum
-    if (strcmp(checksum, otaupdate->attribute.ota_checksum)==0) {
+    //if (strcmp(checksum, otaupdate->attribute.ota_checksum)==0) {
+    if (checksum_int == ota_checksum) {
         return true;
     } else {
-        TBMCH_LOGW("checksum(%s) is NOT equal to otaupdate->attribute.ota_checksum(%s)!", 
-            checksum, otaupdate->attribute.ota_checksum);
+        TBMCH_LOGW("checksum(%s, %#x) is NOT equal to otaupdate->attribute.ota_checksum(%s, %#x)!", 
+            checksum_str, checksum_int, 
+            otaupdate->attribute.ota_checksum, ota_checksum);
         return false;
     }
+}
+
+//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3"}
+void _tbmch_otaupdate_publish_early_current_version(tbmch_otaupdate_t *otaupdate)
+{
+    if (!otaupdate) {
+        TBMCH_LOGE("otaupdate is NULL!");
+        return;
+    }
+
+    const char *current_ota_title_key = NULL;
+    const char *current_ota_version_key = NULL;
+    const char *current_ota_title_value = NULL;
+    const char *current_ota_version_value = NULL;
+    if (otaupdate->config.ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
+        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_FW_TITLE;   //"current_fw_title"
+        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_FW_VERSION; //"current_fw_version"
+    } else {
+        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_SW_TITLE;   //"current_sw_title"
+        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_SW_VERSION; //"current_sw_version"
+    }
+    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
+    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->client, otaupdate->config.context);
+
+    // send package...    
+    cJSON *object = cJSON_CreateObject(); // create json object
+    cJSON_AddStringToObject(object, current_ota_title_key, current_ota_title_value);
+    cJSON_AddStringToObject(object, current_ota_version_key, current_ota_version_value);
+    char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
+    tbmc_handle_t tbmc_handle = _tbmch_get_tbmc_handle(otaupdate->client);
+    /*int result =*/ tbmc_telemetry_publish(tbmc_handle, pack, 1/*qos*/, 0/*retain*/);
+    cJSON_free(pack); // free memory
+    cJSON_Delete(object); // delete json object
 }
 
 //{"fw_state": "FAILED", "fw_error":  "the human readable message about the cause of the error"}
@@ -416,6 +473,11 @@ void _tbmch_otaupdate_publish_updated_status(tbmch_otaupdate_t *otaupdate)
         return;
     }
 
+    /*if (!otaupdate->config.is_first_boot) {
+        TBMCH_LOGI("otaupdate is NOT first boot! ota update type=%d(0:F/W, 1:S/W)",TBMCH_OTAUPDATE_TYPE_FW);
+        return;
+    }*/
+
     const char *current_ota_title_key = NULL;
     const char *current_ota_version_key = NULL;
     const char *ota_state_key = NULL;
@@ -439,9 +501,11 @@ void _tbmch_otaupdate_publish_updated_status(tbmch_otaupdate_t *otaupdate)
     /*int result =*/ tbmc_telemetry_publish(tbmc_handle, pack, 1/*qos*/, 0/*retain*/);
     cJSON_free(pack); // free memory
     cJSON_Delete(object); // delete json object
+
+    usleep(500000);
 }
 
-//return 0 on successful, -1 on failure
+//return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
                                         const char *ota_title, const char *ota_version, int ota_size,
                                         const char *ota_checksum, const char *ota_checksum_algorithm,
@@ -461,11 +525,14 @@ tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
         return -1;
     }
 
-    __tbmch_otaupdate_reset(otaupdate);
+    _tbmch_otaupdate_reset(otaupdate);
+
+    // TODO: if ota_title & ota_version == current_title & current_version, then return 0!
+    
     int result = otaupdate->config.on_ota_negotiate(otaupdate->client, otaupdate->config.context,
                                              ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm,
                                              ota_error, error_size);
-    if (result==0) { //successful
+    if (result==1) { // negotiate successful(next to F/W OTA)
         // cache ota_title
         otaupdate->attribute.ota_title = TBMCH_MALLOC(strlen(ota_title)+1);
         if (otaupdate->attribute.ota_title) {
@@ -492,7 +559,7 @@ tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
     return result;
 }
 
-//return 0 on successful, -1 on failure
+//return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id, 
                                             const void *ota_data, int data_size,
                                             char *ota_error, int error_size)
@@ -507,7 +574,7 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
         strncpy(ota_error, "Chunk ID is error!", error_size);
         return -1; //chunk_id error
     }
-    if (ota_data && data_size) {
+    if (!ota_data || !data_size) {
         TBMCH_LOGE("ota_data(%p) or data_size(%d) is error!", ota_data, data_size);
         strncpy(ota_error, "OTA data is empty!", error_size);
         return -1; //ota_data is empty
@@ -517,7 +584,7 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
     result = otaupdate->config.on_ota_write(otaupdate->client, otaupdate->config.context,
                             otaupdate->state.request_id, chunk_id, ota_data, data_size,
                             ota_error, error_size);
-    if (!result) {
+    if (result != ESP_OK) {
         TBMCH_LOGW("fail to call on_ota_write()!");
         return -1; //payload error & end
     }
@@ -525,7 +592,7 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
     otaupdate->state.chunk_id++; //next chunk id
     otaupdate->state.received_len += data_size;
     // TODO: support multi-ALG! 
-    otaupdate->state.checksum = crc32_be(otaupdate->state.checksum, (uint8_t const*)ota_data, (uint32_t)data_size); //crc32_le(...)
+    otaupdate->state.checksum = crc32_le(otaupdate->state.checksum, (uint8_t const*)ota_data, (uint32_t)data_size); //crc32_be(...)
     return 0;
 }
 
@@ -544,7 +611,6 @@ tbmch_err_t _tbmch_otaupdate_do_end(tbmch_otaupdate_t *otaupdate, char *ota_erro
                                          otaupdate->state.request_id, otaupdate->state.chunk_id,
                                          ota_error, error_size);
     }
-    __tbmch_otaupdate_reset(otaupdate);
     return (ret==0)?0:-1;
 }
 
@@ -560,9 +626,9 @@ void _tbmch_otaupdate_do_abort(tbmch_otaupdate_t *otaupdate)
         otaupdate->config.on_ota_abort(otaupdate->client, otaupdate->config.context, 
                                          otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/);
     }
-    __tbmch_otaupdate_reset(otaupdate);
 }
 
+#if 0
 // TODO:
 /* * On connected:
    1. Subscribe to `v1/devices/me/attributes/response/+`
@@ -623,4 +689,5 @@ void _tbmch_otaupdate_do_abort(tbmch_otaupdate_t *otaupdate)
     //      * Payload: `{"sharedKeys": "sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version"}`
 
 }
+#endif
 

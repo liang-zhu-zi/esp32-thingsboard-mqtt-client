@@ -166,6 +166,7 @@ static void _response_timer_destroy(tbmch_handle_t client_);
 static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, const char *key, void *context,
                                                   tbmch_clientattribute_on_get_t on_get,
                                                   tbmch_clientattribute_on_set_t on_set);
+static void _tbmch_otaupdate_on_connected(tbmch_handle_t client_);
 static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_otaupdate_type_t ota_type,
                                                  const char *ota_title, const char *ota_version, int ota_size,
                                                  const char *ota_checksum, const char *ota_checksum_algorithm);
@@ -445,6 +446,8 @@ static void _tbmch_connected_on(tbmch_handle_t client_) //onConnected() // First
           TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;
      }
+
+     _tbmch_otaupdate_on_connected(client_);
 
      // clone parameter in lock/unlock
      void *context = client->config.context;
@@ -1014,7 +1017,7 @@ static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJS
           int ota_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_SIZE));
           char *ota_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM));
           char *ota_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG));
-          _tbmch_otaupdate_on_sharedattributes(client, TBMCH_OTAUPDATE_TYPE_FW, ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
+          _tbmch_otaupdate_on_sharedattributes(client_, TBMCH_OTAUPDATE_TYPE_FW, ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
      } else if (cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_TITLE) &&
          cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_VERSION) &&
          cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_SIZE) &&
@@ -1026,7 +1029,7 @@ static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJS
           int sw_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_SIZE));
           char *sw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM));
           char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG));
-          _tbmch_otaupdate_on_sharedattributes(client, TBMCH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
+          _tbmch_otaupdate_on_sharedattributes(client_, TBMCH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
      }
 
      return;// ESP_OK;
@@ -1065,6 +1068,7 @@ static tbmch_err_t _tbmch_attributesrequest_empty(tbmch_handle_t client_)
      return ESP_OK;
 }
 
+#define MAX_KEYS_LEN (256)
 ////tbmqttlink.h.tbmch_sendAttributesRequest();
 ////return request_id on successful, otherwise return -1/ESP_FAIL
 int tbmch_attributesrequest_send(tbmch_handle_t client_,
@@ -1073,8 +1077,6 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
                                  tbmch_attributesrequest_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...)
 {
-#define MAX_KEYS_LEN (256)
-
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
           TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
@@ -1095,8 +1097,8 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
      if (!client_keys || !shared_keys) {
           goto attributesrequest_fail;
      }
-     memset(client_keys, 0x00, 256);
-     memset(shared_keys, 0x00, 256);
+     memset(client_keys, 0x00, MAX_KEYS_LEN);
+     memset(shared_keys, 0x00, MAX_KEYS_LEN);
 
      // Get client_keys & shared_keys
      int i = 0;
@@ -1126,7 +1128,7 @@ next_attribute_key:
           tbmch_sharedattribute_t *sharedattribute = NULL;
           LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
                if (sharedattribute && strcmp(_tbmch_sharedattribute_get_key(sharedattribute), key)==0) {
-                    // copy key to client_keys
+                    // copy key to shared_keys
                     if (strlen(shared_keys)==0) {
                          strncpy(shared_keys, key, MAX_KEYS_LEN-1);
                     } else {
@@ -1191,6 +1193,103 @@ attributesrequest_fail:
      }
      return ESP_FAIL;
 }
+
+////return request_id on successful, otherwise return -1/ESP_FAIL
+static int _tbmch_attributesrequest_send_4_ota_sharedattributes(tbmch_handle_t client_,
+                                  void *context,
+                                  tbmch_attributesrequest_on_response_t on_response,
+                                  tbmch_attributesrequest_on_timeout_t on_timeout,
+                                  int count, /*const char *key,*/...)
+{
+      // this funciton is in client->_lock !
+
+      tbmch_t *client = (tbmch_t*)client_;
+      if (!client) {
+           TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+           return ESP_FAIL;
+      }
+      if (count <= 0) {
+           TBMCH_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
+           return ESP_FAIL;
+      }
+ 
+      // Take semaphore, malloc client_keys & shared_keys
+      //if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+      //     TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+      //     return ESP_FAIL;
+      //}
+      char *shared_keys = TBMCH_MALLOC(MAX_KEYS_LEN);
+      if (!shared_keys) {
+           goto attributesrequest_fail;
+      }
+      memset(shared_keys, 0x00, MAX_KEYS_LEN);
+ 
+      // Get shared_keys
+      int i = 0;
+      va_list ap;
+      va_start(ap, count);
+      while (i<count) {
+        i++;
+        const char *key = va_arg(ap, const char*);
+        if (strlen(key)>0) {
+            // copy key to shared_keys
+            if (strlen(shared_keys)==0) {
+                strncpy(shared_keys, key, MAX_KEYS_LEN-1);
+            } else {
+                strncat(shared_keys, ",", MAX_KEYS_LEN-1);                         
+                strncat(shared_keys, key, MAX_KEYS_LEN-1);
+            }
+        }
+      }
+      va_end(ap);
+ 
+      // Send msg to server
+      int request_id = tbmc_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
+                                client,
+                                _tbmch_on_attrrequest_response,
+                                _tbmch_on_attrrequest_timeout,
+                                1/*qos*/, 0/*retain*/);
+      if (request_id<0) {
+           TBMCH_LOGE("Init tbmc_attributes_request failure! %s()", __FUNCTION__);
+           goto attributesrequest_fail;
+      }
+ 
+      // Create attributesrequest
+      tbmch_attributesrequest_t *attributesrequest = _tbmch_attributesrequest_init(client_, request_id, context, on_response, on_timeout);
+      if (!attributesrequest) {
+           TBMCH_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
+           goto attributesrequest_fail;
+      }
+ 
+      // Insert attributesrequest to list
+      tbmch_attributesrequest_t *it, *last = NULL;
+      if (LIST_FIRST(&client->attributesrequest_list) == NULL) {
+           // Insert head
+           LIST_INSERT_HEAD(&client->attributesrequest_list, attributesrequest, entry);
+      } else {
+           // Insert last
+           LIST_FOREACH(it, &client->attributesrequest_list, entry) {
+                last = it;
+           }
+           if (it == NULL) {
+                assert(last);
+                LIST_INSERT_AFTER(last, attributesrequest, entry);
+           }
+      }
+ 
+      // Give semaphore
+      //xSemaphoreGive(client->_lock);
+      TBMCH_FREE(shared_keys);
+      return request_id;
+ 
+ attributesrequest_fail:
+      //xSemaphoreGive(client->_lock);
+      if (!shared_keys) {
+           TBMCH_FREE(shared_keys);
+      }
+      return ESP_FAIL;
+ }
+
 
 // onAttributesResponse()=>_attributesResponse()
 static void _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
@@ -1831,6 +1930,7 @@ static tbmch_err_t _tbmch_otaupdate_empty(tbmch_handle_t client_)
      LIST_FOREACH_SAFE(otaupdate, &client->otaupdate_list, entry, next) {
           // exec timeout callback
           _tbmch_otaupdate_do_abort(otaupdate);
+          _tbmch_otaupdate_reset(otaupdate);
 
           // remove from otaupdate list and destory
           LIST_REMOVE(otaupdate, entry);
@@ -1841,6 +1941,76 @@ static tbmch_err_t _tbmch_otaupdate_empty(tbmch_handle_t client_)
      // Give semaphore
      xSemaphoreGive(client->_lock);
      return ESP_OK;
+}
+
+static void __tbmch_otaupdate_on_fw_attributesrequest_response(tbmch_handle_t client,
+                void *context, int request_id)
+{
+    //no code
+}
+static void __tbmch_otaupdate_on_sw_attributesrequest_response(tbmch_handle_t client,
+                void *context, int request_id)
+{
+    //no code
+}
+
+static void _tbmch_otaupdate_on_connected(tbmch_handle_t client_)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    tbmch_t *client = (tbmch_t *)client_;
+    if (!client) {
+         TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;// ESP_FAIL;
+    }
+
+     // Search item
+     tbmch_otaupdate_t *otaupdate = NULL;
+     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
+          if (otaupdate && (_tbmch_otaupdate_get_type(otaupdate)==TBMCH_OTAUPDATE_TYPE_FW) ) {
+              // send current f/w info UPDATED telemetry
+              ////_tbmch_otaupdate_publish_updated_status(otaupdate); // only at otaupdate->config.is_first_boot
+
+              // send init current f/w info telemetry
+              _tbmch_otaupdate_publish_early_current_version(otaupdate);
+              // send f/w info attributes request
+              _tbmch_attributesrequest_send_4_ota_sharedattributes(client_,
+                     NULL/*context*/,
+                     __tbmch_otaupdate_on_fw_attributesrequest_response/*on_response*/,
+                     NULL/*on_timeout*/,
+                     5/*count*/,
+                     TB_MQTT_SHAREDATTRBUTE_FW_TITLE,
+                     TB_MQTT_SHAREDATTRBUTE_FW_VERSION,
+                     TB_MQTT_SHAREDATTRBUTE_FW_SIZE,
+                     TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM,
+                     TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG);
+              break;
+          }
+     }
+     
+     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
+          if (otaupdate && (_tbmch_otaupdate_get_type(otaupdate)==TBMCH_OTAUPDATE_TYPE_SW) ) {
+              // send current s/w info UPDATED telemetry
+              ////_tbmch_otaupdate_publish_updated_status(otaupdate); // only at otaupdate->config.is_first_boot
+
+              // send init current s/w telemetry
+              _tbmch_otaupdate_publish_early_current_version(otaupdate);
+              // send s/w info attributes request
+              _tbmch_attributesrequest_send_4_ota_sharedattributes(client_,
+                     NULL/*context*/,
+                     __tbmch_otaupdate_on_sw_attributesrequest_response/*on_response*/,
+                     NULL/*on_timeout*/,
+                     5/*count*/,
+                     TB_MQTT_SHAREDATTRBUTE_SW_TITLE,
+                     TB_MQTT_SHAREDATTRBUTE_SW_VERSION,
+                     TB_MQTT_SHAREDATTRBUTE_SW_SIZE,
+                     TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM,
+                     TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG);
+              break;
+          }
+     }
+
+     
 }
 
 static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_otaupdate_type_t ota_type,
@@ -1866,7 +2036,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
      tbmch_otaupdate_t *otaupdate = NULL;
      LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
           if (otaupdate &&
-               (strcmp(_tbmch_otaupdate_get_title(otaupdate), ota_title)==0) &&
+               (strcmp(_tbmch_otaupdate_get_current_title(otaupdate), ota_title)==0) &&
                (_tbmch_otaupdate_get_type(otaupdate)==ota_type) ) {
                break;
           }
@@ -1884,15 +2054,24 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
      const char* ota_error_ = "Unknown error!";
      int result = _tbmch_otaupdate_do_negotiate(otaupdate, ota_title, ota_version, ota_size,
                         ota_checksum, ota_checksum_algorithm, ota_error, sizeof(ota_error)-1);
-     if (result == 0) { //successful
+     if (result == 1) { //negotiate successful(next to F/W OTA)
         _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADING);
         result = _tbmch_otaupdate_request_chunk(otaupdate, _tbmch_on_otaupdate_response, _tbmch_on_otaupdate_timeout);
         if (result != 0) { //failure to request chunk
             TBMCH_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
             _tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, "Request OTA chunk failure!");
             _tbmch_otaupdate_do_abort(otaupdate);
+            _tbmch_otaupdate_reset(otaupdate);
         }
-     } else { //-1: failure
+     } else if (result==0) { //0/ESP_OK: already updated!
+        //no code!
+        //if (strlen(ota_error)>0) {
+        //    ota_error_ = ota_error;
+        //}
+        //TBMCH_LOGE("ota_error (%s) of _tbmch_otaupdate_do_negotiate()!", ota_error_);
+        //_tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, ota_error_);
+     }
+     else { //-1/ESP_FAIL: negotiate failure
         if (strlen(ota_error)>0) {
             ota_error_ = ota_error;
         }
@@ -1950,23 +2129,27 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
                 result = _tbmch_otaupdate_do_end(otaupdate, ota_error, sizeof(ota_error)-1);
                 if (result==0) { // sussessful
                     _tbmch_otaupdate_publish_updated_status(otaupdate); //UPDATED
+                    _tbmch_otaupdate_reset(otaupdate);
                 } else {
                     if (strlen(ota_error)>0) {
                         ota_error_ = ota_error;
                     }
-                    TBMCH_LOGE("Unknow result(%d, %s) of _tbmch_otaupdate_do_write()!", result, ota_error_);
+                    TBMCH_LOGE("Unknow result (%d, %s) of _tbmch_otaupdate_do_write()!", result, ota_error_);
                     _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
-                    _tbmch_otaupdate_do_abort(otaupdate); 
+                    _tbmch_otaupdate_do_abort(otaupdate);
+                    _tbmch_otaupdate_reset(otaupdate);
                 }
             } else {
                 _tbmch_otaupdate_publish_late_failed_status(otaupdate, "Checksum verification failed!");
                 _tbmch_otaupdate_do_abort(otaupdate);
+                _tbmch_otaupdate_reset(otaupdate);
             }
          }else {  //un-receied all f/w or s/w: go on, get next package
             result = _tbmch_otaupdate_request_chunk(otaupdate, _tbmch_on_otaupdate_response, _tbmch_on_otaupdate_timeout);
             if (result != 0) { //failure to request chunk
                 _tbmch_otaupdate_publish_late_failed_status(otaupdate, "Request OTA chunk failure!");
                 _tbmch_otaupdate_do_abort(otaupdate);
+                _tbmch_otaupdate_reset(otaupdate);
             }
          }
          break;
@@ -1975,15 +2158,17 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
         if (strlen(ota_error)>0) {
             ota_error_ = ota_error;
         }
-        TBMCH_LOGE("ota_error_(%s) of _tbmch_otaupdate_do_write()!", ota_error_);
+        TBMCH_LOGE("ota_error (%s) of _tbmch_otaupdate_do_write()!", ota_error_);
         _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
         _tbmch_otaupdate_do_abort(otaupdate);
+        _tbmch_otaupdate_reset(otaupdate);
         break;
         
      default: //Unknow error
-        TBMCH_LOGE("Unknow result(%d) of _tbmch_otaupdate_do_write()!", result);
+        TBMCH_LOGE("Unknow result (%d) of _tbmch_otaupdate_do_write()!", result);
         _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
         _tbmch_otaupdate_do_abort(otaupdate);
+        _tbmch_otaupdate_reset(otaupdate);
      }
 
      // Give semaphore
@@ -2021,6 +2206,7 @@ static void _tbmch_otaupdate_on_timeout(tbmch_handle_t client_, int request_id)
      // abort ota
      _tbmch_otaupdate_publish_late_failed_status(otaupdate, "OTA response timeout!");
      _tbmch_otaupdate_do_abort(otaupdate);
+     _tbmch_otaupdate_reset(otaupdate);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
@@ -2453,3 +2639,4 @@ static void _response_timer_destroy(tbmch_handle_t client_)
      esp_timer_delete(client->respone_timer);
      client->respone_timer = NULL;
 }
+

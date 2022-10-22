@@ -46,14 +46,17 @@ typedef struct tbmch_otaupdate_storage_config
      tbmch_otaupdate_on_write_t on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
      tbmch_otaupdate_on_end_t on_ota_end;                     /*!< callback of F/W or S/W OTA success & end */
      tbmch_otaupdate_on_abort_t on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
+
+     ////bool is_first_boot;            /*!< whether first boot after ota update  */
 } tbmch_otaupdate_config_storage_t;
 
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA attribute
  */
+// TODO: it has a value after receiving a shared attributes msg!
 typedef struct tbmch_otaupdate_attribute
 {
-     char *ota_title;              /*!< fw_title or sw_title  */
+     char *ota_title;              /*!< fw_title or sw_title  */  // TODO: replace this field with otaupdate->config.on_get_current_ota_title
      char *ota_version;            /*!< fw_version or sw_version  */
      int   ota_size;               /*!< fw_size or sw_size  */
      char *ota_checksum;           /*!< fw_checksum or sw_checksum  */
@@ -88,14 +91,15 @@ typedef struct tbmch_otaupdate
 } tbmch_otaupdate_t;
 
 tbmch_otaupdate_t *_tbmch_otaupdate_init(tbmch_handle_t client,  const char *ota_description, const tbmch_otaupdate_config_t *config); /*!< Initialize tbmch_otaupdate_t */
-tbmch_err_t _tbmch_otaupdate_destroy(tbmch_otaupdate_t *otaupdate);                   /*!< Destroys the tbmch_otaupdate_t */
-////tbmch_err_t __tbmch_otaupdate_reset(tbmch_otaupdate_t *otaupdate);
+tbmch_err_t        _tbmch_otaupdate_destroy(tbmch_otaupdate_t *otaupdate);                   /*!< Destroys the tbmch_otaupdate_t */
+void               _tbmch_otaupdate_reset(tbmch_otaupdate_t *otaupdate);
 
 tbmch_otaupdate_type_t _tbmch_otaupdate_get_type(tbmch_otaupdate_t *otaupdate);
-const char *_tbmch_otaupdate_get_description(tbmch_otaupdate_t *otaupdate);
-const char *_tbmch_otaupdate_get_title(tbmch_otaupdate_t *otaupdate);  
+const char*            _tbmch_otaupdate_get_description(tbmch_otaupdate_t *otaupdate);
+const char*            _tbmch_otaupdate_get_current_title(tbmch_otaupdate_t *otaupdate);  
 int _tbmch_otaupdate_get_request_id(tbmch_otaupdate_t *otaupdate);
 
+void _tbmch_otaupdate_publish_early_current_version(tbmch_otaupdate_t *otaupdate);
 void _tbmch_otaupdate_publish_early_failed_status(tbmc_handle_t tbmc_handle, 
                                 tbmch_otaupdate_type_t ota_type, const char *ota_error);
 void _tbmch_otaupdate_publish_late_failed_status(tbmch_otaupdate_t *otaupdate, const char *ota_error);
@@ -117,7 +121,7 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
                                          char *ota_error, int error_size);
 //return 0 on successful, -1 on failure
 tbmch_err_t _tbmch_otaupdate_do_end(tbmch_otaupdate_t *otaupdate, char *ota_error, int error_size);
-void _tbmch_otaupdate_do_abort(tbmch_otaupdate_t *otaupdate);
+void        _tbmch_otaupdate_do_abort(tbmch_otaupdate_t *otaupdate);
 
 #ifdef __cplusplus
 }

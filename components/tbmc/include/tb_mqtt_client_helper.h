@@ -127,12 +127,15 @@ typedef enum
 //Don't call TBMCH API in these callback!
 typedef const char* (*tbmch_otaupdate_on_get_current_ota_title_t)(tbmch_handle_t client, void *context);
 typedef const char* (*tbmch_otaupdate_on_get_current_ota_version_t)(tbmch_handle_t client, void *context);
+//return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 typedef tbmch_err_t (*tbmch_otaupdate_on_negotiate_t)(tbmch_handle_t client, void *context,
                   const char *ota_title, const char *ota_version, int ota_size, const char *ota_checksum, const char *ota_checksum_algorithm,
                   char *ota_error, int error_size);
+//return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 typedef tbmch_err_t (*tbmch_otaupdate_on_write_t)(tbmch_handle_t client, void *context,
                   int request_id, int chunk_id/*current chunk_id*/, const void *ota_data, int data_size,
                   char *ota_error, int error_size);
+//return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 typedef tbmch_err_t (*tbmch_otaupdate_on_end_t)(tbmch_handle_t client, void *context,
                                          int request_id, int chunk_id,
                                          char *ota_error, int error_size);
@@ -222,7 +225,7 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
 typedef struct tbmch_otaupdate_config
 {
      tbmch_otaupdate_type_t ota_type; /*!< FW/TBMCH_OTAUPDATE_TYPE_FW or SW/TBMCH_OTAUPDATE_TYPE_SW  */
-     int chunk_size;                  /*!< chunk_size, eg: 2048. 0 to get all F/W or S/W by request  */
+     int chunk_size;                  /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
 
      void *context;
      tbmch_otaupdate_on_get_current_ota_title_t   on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
@@ -232,6 +235,8 @@ typedef struct tbmch_otaupdate_config
      tbmch_otaupdate_on_write_t on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
      tbmch_otaupdate_on_end_t on_ota_end;                     /*!< callback of F/W or S/W OTA success & end*/
      tbmch_otaupdate_on_abort_t on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
+
+     ////bool is_first_boot;            /*!< whether first boot after ota update  */
 } tbmch_otaupdate_config_t;
 
 tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_description, const tbmch_otaupdate_config_t *config);

@@ -113,7 +113,7 @@ extern "C" {
 //         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm,
 //         sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm
 #define TB_MQTT_TOPIC_FW_REQUEST_PATTERN        "v2/fw/request/%d/chunk/%d"   //publish, ${requestId}, ${chunkId}
-#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN       "v2/fw/response/%d/chunk/%d"  //receive, ${requestId}, ${chunkId}
+#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN       "v2/fw/response/%d/chunk/"    //receive, ${requestId}
 #define TB_MQTT_TOPIC_FW_RESPONSE_PREFIX        "v2/fw/response/"             //receive, ${requestId}, ${chunkId}
 #define TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE     "v2/fw/response/+/chunk/+"    //subsribe
 

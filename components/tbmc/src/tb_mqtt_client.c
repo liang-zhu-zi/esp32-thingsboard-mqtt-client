@@ -27,6 +27,9 @@
 
 #include "tb_mqtt_client_log.h"
 
+#include "tbmc_payload_buffer.h"
+
+
 typedef enum
 {
      TBMC_REQUEST_ATTR = 1,
@@ -83,6 +86,8 @@ typedef struct tbmc_client
      int next_request_id;
      uint64_t last_check_timestamp;
      tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
+
+     tbmc_payload_buffer_t buffer;     /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
 } tbmc_t;
 
 static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
@@ -90,7 +95,8 @@ static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *p
 
 static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
-
+static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg);
+;
 /*static*/ bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                            void *context,
@@ -132,6 +138,7 @@ tbmc_handle_t tbmc_init(void)
      client->last_check_timestamp = (uint64_t)time(NULL);
      memset(&client->request_list, 0x00, sizeof(client->request_list));//client->request_list = LIST_HEAD_INITIALIZER(client->request_list);
 
+     tbmc_payload_buffer_init(&client->buffer);
      return client;
 }
 
@@ -152,6 +159,8 @@ void tbmc_destroy(tbmc_handle_t client_)
           vSemaphoreDelete(client->lock);
           client->lock = NULL;
      }
+
+     tbmc_payload_buffer_clear(&client->buffer);
 
      TBMC_FREE(client);
 }
@@ -807,14 +816,14 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
           return -1;
      }
 
-     int size = strlen(TB_MQTT_TOPIC_FW_RESPONSE_PATTERN) + 20;
+     int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
      char *topic = TBMC_MALLOC(size);
      if (!topic) {
           TBMC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(topic, 0x00, size);
-     snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, request_id, chunk_id);
+     snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
         TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
@@ -975,127 +984,170 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
      }
      return;// ESP_OK;
 }
+
 // Processes MQTT_EVENT_DATA message
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onDataEventProcess(); //MQTT_EVENT_DATA
 {
-     const char *topic = event->topic;
-     const char *payload = event->data;
-     const int topic_len = event->topic_len;
-     const int payload_len = event->data_len;
 
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
           TBMC_LOGE("client is NULL!");
           return;
      }
-
-     //if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
-     if (strcmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES) == 0) {
-          // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
-
-          if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
-          }
-
-          if (client->on_sharedattr_received) {
-               client->on_sharedattr_received(client->context, payload, payload_len);
-          } else {
-               TBMC_LOGW("Unable to find shared-attributes, (%.*s, %.*s)",
-                       topic_len, topic, payload_len, payload);
-          }
-
-     } else if (strncmp(topic, TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX, strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX)) == 0) {
-          // 2.TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX
-
-          int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
-          if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d Payload=%.*s",
-                   request_id, payload_len, payload);
-          }
-
-          if (client->on_serverrpc_request) {
-               client->on_serverrpc_request(client->context, request_id, payload, payload_len);
-          } else {
-               TBMC_LOGW("Unable to find server-rpc request(%d), (%.*s, %.*s)", request_id,
-                       topic_len, topic, payload_len, payload);
-          }
-
-     } else if (strncmp(topic, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX)) == 0) {
-          // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
-
-          int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
-          if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[Attributes Request][Rx] RequestID=%d %.*s",
-                   request_id, payload_len, payload);
-          }
-
-          tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-          if (tbmc_request) {
-               if (tbmc_request->on_response) {
-                    tbmc_on_response_t on_response = tbmc_request->on_response;
-                    on_response(client->context, request_id, payload, payload_len);
-               }
-               _request_destroy(tbmc_request);
-               tbmc_request = NULL;
-          } else {
-               TBMC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
-                       topic_len, topic, payload_len, payload);
-               return; // -1;
-          }
-
-     } else if (strncmp(topic, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX)) == 0) {
-          // 4.TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX
-
-          int request_id = atoi(topic + strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
-          if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[Client-Side RPC][Rx] RequestID=%d %.*s",
-                   request_id, payload_len, payload);
-          }
-
-          tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-          if (tbmc_request) {
-               if (tbmc_request->on_response) {
-                    tbmc_on_response_t on_response = tbmc_request->on_response;
-                    on_response(client->context, request_id, payload, payload_len);
-               }
-               _request_destroy(tbmc_request);
-               tbmc_request = NULL;
-          } else {
-               TBMC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
-                       topic_len, topic, payload_len, payload);
-               return; // -1;
-          }
-
-     } else if (strncmp(topic, TB_MQTT_TOPIC_FW_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_FW_RESPONSE_PREFIX)) == 0) {
-          // 5.TB_MQTT_TOPIC_FW_RESPONSE_PREFIX
-          int request_id = 0;
-          int chunk_id = 0;
-          sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id, &chunk_id);
-          if (client->config.log_rxtx_package) {
-              TBMC_LOGI("[FW update][Rx] RequestID=%d %.*s",
-                    request_id, payload_len, payload);
-          }
-
-          tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-          if (tbmc_request) {
-               tbmc_on_otaupdate_response_t on_otaupdate_response = tbmc_request->on_response;
-               if (on_otaupdate_response) {
-                    on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
-               }
-               _request_destroy(tbmc_request);
-               tbmc_request = NULL;
-          } else {
-               TBMC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
-                         request_id,
-                         topic_len, topic, payload_len, payload);
-               return; // -1;
-          }
-
-     }  else {
-          // Payload is too long, then Serial.*/
-          TBMC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s",
-                    topic_len, topic, payload_len, payload);
+     if (!event) {
+          TBMC_LOGE("!event is NULL!");
+          return;
      }
+
+     // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
+     tbmc_rx_msg_info rx_msg = {0};
+     rx_msg.topic = event->topic;          /*!< Topic associated with this event */
+     rx_msg.payload = event->data;         /*!< Data associated with this event */
+     rx_msg.topic_len = event->topic_len;  /*!< Length of the topic for this event associated with this event */
+     rx_msg.payload_len = event->data_len;                       /*!< Length of the data for this event */
+     rx_msg.total_payload_len = event->total_data_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+     rx_msg.current_payload_offset = event->current_data_offset; /*!< Actual offset for the data associated with this event */
+     tbmc_payload_buffer_pocess(&client->buffer, &rx_msg, _on_PayloadProcess, client_);
+}
+
+static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg)
+{
+    tbmc_t *client = (tbmc_t*)context/*client*/;
+    if (!client) {
+         TBMC_LOGE("client is NULL!");
+         return;
+    }
+
+    const char *topic = rx_msg->topic;          /*!< Topic associated with this event */
+    const char *payload = rx_msg->payload;      /*!< Data associated with this event */
+    const int topic_len = rx_msg->topic_len;    /*!< Length of the topic for this event associated with this event */
+    const int payload_len = rx_msg->payload_len;                       /*!< Length of the data for this event */
+    const int total_payload_len = rx_msg->total_payload_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+    const int current_payload_offset = rx_msg->current_payload_offset; /*!< Actual offset for the data associated with this event */
+
+    if (strncmp(topic, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX)) == 0) {
+         // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
+
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[Attributes Request][Rx] RequestID=%d %.*s",
+                  request_id, payload_len, payload);
+         }
+    
+         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
+         if (tbmc_request) {
+              if (tbmc_request->on_response) {
+                   tbmc_on_response_t on_response = tbmc_request->on_response;
+                   on_response(client->context, request_id, payload, payload_len);
+              }
+              _request_destroy(tbmc_request);
+              tbmc_request = NULL;
+         } else {
+              TBMC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+              return; // -1;
+         }
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
+                                            //if (strcmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES) == 0) {
+         // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
+    
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
+         }
+    
+         if (client->on_sharedattr_received) {
+              client->on_sharedattr_received(client->context, payload, payload_len);
+         } else {
+              TBMC_LOGW("Unable to find shared-attributes, (%.*s, %.*s)",
+                      topic_len, topic, payload_len, payload);
+         }
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX, strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX)) == 0) {
+         // 2.TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX
+
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d Payload=%.*s",
+                  request_id, payload_len, payload);
+         }
+    
+         if (client->on_serverrpc_request) {
+              client->on_serverrpc_request(client->context, request_id, payload, payload_len);
+         } else {
+              TBMC_LOGW("Unable to find server-rpc request(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+         }
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX)) == 0) {
+         // 4.TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX
+    
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[Client-Side RPC][Rx] RequestID=%d %.*s",
+                  request_id, payload_len, payload);
+         }
+    
+         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
+         if (tbmc_request) {
+              if (tbmc_request->on_response) {
+                   tbmc_on_response_t on_response = tbmc_request->on_response;
+                   on_response(client->context, request_id, payload, payload_len);
+              }
+              _request_destroy(tbmc_request);
+              tbmc_request = NULL;
+         } else {
+              TBMC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+              return; // -1;
+         }
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_FW_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_FW_RESPONSE_PREFIX)) == 0) {
+         // 5.TB_MQTT_TOPIC_FW_RESPONSE_PREFIX
+         int request_id = 0;
+         sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id);
+
+         int chunk_id = -1;
+         const char *chunk_str = strstr(topic, "/chunk/");
+         if (chunk_str) {
+             char temp[32] = {0};
+             int offset = (uint32_t)chunk_str - (uint32_t)topic;
+             strncpy(temp, topic+offset+strlen("/chunk/"), topic_len-offset-strlen("/chunk/"));
+             chunk_id = atoi(temp);
+         }
+
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[FW update][Rx] RequestID=%d payload_len=%d",
+                   request_id, payload_len);
+         }
+    
+         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
+         if (tbmc_request) {
+              tbmc_on_otaupdate_response_t on_otaupdate_response = tbmc_request->on_response;
+              if (on_otaupdate_response) {
+                   on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
+              }
+              _request_destroy(tbmc_request);
+              tbmc_request = NULL;
+         } else {
+              TBMC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
+                        request_id,
+                        topic_len, topic, payload_len, payload);
+              return; // -1;
+         }
+    
+    }  else {
+         // Payload is too long, then Serial.*/
+         TBMC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d, total_payload_len=%d, current_payload_offset=%d",
+                   topic_len, topic, payload_len, payload, payload_len, total_payload_len, current_payload_offset);
+    }
+
 }
 
 /*static*/ bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
