@@ -768,6 +768,41 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
      return retult;
 }
 
+ /**
+  * @brief Client to send a 'claiming_device_using_device_side_key' publish message to the broker
+  *
+  * Notes:
+  * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+  * - A ThingsBoard MQTT Protocol message example:
+  *      Topic: 'v1/devices/me/claim'
+  *      Data:  '{"secretKey":"value", "durationMs":60000}'
+  *
+  * @param claiming   example: {"secretKey":"value", "durationMs":60000}, (字符串要符合 json 数据格式)
+  * @param qos        qos of publish message
+  * @param retain     ratain flag
+  *
+  * @return message_id of the subscribe message on success
+  *         0 if cannot publish
+  *        -1 if error
+  */
+ int tbmc_claiming_device_publish(tbmc_handle_t client_, const char *claiming,
+                            int qos /*= 1*/, int retain /*= 0*/)
+ {
+      tbmc_t *client = (tbmc_t*)client_;
+      if (!client) {
+           TBMC_LOGE("client is NULL!");
+           return -1;
+      }
+ 
+      if (client->config.log_rxtx_package) {
+         TBMC_LOGI("[Claiming][Tx] %.*s", strlen(claiming), claiming);
+      }
+ 
+      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLAIMING_DEVICE, claiming, qos, retain);
+      return message_id;
+ }
+
+
 /**
  * @brief Client to send a 'Client-Side RPC Request' publish message to the broker
  *

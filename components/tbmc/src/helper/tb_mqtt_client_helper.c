@@ -487,7 +487,7 @@ static void _tbmch_disonnected_on(tbmch_handle_t client_) //onDisonnected() // F
      return;
 }
 
-//====1.Publish Telemetry time-series data==============================================================================
+//====10.Publish Telemetry time-series data==============================================================================
 tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void *context, tbmch_tsdata_on_get_t on_get)
 {
      tbmch_t *client = (tbmch_t*)client_;
@@ -650,7 +650,7 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
-//====2.Publish client-side device attributes to the server============================================================
+//====20.Publish client-side device attributes to the server============================================================
 tbmch_err_t tbmch_clientattribute_append(tbmch_handle_t client_, const char *key, void *context,
                                          tbmch_clientattribute_on_get_t on_get)
 {
@@ -861,7 +861,7 @@ static void _tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJS
      return;// ESP_OK;
 }
 
-//====3.Subscribe to shared device attribute updates from the server===================================================
+//====21.Subscribe to shared device attribute updates from the server===================================================
 ////tbmqttlink.h.tbmch_addSubAttrEvent(); //Call it before connect() //tbmch_shared_attribute_list_t
 tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key, void *context,
                                          tbmch_sharedattribute_on_set_t on_set)
@@ -1035,7 +1035,7 @@ static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJS
      return;// ESP_OK;
 }
 
-//====4.Request client-side or shared device attributes from the server================================================
+//====22.Request client-side or shared device attributes from the server================================================
 static tbmch_err_t _tbmch_attributesrequest_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
@@ -1387,7 +1387,7 @@ static void _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int requ
      return;// ESP_OK;
 }
 
-//====5.Server-side RPC================================================================================================
+//====30.Server-side RPC================================================================================================
 ////tbmqttlink.h.tbmch_addServerRpcEvent(evtServerRpc); //Call it before connect()
 tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
                                    void *context,
@@ -1568,7 +1568,7 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
      return;// ESP_OK;
 }
 
-//====6.Client-side RPC================================================================================================
+//====31.Client-side RPC================================================================================================
 static tbmch_err_t _tbmch_clientrpc_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
@@ -1818,11 +1818,45 @@ static void _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
      return;// ESP_OK;
 }
 
-//====7.Claiming device using device-side key scenario: Not implemented yet============================================
+//====40.Claiming device using device-side key scenario============================================
+tbmch_err_t tbmch_claiming_device_using_device_side_key(tbmch_handle_t client_,
+                    const char *secret_key, uint32_t *duration_ms)
+{
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
 
-//====8.Device provisioning: Not implemented yet=======================================================================
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
 
-//====9.Firmware update================================================================================================
+     // send package...
+     cJSON *object = cJSON_CreateObject(); // create json object
+     if (secret_key) {
+        cJSON_AddStringToObject(object, TB_MQTT_CLAIMING_DEVICE_SECRETKEY, secret_key);
+     }
+     if (duration_ms) {
+        cJSON_AddNumberToObject(object, TB_MQTT_CLAIMING_DEVICE_DURATIONMS, *duration_ms);
+     }
+     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
+     int result = tbmc_claiming_device_publish(client->tbmqttclient, pack, 1/*qos*/, 0/*retain*/);
+     cJSON_free(pack); // free memory
+     cJSON_Delete(object); // delete json object
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return (result > -1) ? ESP_OK : ESP_FAIL;
+}
+
+
+
+//====50.Device provisioning: Not implemented yet=======================================================================
+
+//====60.Firmware update================================================================================================
 tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_description, const tbmch_otaupdate_config_t *config)
 {
      tbmch_t *client = (tbmch_t*)client_;

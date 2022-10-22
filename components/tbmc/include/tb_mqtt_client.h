@@ -102,7 +102,9 @@ extern "C" {
 #define TB_MQTT_TEXT_RPC_RESULTS    "results"
 
 // Claiming device using device-side key scenario: Not implemented yet
-//#define TB_MQTT_TOPIC_DEVICE_CLAIM         "v1/devices/me/claim" //publish
+#define TB_MQTT_TOPIC_CLAIMING_DEVICE         "v1/devices/me/claim" //publish
+#define TB_MQTT_CLAIMING_DEVICE_SECRETKEY     "secretKey"
+#define TB_MQTT_CLAIMING_DEVICE_DURATIONMS    "durationMs"
 
 // Device provisioning: Not implemented yet
 //#define TB_MQTT_TOPIC_PROVISION_REQUESTC   "/provision/request"  //publish
@@ -263,6 +265,10 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
                               tbmc_on_clientrpc_response_t on_clientrpc_response,
                               tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
                               int qos /*= 1*/, int retain /*= 0*/);
+
+int tbmc_claiming_device_publish(tbmc_handle_t client_, const char *claiming,
+                         int qos /*= 1*/, int retain /*= 0*/);
+
 int tbmc_otaupdate_request(tbmc_handle_t client_,
                           int request_id_, int chunk_id, const char *payload, //?payload
                           void *context,

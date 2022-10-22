@@ -12,7 +12,7 @@
   * RPC API
     * Server-side RPC: [30_server_side_rpc](./tb_mqtt_client_helper/30_server_side_rpc)
     * Client-side RPC: [31_client_side_rpc](./tb_mqtt_client_helper/31_client_side_rpc)
-  * Claiming devices: *API 仍未实现*
+  * Claiming devices: [40_claiming_device](./tb_mqtt_client_helper/40_claiming_device)
   * Device provisioning: *API 仍未实现*
   * Firmware API: [60_ota_update](./tb_mqtt_client_helper/60_ota_update)
   * All in one: [09_all_in_one](./tb_mqtt_client_helper/09_all_in_one)
