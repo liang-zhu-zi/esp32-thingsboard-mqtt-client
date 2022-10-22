@@ -64,7 +64,7 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
 
       Replace `{chunk_id}` with your chunk_id -- `0`
 
-      Replace `chunk_size` with your chunk size, eg: `2048`
+      Replace `chunk_size` with your chunk size, eg: `16384`
 
 * If receiving `v2/fw/response/{request_id}/chunk/{chunk_id}`, then
    1. Saves *msg.payload*.
@@ -76,7 +76,7 @@ This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp
 
          Replace `{chunk_id}` with your chunk id;
 
-         Replace `chunk_size` with your chunk size, eg: `2048`
+         Replace `chunk_size` with your chunk size, eg: `16384`
 
    4. Else *processing firmware*:
       1. Send telemetry: *current firmware info*
