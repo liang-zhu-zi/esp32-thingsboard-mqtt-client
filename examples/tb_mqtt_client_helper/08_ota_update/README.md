@@ -94,6 +94,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    Modify `CMakeLists.txt`
 
    ```CMake
+   ...
    set(PROJECT_VER "0.1.0.2")
 
    include($ENV{IDF_PATH}/tools/cmake/project.cmake)
@@ -112,6 +113,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    Modify `CMakeLists.txt`
 
    ```CMake
+   ...
    set(PROJECT_VER "0.1.0.1")
 
    include($ENV{IDF_PATH}/tools/cmake/project.cmake)
