@@ -1,56 +1,56 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# 从服务器请求 attribute values - ThingsBoard MQTT Client 示例
+# Request attribute values from the server - ThingsBoard MQTT Client Example
 
-* [English Version](./README.md)
+* [中文版](./README_CN.md)
 
-本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
+This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
-本示例实现了 attributes 相关功能：
+This example implements shared attributes related functions:
 
-* 从服务器请求属性值: client-side attribute - setpoint, shared attribute - sntp_server
-* 从服务器订阅并接收 shared attribute 更新: sntp_server
-* 发布 client-side attributes: setpoint
+* Request attribute values from the server: client-side attribute - setpoint, shared attribute - sntp_server
+* Subscribe to and receive shared attribute updates from the server: sntp_server
+* Publish client-side attributes: setpoint
+  
+## Hardware Required
 
-## 硬件需求
+* A development board with ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
+* A USB cable for Power supply and programming
 
-* 一个载有 ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC 的开发板(例如, ESP32-DevKitC, ESP-WROVER-KIT 等等)
-* 一条用于供电与编程的 USB 线
+See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
 
-参考 [Development Boards](https://www.espressif.com/en/products/devkits) 获得更多信息.
+## How to Use Example
 
-## 如何使用例子
+**Note: Please execute example [10_telemetry_and_client_attr](../10_telemetry_and_client_attr) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.**
 
-**注意: 请先执行示例 [01_telemetry_and_client_attr](../01_telemetry_and_client_attr), 再执行本示例. 否则当从服务器请求属性时，无法取得属性`setpoint`.**
+1. Get a device access token
 
-1. 获取 Access token
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
-
-1. 在 ThingsBoard 上添加或更新 shared attribute
+1. add or update a shared attribute in ThingsBoard
 
    * Shared attributes `sntp_server`:
      * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
      * Or update: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "uk.pool.ntp.org" --> `Update`.
 
-1. 设定 Target (optional)
+1. set-targe (optional)
 
-   在项目 configuration 与 build 之前, 请务必使用设置正确的芯片目标:
+   Before project configuration and build, be sure to set the correct chip target using:
 
    ```bash
    idf.py set-target <chip_name>
    ```
 
-1. 编译配置 menuconfig
+1. menuconfig
 
-   项目 configuration:
+   Then project configuration:
 
    ```bash
    idf.py menuconfig
    ```
 
-   配置以下选项 ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
+   Configuration: ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
 
    ```menuconfig
    Example Configuration  --->
@@ -65,21 +65,15 @@
            [*] Enable TBMQTTClient Helper
    ```
 
-1. 编译与运行 build, flash and monitor
+1. build, flash and monitor
 
-   运行 `idf.py -p PORT flash monitor` 来编译、烧录、监控项目.
+   Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
-   (如果要退出串口监控，请输入 ``Ctrl-]``.)
+   (To exit the serial monitor, type ``Ctrl-]``.)
 
-   有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
+   See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-1. 在 ThingsBoard 上添加并修改 shared attribute
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
-
-## 日志输出
+## Example Output
 
 ```none
 ...
@@ -209,6 +203,6 @@ I (28301) ATTR_REQUEST_EXAMPLE: Destroy tbmch ...
 I (28301) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## 故障排除
+## Troubleshooting
 
-如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues)。 我们会尽快回复您。
+For any technical queries, please open an [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues) on GitHub. We will get back to you soon.
