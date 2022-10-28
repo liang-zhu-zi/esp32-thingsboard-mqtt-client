@@ -66,6 +66,16 @@ typedef cJSON tbmch_rpc_params_t;
  */
 typedef cJSON tbmch_rpc_results_t;
 
+/**
+ * ThingsBoard MQTT Client Helper provision params
+ */
+typedef cJSON tbmch_provision_params_t;
+
+/**
+ * ThingsBoard MQTT Client Helper provision results
+ */
+typedef cJSON tbmch_provision_results_t;
+
 //====0.tbmc client====================================================================================================
 /**
  * ThingsBoard MQTT Client Helper handle
@@ -110,9 +120,14 @@ typedef void (*tbmch_clientrpc_on_response_t)(tbmch_handle_t client, void *conte
 typedef void (*tbmch_clientrpc_on_timeout_t)(tbmch_handle_t client, void *context,
                                              int request_id, const char *method); /*, tbmch_rpc_params_t *params*/
 
-//====7.Claiming device using device-side key scenario: Not implemented yet============================================
+//====7.Claiming device using device-side key scenario============================================
 
-//====8.Device provisioning: Not implemented yet=======================================================================
+//====8.Device provisioning=======================================================================
+// free results by caller/(tbmch library)!
+typedef void (*tbmch_provision_on_response_t)(tbmch_handle_t client, void *context,
+                                              int request_id, const tbmch_provision_results_t *results); /*, tbmch_provision_params_t *params*/
+typedef void (*tbmch_provision_on_timeout_t)(tbmch_handle_t client, void *context,
+                                             int request_id); /*, tbmch_provision_params_t *params*/
 
 //====9.Firmware/Software update=======================================================================================
 /**
@@ -219,6 +234,10 @@ tbmch_err_t tbmch_claiming_device_using_device_side_key(tbmch_handle_t client_,
                     const char *secret_key, uint32_t *duration_ms);
 
 //====50.Device provisioning: Not implemented yet=======================================================================
+int tbmch_provision_request(tbmch_handle_t client_, /*const*/ tbmch_provision_params_t *params,
+                                   void *context,
+                                   tbmch_provision_on_response_t on_response,
+                                   tbmch_provision_on_timeout_t on_timeout);
 
 //====60.Firmware update================================================================================================
 /**

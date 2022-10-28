@@ -34,7 +34,8 @@ typedef enum
 {
      TBMC_REQUEST_ATTR = 1,
      TBMC_REQUEST_CLIENTRPC,
-     TBMC_REQUEST_FWUPDATE
+     TBMC_REQUEST_FWUPDATE,
+     TBMC_REQUEST_PROVISION
 } tbmc_request_type_t;
 
 typedef struct tbmc_request
@@ -103,6 +104,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
                                            void *on_response, /*tbmc_on_response_t*/
                                            void *on_timeout); /*tbmc_on_timeout_t*/
 static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id);
+static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t client_, tbmc_request_type_t type);
 static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t timestamp,
                                              tbmc_request_list_t *timeout_request_list);
 static tbmc_request_t *_request_create(tbmc_request_type_t type,
@@ -767,7 +769,7 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
      TBMC_FREE(payload);
      return retult;
 }
-
+ 
  /**
   * @brief Client to send a 'claiming_device_using_device_side_key' publish message to the broker
   *
@@ -802,6 +804,60 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
       return message_id;
  }
 
+/**
+ * @brief Client to send a 'Provisoin Request' publish message to the broker
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic:   '/provision/request'
+ *      payload: '{"deviceName": "DEVICE_NAME", "provisionDeviceKey": "u7piawkboq8v32dmcmpp", "provisionDeviceSecret": "jpmwdn8ptlswmf4m29bw"}'
+ *
+ * @param payload           
+ * @param on_provision_response    f/w update response callback
+ * @param on_provision_timeout     f/w update response timeout callback
+ * @param qos            qos of publish message
+ * @param retain         ratain flag
+ *
+ * @return rpc_request_id of the subscribe message on success
+ *        -1 if error
+ */
+int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
+                          void *context,
+                          tbmc_on_provision_response_t on_provision_response,
+                          tbmc_on_provision_timeout_t on_provision_timeout,
+                          int qos /*= 1*/, int retain /*= 0*/)
+{
+     tbmc_t *client = (tbmc_t*)client_;
+     if (!client) {
+          TBMC_LOGE("client is NULL!");
+          return -1;
+     }
+
+     if (!client->mqtt_handle) {
+          TBMC_LOGE("mqtt client is NULL");
+          return -1;
+     }
+     if (!payload) {
+          TBMC_LOGW("There are no payload to request");
+          return -1;
+     }
+
+     int request_id = _request_list_create_and_append(client, TBMC_REQUEST_PROVISION, -1, context,
+                                           on_provision_response, on_provision_timeout);
+     if (request_id <= 0) {
+          TBMC_LOGE("Unable to take semaphore");
+          return -1;
+     }
+
+     if (client->config.log_rxtx_package) {
+        TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+              request_id, strlen(payload), payload);
+     }
+
+     /*int message_id =*/ _tbmc_publish(client, TB_MQTT_TOPIC_PROVISION_REQUESTC, payload, qos, retain);
+     return request_id; /*return message_id;*/
+}
 
 /**
  * @brief Client to send a 'Client-Side RPC Request' publish message to the broker
@@ -1177,6 +1233,28 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
               return; // -1;
          }
     
+    } else if (strncmp(topic, TB_MQTT_TOPIC_PROVISION_RESPONSE, strlen(TB_MQTT_TOPIC_PROVISION_RESPONSE)) == 0) {
+         // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
+         if (client->config.log_rxtx_package) {
+             TBMC_LOGI("[Provision][Rx] request_type=%d, payload_len=%d",
+                   TBMC_REQUEST_PROVISION, payload_len);
+         }
+
+         tbmc_request_t *tbmc_request = _request_list_search_and_remove_by_type(client, TBMC_REQUEST_PROVISION);
+         if (tbmc_request) {
+              tbmc_on_provision_response_t on_provision_response = tbmc_request->on_response;
+              if (on_provision_response) {
+                   on_provision_response(client->context, tbmc_request->request_id, payload, payload_len);
+              }
+              _request_destroy(tbmc_request);
+              tbmc_request = NULL;
+         } else {
+              TBMC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
+                        TBMC_REQUEST_PROVISION,
+                        topic_len, topic, payload_len, payload);
+              return; // -1;
+         }
+    
     }  else {
          // Payload is too long, then Serial.*/
          TBMC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d, total_payload_len=%d, current_payload_offset=%d",
@@ -1297,6 +1375,41 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
           LIST_REMOVE(tbmc_request, entry);
      } else {
           TBMC_LOGW("Unable to remove request:%d!", request_id);
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->lock);
+     return tbmc_request;
+}
+
+
+static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t client_, tbmc_request_type_t type)
+{
+     tbmc_t *client = (tbmc_t *)client_;
+     if (!client) {
+          TBMC_LOGE("client is NULL!");
+          return NULL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMC_LOGE("Unable to take semaphore!");
+          return NULL;
+     }
+
+     // Search item
+     tbmc_request_t *tbmc_request = NULL;
+     LIST_FOREACH(tbmc_request, &client->request_list, entry) {
+          if (tbmc_request && tbmc_request->type == type) {
+               break;
+          }
+     }
+
+     /// Remove form list
+     if (tbmc_request) {
+          LIST_REMOVE(tbmc_request, entry);
+     } else {
+          TBMC_LOGW("Unable to remove request: type=%d!", type);
      }
 
      // Give semaphore

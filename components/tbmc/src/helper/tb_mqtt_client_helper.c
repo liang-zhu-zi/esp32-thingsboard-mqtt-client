@@ -34,6 +34,7 @@
 #include "attributes_request_observer.h"
 #include "server_rpc_observer.h"
 #include "client_rpc_observer.h"
+#include "provision_observer.h"
 #include "ota_update_observer.h"
 
 
@@ -51,8 +52,10 @@ typedef enum
   TBMCH_MSGID_SERVERRPC_REQUSET,   //request_id,             cJSON
   TBMCH_MSGID_CLIENTRPC_RESPONSE,  //request_id,             cJSON
   TBMCH_MSGID_CLIENTRPC_TIMEOUT,   //request_id
+  TBMCH_MSGID_PROVISION_RESPONSE,  //request_id,             cJSON
+  TBMCH_MSGID_PROVISION_TIMEOUT,   //request_id
   TBMCH_MSGID_FWUPDATE_RESPONSE,   //request_id,   chunk_id, payload,  len
-  TBMCH_MSGID_FWUPDATE_TIMEOUT     //request_id
+  TBMCH_MSGID_FWUPDATE_TIMEOUT,    //request_id
 } tbmch_msgid_t;
 
 typedef struct tbmch_msg_easy {
@@ -67,6 +70,11 @@ typedef struct tbmch_msg_response {
      int32_t request_id;
      cJSON *object; /*!< received palyload. free memory by msg receiver */
 } tbmch_msg_response_t;
+
+typedef struct tbmch_msg_provision_response {
+     int32_t request_id;
+     cJSON *object; /*!< received palyload. free memory by msg receiver */
+} tbmch_msg_provision_response_t;
 
 typedef struct tbmch_msg_otaupdate_response {
      int32_t request_id;
@@ -94,6 +102,9 @@ typedef union tbmch_msgbody {
 
      tbmch_msg_response_t clientrpc_response; // request_id, cJSON
      tbmch_msg_timeout_t clientrpc_timeout;   // request_id
+
+     tbmch_msg_provision_response_t provision_response; // request_id, payload, len
+     tbmch_msg_timeout_t provision_timeout;             // request_id
 
      tbmch_msg_otaupdate_response_t otaupdate_response; // request_id, chunk_id, payload, len
      tbmch_msg_timeout_t otaupdate_timeout;            // request_id
@@ -144,6 +155,7 @@ typedef struct tbmch_client
      LIST_HEAD(tbmch_attributesrequest_list, tbmch_attributesrequest) attributesrequest_list;  /*!< attributes request entries */
      LIST_HEAD(tbmch_serverrpc_list, tbmch_serverrpc) serverrpc_list;  /*!< server side RPC entries */
      LIST_HEAD(tbmch_clientrpc_list, tbmch_clientrpc) clientrpc_list;  /*!< client side RPC entries */
+     LIST_HEAD(tbmch_provision_list, tbmch_provision) provision_list;  /*!< provision entries */
      LIST_HEAD(tbmch_otaupdate_list, tbmch_otaupdate) otaupdate_list;    /*!< A device may have multiple firmware */
 } tbmch_t;
 
@@ -155,6 +167,8 @@ static void _tbmch_on_attrrequest_timeout(void *context, int request_id);
 static void _tbmch_on_serverrpc_request(void *context, int request_id, const char* payload, int length);
 static void _tbmch_on_clientrpc_response(void *context, int request_id, const char* payload, int length);
 static void _tbmch_on_clientrpc_timeout(void *context, int request_id);
+static void _tbmch_on_provision_response(void *context, int request_id, const char* payload, int length);
+static void _tbmch_on_provision_timeout(void *context, int request_id);
 static void _tbmch_on_otaupdate_response(void *context, int request_id, int chunk_id, const char* payload, int length);
 static void _tbmch_on_otaupdate_timeout(void *context, int request_id);
 
@@ -177,6 +191,7 @@ static tbmch_err_t _tbmch_sharedattribute_empty(tbmch_handle_t client_);
 static tbmch_err_t _tbmch_attributesrequest_empty(tbmch_handle_t client_);
 static tbmch_err_t _tbmch_serverrpc_empty(tbmch_handle_t client_);
 static tbmch_err_t _tbmch_clientrpc_empty(tbmch_handle_t client_);
+static tbmch_err_t _tbmch_provision_empty(tbmch_handle_t client_);
 static tbmch_err_t _tbmch_otaupdate_empty(tbmch_handle_t client_);
 
 const static char *TAG = "tb_mqtt_client_helper";
@@ -242,6 +257,7 @@ void tbmch_destroy(tbmch_handle_t client_)
      _tbmch_attributesrequest_empty(client_);
      _tbmch_serverrpc_empty(client_);
      _tbmch_clientrpc_empty(client_);
+     _tbmch_provision_empty(client_);
      _tbmch_otaupdate_empty(client_);
 
      if (client->_lock) {
@@ -422,6 +438,7 @@ void tbmch_disconnect(tbmch_handle_t client_)
      _tbmch_attributesrequest_empty(client_);
      //_tbmch_serverrpc_empty(client_);
      _tbmch_clientrpc_empty(client_);
+     _tbmch_provision_empty(client_);
      _tbmch_otaupdate_empty(client_);
 }
 bool tbmch_is_connected(tbmch_handle_t client_)
@@ -1852,9 +1869,198 @@ tbmch_err_t tbmch_claiming_device_using_device_side_key(tbmch_handle_t client_,
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
-
-
 //====50.Device provisioning: Not implemented yet=======================================================================
+static tbmch_err_t _tbmch_provision_empty(tbmch_handle_t client_)
+{
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // TODO: How to add lock??
+     // Take semaphore
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      return ESP_FAIL;
+     // }
+
+     // remove all item in provision_list
+     tbmch_provision_t *provision = NULL, *next;
+     LIST_FOREACH_SAFE(provision, &client->provision_list, entry, next) {
+          // exec timeout callback
+          _tbmch_provision_do_timeout(provision);
+
+          // remove from provision list and destory
+          LIST_REMOVE(provision, entry);
+          _tbmch_provision_destroy(provision);
+     }
+     memset(&client->provision_list, 0x00, sizeof(client->provision_list));
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+     return ESP_OK;
+}
+
+int tbmch_provision_request(tbmch_handle_t client_, /*const*/ tbmch_provision_params_t *params,
+                                                           void *context,
+                                                           tbmch_provision_on_response_t on_response,
+                                                           tbmch_provision_on_timeout_t on_timeout)
+{
+     tbmch_t *client = (tbmch_t*)client_;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+     if (!params) {
+          TBMCH_LOGE("params is NULL! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Send msg to server
+     //cJSON *object = cJSON_CreateObject(); // create json object
+     //cJSON_AddStringToObject(object, TB_MQTT_TEXT_PROVISION_METHOD, method);
+     //if (params)
+     //     cJSON_AddItemReferenceToObject(object, TB_MQTT_TEXT_PROVISION_PARAMS, params);
+     //else 
+     //     cJSON_AddNullToObject(object, TB_MQTT_TEXT_PROVISION_PARAMS);
+     //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
+     int request_id;
+     char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
+     request_id = tbmc_provision_request(client->tbmqttclient, params_str,
+                              client,
+                              _tbmch_on_provision_response,
+                              _tbmch_on_provision_timeout,
+                               1/*qos*/, 0/*retain*/);
+     cJSON_free(params_str); // free memory
+     //cJSON_Delete(object); // delete json object
+     if (request_id<0) {
+          TBMCH_LOGE("Init tbmc_provision_request failure! %s()", __FUNCTION__);
+          xSemaphoreGive(client->_lock);
+          return ESP_FAIL;
+     }
+
+     // Create provision
+     tbmch_provision_t *provision = _tbmch_provision_init(client, request_id, context, on_response, on_timeout);
+     if (!provision) {
+          TBMCH_LOGE("Init provision failure! %s()", __FUNCTION__);
+          xSemaphoreGive(client->_lock);
+          return ESP_FAIL;
+     }
+
+     // Insert provision to list
+     tbmch_provision_t *it, *last = NULL;
+     if (LIST_FIRST(&client->provision_list) == NULL) {
+          // Insert head
+          LIST_INSERT_HEAD(&client->provision_list, provision, entry);
+     } else {
+          // Insert last
+          LIST_FOREACH(it, &client->provision_list, entry) {
+               last = it;
+          }
+          if (it == NULL) {
+               assert(last);
+               LIST_INSERT_AFTER(last, provision, entry);
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return request_id;
+}
+
+static void _tbmch_provision_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
+{
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client || !object) {
+          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Search provision
+     tbmch_provision_t *provision = NULL;
+     LIST_FOREACH(provision, &client->provision_list, entry) {
+          if (provision && (_tbmch_provision_get_request_id(provision)==request_id)) {
+               break;
+          }
+     }
+     if (!provision) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCH_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove provision
+     tbmch_provision_t *cache = _tbmch_provision_clone_wo_listentry(provision);
+     LIST_REMOVE(provision, entry);
+     _tbmch_provision_destroy(provision);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do response
+     _tbmch_provision_do_response(cache, object);
+     // Free cache
+     _tbmch_provision_destroy(cache);
+
+     return;// ESP_OK;
+}
+
+static void _tbmch_provision_on_timeout(tbmch_handle_t client_, int request_id)
+{
+     tbmch_t *client = (tbmch_t *)client_;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Search provision
+     tbmch_provision_t *provision = NULL;
+     LIST_FOREACH(provision, &client->provision_list, entry) {
+          if (provision && (_tbmch_provision_get_request_id(provision)==request_id)) {
+               break;
+          }
+     }
+     if (!provision) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBMCH_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
+          return;// ESP_FAIL;
+     }
+
+     // Cache and remove provision
+     tbmch_provision_t *cache = _tbmch_provision_clone_wo_listentry(provision);
+     LIST_REMOVE(provision, entry);
+     _tbmch_provision_destroy(provision);
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Do timeout
+     _tbmch_provision_do_timeout(cache);
+     // Free provision
+     _tbmch_provision_destroy(cache);
+
+     return;// ESP_OK;
+}
+
 
 //====60.Firmware update================================================================================================
 tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_description, const tbmch_otaupdate_config_t *config)
@@ -2327,6 +2533,15 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
           _tbmch_clientrpc_on_timeout(client_, msg->body.clientrpc_response.request_id);
           break;
 
+     case TBMCH_MSGID_PROVISION_RESPONSE:  //request_id,              payload,  len
+          _tbmch_provision_on_response(client_, msg->body.provision_response.request_id,
+                                       msg->body.clientrpc_response.object);
+          cJSON_Delete(msg->body.provision_response.object); //free cJSON
+          break;
+     case TBMCH_MSGID_PROVISION_TIMEOUT:   //request_id
+          _tbmch_provision_on_timeout(client_, msg->body.provision_timeout.request_id);
+          break;
+
      case TBMCH_MSGID_FWUPDATE_RESPONSE:    // request_id,   chunk_id,    payload,  len
           _tbmch_otaupdate_on_response(client_, msg->body.otaupdate_response.request_id, 
                msg->body.otaupdate_response.chunk_id, 
@@ -2570,6 +2785,45 @@ static void _tbmch_on_clientrpc_timeout(void *context, int request_id)
      msg.body.clientrpc_timeout.request_id = request_id;
      _tbmch_sendTbmqttMsg2Queue(client, &msg);
 } 
+
+
+static void _tbmch_on_provision_response(void *context, int request_id, const char* payload, int length)
+{
+     tbmch_t *client = (tbmch_t *)context;
+     if (!client ) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
+     }
+     if (!payload) {
+          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          return;
+     }
+     if (length<=0) {
+          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          return;
+     }
+
+     tbmch_msg_t msg;
+     msg.id = TBMCH_MSGID_PROVISION_RESPONSE;
+     msg.body.provision_response.request_id = request_id;
+     msg.body.provision_response.object = cJSON_ParseWithLength(payload, length); /*!< received palyload. free memory by msg receiver */;
+     _tbmch_sendTbmqttMsg2Queue(client, &msg);
+}
+
+static void _tbmch_on_provision_timeout(void *context, int request_id)
+{
+     tbmch_t *client = (tbmch_t *)context;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
+     }
+
+     tbmch_msg_t msg;
+     msg.id = TBMCH_MSGID_PROVISION_TIMEOUT;
+     msg.body.provision_timeout.request_id = request_id;
+     _tbmch_sendTbmqttMsg2Queue(client, &msg);
+}
+
 // First send
 static void _tbmch_on_otaupdate_response(void *context, int request_id, int chunk_id, const char* payload, int length)
 {
