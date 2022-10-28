@@ -93,10 +93,10 @@ extern "C" {
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX      "v1/devices/me/attributes/response/"   //receive
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE  "v1/devices/me/attributes/response/+"  //subscribe
 
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS    "clientKeys"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS    "sharedKeys"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT        "client"
-#define TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED        "shared"
+#define TB_MQTT_KEY_ATTRIBUTES_REQUEST_CLIENTKEYS     "clientKeys"
+#define TB_MQTT_KEY_ATTRIBUTES_REQUEST_SHAREDKEYS     "sharedKeys"
+#define TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT        "client"
+#define TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED        "shared"
 
 // ======== Subscribe to shared device attribute updates from the server=====================
 #define TB_MQTT_TOPIC_SHARED_ATTRIBUTES               "v1/devices/me/attributes"      //subscribe, receive
@@ -115,15 +115,15 @@ extern "C" {
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX       "v1/devices/me/rpc/response/"   //receive
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE    "v1/devices/me/rpc/response/+"  //subscribe
 
-#define TB_MQTT_TEXT_RPC_METHOD     "method"
-#define TB_MQTT_TEXT_RPC_PARAMS     "params"
-#define TB_MQTT_TEXT_RPC_RESULTS    "results"
+#define TB_MQTT_KEY_RPC_METHOD     "method"
+#define TB_MQTT_KEY_RPC_PARAMS     "params"
+#define TB_MQTT_KEY_RPC_RESULTS    "results"
 
 // ======== Claiming device using device-side key scenario===================================
-#define TB_MQTT_TOPIC_CLAIMING_DEVICE       "v1/devices/me/claim" //publish
+#define TB_MQTT_TOPIC_CLAIMING_DEVICE           "v1/devices/me/claim" //publish
 
-#define TB_MQTT_CLAIMING_DEVICE_SECRETKEY   "secretKey"
-#define TB_MQTT_CLAIMING_DEVICE_DURATIONMS  "durationMs"
+#define TB_MQTT_KEY_CLAIMING_DEVICE_SECRETKEY   "secretKey"
+#define TB_MQTT_KEY_CLAIMING_DEVICE_DURATIONMS  "durationMs"
 
 // ======== Device provisioning==============================================================
 #define TB_MQTT_TOPIC_PROVISION_REQUESTC    "/provision/request"  //publish
@@ -164,43 +164,45 @@ extern "C" {
 #define TB_MQTT_TOPIC_FW_RESPONSE_PREFIX        "v2/fw/response/"             //receive, ${requestId}, ${chunkId}
 #define TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE     "v2/fw/response/+/chunk/+"    //subsribe
 
-#define TB_MQTT_SHAREDATTRBUTE_FW_TITLE         "fw_title"                  //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_FW_VERSION       "fw_version"                //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_FW_SIZE          "fw_size"                   //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM      "fw_checksum"               //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG  "fw_checksum_algorithm"     //shared attribute
+#define TB_MQTT_KEY_FW_TITLE         "fw_title"                  //shared attribute
+#define TB_MQTT_KEY_FW_VERSION       "fw_version"                //shared attribute
+#define TB_MQTT_KEY_FW_SIZE          "fw_size"                   //shared attribute
+#define TB_MQTT_KEY_FW_CHECKSUM      "fw_checksum"               //shared attribute
+#define TB_MQTT_KEY_FW_CHECKSUM_ALG  "fw_checksum_algorithm"     //shared attribute
 
-#define TB_MQTT_SHAREDATTRBUTE_SW_TITLE         "sw_title"                  //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_SW_VERSION       "sw_version"                //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_SW_SIZE          "sw_size"                   //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM      "sw_checksum"               //shared attribute
-#define TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG  "sw_checksum_algorithm"     //shared attribute
+#define TB_MQTT_KEY_SW_TITLE         "sw_title"                  //shared attribute
+#define TB_MQTT_KEY_SW_VERSION       "sw_version"                //shared attribute
+#define TB_MQTT_KEY_SW_SIZE          "sw_size"                   //shared attribute
+#define TB_MQTT_KEY_SW_CHECKSUM      "sw_checksum"               //shared attribute
+#define TB_MQTT_KEY_SW_CHECKSUM_ALG  "sw_checksum_algorithm"     //shared attribute
 
-#define TB_MQTT_TELEMETRY_CURRENT_FW_TITLE      "current_fw_title"          //telemetry
-#define TB_MQTT_TELEMETRY_CURRENT_FW_VERSION    "current_fw_version"        //telemetry
-#define TB_MQTT_TELEMETRY_FW_STATE              "fw_state"                  //telemetry
-#define TB_MQTT_TELEMETRY_FW_ERROR              "fw_error"                  //telemetry
+#define TB_MQTT_KEY_CURRENT_FW_TITLE      "current_fw_title"          //telemetry
+#define TB_MQTT_KEY_CURRENT_FW_VERSION    "current_fw_version"        //telemetry
+#define TB_MQTT_KEY_FW_STATE              "fw_state"                  //telemetry
+#define TB_MQTT_KEY_FW_ERROR              "fw_error"                  //telemetry
 
-#define TB_MQTT_TELEMETRY_CURRENT_SW_TITLE      "current_sw_title"          //telemetry
-#define TB_MQTT_TELEMETRY_CURRENT_SW_VERSION    "current_sw_version"        //telemetry
-#define TB_MQTT_TELEMETRY_SW_STATE              "sw_state"                  //telemetry
-#define TB_MQTT_TELEMETRY_SW_ERROR              "sw_error"                  //telemetry
+#define TB_MQTT_KEY_CURRENT_SW_TITLE      "current_sw_title"          //telemetry
+#define TB_MQTT_KEY_CURRENT_SW_VERSION    "current_sw_version"        //telemetry
+#define TB_MQTT_KEY_SW_STATE              "sw_state"                  //telemetry
+#define TB_MQTT_KEY_SW_ERROR              "sw_error"                  //telemetry
 
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADING "DOWNLOADING" // telemetry value of fw/sw state - notification about new firmware/software update was received and device started downloading the update package.
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADED  "DOWNLOADED"  // telemetry value of fw/sw state - device completed downloading of the update package.
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_VERIFIED    "VERIFIED"    // telemetry value of fw/sw state - device verified the checksum of the downloaded package.
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATING    "UPDATING"    // telemetry value of fw/sw state - device started the firmware/software update. Typically is sent before reboot of the device or restart of the service.
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATED     "UPDATED"     // telemetry value of fw/sw state - the firmware was successfully updated to the next version.
-#define TB_MQTT_TELEMETRY_FW_SW_STATE_FAILED      "FAILED"      // telemetry value of fw/sw state - checksum wasn’t verified, or the device failed to update. See “Device failed” tab on the Firmware dashboard for more details.
+//TB_MQTT_KEY_FW_STATE or TB_MQTT_KEY_SW_STATE
+#define TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING "DOWNLOADING" // telemetry value of fw/sw state - notification about new firmware/software update was received and device started downloading the update package.
+#define TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADED  "DOWNLOADED"  // telemetry value of fw/sw state - device completed downloading of the update package.
+#define TB_MQTT_VALUE_FW_SW_STATE_VERIFIED    "VERIFIED"    // telemetry value of fw/sw state - device verified the checksum of the downloaded package.
+#define TB_MQTT_VALUE_FW_SW_STATE_UPDATING    "UPDATING"    // telemetry value of fw/sw state - device started the firmware/software update. Typically is sent before reboot of the device or restart of the service.
+#define TB_MQTT_VALUE_FW_SW_STATE_UPDATED     "UPDATED"     // telemetry value of fw/sw state - the firmware was successfully updated to the next version.
+#define TB_MQTT_VALUE_FW_SW_STATE_FAILED      "FAILED"      // telemetry value of fw/sw state - checksum wasn’t verified, or the device failed to update. See “Device failed” tab on the Firmware dashboard for more details.
 
+//TB_MQTT_KEY_FW_CHECKSUM_ALG or TB_MQTT_KEY_SW_CHECKSUM_ALG
 // only support CRC32
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA256      "sha256"
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA384      "sha384"
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHA512      "sha512"
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_SHAMD5      "md5"
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_MURMUR3_32  "murmur3_32"
-//#define TB_MQTTT_FW_SW_CHECKSUM_ALG_MURMUR3_128 "murmur3_128"
-#define TB_MQTTT_FW_SW_CHECKSUM_ALG_CRC32       "crc32"         // TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG or TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_SHA256      "sha256"
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_SHA384      "sha384"
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_SHA512      "sha512"
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_SHAMD5      "md5"
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_MURMUR3_32  "murmur3_32"
+//#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_MURMUR3_128 "murmur3_128"
+#define TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_CRC32       "crc32"         // TB_MQTT_KEY_FW_CHECKSUM_ALG or TB_MQTT_KEY_SW_CHECKSUM_ALG
 
 //second, Client-Side RPC timeout, Attributes Request timeout or otaupdate Request timeout
 #define TB_MQTT_TIMEOUT (30) 

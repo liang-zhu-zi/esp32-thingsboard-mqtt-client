@@ -1023,29 +1023,29 @@ static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJS
      xSemaphoreGive(client->_lock);
 
      // special process for otaupdate
-     if (cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_TITLE) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_VERSION) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_SIZE) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG))
+     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_TITLE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_VERSION) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_SIZE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM_ALG))
      {
-          char *ota_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_TITLE));
-          char *ota_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_VERSION));
-          int ota_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_SIZE));
-          char *ota_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM));
-          char *ota_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG));
+          char *ota_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_TITLE));
+          char *ota_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_VERSION));
+          int ota_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_SIZE));
+          char *ota_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM));
+          char *ota_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM_ALG));
           _tbmch_otaupdate_on_sharedattributes(client_, TBMCH_OTAUPDATE_TYPE_FW, ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
-     } else if (cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_TITLE) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_VERSION) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_SIZE) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM) &&
-         cJSON_HasObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG))
+     } else if (cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_TITLE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_VERSION) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_SIZE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG))
      {
-          char *sw_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_TITLE));
-          char *sw_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_VERSION));
-          int sw_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_SIZE));
-          char *sw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM));
-          char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG));
+          char *sw_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_TITLE));
+          char *sw_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_VERSION));
+          int sw_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_SIZE));
+          char *sw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM));
+          char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG));
           _tbmch_otaupdate_on_sharedattributes(client_, TBMCH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
      }
 
@@ -1345,12 +1345,12 @@ static void _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int req
      xSemaphoreGive(client->_lock);
 
      // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
-     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT)) {
-          _tbmch_clientattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENT));
+     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT)) {
+          _tbmch_clientattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
      }
      // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
-     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED)) {
-          _tbmch_sharedattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHARED));
+     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED)) {
+          _tbmch_sharedattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
      }
 
      // Do response
@@ -1529,8 +1529,8 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
      }
 
      const char *method = NULL;
-     if (cJSON_HasObjectItem(object, TB_MQTT_TEXT_RPC_METHOD)) {
-          cJSON *methodItem = cJSON_GetObjectItem(object, TB_MQTT_TEXT_RPC_METHOD);
+     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_RPC_METHOD)) {
+          cJSON *methodItem = cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_METHOD);
           method = cJSON_GetStringValue(methodItem);
      }
 
@@ -1561,13 +1561,13 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
 
      // Do request
      tbmch_rpc_results_t *result = _tbmch_serverrpc_do_request(cache, request_id,
-                                                               cJSON_GetObjectItem(object, TB_MQTT_TEXT_RPC_PARAMS));
+                                                               cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_PARAMS));
      // Send reply
      if (result) {
           #if 0
           cJSON* reply = cJSON_CreateObject();
-          cJSON_AddStringToObject(reply, TB_MQTT_TEXT_RPC_METHOD, method);
-          cJSON_AddItemToObject(reply, TB_MQTT_TEXT_RPC_RESULTS, result);
+          cJSON_AddStringToObject(reply, TB_MQTT_KEY_RPC_METHOD, method);
+          cJSON_AddItemToObject(reply, TB_MQTT_KEY_RPC_RESULTS, result);
           const char *response = cJSON_PrintUnformatted(reply); //cJSON_Print()
           tbmc_serverrpc_response(client_->tbmqttclient, request_id, response, 1/*qos*/, 0/*retain*/);
           cJSON_free(response); // free memory
@@ -1634,11 +1634,11 @@ int tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method
 
      // Send msg to server
      //cJSON *object = cJSON_CreateObject(); // create json object
-     //cJSON_AddStringToObject(object, TB_MQTT_TEXT_RPC_METHOD, method);
+     //cJSON_AddStringToObject(object, TB_MQTT_KEY_RPC_METHOD, method);
      //if (params) {
-     //     cJSON_AddItemReferenceToObject(object, TB_MQTT_TEXT_RPC_PARAMS, params);
+     //     cJSON_AddItemReferenceToObject(object, TB_MQTT_KEY_RPC_PARAMS, params);
      //} else  {
-     //     cJSON_AddNullToObject(object, TB_MQTT_TEXT_RPC_PARAMS);
+     //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //}
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      int request_id;
@@ -1690,11 +1690,11 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
 
      // Send msg to server
      //cJSON *object = cJSON_CreateObject(); // create json object
-     //cJSON_AddStringToObject(object, TB_MQTT_TEXT_RPC_METHOD, method);
+     //cJSON_AddStringToObject(object, TB_MQTT_KEY_RPC_METHOD, method);
      //if (params)
-     //     cJSON_AddItemReferenceToObject(object, TB_MQTT_TEXT_RPC_PARAMS, params);
+     //     cJSON_AddItemReferenceToObject(object, TB_MQTT_KEY_RPC_PARAMS, params);
      //else 
-     //     cJSON_AddNullToObject(object, TB_MQTT_TEXT_RPC_PARAMS);
+     //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      int request_id;
      if (params) {
@@ -1785,7 +1785,7 @@ static void _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id,
      xSemaphoreGive(client->_lock);
 
      // Do response
-     _tbmch_clientrpc_do_response(cache, cJSON_GetObjectItem(object, TB_MQTT_TEXT_RPC_RESULTS));
+     _tbmch_clientrpc_do_response(cache, cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_RESULTS));
      // Free cache
      _tbmch_clientrpc_destroy(cache);
 
@@ -1854,10 +1854,10 @@ tbmch_err_t tbmch_claiming_device_using_device_side_key(tbmch_handle_t client_,
      // send package...
      cJSON *object = cJSON_CreateObject(); // create json object
      if (secret_key) {
-        cJSON_AddStringToObject(object, TB_MQTT_CLAIMING_DEVICE_SECRETKEY, secret_key);
+        cJSON_AddStringToObject(object, TB_MQTT_KEY_CLAIMING_DEVICE_SECRETKEY, secret_key);
      }
      if (duration_ms) {
-        cJSON_AddNumberToObject(object, TB_MQTT_CLAIMING_DEVICE_DURATIONMS, *duration_ms);
+        cJSON_AddNumberToObject(object, TB_MQTT_KEY_CLAIMING_DEVICE_DURATIONMS, *duration_ms);
      }
      char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
      int result = tbmc_claiming_device_publish(client->tbmqttclient, pack, 1/*qos*/, 0/*retain*/);
@@ -2219,11 +2219,11 @@ static void _tbmch_otaupdate_on_connected(tbmch_handle_t client_)
                      __tbmch_otaupdate_on_fw_attributesrequest_response/*on_response*/,
                      NULL/*on_timeout*/,
                      5/*count*/,
-                     TB_MQTT_SHAREDATTRBUTE_FW_TITLE,
-                     TB_MQTT_SHAREDATTRBUTE_FW_VERSION,
-                     TB_MQTT_SHAREDATTRBUTE_FW_SIZE,
-                     TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM,
-                     TB_MQTT_SHAREDATTRBUTE_FW_CHECKSUM_ALG);
+                     TB_MQTT_KEY_FW_TITLE,
+                     TB_MQTT_KEY_FW_VERSION,
+                     TB_MQTT_KEY_FW_SIZE,
+                     TB_MQTT_KEY_FW_CHECKSUM,
+                     TB_MQTT_KEY_FW_CHECKSUM_ALG);
               break;
           }
      }
@@ -2241,11 +2241,11 @@ static void _tbmch_otaupdate_on_connected(tbmch_handle_t client_)
                      __tbmch_otaupdate_on_sw_attributesrequest_response/*on_response*/,
                      NULL/*on_timeout*/,
                      5/*count*/,
-                     TB_MQTT_SHAREDATTRBUTE_SW_TITLE,
-                     TB_MQTT_SHAREDATTRBUTE_SW_VERSION,
-                     TB_MQTT_SHAREDATTRBUTE_SW_SIZE,
-                     TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM,
-                     TB_MQTT_SHAREDATTRBUTE_SW_CHECKSUM_ALG);
+                     TB_MQTT_KEY_SW_TITLE,
+                     TB_MQTT_KEY_SW_VERSION,
+                     TB_MQTT_KEY_SW_SIZE,
+                     TB_MQTT_KEY_SW_CHECKSUM,
+                     TB_MQTT_KEY_SW_CHECKSUM_ALG);
               break;
           }
      }
@@ -2295,7 +2295,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
      int result = _tbmch_otaupdate_do_negotiate(otaupdate, ota_title, ota_version, ota_size,
                         ota_checksum, ota_checksum_algorithm, ota_error, sizeof(ota_error)-1);
      if (result == 1) { //negotiate successful(next to F/W OTA)
-        _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADING);
+        _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);
         result = _tbmch_otaupdate_request_chunk(otaupdate, _tbmch_on_otaupdate_response, _tbmch_on_otaupdate_timeout);
         if (result != 0) { //failure to request chunk
             TBMCH_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
@@ -2359,11 +2359,11 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
      switch (result) {
      case 0: //return 0: success on response
          if (_tbmch_otaupdate_is_received_all(otaupdate))  { //received all f/w or s/w
-            _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADED);
+            _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADED);
 
             if (_tbmch_otaupdate_checksum_verification(otaupdate)) {
-                _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_TELEMETRY_FW_SW_STATE_VERIFIED);
-                _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATING);
+                _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_VERIFIED);
+                _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_UPDATING);
 
                 memset(ota_error, 0x00, sizeof(ota_error));
                 result = _tbmch_otaupdate_do_end(otaupdate, ota_error, sizeof(ota_error)-1);

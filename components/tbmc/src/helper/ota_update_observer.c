@@ -333,11 +333,11 @@ void _tbmch_otaupdate_publish_early_current_version(tbmch_otaupdate_t *otaupdate
     const char *current_ota_title_value = NULL;
     const char *current_ota_version_value = NULL;
     if (otaupdate->config.ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_FW_TITLE;   //"current_fw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_FW_VERSION; //"current_fw_version"
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_FW_TITLE;   //"current_fw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_FW_VERSION; //"current_fw_version"
     } else {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_SW_TITLE;   //"current_sw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_SW_VERSION; //"current_sw_version"
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_SW_TITLE;   //"current_sw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
     }
     current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
     current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->client, otaupdate->config.context);
@@ -368,16 +368,16 @@ void _tbmch_otaupdate_publish_early_failed_status(tbmc_handle_t tbmc_handle,
     const char *ota_state_key = NULL;
     const char *ota_error_key = NULL;
     if (ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
-        ota_state_key           = TB_MQTT_TELEMETRY_FW_STATE;           //"fw_state"
-        ota_error_key           = TB_MQTT_TELEMETRY_FW_ERROR;           //"fw_error"  
+        ota_state_key           = TB_MQTT_KEY_FW_STATE;           //"fw_state"
+        ota_error_key           = TB_MQTT_KEY_FW_ERROR;           //"fw_error"  
     } else {
-        ota_state_key           = TB_MQTT_TELEMETRY_SW_STATE;           //"sw_state"
-        ota_error_key           = TB_MQTT_TELEMETRY_SW_ERROR;           //"sw_error"  
+        ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"
+        ota_error_key           = TB_MQTT_KEY_SW_ERROR;           //"sw_error"  
     }
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
-    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_TELEMETRY_FW_SW_STATE_FAILED);
+    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_VALUE_FW_SW_STATE_FAILED);
     if (ota_error) {
         cJSON_AddStringToObject(object, ota_error_key, ota_error);
     }
@@ -400,16 +400,16 @@ void _tbmch_otaupdate_publish_late_failed_status(tbmch_otaupdate_t *otaupdate, c
     const char *ota_state_key = NULL;
     const char *ota_error_key = NULL;
     if (otaupdate->config.ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
-        ota_state_key           = TB_MQTT_TELEMETRY_FW_STATE;           //"fw_state"
-        ota_error_key           = TB_MQTT_TELEMETRY_FW_ERROR;           //"fw_error"  
+        ota_state_key           = TB_MQTT_KEY_FW_STATE;           //"fw_state"
+        ota_error_key           = TB_MQTT_KEY_FW_ERROR;           //"fw_error"  
     } else {
-        ota_state_key           = TB_MQTT_TELEMETRY_SW_STATE;           //"sw_state"
-        ota_error_key           = TB_MQTT_TELEMETRY_SW_ERROR;           //"sw_error"  
+        ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"
+        ota_error_key           = TB_MQTT_KEY_SW_ERROR;           //"sw_error"  
     }
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
-    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_TELEMETRY_FW_SW_STATE_FAILED);
+    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_VALUE_FW_SW_STATE_FAILED);
     if (ota_error) {
         cJSON_AddStringToObject(object, ota_error_key, ota_error);
     }
@@ -420,10 +420,10 @@ void _tbmch_otaupdate_publish_late_failed_status(tbmch_otaupdate_t *otaupdate, c
     cJSON_Delete(object); // delete json object
 }
 
-//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADING}
-//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_TELEMETRY_FW_SW_STATE_DOWNLOADED}
-//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_TELEMETRY_FW_SW_STATE_VERIFIED}
-//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATING}
+//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING}
+//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADED}
+//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_VALUE_FW_SW_STATE_VERIFIED}
+//{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3", "fw_state": TB_MQTT_VALUE_FW_SW_STATE_UPDATING}
 void _tbmch_otaupdate_publish_going_status(tbmch_otaupdate_t *otaupdate, const char *ota_state)
 {
     if (!otaupdate) {
@@ -441,13 +441,13 @@ void _tbmch_otaupdate_publish_going_status(tbmch_otaupdate_t *otaupdate, const c
     const char *current_ota_title_value = NULL;
     const char *current_ota_version_value = NULL;
     if (otaupdate->config.ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_FW_TITLE;   //"current_fw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_FW_VERSION; //"current_fw_version"
-        ota_state_key           = TB_MQTT_TELEMETRY_FW_STATE;           //"fw_state"  
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_FW_TITLE;   //"current_fw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_FW_VERSION; //"current_fw_version"
+        ota_state_key           = TB_MQTT_KEY_FW_STATE;           //"fw_state"  
     } else {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_SW_TITLE;   //"current_sw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_SW_VERSION; //"current_sw_version"
-        ota_state_key           = TB_MQTT_TELEMETRY_SW_STATE;           //"sw_state"  
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_SW_TITLE;   //"current_sw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
+        ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"  
     }
     current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
     current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->client, otaupdate->config.context);
@@ -482,20 +482,20 @@ void _tbmch_otaupdate_publish_updated_status(tbmch_otaupdate_t *otaupdate)
     const char *current_ota_version_key = NULL;
     const char *ota_state_key = NULL;
     if (otaupdate->config.ota_type == TBMCH_OTAUPDATE_TYPE_FW) {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_FW_TITLE;   //"current_fw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_FW_VERSION; //"current_fw_version"
-        ota_state_key           = TB_MQTT_TELEMETRY_FW_STATE;           //"fw_state"
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_FW_TITLE;   //"current_fw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_FW_VERSION; //"current_fw_version"
+        ota_state_key           = TB_MQTT_KEY_FW_STATE;           //"fw_state"
     } else {
-        current_ota_title_key   = TB_MQTT_TELEMETRY_CURRENT_SW_TITLE;   //"current_sw_title"
-        current_ota_version_key = TB_MQTT_TELEMETRY_CURRENT_SW_VERSION; //"current_sw_version"
-        ota_state_key           = TB_MQTT_TELEMETRY_SW_STATE;           //"sw_state"
+        current_ota_title_key   = TB_MQTT_KEY_CURRENT_SW_TITLE;   //"current_sw_title"
+        current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
+        ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"
     }
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
     cJSON_AddStringToObject(object, current_ota_title_key, otaupdate->attribute.ota_title);
     cJSON_AddStringToObject(object, current_ota_version_key, otaupdate->attribute.ota_version);
-    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_TELEMETRY_FW_SW_STATE_UPDATED);
+    cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_VALUE_FW_SW_STATE_UPDATED);
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
     tbmc_handle_t tbmc_handle = _tbmch_get_tbmc_handle(otaupdate->client);
     /*int result =*/ tbmc_telemetry_publish(tbmc_handle, pack, 1/*qos*/, 0/*retain*/);
@@ -519,7 +519,7 @@ tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
 
     // TODO: support multi-ALG! 
     // only support CRC32
-    if (strcasecmp(ota_checksum_algorithm, TB_MQTTT_FW_SW_CHECKSUM_ALG_CRC32)!=0) { // Not CRC32
+    if (strcasecmp(ota_checksum_algorithm, TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_CRC32)!=0) { // Not CRC32
         TBMCH_LOGW("Only support CRC32 for ota_update! Don't support %s! %s()", ota_checksum_algorithm, __FUNCTION__);
         strncpy(ota_error, "Only support CRC checksum!", error_size);
         return -1;

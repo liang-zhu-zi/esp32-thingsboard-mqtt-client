@@ -579,8 +579,8 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
           return -1;
      }
 
-     int size = strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_CLIENTKEYS) + client_len 
-               + strlen(TB_MQTT_TEXT_ATTRIBUTES_REQUEST_SHAREDKEYS) + shared_len + 20;
+     int size = strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_CLIENTKEYS) + client_len 
+               + strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_SHAREDKEYS) + shared_len + 20;
      char *payload = TBMC_MALLOC(size);
      if (!payload)
      {
@@ -753,7 +753,7 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
           return -1;
      }
 
-     int size = strlen(TB_MQTT_TEXT_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_TEXT_RPC_PARAMS) + strlen(params) + 20;
+     int size = strlen(TB_MQTT_KEY_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_KEY_RPC_PARAMS) + strlen(params) + 20;
      char *payload = TBMC_MALLOC(size);
      if (!payload) {
           TBMC_LOGE("Unable to malloc memory");
