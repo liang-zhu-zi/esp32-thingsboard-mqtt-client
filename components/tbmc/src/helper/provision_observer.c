@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,17 @@
 #include <string.h>
 #include "esp_err.h"
 
+#include "cJSON.h"
+
 #include "provision_observer.h"
+#include "tb_mqtt_client.h"
 #include "tb_mqtt_client_helper_log.h"
 
 const static char *TAG = "provision";
 
 /*!< Initialize tbmch_provision_t */
 tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
+                                         const tbmch_provision_params_t *params,
                                          void *context,
                                          tbmch_provision_on_response_t on_response,
                                          tbmch_provision_on_timeout_t on_timeout)
@@ -41,6 +45,7 @@ tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
 
     memset(provision, 0x00, sizeof(tbmch_provision_t));
     provision->client = client;
+    provision->params = cJSON_Duplicate(params, true);
     provision->request_id = request_id;
     provision->context = context;
     provision->on_response = on_response;
@@ -63,6 +68,7 @@ tbmch_provision_t *_tbmch_provision_clone_wo_listentry(tbmch_provision_t *src)
 
     memset(provision, 0x00, sizeof(tbmch_provision_t));
     provision->client = src->client;
+    provision->params = cJSON_Duplicate(src->params, true);
     provision->request_id = src->request_id;
     provision->context = src->context;
     provision->on_response = src->on_response;
@@ -88,7 +94,118 @@ tbmch_err_t _tbmch_provision_destroy(tbmch_provision_t *provision)
         return ESP_FAIL;
     }
 
+    cJSON_Delete(provision->params);
+    provision->params = NULL;
     TBMCH_FREE(provision);
+    return ESP_OK;
+}
+
+static char *_parse_string_item(const cJSON *object, const char* key)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(object, NULL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
+
+    cJSON *item = cJSON_GetObjectItem(object, key);
+    if (!item) {
+        TBMCH_LOGW("%s is not existed!", key);
+        return NULL;
+    }
+    char *string_value = cJSON_GetStringValue(item);
+    if (!string_value) {
+        TBMCH_LOGW("%s is NULL!", key);
+        return NULL;
+    }
+    return string_value;
+}
+
+static int _parse_provision_response(const tbmch_provision_results_t *results,
+                                          tbc_transport_credentials_config_t *credentials)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(results, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(credentials, ESP_FAIL);
+
+    bool isSuccess = false;
+    cJSON *status = cJSON_GetObjectItem(results, TB_MQTT_KEY_PROVISION_STATUS);
+    if (status) {
+        if (strcmp(cJSON_GetStringValue(status), TB_MQTT_VALUE_PROVISION_SUCCESS) ==0) {
+            isSuccess = true;
+        }
+    }
+    cJSON *provisionDeviceStatus = cJSON_GetObjectItem(results, TB_MQTT_KEY_PROVISION_DEVICE_STATUS);
+    if (provisionDeviceStatus) {
+        if (strcmp(cJSON_GetStringValue(provisionDeviceStatus), TB_MQTT_VALUE_PROVISION_SUCCESS) ==0) {
+            isSuccess = true;
+        }
+    }
+    if (!isSuccess) {
+        char *results_str = cJSON_PrintUnformatted(results); //cJSON_Print(object);
+        TBMCH_LOGW("provision response is failure! %s", results_str);
+        cJSON_free(results_str); // free memory
+        return ESP_FAIL;
+    }
+
+    char *credentialsTypeStr = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE);
+    if (!credentialsTypeStr) {
+        TBMCH_LOGW("credentialsType is error!");
+        return ESP_FAIL;
+    }
+
+    if (strcmp(credentialsTypeStr, TB_MQTT_VALUE_PROVISION_ACCESS_TOKEN) == 0) {
+        //{
+        //  "credentialsType":"ACCESS_TOKEN",
+        //  "credentialsValue":"sLzc0gDAZPkGMzFVTyUY"
+        //  "status":"SUCCESS"
+        //}
+        credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
+        credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
+        if (!credentials->token){
+            TBMCH_LOGW("credentialsValue is error!");
+            return ESP_FAIL;
+        }
+
+    } else if (strcmp(credentialsTypeStr, TB_MQTT_VALUE_PROVISION_MQTT_BASIC) == 0) {
+        //{
+        //  "credentialsType":"MQTT_BASIC",
+        //  "credentialsValue": {
+        //    "clientId":"DEVICE_CLIENT_ID_HERE",
+        //    "userName":"DEVICE_USERNAME_HERE",
+        //    "password":"DEVICE_PASSWORD_HERE"
+        //    },
+        //  "status":"SUCCESS"
+        //}
+        credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_BASIC_MQTT;
+        cJSON *credentialsValue = cJSON_GetObjectItem(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
+        if (!credentialsValue){
+            TBMCH_LOGW("credentialsValue is NOT existed!");
+            return ESP_FAIL;
+        }
+        credentials->client_id = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_CLIENT_ID);
+        credentials->username  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME);
+        if (!credentials->username) {
+            credentials->username  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME2);
+        }
+        credentials->password  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_PASSWORD);
+
+    } else if (strcmp(credentialsTypeStr, TB_MQTT_VALUE_PROVISION_X509_CERTIFICATE) == 0) {
+        //{
+        //  "deviceId":"3b829220-232f-11eb-9d5c-e9ed3235dff8",
+        //  "credentialsType":"X509_CERTIFICATE",
+        //  "credentialsId":"f307a1f717a12b32c27203cf77728d305d29f64694a8311be921070dd1259b3a",
+        //  "credentialsValue":"MIIB........AQAB",
+        //  "provisionDeviceStatus":"SUCCESS"
+        //}
+        credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_X509;
+        credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
+        if (!credentials->token){
+            TBMCH_LOGW("credentialsValue is error!");
+            return ESP_FAIL;
+        }
+
+    } else {
+        TBMCH_LOGW("credentialsType(%s) is error!", credentialsTypeStr);
+        return ESP_FAIL;
+    }
+    
     return ESP_OK;
 }
 
@@ -105,7 +222,14 @@ void _tbmch_provision_do_response(tbmch_provision_t *provision, const tbmch_prov
         return; // ESP_FAIL;
     }*/
 
-    provision->on_response(provision->client, provision->context, provision->request_id, results);
+    // parse results - provision response
+    tbc_transport_credentials_config_t credentials = {0};
+    int result = _parse_provision_response(results, &credentials);
+    if (result == ESP_OK) {
+        provision->on_response(provision->client, provision->context, provision->request_id, &credentials);
+    } else {
+        provision->on_timeout(provision->client, provision->context, provision->request_id); // TODO: a new faiure callback?
+    }
     return; // ESP_OK;
 }
 
@@ -127,3 +251,4 @@ void _tbmch_provision_do_timeout(tbmch_provision_t *provision)
     }
     return; // ESP_OK;
 }
+

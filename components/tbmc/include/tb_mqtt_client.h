@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "tbc_transport_config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -129,6 +131,8 @@ extern "C" {
 #define TB_MQTT_TOPIC_PROVISION_REQUESTC    "/provision/request"  //publish
 #define TB_MQTT_TOPIC_PROVISION_RESPONSE    "/provision/response" //subscribe, receive
 
+#define TB_MQTT_PARAM_PROVISION_USERNAME    "provision"           //MQTT username for provison
+
 //Key: request
 #define TB_MQTT_KEY_PROVISION_DEVICE_NAME               "deviceName"            //Device name in ThingsBoard
 #define TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_KEY      "provisionDeviceKey"	//Provisioning device key, you should take it from configured device profile
@@ -137,10 +141,10 @@ extern "C" {
 //Key: request: ACCESS TOKEN
 #define TB_MQTT_KEY_PROVISION_TOKEN                     "token"	    //Access token for device in ThingsBoard.
 //Key: request: MQTT_BASIC
+#define TB_MQTT_KEY_PROVISION_CLIENT_ID                 "clientId"  //Client id for device in ThingsBoard
 #define TB_MQTT_KEY_PROVISION_USERNAME                  "username"  //Username for device in ThingsBoard
 #define TB_MQTT_KEY_PROVISION_USERNAME2                 "userName"  //In response of Devices supplies Basic MQTT Credentials
 #define TB_MQTT_KEY_PROVISION_PASSWORD                  "password"  //Password for device in ThingsBoard
-#define TB_MQTT_KEY_PROVISION_CLIENT_ID                 "clientId"  //Client id for device in ThingsBoard
 //Key: request: X509_CERTIFICATE
 #define TB_MQTT_KEY_PROVISION_HASH                      "hash"	    //Public key X509 hash for device in ThingsBoard.
 //Key: response
@@ -239,17 +243,6 @@ typedef enum
   TBMC_STATE_CONNECTED
 } tbmc_state_t; //TBMQTT_STATE
 
-typedef struct
-{
-  const bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
-
-  const char *uri;             /*!< Complete MQTT broker URI */
-  const char *access_token;    /*!< Access Token */
-  const char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-  const char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-  const char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
-} tbmc_config_t;
-
 /**
  * ThingsBoard MQTT Client handle
  */
@@ -275,18 +268,21 @@ typedef tbmc_on_timeout_t tbmc_on_provision_timeout_t;
 
 tbmc_handle_t tbmc_init(void);
 void tbmc_destroy(tbmc_handle_t client_);
-bool tbmc_connect(tbmc_handle_t client_, const tbmc_config_t *config,
+bool tbmc_connect(tbmc_handle_t client_, const tbc_transport_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disconnected,
                   tbmc_on_sharedattr_received_t on_sharedattributes_received,
-                  tbmc_on_serverrpc_request_t on_serverrpc_request);
+                  tbmc_on_serverrpc_request_t on_serverrpc_request);  
 void tbmc_disconnect(tbmc_handle_t client_);
 bool tbmc_is_connected(tbmc_handle_t client_);
 bool tbmc_is_connecting(tbmc_handle_t client_);
 bool tbmc_is_disconnected(tbmc_handle_t client_);
 tbmc_state_t tbmc_get_state(tbmc_handle_t client_);
 void tbmc_check_timeout(tbmc_handle_t client_);
+
+int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos/*=0*/);
+
 
 int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/);

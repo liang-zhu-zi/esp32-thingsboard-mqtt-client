@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ typedef struct tbmch_provision
      ////const char *results_key;  /*!< results key, default "results" */
 
      //char *method; /*!< method value */
-     ////tbmch_provision_params_t *params;
+     tbmch_provision_params_t *params;
      int request_id;
      void *context;                             /*!< Context of callback */
      tbmch_provision_on_response_t on_response; /*!< Callback of provision response success */
@@ -49,6 +49,7 @@ typedef struct tbmch_provision
 } tbmch_provision_t;
 
 tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
+                                         const tbmch_provision_params_t *params,
                                          void *context,
                                          tbmch_provision_on_response_t on_response,
                                          tbmch_provision_on_timeout_t on_timeout); /*!< Initialize tbmch_provision_t */

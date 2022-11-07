@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,6 +28,18 @@ extern "C" {
 #define TBMCH_LOGI(format, ...)  ESP_LOGI(TAG, format, ##__VA_ARGS__) //"[TBMCH][I] "
 #define TBMCH_LOGD(format, ...)  ESP_LOGD(TAG, format, ##__VA_ARGS__) //"[TBMCH][D] "
 #define TBMCH_LOGV(format, ...)  ESP_LOGV(TAG, format, ##__VA_ARGS__) //"[TBMCH][V] "
+
+#define TBMCH_CHECK_PTR_WITH_RETURN_VALUE(pointer, returnValue) \
+     if (!pointer) { \
+          TBMCH_LOGE(#pointer" is NULL! %s()", __FUNCTION__); \
+          return returnValue; \
+     }
+
+#define TBMCH_CHECK_PTR(pointer) \
+     if (!pointer) { \
+          TBMCH_LOGE(pointer" is NULL! %s()", __FUNCTION__); \
+          return; \
+     }
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,3 @@
 idf_component_register(SRC_DIRS .
                 PRIV_INCLUDE_DIRS .
-                PRIV_REQUIRES cmock test_utils thingsboard-mqttclient-basedon-espmqtt)
+                PRIV_REQUIRES cmock test_utils esp32-thingsboard-mqtt-client)

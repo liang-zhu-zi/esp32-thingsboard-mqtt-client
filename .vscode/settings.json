@@ -10,5 +10,6 @@
         "shared_attribute_observer.h": "c",
         "tb_mqtt_client_helper.h": "c"
     },
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "esbonio.sphinx.confDir": ""
 }

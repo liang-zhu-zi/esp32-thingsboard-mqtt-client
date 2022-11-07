@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 #include "sys/queue.h"
 #include "esp_err.h"
 #include "mqtt_client.h"
+
+#include "tbc_transport_config.h"
+#include "tbc_transport_storage.h"
 
 #include "tb_mqtt_client.h"
 
@@ -54,27 +57,13 @@ typedef struct tbmc_request
 typedef LIST_HEAD(tbmc_request_list, tbmc_request) tbmc_request_list_t;
 
 /**
- * Reference tbmc_config_t
- */
-typedef struct
-{
-  bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
-
-  char *uri;             /*!< Complete MQTT broker URI */
-  char *access_token;    /*!< Access Token */
-  char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-  char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-  char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
-} tbmc_config_storage_t;
-
-/**
  * ThingsBoard MQTT Client
  */
 typedef struct tbmc_client
 {
      esp_mqtt_client_handle_t mqtt_handle;
 
-     tbmc_config_storage_t config; /*!< ThingsBoard MQTT config */
+     tbc_transport_storage_t config;                       /*!< ThingsBoard MQTT config */
      void *context;
      tbmc_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
      tbmc_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
@@ -91,13 +80,13 @@ typedef struct tbmc_client
      tbmc_payload_buffer_t buffer;     /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
 } tbmc_t;
 
-static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
+//static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
 static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
 
 static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
 static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg);
-;
+
 /*static*/ bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
 static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
                                            void *context,
@@ -115,6 +104,124 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
 static void _request_destroy(tbmc_request_t *tbmc_request);
 
 const static char *TAG = "tb_mqtt_client";
+
+static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transport_config_t *transport,
+                                                      esp_mqtt_client_config_t *mqtt_config)
+{
+    if (!mqtt_config) {
+         TBMC_LOGE("mqtt_config is NULL! %s()", __FUNCTION__);
+         return NULL;
+    }
+    if (!transport) {
+         TBMC_LOGE("transport is NULL! %s()", __FUNCTION__);
+         return NULL;
+    }
+
+    // address
+    bool tlsEnabled = false;
+    if (strcmp(transport->address.schema, "mqtt") == 0) {
+        mqtt_config->transport = MQTT_TRANSPORT_OVER_TCP;
+        mqtt_config->port = 1883;
+    } else if (strcmp(transport->address.schema, "mqtts") == 0) {
+        mqtt_config->transport = MQTT_TRANSPORT_OVER_SSL;
+        mqtt_config->port = 8883;
+        tlsEnabled = true;
+    } else if (strcmp(transport->address.schema, "ws") == 0) {
+        mqtt_config->transport = MQTT_TRANSPORT_OVER_WS;
+        mqtt_config->port = 80;
+    } else if (strcmp(transport->address.schema, "wss") == 0) {
+        mqtt_config->transport = MQTT_TRANSPORT_OVER_WSS;
+        mqtt_config->port = 443;
+        tlsEnabled = true;
+    } else {
+        ESP_LOGE(TAG, "address->schema(%s) is error!", transport->address.schema);
+        return NULL;
+    }
+   
+    if (transport->address.host) {
+        mqtt_config->host = transport->address.host;
+    } else {
+        ESP_LOGE(TAG, "mqtt_config->host is NULL!");
+        return NULL;
+    }
+
+    if (transport->address.port) {
+        mqtt_config->port = transport->address.port;
+    }
+    if (transport->address.path) {
+        mqtt_config->path = transport->address.path;
+    }
+
+    //credentials
+    switch (transport->credentials.type) {
+    case TBC_TRANSPORT_CREDENTIALS_TYPE_NONE: // for provision
+        mqtt_config->username = transport->credentials.username; //"provision"
+        break;
+    case TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN: // Access Token
+        if (!transport->credentials.token) {
+             TBMC_LOGE("credentials->token is NULL! %s()", __FUNCTION__);
+             return NULL;
+        }
+        mqtt_config->username = transport->credentials.token;
+        break;
+        
+    case TBC_TRANSPORT_CREDENTIALS_TYPE_BASIC_MQTT: // Basic MQTT Credentials.for MQTT
+        if (!transport->credentials.client_id && !transport->credentials.username) {
+             TBMC_LOGE("credentials->client_id && credentials->username are NULL in Basic MQTT authentication! %s()",
+                __FUNCTION__);
+             return NULL;
+        }
+        mqtt_config->client_id = transport->credentials.client_id;
+        mqtt_config->username = transport->credentials.username;
+        mqtt_config->password = transport->credentials.password;
+        break;
+        
+    case TBC_TRANSPORT_CREDENTIALS_TYPE_X509:      // X.509 Certificate
+        if (!tlsEnabled) {
+            TBMC_LOGE("credentials->type(%d) and address->schema(%s) is not match! ()%s",
+                transport->credentials.type, transport->address.schema, __FUNCTION__);
+            return NULL;
+        }
+        // NOTE: transport->credentials.token: At TBC_TRANSPORT_CREDENTIALS_TYPE_X509 it's a client public key. DON'T USE IT! */
+        break;
+        
+    default:
+        ESP_LOGE(TAG, "credentials->type(%d) is error!", transport->credentials.type);
+        return NULL;
+    }
+
+    //authentication
+    if (tlsEnabled) {
+        if (!transport->verification.cert_pem) {
+            TBMC_LOGE("verification->cert_pem is request but it is NULL! %s()", __FUNCTION__);
+            return NULL;
+        }
+        mqtt_config->cert_pem = transport->verification.cert_pem;
+        mqtt_config->cert_len = transport->verification.cert_len;
+        mqtt_config->skip_cert_common_name_check = transport->verification.skip_cert_common_name_check;
+
+        // SSL mutual authentication (two-way SSL)
+        if (transport->credentials.type == TBC_TRANSPORT_CREDENTIALS_TYPE_X509) {
+            if (!transport->authentication.client_cert_pem) {
+                TBMC_LOGE("authentication->client_cert_pem is request but it is NULL! %s()", __FUNCTION__);
+                return NULL;
+            }
+            if (!transport->authentication.client_key_pem) {
+                TBMC_LOGE("authentication->client_key_pem is request but it is NULL! %s()", __FUNCTION__);
+                return NULL;
+            }
+            mqtt_config->client_cert_pem         = transport->authentication.client_cert_pem;
+            mqtt_config->client_cert_len         = transport->authentication.client_cert_len;
+            mqtt_config->client_key_pem          = transport->authentication.client_key_pem;
+            mqtt_config->client_key_len          = transport->authentication.client_key_len;
+            mqtt_config->clientkey_password      = transport->authentication.client_key_password;
+            mqtt_config->clientkey_password_len  = transport->authentication.client_key_password_len;
+        }
+    }
+
+    return mqtt_config;
+}
+
 
 // Initializes tbmc_handle_t with network client.
 tbmc_handle_t tbmc_init(void)
@@ -171,7 +278,7 @@ void tbmc_destroy(tbmc_handle_t client_)
 // Access token is used to authenticate a client.
 // Returns true on success, false otherwise.
 bool tbmc_connect(tbmc_handle_t client_,
-                  const tbmc_config_t *config,
+                  const tbc_transport_config_t *config,
                   void *context,
                   tbmc_on_connected_t on_connected,
                   tbmc_on_disconnected_t on_disconnected,
@@ -186,7 +293,7 @@ bool tbmc_connect(tbmc_handle_t client_,
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
-     if (!client_ || !config || !config->access_token || !config->uri) {
+     if (!client_ || !config) {
           TBMC_LOGW("one argument isn't NULL!");
           return false;
      }
@@ -197,12 +304,7 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false; //!!
      }
 
-     client->config.log_rxtx_package = false;
-     free(client->config.uri);               client->config.uri = NULL;
-     free(client->config.access_token);      client->config.access_token = NULL;
-     free(client->config.cert_pem);          client->config.cert_pem = NULL;
-     free(client->config.client_cert_pem);   client->config.client_cert_pem = NULL;
-     free(client->config.client_key_pem);    client->config.client_key_pem = NULL;
+     tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
      client->on_connected = NULL;           /*!< Callback of connected ThingsBoard MQTT */
      client->on_disconnected = NULL;        /*!< Callback of disconnected ThingsBoard MQTT */
@@ -215,15 +317,8 @@ bool tbmc_connect(tbmc_handle_t client_,
      // uint64_t last_check_timestamp;
      // tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 
-     const esp_mqtt_client_config_t mqtt_cfg = {
-        .uri = config->uri,
-        .client_id = NULL, ////"TbDev"
-        .username = config->access_token,
-        .client_cert_pem = config->client_cert_pem,
-        .client_key_pem = config->client_key_pem,
-        .cert_pem = config->cert_pem, //server_cert_pem
-     };
-
+     esp_mqtt_client_config_t mqtt_cfg = {0};
+     _tbc_transport_config_fill_to_mqtt_client_config(config, &mqtt_cfg);
      client->mqtt_handle = esp_mqtt_client_init(&mqtt_cfg);
      if (!client->mqtt_handle)
      {
@@ -241,22 +336,7 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false;
      }
 
-     client->config.log_rxtx_package = config->log_rxtx_package;
-     if (config->uri && strlen(config->uri)>0) {
-          client->config.uri = strdup(config->uri);
-     }
-     if (config->access_token && strlen(config->access_token)>0) {
-          client->config.access_token = strdup(config->access_token);
-     }
-     if (config->cert_pem && strlen(config->cert_pem)>0) {
-          client->config.cert_pem = strdup(config->cert_pem);
-     }
-     if (config->client_cert_pem && strlen(config->client_cert_pem)>0) {
-          client->config.client_cert_pem = strdup(config->client_cert_pem);
-     }
-     if (config->client_key_pem && strlen(config->client_key_pem)>0) {
-          client->config.client_key_pem = strdup(config->client_key_pem);
-     }
+     tbc_transport_storage_fill_from_config(&client->config, config);
      client->context = context;
      client->on_connected = on_connected;
      client->on_disconnected = on_disconnected;
@@ -294,15 +374,7 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
      }
      client->mqtt_handle = NULL;
 
-     client->config.log_rxtx_package = false;
-     free(client->config.uri);               client->config.uri = NULL;
-     free(client->config.access_token);      client->config.access_token = NULL;
-     //free(client->config.client_id);       client->config.client_id = NULL;
-     //free(client->config.username);        client->config.username = NULL;
-     free(client->config.cert_pem);          client->config.cert_pem = NULL;
-     free(client->config.client_cert_pem);   client->config.client_cert_pem = NULL;
-     free(client->config.client_key_pem);    client->config.client_key_pem = NULL;
-
+     tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
      client->on_connected = NULL;
      client->on_disconnected = NULL;
@@ -943,7 +1015,7 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
  * @return message_id of the subscribe message on success
  *         -1 on failure
  */
-static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/) // subscribe()
+/*static*/ int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/) // subscribe()
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
@@ -1507,3 +1579,4 @@ static void _request_destroy(tbmc_request_t *tbmc_request)
      tbmc_request->on_timeout = NULL;
      TBMC_FREE(tbmc_request);
 }
+

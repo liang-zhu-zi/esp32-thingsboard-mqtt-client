@@ -56,3 +56,7 @@ build/
 
 # Visual Studio Code
 .vscode/
+
+# Sphinx documentation
+docs/_build/
+

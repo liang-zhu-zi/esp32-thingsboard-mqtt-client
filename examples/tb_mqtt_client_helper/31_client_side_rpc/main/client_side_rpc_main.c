@@ -73,7 +73,7 @@ void tb_clientrpc_publish_local_time_send(tbmch_handle_t client)
     // free params by caller/(user code)!
     int request_id = tbmch_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
     ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
-    cJSON_free(params);
+    cJSON_Delete(params);
 }
 
 
@@ -115,7 +115,7 @@ void tb_clientrpc_get_current_time_send(tbmch_handle_t client)
                                                  tb_clientrpc_get_current_time_on_response,
                                                  tb_clientrpc_get_current_time_on_timeout);
     ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
-    //cJSON_free(params);
+    //cJSON_Delete(params);
 }
 
 // free results by caller/(tbmch library)!
@@ -144,7 +144,7 @@ void tb_clientrpc_loopback_send(tbmch_handle_t client)
                                                  tb_clientrpc_loopback_on_response,
                                                  tb_clientrpc_loopback_on_timeout);
     ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
-    cJSON_free(params);
+    cJSON_Delete(params);
 }
 
 
@@ -173,7 +173,7 @@ void tb_clientrpc_not_implemented_twoway_send(tbmch_handle_t client)
                                                  tb_clientrpc_not_implemented_twoway_on_response,
                                                  tb_clientrpc_not_implemented_twoway_on_timeout);
     ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
-    cJSON_free(params);
+    cJSON_Delete(params);
 }
 
 
@@ -265,20 +265,12 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Connect tbmch ...");
-    tbmch_config_t config = {
+    tbc_transport_config_esay_t config = {
         .uri = uri,                     /*!< Complete ThingsBoard MQTT broker URI */
         .access_token = access_token,   /*!< ThingsBoard Access Token */
-        .cert_pem = NULL,               /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-        .client_cert_pem = NULL,        /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-        .client_key_pem = NULL,         /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
-
-        .context = NULL,                        /*!< Context parameter of the below two callbacks */
-        .on_connected = tb_on_connected,        /*!< Callback of connected ThingsBoard MQTT */
-        .on_disconnected = tb_on_disconnected,  /*!< Callback of disconnected ThingsBoard MQTT */
-
-        .log_rxtx_package = true                /*!< print Rx/Tx MQTT package */
-     };
-    bool result = tbmch_connect(client, &config);
+        .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
+    };
+    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;

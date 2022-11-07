@@ -1,4 +1,4 @@
-// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/thingsboard-mqttclient-basedon-espmqtt
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,12 @@
 #include "sys/queue.h"
 #include "esp_err.h"
 
+/* using uri parser */
+#include "http_parser.h"
+
+#include "tbc_transport_config.h"
+#include "tbc_transport_storage.h"
+
 #include "tb_mqtt_client.h"
 #include "tb_mqtt_client_helper.h"
 
@@ -37,6 +43,11 @@
 #include "provision_observer.h"
 #include "ota_update_observer.h"
 
+#define FIELD_FREE(field) \
+                if (field) { \
+                    free(field); \
+                    field = NULL; \
+                }
 
 /**
  * ThingsBoard MQTT Client Helper message id
@@ -116,24 +127,6 @@ typedef struct tbmch_msg {
 } tbmch_msg_t;
 
 /**
- * Reference tbmch_config_t
- */
-typedef struct
-{
-    bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
-    
-    char *uri;             /*!< Complete ThingsBoard MQTT broker URI */
-    char *access_token;    /*!< ThingsBoard Access Token */
-    char *cert_pem;        /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-    char *client_cert_pem; /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-    char *client_key_pem;  /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
-    
-    void *context;                           /*!< Context parameter of the below two callbacks */
-    tbmch_on_connected_t on_connected;       /*!< Callback of connected ThingsBoard MQTT */
-    tbmch_on_disconnected_t on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
-} tbmch_config_storage_t;
-
-/**
  * ThingsBoard MQTT Client Helper 
  */
 typedef struct tbmch_client
@@ -145,7 +138,10 @@ typedef struct tbmch_client
      esp_timer_handle_t respone_timer;   // /*!< timer for checking response timeout */
 
      // modify at connect & disconnect
-     tbmch_config_storage_t config;
+     tbc_transport_storage_t config;
+     void *context;                          /*!< Context parameter of the below two callbacks */
+     tbmch_on_connected_t on_connected;      /*!< Callback of connected ThingsBoard MQTT */
+     tbmch_on_disconnected_t on_disconnected;/*!< Callback of disconnected ThingsBoard MQTT */
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
@@ -214,15 +210,10 @@ tbmch_handle_t tbmch_init(void)
      }
      _response_timer_create(client);
 
-     client->config.log_rxtx_package = false;
-     client->config.uri = NULL;
-     client->config.access_token = NULL;
-     client->config.cert_pem = NULL;
-     client->config.client_cert_pem = NULL;
-     client->config.client_key_pem = NULL;
-     client->config.context = NULL;
-     client->config.on_connected = NULL; 
-     client->config.on_disconnected = NULL;
+     //tbc_transport_storage_free_fields(&client->config);
+     client->context = NULL;
+     client->on_connected = NULL; 
+     client->on_disconnected = NULL;
 
      client->_lock = xSemaphoreCreateMutex();
      if (client->_lock == NULL)  {
@@ -288,95 +279,170 @@ tbmc_handle_t _tbmch_get_tbmc_handle(tbmch_handle_t client_)
      return client->tbmqttclient;    
 }
 
+static char *_create_string(const char *ptr, int len)
+{
+    char *ret;
+    if (len <= 0) {
+        return NULL;
+    }
+    ret = calloc(1, len + 1);
+    if (!ret) {
+        TBMCH_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
+        return NULL;
+    }
+
+    memcpy(ret, ptr, len);
+    return ret;
+}
+
+static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
+                                tbc_transport_credentials_storage_t *credentials,
+                                const char *uri)
+{
+    struct http_parser_url puri;
+    http_parser_url_init(&puri);
+    int parser_status = http_parser_parse_url(uri, strlen(uri), 0, &puri);
+    if (parser_status != 0) {
+        ESP_LOGE(TAG, "Error parse uri = %s", uri);
+        return ESP_FAIL;
+    }
+
+    address->schema = _create_string(uri + puri.field_data[UF_SCHEMA].off, puri.field_data[UF_SCHEMA].len);
+    address->host = _create_string(uri + puri.field_data[UF_HOST].off, puri.field_data[UF_HOST].len);
+    address->path = NULL;
+
+    if (puri.field_data[UF_PATH].len || puri.field_data[UF_QUERY].len) {
+        if (puri.field_data[UF_QUERY].len == 0) {
+            asprintf(&address->path, "%.*s", puri.field_data[UF_PATH].len, uri + puri.field_data[UF_PATH].off);
+        } else if (puri.field_data[UF_PATH].len == 0)  {
+            asprintf(&address->path, "/?%.*s", puri.field_data[UF_QUERY].len, uri + puri.field_data[UF_QUERY].off);
+        } else {
+            asprintf(&address->path, "%.*s?%.*s", puri.field_data[UF_PATH].len, uri + puri.field_data[UF_PATH].off,
+                     puri.field_data[UF_QUERY].len, uri + puri.field_data[UF_QUERY].off);
+        }
+
+        if (!address->path) {
+            TBMCH_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
+            return ESP_ERR_NO_MEM;
+        }
+    }
+
+    if (puri.field_data[UF_PORT].len) {
+        address->port = strtol((const char *)(uri + puri.field_data[UF_PORT].off), NULL, 10);
+    }
+
+    char *user_info = _create_string(uri + puri.field_data[UF_USERINFO].off, puri.field_data[UF_USERINFO].len);
+    if (user_info) {
+        char *pass = strchr(user_info, ':');
+        if (pass) {
+            pass[0] = 0; //terminal username
+            pass ++;
+            credentials->password = strdup(pass);
+        }
+        credentials->username = strdup(user_info);
+
+        free(user_info);
+    }
+   
+    return ESP_OK;
+}
+
+
 //~~tbmch_config(); //move to tbmch_connect()
 //~~tbmch_set_ConnectedEvent(evtConnected); //move to tbmch_init()
 //~~tbmch_set_DisconnectedEvent(evtDisconnected); //move to tbmch_init()
-bool tbmch_connect(tbmch_handle_t client_, const tbmch_config_t *config) //_begin()
+bool tbmch_connect(tbmch_handle_t client_, const tbc_transport_config_esay_t *config,
+                   void *context,
+                   tbmch_on_connected_t on_connected,
+                   tbmch_on_disconnected_t on_disconnected)
 {
-     tbmch_t *client = (tbmch_t *)client_;
-     if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
-          return false;
-     }
-     if (!config) {
-          TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
-          return false;
-     }
-     if (!client->tbmqttclient) {
-          TBMCH_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
-          return false;
-     }
-     if (!tbmc_is_disconnected(client->tbmqttclient)) {
-          TBMCH_LOGI("It already connected to thingsboard MQTT server!");
-          return false;
-     }
+    if (!config) {
+         TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
+         return false;
+    }
+    if (!config->uri) {
+         TBMCH_LOGE("config->uri is NULL! %s()", __FUNCTION__);
+         return false;
+    }
+    if (!config->access_token) {
+         TBMCH_LOGE("config->access_token is NULL! %s()", __FUNCTION__);
+         return false;
+    }
 
-     // connect
-     TBMCH_LOGI("connecting to %s...", config->uri);
-     tbmc_config_t tbmc_config = {
-         .uri = config->uri,                            /*!< Complete MQTT broker URI */
-         .access_token = config->access_token,          /*!< Access Token */
-         .cert_pem = config->cert_pem,                  /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-         .client_cert_pem = config->client_cert_pem,    /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-         .client_key_pem = config->client_key_pem,      /*!< Reserved. Pointer to private key data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_cert_pem` has to be provided. */
+    bool result = false;
+    tbc_transport_address_storage_t address = {0};
+    tbc_transport_credentials_storage_t credentials = {0};
+    tbc_transport_config_t transport = {0};
+    if (_parse_uri(&address, &credentials, config->uri) != ESP_OK) {
+        TBMCH_LOGE("parse config->uri(%s) failure! %s()", config->uri, __FUNCTION__);
+        goto fail_exit;
+    }
+    transport.address.schema = address.schema;
+    transport.address.host   = address.host;
+    transport.address.port   = address.port;
+    transport.address.path   = address.path;
+    transport.credentials.username = credentials.username;
+    transport.credentials.password = credentials.password;
+    transport.credentials.token = config->access_token;
+    transport.credentials.type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
+    transport.log_rxtx_package = config->log_rxtx_package;
+    result = tbmch_connect_ex(client_, &transport, context, on_connected, on_disconnected);
 
-         .log_rxtx_package = config->log_rxtx_package   /*!< print Rx/Tx MQTT package */
-     };
-     bool result = tbmc_connect(client->tbmqttclient, &tbmc_config,
-                                client,
-                                _tbmch_on_connected,
-                                _tbmch_on_disonnected,
-                                _tbmch_on_sharedattr_received,
-                                _tbmch_on_serverrpc_request);
-     if (!result) {
-          TBMCH_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
-          return false;
-     }
-
-     // cache config & callback
-     client->config.log_rxtx_package = config->log_rxtx_package; /*!< print Rx/Tx MQTT package */
-     if (client->config.uri) {
-          free(client->config.uri);
-          client->config.uri = NULL;
-     }
-     if (config->uri && strlen(config->uri)>0) {
-          client->config.uri = strdup(config->uri); /*!< ThingsBoard MQTT host uri */
-     }
-     if (client->config.access_token) {
-          free(client->config.access_token);
-          client->config.access_token = NULL;
-     }
-     if (config->access_token && strlen(config->access_token)>0) {
-          client->config.access_token = strdup(config->access_token); /*!< ThingsBoard MQTT token */
-     }
-     if (client->config.cert_pem) {
-          free(client->config.cert_pem);
-          client->config.cert_pem = NULL;
-     }
-     if (config->cert_pem && strlen(config->cert_pem)>0) {
-          client->config.cert_pem = strdup(config->cert_pem); /*!< Reserved. Pointer to certificate data in PEM format for server verify (with SSL), default is NULL, not required to verify the server */
-     }
-     if (client->config.client_cert_pem) {
-          free(client->config.client_cert_pem);
-          client->config.client_cert_pem = NULL;
-     }
-     if (config->client_cert_pem && strlen(config->client_cert_pem)>0) {
-          client->config.client_cert_pem = strdup(config->client_cert_pem); /*!< Reserved. Pointer to certificate data in PEM format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. */
-     }
-     if (client->config.client_key_pem) {
-          free(client->config.client_key_pem);
-          client->config.client_key_pem = NULL;
-     }
-     if (config->client_key_pem && strlen(config->client_key_pem)>0) {
-          client->config.client_key_pem = strdup(config->client_key_pem); /*!< ThingsBoard MQTT token */
-     }
-     client->config.context = config->context;
-     client->config.on_connected = config->on_connected;       /*!< Callback of connected ThingsBoard MQTT */
-     client->config.on_disconnected = config->on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
-
-     return true;
+fail_exit:
+    FIELD_FREE(address.schema);
+    FIELD_FREE(address.host);
+    FIELD_FREE(address.path);
+    FIELD_FREE(credentials.username);
+    FIELD_FREE(credentials.password);
+    return result;
 }
-//_end()
+
+bool tbmch_connect_ex(tbmch_handle_t client_, const tbc_transport_config_t* config,
+                            void *context,
+                            tbmch_on_connected_t on_connected,
+                            tbmch_on_disconnected_t on_disconnected)
+{
+    tbmch_t *client = (tbmch_t *)client_;
+    if (!client) {
+         TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+         return false;
+    }
+    if (!config) {
+         TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
+         return false;
+    }
+    if (!client->tbmqttclient) {
+         TBMCH_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
+         return false;
+    }
+    if (!tbmc_is_disconnected(client->tbmqttclient)) {
+         TBMCH_LOGI("It already connected to thingsboard MQTT server!");
+         return false;
+    }
+    
+    // connect
+    TBMCH_LOGI("connecting to %s://%s:%d ...",
+                config->address.schema, config->address.host, config->address.port);
+    bool result = tbmc_connect(client->tbmqttclient, config,
+                               client,
+                               _tbmch_on_connected,
+                               _tbmch_on_disonnected,
+                               _tbmch_on_sharedattr_received,
+                               _tbmch_on_serverrpc_request);
+    if (!result) {
+         TBMCH_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
+         return false;
+    }
+    
+    // cache config & callback
+    tbc_transport_storage_fill_from_config(&client->config, config);
+    client->context = context;
+    client->on_connected = on_connected;       /*!< Callback of connected ThingsBoard MQTT */
+    client->on_disconnected = on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+
+    return true;
+}
+
 void tbmch_disconnect(tbmch_handle_t client_)               
 {
      tbmch_t *client = (tbmch_t *)client_;
@@ -393,8 +459,8 @@ void tbmch_disconnect(tbmch_handle_t client_)
           return;
      }
 
-     TBMCH_LOGI("disconnecting from %s...", client->config.uri);
-
+     TBMCH_LOGI("disconnecting from %s://%s:%d ...",
+                client->config.address.schema, client->config.address.host, client->config.address.port);
      // empty msg queue
      while (tbmch_has_events(client_)) {
           tbmch_run(client_);
@@ -406,30 +472,10 @@ void tbmch_disconnect(tbmch_handle_t client_)
      }
 
      // clear config & callback
-     client->config.log_rxtx_package = false;
-     if (client->config.uri) {
-          free(client->config.uri);
-     }
-     client->config.uri = NULL;
-     if (client->config.access_token) {
-          free(client->config.access_token);
-     }
-     client->config.access_token = NULL;
-     if (client->config.cert_pem) {
-          free(client->config.cert_pem);
-     }
-     client->config.cert_pem = NULL;
-     if (client->config.client_cert_pem) {
-          free(client->config.client_cert_pem);
-     }
-     client->config.client_cert_pem = NULL;
-     if (client->config.client_key_pem) {
-          free(client->config.client_key_pem);
-     }
-     client->config.client_key_pem = NULL;
-     client->config.context = NULL;
-     client->config.on_connected = NULL;
-     client->config.on_disconnected = NULL;
+     tbc_transport_storage_free_fields(&client->config);
+     client->context = NULL;
+     client->on_connected = NULL;
+     client->on_disconnected = NULL;
 
      // empty all request lists;
      //_tbmch_telemetry_empty(client_);
@@ -467,8 +513,8 @@ static void _tbmch_connected_on(tbmch_handle_t client_) //onConnected() // First
      _tbmch_otaupdate_on_connected(client_);
 
      // clone parameter in lock/unlock
-     void *context = client->config.context;
-     tbmch_on_connected_t on_connected = client->config.on_connected; /*!< Callback of connected ThingsBoard MQTT */
+     void *context = client->context;
+     tbmch_on_connected_t on_connected = client->on_connected; /*!< Callback of connected ThingsBoard MQTT */
      _response_timer_start(client);
 
      // Give semaphore
@@ -493,8 +539,8 @@ static void _tbmch_disonnected_on(tbmch_handle_t client_) //onDisonnected() // F
      }
 
      // clone parameter in lock/unlock
-     void *context = client->config.context;
-     tbmch_on_disconnected_t on_disconnected = client->config.on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
+     void *context = client->context;
+     tbmch_on_disconnected_t on_disconnected = client->on_disconnected; /*!< Callback of disconnected ThingsBoard MQTT */
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
@@ -503,6 +549,28 @@ static void _tbmch_disonnected_on(tbmch_handle_t client_) //onDisonnected() // F
      on_disconnected(client, context);
      return;
 }
+
+tbmch_err_t tbmch_subscribe(tbmch_handle_t client_, const char *topic)
+{
+     tbmch_t *client = (tbmch_t*)client_;
+     if (!client) {
+          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     int result = _tbmc_subscribe(client->tbmqttclient, topic, 1/*qos*/);
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return result==ESP_OK ? ESP_OK : ESP_FAIL;
+}
+
 
 //====10.Publish Telemetry time-series data==============================================================================
 tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void *context, tbmch_tsdata_on_get_t on_get)
@@ -1902,10 +1970,120 @@ static tbmch_err_t _tbmch_provision_empty(tbmch_handle_t client_)
      return ESP_OK;
 }
 
-int tbmch_provision_request(tbmch_handle_t client_, /*const*/ tbmch_provision_params_t *params,
-                                                           void *context,
-                                                           tbmch_provision_on_response_t on_response,
-                                                           tbmch_provision_on_timeout_t on_timeout)
+// return ESP_OK on successful, ESP_FAIL on failure
+static int _params_of_credentials_generated_by_server(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+
+    if (config->deviceName) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
+    }
+    if (config->provisionDeviceKey) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_KEY, config->provisionDeviceKey);
+    }
+    if (config->provisionDeviceSecret) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_SECRET, config->provisionDeviceSecret);
+    }
+    return ESP_OK;
+}
+
+// return ESP_OK on successful, ESP_FAIL on failure
+static int _params_of_devices_supplies_access_token(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->token, ESP_FAIL);
+
+    if (config->deviceName) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
+    }
+    if (config->provisionDeviceKey) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_KEY, config->provisionDeviceKey);
+    }
+    if (config->provisionDeviceSecret) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_SECRET, config->provisionDeviceSecret);
+    }
+    cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE, TB_MQTT_VALUE_PROVISION_ACCESS_TOKEN); //Credentials type parameter.
+    if (config->token) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_TOKEN, config->token);
+    }
+    return ESP_OK;
+}
+
+// return ESP_OK on successful, ESP_FAIL on failure
+static int _params_of_devices_supplies_basic_mqtt_credentials(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    if (!config->clientId && !config->username) {
+         TBMCH_LOGE("config->clientId and config->username are NULL! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    if (config->deviceName) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
+    }
+    if (config->provisionDeviceKey) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_KEY, config->provisionDeviceKey);
+    }
+    if (config->provisionDeviceSecret) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_SECRET, config->provisionDeviceSecret);
+    }
+    cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE, TB_MQTT_VALUE_PROVISION_MQTT_BASIC); //Credentials type parameter.
+    if (config->clientId) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_CLIENT_ID, config->clientId);
+    }
+    if (config->username) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_USERNAME, config->username);
+    }
+    if (config->password) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PASSWORD, config->password);
+    }
+    return ESP_OK;
+}
+
+// hash - Public key X509 hash for device in ThingsBoard.
+// return ESP_OK on successful, ESP_FAIL on failure
+static int _params_of_devices_supplies_x509_certificate(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
+{
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->hash, ESP_FAIL);
+
+    if (config->deviceName) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
+    }
+    if (config->provisionDeviceKey) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_KEY, config->provisionDeviceKey);
+    }
+    if (config->provisionDeviceSecret) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_PROVISION_DEVICE_SECRET, config->provisionDeviceSecret);
+    }
+    cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE, TB_MQTT_VALUE_PROVISION_X509_CERTIFICATE); //Credentials type parameter.
+    if (config->hash) {
+         cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_HASH, config->hash);  ////Public key X509 hash for device in ThingsBoard.
+    }
+    return ESP_OK;
+}
+
+static int _tbmch_provision_request(tbmch_handle_t client_,
+                                const tbmch_provision_params_t *params,
+                                void *context,
+                                tbmch_provision_on_response_t on_response,
+                                tbmch_provision_on_timeout_t on_timeout)
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
@@ -1947,7 +2125,7 @@ int tbmch_provision_request(tbmch_handle_t client_, /*const*/ tbmch_provision_pa
      }
 
      // Create provision
-     tbmch_provision_t *provision = _tbmch_provision_init(client, request_id, context, on_response, on_timeout);
+     tbmch_provision_t *provision = _tbmch_provision_init(client, request_id, params, context, on_response, on_timeout);
      if (!provision) {
           TBMCH_LOGE("Init provision failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
@@ -1974,6 +2152,49 @@ int tbmch_provision_request(tbmch_handle_t client_, /*const*/ tbmch_provision_pa
      xSemaphoreGive(client->_lock);
      return request_id;
 }
+
+// return request_id or ESP_FAIL
+int tbmch_provision_request(tbmch_handle_t client_,
+                                    const tbc_provison_config_t *config,
+                                    void *context,
+                                    tbmch_provision_on_response_t on_response,
+                                    tbmch_provision_on_timeout_t on_timeout)
+{
+    //TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(client_, ESP_FAIL);
+
+    tbmch_provision_params_t *params = cJSON_CreateObject();
+    if (!params) {
+         TBMCH_LOGE("create params is error(NULL)!");
+         return ESP_FAIL;
+    }
+    int ret = ESP_FAIL;
+    if (config->provisionType == TBC_PROVISION_TYPE_SERVER_GENERATES_CREDENTIALS) { // Credentials generated by the ThingsBoard server
+         ret = _params_of_credentials_generated_by_server(params, config);
+    } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_ACCESS_TOKEN) { // Devices supplies Access Token
+         ret = _params_of_devices_supplies_access_token(params, config);
+    } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS) { // Devices supplies Basic MQTT Credentials
+         ret = _params_of_devices_supplies_basic_mqtt_credentials(params, config);
+    } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS) { // Devices supplies X.509 Certificate)
+         ret = _params_of_devices_supplies_x509_certificate(params, config);
+    } else {
+         TBMCH_LOGE("config->provisionType(%d) is error!", config->provisionType);
+         ret = ESP_FAIL;
+    }
+
+    if (ret == ESP_OK) {
+         // request_id
+         ret = _tbmch_provision_request(client_, params, context,
+                                       on_response, on_timeout);
+    } else {
+         // TBMCH_LOGE("ret is error!", ret);
+         ret = ESP_FAIL;
+    }
+
+    cJSON_Delete(params); // delete json object     
+    return ret;
+}
+
 
 static void _tbmch_provision_on_response(tbmch_handle_t client_, int request_id, const cJSON *object)
 {

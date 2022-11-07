@@ -3,17 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-欢迎使用 ESP32-ThingsBoard-MQTT-Client
-=====================================
+欢迎使用 ESP32-ThingsBoard-MQTT-Client SDK
+=======================================================
 
 
-`ESP32-ThingsBoard-MQTT-Client`__ 适用于 C/C++ 开发人员。 此库提供了一些简单的 API 来使用 MQTT API 与 ThingsBoard 平台进行通信。
+`ESP32-ThingsBoard-MQTT-Client SDK`__ 适用于 C/C++ 开发人员。 此库提供了一些简单的 API 来使用 MQTT API 与 ThingsBoard 平台进行通信。
 
 它被封装成一个ESP-IDF组件，既可以在ESP-IDF和ESP-ADF下使用，也可以很简单移植到Arduino-ESP32。
 
 当前客户端版本基于 ESP-IDF-v4.4.1，兼容 ThingsBoard 3.4.0 及更新版本。
 
 .. __: https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
+
 
 Contents
 --------
@@ -22,26 +23,74 @@ Contents
    :maxdepth: 2
    :caption: First steps
 
+   /intro/usage
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Usage
-
-   usage
+..   Getting Started with ESP32-ThingsBoard-MQTT-Client SDK
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: API
+   :caption: ThingsBoard Concepts & Features
 
-   api
+   /concepts/overview
+   /concepts/time-series_data
+   /concepts/attributes
+   /concepts/rpc
+   /concepts/claiming_devices
+   /concepts/ota_update
+   /concepts/provision
+
+
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: Device Connectivity APIs/Protocols
+
+..    MQTT Device API   </api/mqtt-api/...>
+..    MQTT Gateway API  </api/gateway-mqtt-api/...>
+..    CoAP Device API   </api/coap-api/...>
+..    HTTP Device API   </api/http-api/...>
+
+.. toctree::
+   :maxdepth: 2
+   :caption: MQTT Device Connectivity API (Protocol)
+
+   /api/mqtt-api/thingsboard-mqtt-api
+   /api/mqtt-api/telemetry-upload-api
+   /api/mqtt-api/attributes-api
+   /api/mqtt-api/rpc-api
+   /api/mqtt-api/claiming-devices-api
+   /api/mqtt-api/firmware-api
+   /api/mqtt-api/provisioning-api
+   /api/mqtt-api/security
+
+
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: Software Development Kits
+
+..    ESP32 ThingsBoard MQTT Client SDK   </sdk/esp32-thingsboard-mqtt-client/...>
+..       Funcitons
+..       Examples
+..       Opreation
+..    Python Client SDK                   </sdk/python-client-sdk/...>
+
+
+
+.. .. toctree::
+..    :maxdepth: 2
+..    :caption: Improvement
+
+..    How to improve   </improve/...>
 
 
 .. toctree::
    :maxdepth: 2
    :caption: About
 
-   copyright
+   /about/copyright
+
+
+
 
 
 .. .. toctree::
@@ -83,12 +132,7 @@ Contents
 ..    :caption: About
 
 ..    copyright
-..    avantec
 
-
-.. note::
-
-   This project is under active development.
 
 .. Indices and tables
 .. ==================
@@ -100,3 +144,8 @@ Contents
 .. `Install sphinx-quickstart <https://github.com/avantec-iot/avantec-thingsboard/blob/master/README.md>`_
 
 .. `Read the Docs tutorial <https://docs.readthedocs.io/en/stable/tutorial/>`_
+
+
+.. note::
+
+   This project is under active development.

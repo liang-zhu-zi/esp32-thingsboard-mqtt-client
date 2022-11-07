@@ -1,4 +1,6 @@
-set(srcs "src/tb_mqtt_client.c"
+set(srcs "src/tbc_transport_config.c"
+         "src/tbc_transport_storage.c"
+         "src/tb_mqtt_client.c"
          "src/tbmc_payload_buffer.c")
 set(includes "include")
 set(priv_includes "private_include")
