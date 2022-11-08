@@ -27,6 +27,7 @@
 /* using uri parser */
 #include "http_parser.h"
 
+#include "tbc_util.h"
 #include "tbc_transport_config.h"
 #include "tbc_transport_storage.h"
 
@@ -42,12 +43,6 @@
 #include "client_rpc_observer.h"
 #include "provision_observer.h"
 #include "ota_update_observer.h"
-
-#define FIELD_FREE(field) \
-                if (field) { \
-                    free(field); \
-                    field = NULL; \
-                }
 
 /**
  * ThingsBoard MQTT Client Helper message id
@@ -389,11 +384,11 @@ bool tbmch_connect(tbmch_handle_t client_, const tbc_transport_config_esay_t *co
     result = tbmch_connect_ex(client_, &transport, context, on_connected, on_disconnected);
 
 fail_exit:
-    FIELD_FREE(address.schema);
-    FIELD_FREE(address.host);
-    FIELD_FREE(address.path);
-    FIELD_FREE(credentials.username);
-    FIELD_FREE(credentials.password);
+    TBC_FIELD_FREE(address.schema);
+    TBC_FIELD_FREE(address.host);
+    TBC_FIELD_FREE(address.path);
+    TBC_FIELD_FREE(credentials.username);
+    TBC_FIELD_FREE(credentials.password);
     return result;
 }
 

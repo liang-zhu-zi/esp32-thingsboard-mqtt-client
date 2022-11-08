@@ -163,8 +163,6 @@ typedef struct tbc_provison_config
   const char *hash;      // Public key X509 hash for device     // Public key X509.    Each device is different.
 } tbc_provison_config_t;
 
-
-// free results by caller/(tbmch library)!
 typedef void (*tbmch_provision_on_response_t)(tbmch_handle_t client, void *context,
                                               int request_id, const tbc_transport_credentials_config_t *credentials); /*, tbmch_provision_params_t *params*/
 typedef void (*tbmch_provision_on_timeout_t)(tbmch_handle_t client, void *context,

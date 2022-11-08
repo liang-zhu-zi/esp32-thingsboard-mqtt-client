@@ -23,6 +23,7 @@
 #include "esp_err.h"
 //#include "mqtt_client.h"
 
+#include "tbc_util.h"
 #include "tb_mqtt_client.h"
 
 #include "tb_mqtt_client_log.h"
@@ -113,3 +114,20 @@ void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transpor
     return dest;
 }
 
+tbc_transport_credentials_config_t *tbc_transport_credentials_clone(
+                                        tbc_transport_credentials_config_t *credentials)
+{
+
+    TBMC_CHECK_PTR_WITH_RETURN_VALUE(credentials, NULL);
+
+    tbc_transport_credentials_config_t *new_credentials = calloc(1, sizeof(tbc_transport_credentials_config_t));
+    TBC_MEM_CHECK(TAG, new_credentials, return NULL);
+
+    new_credentials->type = credentials->type;
+    TBC_FIELD_STRDUP(new_credentials->client_id, credentials->client_id);
+    TBC_FIELD_STRDUP(new_credentials->username, credentials->username);
+    TBC_FIELD_STRDUP(new_credentials->password, credentials->password);
+    TBC_FIELD_STRDUP(new_credentials->token, credentials->token);
+
+    return new_credentials;
+}
