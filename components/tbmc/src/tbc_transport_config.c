@@ -45,7 +45,7 @@ static void *_transport_address_config_copy(tbc_transport_address_config_t *dest
     dest->path = src->path;
     return dest;
 }
-static void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
+void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
                                               const tbc_transport_credentials_config_t *src)
 {
     TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);

@@ -24,6 +24,12 @@
 extern "C" {
 #endif
 
+#define TBC_LOGE(format, ...)  ESP_LOGE(TAG, format, ##__VA_ARGS__) //"[TBC][E] "
+#define TBC_LOGW(format, ...)  ESP_LOGW(TAG, format, ##__VA_ARGS__) //"[TBC][W] "
+#define TBC_LOGI(format, ...)  ESP_LOGI(TAG, format, ##__VA_ARGS__) //"[TBC][I] "
+#define TBC_LOGD(format, ...)  ESP_LOGD(TAG, format, ##__VA_ARGS__) //"[TBC][D] "
+#define TBC_LOGV(format, ...)  ESP_LOGV(TAG, format, ##__VA_ARGS__) //"[TBC][V] "
+
 #define TBC_FIELD_STRDUP(dest, src) \
                 if (src) { \
                     dest = strdup(src);\
@@ -48,6 +54,19 @@ extern "C" {
                     ESP_LOGE(TAG, "%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted"); \
                     action;                                                                                         \
                 }
+
+#define TBC_CHECK_PTR_WITH_RETURN_VALUE(pointer, returnValue) \
+                 if (!pointer) { \
+                      ESP_LOGE(TAG, #pointer" is NULL! %s()", __FUNCTION__); \
+                      return returnValue; \
+                 }
+            
+#define TBC_CHECK_PTR(pointer) \
+                 if (!pointer) { \
+                      ESP_LOGE(TAG, #pointer" is NULL! %s()", __FUNCTION__); \
+                      return; \
+                 }
+
 
 #ifdef __cplusplus
 }
