@@ -63,7 +63,7 @@ static void _print_localtime(void)
 }
 
 
-void tb_clientrpc_publish_local_time_send(tbmch_handle_t client)
+void tb_clientrpc_publish_local_time_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send Client-side RPC: method=%s", CLIENT_RPC_PUBLISH_LOCAL_TIME);
     _print_localtime();
@@ -71,15 +71,15 @@ void tb_clientrpc_publish_local_time_send(tbmch_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "localTime", _get_timestamp());
     // free params by caller/(user code)!
-    int request_id = tbmch_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
+    int request_id = tbcmh_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
     ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
     cJSON_Delete(params);
 }
 
 
 // free results by caller/(tbmch library)!
-void tb_clientrpc_get_current_time_on_response(tbmch_handle_t client, void *context,
-                              int request_id, const char *method, const tbmch_rpc_results_t *results)
+void tb_clientrpc_get_current_time_on_response(tbcmh_handle_t client, void *context,
+                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
 {
     ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
 
@@ -99,18 +99,18 @@ void tb_clientrpc_get_current_time_on_response(tbmch_handle_t client, void *cont
         }
     }
 }
-void tb_clientrpc_get_current_time_on_timeout(tbmch_handle_t client, void *context,
+void tb_clientrpc_get_current_time_on_timeout(tbcmh_handle_t client, void *context,
                              int request_id, const char *method)
 {
     ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
 }
-void tb_clientrpc_get_current_time_send(tbmch_handle_t client)
+void tb_clientrpc_get_current_time_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send Client-side RPC: method=%s", CLIENT_RPC_GET_CURRENT_TIME);
 
     //cJSON *params = cJSON_CreateObject();
     // free params by caller/(user code)!
-    int request_id = tbmch_clientrpc_of_twoway_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
+    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
                                                  NULL,
                                                  tb_clientrpc_get_current_time_on_response,
                                                  tb_clientrpc_get_current_time_on_timeout);
@@ -119,18 +119,18 @@ void tb_clientrpc_get_current_time_send(tbmch_handle_t client)
 }
 
 // free results by caller/(tbmch library)!
-void tb_clientrpc_loopback_on_response(tbmch_handle_t client, void *context,
-                              int request_id, const char *method, const tbmch_rpc_results_t *results)
+void tb_clientrpc_loopback_on_response(tbcmh_handle_t client, void *context,
+                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
 {
     ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
     // print response!
 }
-void tb_clientrpc_loopback_on_timeout(tbmch_handle_t client, void *context,
+void tb_clientrpc_loopback_on_timeout(tbcmh_handle_t client, void *context,
                              int request_id, const char *method)
 {
     ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
 }
-void tb_clientrpc_loopback_send(tbmch_handle_t client)
+void tb_clientrpc_loopback_send(tbcmh_handle_t client)
 {
     static int i = 9001;
 
@@ -139,7 +139,7 @@ void tb_clientrpc_loopback_send(tbmch_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    int request_id = tbmch_clientrpc_of_twoway_request(client, CLIENT_RPC_LOOPBACK, params,
+    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_LOOPBACK, params,
                                                  NULL,
                                                  tb_clientrpc_loopback_on_response,
                                                  tb_clientrpc_loopback_on_timeout);
@@ -149,17 +149,17 @@ void tb_clientrpc_loopback_send(tbmch_handle_t client)
 
 
 // free results by caller/(tbmch library)!
-void tb_clientrpc_not_implemented_twoway_on_response(tbmch_handle_t client, void *context,
-                              int request_id, const char *method, const tbmch_rpc_results_t *results)
+void tb_clientrpc_not_implemented_twoway_on_response(tbcmh_handle_t client, void *context,
+                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
 {
     ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
 }
-void tb_clientrpc_not_implemented_twoway_on_timeout(tbmch_handle_t client, void *context,
+void tb_clientrpc_not_implemented_twoway_on_timeout(tbcmh_handle_t client, void *context,
                              int request_id, const char *method)
 {
     ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
 }
-void tb_clientrpc_not_implemented_twoway_send(tbmch_handle_t client)
+void tb_clientrpc_not_implemented_twoway_send(tbcmh_handle_t client)
 {
     static int i = 4001;
 
@@ -168,7 +168,7 @@ void tb_clientrpc_not_implemented_twoway_send(tbmch_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    int request_id = tbmch_clientrpc_of_twoway_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
+    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
                                                  NULL,
                                                  tb_clientrpc_not_implemented_twoway_on_response,
                                                  tb_clientrpc_not_implemented_twoway_on_timeout);
@@ -178,20 +178,20 @@ void tb_clientrpc_not_implemented_twoway_send(tbmch_handle_t client)
 
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
+void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)
 {
-	//tbmch_err_t err;
+	//tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -258,7 +258,7 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbmch!");
         return;
@@ -270,7 +270,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
     };
-    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;
@@ -280,12 +280,12 @@ static void mqtt_app_start(void)
     _set_timezone();
     int i = 0;
     while (i<40) { // TB_MQTT_TIMEOUT is 30 seconds!
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
             if (i%15 == 0){
                 tb_clientrpc_publish_local_time_send(client);
                 tb_clientrpc_get_current_time_send(client);
@@ -299,11 +299,11 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
-    tbmch_disconnect(client);
+    tbcmh_disconnect(client);
 
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbmch ...");
-    tbmch_destroy(client);
+    tbcmh_destroy(client);
 #endif
 }
 

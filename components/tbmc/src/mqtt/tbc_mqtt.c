@@ -35,73 +35,73 @@
 
 typedef enum
 {
-     TBMC_REQUEST_ATTR = 1,
-     TBMC_REQUEST_CLIENTRPC,
-     TBMC_REQUEST_FWUPDATE,
-     TBMC_REQUEST_PROVISION
-} tbmc_request_type_t;
+     TBCM_REQUEST_ATTR = 1,
+     TBCM_REQUEST_CLIENTRPC,
+     TBCM_REQUEST_FWUPDATE,
+     TBCM_REQUEST_PROVISION
+} tbcm_request_type_t;
 
-typedef struct tbmc_request
+typedef struct tbcm_request
 {
-     tbmc_request_type_t type;
+     tbcm_request_type_t type;
      int request_id;
 
      uint64_t timestamp; /*!< time stamp at sending request */
      void *context;
-     void *on_response; /*!< tbmc_on_response_t or tbmc_on_otaupdate_response_t */
-     void *on_timeout; /*!< tbmc_on_timeout_t */
+     void *on_response; /*!< tbcm_on_response_t or tbcm_on_otaupdate_response_t */
+     void *on_timeout; /*!< tbcm_on_timeout_t */
 
-     LIST_ENTRY(tbmc_request) entry;
-} tbmc_request_t;
+     LIST_ENTRY(tbcm_request) entry;
+} tbcm_request_t;
 
-typedef LIST_HEAD(tbmc_request_list, tbmc_request) tbmc_request_list_t;
+typedef LIST_HEAD(tbcm_request_list, tbcm_request) tbcm_request_list_t;
 
 /**
  * ThingsBoard MQTT Client
  */
-typedef struct tbmc_client
+typedef struct tbcm_client
 {
      esp_mqtt_client_handle_t mqtt_handle;
 
      tbc_transport_storage_t config;                       /*!< ThingsBoard MQTT config */
      void *context;
-     tbmc_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
-     tbmc_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
-     tbmc_on_sharedattr_received_t on_sharedattr_received; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
-     tbmc_on_serverrpc_request_t on_serverrpc_request;     /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
+     tbcm_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
+     tbcm_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
+     tbcm_on_sharedattr_received_t on_sharedattr_received; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
+     tbcm_on_serverrpc_request_t on_serverrpc_request;     /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
 
-     volatile tbmc_state_t state; // TBMQTT_STATE state;
+     volatile tbcm_state_t state; // TBMQTT_STATE state;
 
      SemaphoreHandle_t lock;
      int next_request_id;
      uint64_t last_check_timestamp;
-     tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
+     tbcm_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 
-     tbmc_payload_buffer_t buffer;     /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
-} tbmc_t;
+     tbcm_payload_buffer_t buffer;     /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
+} tbcm_t;
 
-//static int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/);
-static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
+//static int _tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/);
+static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
 
 static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
-static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event);
-static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg);
+static void _on_DataEventProcess(tbcm_handle_t client_, esp_mqtt_event_handle_t event);
+static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg);
 
-/*static*/ bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b);
-static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
+/*static*/ bool _request_is_equal(const tbcm_request_t *a, const tbcm_request_t *b);
+static int _request_list_create_and_append(tbcm_handle_t client_, tbcm_request_type_t type, int request_id,
                                            void *context,
-                                           void *on_response, /*tbmc_on_response_t*/
-                                           void *on_timeout); /*tbmc_on_timeout_t*/
-static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id);
-static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t client_, tbmc_request_type_t type);
-static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t timestamp,
-                                             tbmc_request_list_t *timeout_request_list);
-static tbmc_request_t *_request_create(tbmc_request_type_t type,
+                                           void *on_response, /*tbcm_on_response_t*/
+                                           void *on_timeout); /*tbcm_on_timeout_t*/
+static tbcm_request_t *_request_list_search_and_remove(tbcm_handle_t client_, int request_id);
+static tbcm_request_t *_request_list_search_and_remove_by_type(tbcm_handle_t client_, tbcm_request_type_t type);
+static int _request_list_move_all_of_timeout(tbcm_handle_t client_, uint64_t timestamp,
+                                             tbcm_request_list_t *timeout_request_list);
+static tbcm_request_t *_request_create(tbcm_request_type_t type,
                                        uint32_t request_id,
                                        void *context,
-                                       void *on_response, /*tbmc_on_response_t*/
-                                       void *on_timeout); /*tbmc_on_timeout_t*/
-static void _request_destroy(tbmc_request_t *tbmc_request);
+                                       void *on_response, /*tbcm_on_response_t*/
+                                       void *on_timeout); /*tbcm_on_timeout_t*/
+static void _request_destroy(tbcm_request_t *tbcm_request);
 
 const static char *TAG = "tb_mqtt_client";
 
@@ -223,10 +223,10 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
 }
 
 
-// Initializes tbmc_handle_t with network client.
-tbmc_handle_t tbmc_init(void)
+// Initializes tbcm_handle_t with network client.
+tbcm_handle_t tbcm_init(void)
 {
-     tbmc_t *client = TBMC_MALLOC(sizeof(tbmc_t));
+     tbcm_t *client = TBCM_MALLOC(sizeof(tbcm_t));
      if (!client) {
           TBC_LOGE("Unable to malloc memeory!");
           return NULL;
@@ -240,28 +240,28 @@ tbmc_handle_t tbmc_init(void)
      client->on_sharedattr_received = NULL; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
      client->on_serverrpc_request = NULL;   /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
 
-     client->state = TBMC_STATE_DISCONNECTED;
+     client->state = TBCM_STATE_DISCONNECTED;
 
      client->lock = xSemaphoreCreateMutex();
      client->next_request_id = 0;
      client->last_check_timestamp = (uint64_t)time(NULL);
      memset(&client->request_list, 0x00, sizeof(client->request_list));//client->request_list = LIST_HEAD_INITIALIZER(client->request_list);
 
-     tbmc_payload_buffer_init(&client->buffer);
+     tbcm_payload_buffer_init(&client->buffer);
      return client;
 }
 
-// Destroys tbmc_handle_t with network client.
-void tbmc_destroy(tbmc_handle_t client_)
+// Destroys tbcm_handle_t with network client.
+void tbcm_destroy(tbcm_handle_t client_)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
      }
 
      if (client->mqtt_handle) {
-          tbmc_disconnect(client);
+          tbcm_disconnect(client);
           client->mqtt_handle = NULL;
      }
      if (client->lock) {
@@ -269,27 +269,27 @@ void tbmc_destroy(tbmc_handle_t client_)
           client->lock = NULL;
      }
 
-     tbmc_payload_buffer_clear(&client->buffer);
+     tbcm_payload_buffer_clear(&client->buffer);
 
-     TBMC_FREE(client);
+     TBCM_FREE(client);
 }
 
 // Connects to the specified ThingsBoard server and port.
 // Access token is used to authenticate a client.
 // Returns true on success, false otherwise.
-bool tbmc_connect(tbmc_handle_t client_,
+bool tbcm_connect(tbcm_handle_t client_,
                   const tbc_transport_config_t *config,
                   void *context,
-                  tbmc_on_connected_t on_connected,
-                  tbmc_on_disconnected_t on_disconnected,
-                  tbmc_on_sharedattr_received_t on_sharedattr_received,
-                  // tbmc_on_attrrequest_response_t on_attrrequest_response,
-                  // tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
-                  // tbmc_on_clientrpc_response_t on_clientrpc_response,
-                  // tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
-                  tbmc_on_serverrpc_request_t on_serverrpc_request //,
-                  /* tbmc_on_otaupdate_response_t on_otaupdate_response, */
-                  /* tbmc_on_otaupdate_timeout_t on_otaupdate_timeout */) // connect()//...start()
+                  tbcm_on_connected_t on_connected,
+                  tbcm_on_disconnected_t on_disconnected,
+                  tbcm_on_sharedattr_received_t on_sharedattr_received,
+                  // tbcm_on_attrrequest_response_t on_attrrequest_response,
+                  // tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
+                  // tbcm_on_clientrpc_response_t on_clientrpc_response,
+                  // tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
+                  tbcm_on_serverrpc_request_t on_serverrpc_request //,
+                  /* tbcm_on_otaupdate_response_t on_otaupdate_response, */
+                  /* tbcm_on_otaupdate_timeout_t on_otaupdate_timeout */) // connect()//...start()
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
@@ -298,7 +298,7 @@ bool tbmc_connect(tbmc_handle_t client_,
           return false;
      }
 
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (client->mqtt_handle) {
           TBC_LOGW("unable to re-connect mqtt client: client isn't NULL!");
           return false; //!!
@@ -310,12 +310,12 @@ bool tbmc_connect(tbmc_handle_t client_,
      client->on_disconnected = NULL;        /*!< Callback of disconnected ThingsBoard MQTT */
      client->on_sharedattr_received = NULL; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
      client->on_serverrpc_request = NULL;   /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
-     client->state = TBMC_STATE_DISCONNECTED;
+     client->state = TBCM_STATE_DISCONNECTED;
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
      // uint64_t last_check_timestamp;
-     // tbmc_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
+     // tbcm_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 
      esp_mqtt_client_config_t mqtt_cfg = {0};
      _tbc_transport_config_fill_to_mqtt_client_config(config, &mqtt_cfg);
@@ -342,14 +342,14 @@ bool tbmc_connect(tbmc_handle_t client_,
      client->on_disconnected = on_disconnected;
      client->on_sharedattr_received = on_sharedattr_received;
      client->on_serverrpc_request = on_serverrpc_request;
-     client->state = TBMC_STATE_CONNECTING;
+     client->state = TBCM_STATE_CONNECTING;
      return true;
 }
 
 // Disconnects from ThingsBoard. Returns true on success.
-void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
+void tbcm_disconnect(tbcm_handle_t client_) // disconnect()//...stop()
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -360,13 +360,13 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
      }
      void *context = client->context;
 
-     TBC_LOGI("tbmc_disconnect(): call esp_mqtt_client_stop()...");
+     TBC_LOGI("tbcm_disconnect(): call esp_mqtt_client_stop()...");
      int32_t result = esp_mqtt_client_stop(client->mqtt_handle);
      if (result != ESP_OK) {
           TBC_LOGE("unable to stop mqtt client");
           return;
      }
-     TBC_LOGI("tbmc_disconnect(): call esp_mqtt_client_destroy()...");
+     TBC_LOGI("tbcm_disconnect(): call esp_mqtt_client_destroy()...");
      result = esp_mqtt_client_destroy(client->mqtt_handle);
      if (result != ESP_OK) {
           TBC_LOGE("unable to stop mqtt client");
@@ -381,66 +381,66 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
      client->on_sharedattr_received = NULL;
      client->on_serverrpc_request = NULL;
 
-     client->state = TBMC_STATE_DISCONNECTED;
+     client->state = TBCM_STATE_DISCONNECTED;
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
      // uint64_t last_check_timestamp;
      // remove all item in request_list
-     tbmc_request_t *tbmc_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbmc_request, &client->request_list, entry, next) {
+     tbcm_request_t *tbcm_request = NULL, *next;
+     LIST_FOREACH_SAFE(tbcm_request, &client->request_list, entry, next) {
           // exec timeout callback
-          if (tbmc_request->on_timeout) {
-               tbmc_on_timeout_t on_timeout = tbmc_request->on_timeout;
-               on_timeout(context, tbmc_request->request_id);
+          if (tbcm_request->on_timeout) {
+               tbcm_on_timeout_t on_timeout = tbcm_request->on_timeout;
+               on_timeout(context, tbcm_request->request_id);
           }
 
           // remove from request list
-          LIST_REMOVE(tbmc_request, entry);
-          _request_destroy(tbmc_request);
+          LIST_REMOVE(tbcm_request, entry);
+          _request_destroy(tbcm_request);
      }
      memset(&client->request_list, 0x00, sizeof(client->request_list));
 }
 
 // Returns true if connected, false otherwise.
-bool tbmc_is_connected(tbmc_handle_t client_) // isConnected
+bool tbcm_is_connected(tbcm_handle_t client_) // isConnected
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return false;
      }
-     return client->state == TBMC_STATE_CONNECTED; 
+     return client->state == TBCM_STATE_CONNECTED; 
 }
 
-bool tbmc_is_connecting(tbmc_handle_t client)
+bool tbcm_is_connecting(tbcm_handle_t client)
 {
-     return client->state == TBMC_STATE_CONNECTING; 
+     return client->state == TBCM_STATE_CONNECTING; 
 }
 
-bool tbmc_is_disconnected(tbmc_handle_t client_)
+bool tbcm_is_disconnected(tbcm_handle_t client_)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return false;
      }
-     return client->state == TBMC_STATE_DISCONNECTED; 
+     return client->state == TBCM_STATE_DISCONNECTED; 
 }
 
-tbmc_state_t tbmc_get_state(tbmc_handle_t client_)
+tbcm_state_t tbcm_get_state(tbcm_handle_t client_)
 {
-     tbmc_t *client = (tbmc_t *)client_;
+     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL");
-          return TBMC_STATE_DISCONNECTED;
+          return TBCM_STATE_DISCONNECTED;
      }
      return client->state;
 }
 
-void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for PubSub client. //loop()==>checkTimeout()
+void tbcm_check_timeout(tbcm_handle_t client_) // Executes an event loop for PubSub client. //loop()==>checkTimeout()
 {
-     tbmc_t *client = (tbmc_t *)client_;
+     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL");
           return;
@@ -454,23 +454,23 @@ void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for Pub
      client->last_check_timestamp = timestamp;
 
      // move timeout item to timeout_list
-     tbmc_request_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     tbcm_request_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
      int count = _request_list_move_all_of_timeout(client, timestamp, &timeout_list);
      if (count <=0 ) {
           return;
      }
 
-     tbmc_request_t *tbmc_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbmc_request, &timeout_list, entry, next) {
+     tbcm_request_t *tbcm_request = NULL, *next;
+     LIST_FOREACH_SAFE(tbcm_request, &timeout_list, entry, next) {
           // exec timeout callback
-          if (tbmc_request->on_timeout) {
-               tbmc_on_timeout_t on_timeout = tbmc_request->on_timeout;
-               on_timeout(client->context, tbmc_request->request_id);
+          if (tbcm_request->on_timeout) {
+               tbcm_on_timeout_t on_timeout = tbcm_request->on_timeout;
+               on_timeout(client->context, tbcm_request->request_id);
           }
 
           // remove from request list
-          LIST_REMOVE(tbmc_request, entry);
-          _request_destroy(tbmc_request);
+          LIST_REMOVE(tbcm_request, entry);
+          _request_destroy(tbcm_request);
      }
 }
 
@@ -491,10 +491,10 @@ void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for Pub
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
+int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/) // sendTelemetry()
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -504,7 +504,7 @@ int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
         TBC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
      }
 
-     int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
+     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
      return message_id;
 }
 
@@ -525,10 +525,10 @@ int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
+int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
                                          int qos /*= 1*/, int retain /*= 0*/) // sendAttributes() //publish client attributes
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -538,7 +538,7 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
         TBC_LOGI("[Client-Side Attributes][Tx] %.*s", strlen(attributes), attributes);
      }
 
-     int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH, attributes, qos, retain);
+     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH, attributes, qos, retain);
      return message_id;
 }
 
@@ -560,13 +560,13 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
  * @return request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
+int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
                             void *context,
-                            tbmc_on_attrrequest_response_t on_attrrequest_response,
-                            tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
+                            tbcm_on_attrrequest_response_t on_attrrequest_response,
+                            tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/) // requestAttributes() //request client and shared attributes
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -581,7 +581,7 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBMC_REQUEST_ATTR, 0 /*request_id*/, context,
+     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_ATTR, 0 /*request_id*/, context,
                                            on_attrrequest_response, on_attrrequest_timeout);
      if (request_id <= 0) {
           TBC_LOGE("Unable to take semaphore");
@@ -589,7 +589,7 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
      }
 
      int size = strlen(TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX) + 20;
-     char *topic = TBMC_MALLOC(size);
+     char *topic = TBCM_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -602,8 +602,8 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
-     TBMC_FREE(topic);
+     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     TBCM_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -626,13 +626,13 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
  * @return request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, const char *shared_keys,
+int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, const char *shared_keys,
                                void *context,
-                               tbmc_on_attrrequest_response_t on_attrrequest_response,
-                               tbmc_on_attrrequest_timeout_t on_attrrequest_timeout,
+                               tbcm_on_attrrequest_response_t on_attrrequest_response,
+                               tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -653,7 +653,7 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
 
      int size = strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_CLIENTKEYS) + client_len 
                + strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_SHAREDKEYS) + shared_len + 20;
-     char *payload = TBMC_MALLOC(size);
+     char *payload = TBCM_MALLOC(size);
      if (!payload)
      {
           TBC_LOGE("Unable to malloc memory");
@@ -668,12 +668,12 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
      } else if (shared_len>0) {
          snprintf(payload, size - 1, "{\"sharedKeys\":\"%s\"}", shared_keys);
      }
-     int retult = tbmc_attributes_request(client, payload,
+     int retult = tbcm_attributes_request(client, payload,
                                           context,
                                           on_attrrequest_response,
                                           on_attrrequest_timeout,
                                           qos, retain);
-     TBMC_FREE(payload);
+     TBCM_FREE(payload);
      return retult;
 }
 
@@ -695,10 +695,10 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
  *         0 if cannot publish
  *        -1 if error
  */
-int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *response,
+int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *response,
                                    int qos /*= 1*/, int retain /*= 0*/) // sendServerRpcReply() //response server-side RPC
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -710,7 +710,7 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
      }
 
      int size = strlen(TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX) + 20;
-     char *topic = TBMC_MALLOC(size);
+     char *topic = TBCM_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory!");
           return -1;
@@ -723,8 +723,8 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
               request_id, strlen(response), response);
      }
 
-     int message_id = _tbmc_publish(client, topic, response, qos, retain);
-     TBMC_FREE(topic);
+     int message_id = _tbcm_publish(client, topic, response, qos, retain);
+     TBCM_FREE(topic);
      return message_id;
 }
 
@@ -747,13 +747,13 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
+int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
                                void *context,
-                               tbmc_on_clientrpc_response_t on_clientrpc_response,
-                               tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
+                               tbcm_on_clientrpc_response_t on_clientrpc_response,
+                               tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
                                int qos /*= 1*/, int retain /*= 0*/) // sendClientRpcCall() //request client-side RPC
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -768,7 +768,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBMC_REQUEST_CLIENTRPC, 0/*request_id*/, context,
+     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_CLIENTRPC, 0/*request_id*/, context,
                                            on_clientrpc_response, on_clientrpc_timeout);
      if (request_id <= 0) {
           TBC_LOGE("Unable to take semaphore");
@@ -776,7 +776,7 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
      }
 
      int size = strlen(TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX) + 20;
-     char *topic = TBMC_MALLOC(size);
+     char *topic = TBCM_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -789,8 +789,8 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
-     TBMC_FREE(topic);
+     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     TBCM_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -813,32 +813,32 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const char *params,
+int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const char *params,
                                      void *context,
-                                     tbmc_on_clientrpc_response_t on_clientrpc_response,
-                                     tbmc_on_clientrpc_timeout_t on_clientrpc_timeout,
+                                     tbcm_on_clientrpc_response_t on_clientrpc_response,
+                                     tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
                                      int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
      }
 
      int size = strlen(TB_MQTT_KEY_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_KEY_RPC_PARAMS) + strlen(params) + 20;
-     char *payload = TBMC_MALLOC(size);
+     char *payload = TBCM_MALLOC(size);
      if (!payload) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(payload, 0x00, size);
      snprintf(payload, size - 1, "{\"method\":\"%s\",\"params\":%s}", method, params); //{%s}
-     int retult = tbmc_clientrpc_request(client, payload,
+     int retult = tbcm_clientrpc_request(client, payload,
                                          context,
                                          on_clientrpc_response,
                                          on_clientrpc_timeout,
                                          qos, retain);
-     TBMC_FREE(payload);
+     TBCM_FREE(payload);
      return retult;
 }
  
@@ -859,10 +859,10 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
   *         0 if cannot publish
   *        -1 if error
   */
- int tbmc_claiming_device_publish(tbmc_handle_t client_, const char *claiming,
+ int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
                             int qos /*= 1*/, int retain /*= 0*/)
  {
-      tbmc_t *client = (tbmc_t*)client_;
+      tbcm_t *client = (tbcm_t*)client_;
       if (!client) {
            TBC_LOGE("client is NULL!");
            return -1;
@@ -872,7 +872,7 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
          TBC_LOGI("[Claiming][Tx] %.*s", strlen(claiming), claiming);
       }
  
-      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLAIMING_DEVICE, claiming, qos, retain);
+      int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_CLAIMING_DEVICE, claiming, qos, retain);
       return message_id;
  }
 
@@ -894,13 +894,13 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
+int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
                           void *context,
-                          tbmc_on_provision_response_t on_provision_response,
-                          tbmc_on_provision_timeout_t on_provision_timeout,
+                          tbcm_on_provision_response_t on_provision_response,
+                          tbcm_on_provision_timeout_t on_provision_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -915,7 +915,7 @@ int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBMC_REQUEST_PROVISION, -1, context,
+     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_PROVISION, -1, context,
                                            on_provision_response, on_provision_timeout);
      if (request_id <= 0) {
           TBC_LOGE("Unable to take semaphore");
@@ -927,7 +927,7 @@ int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbmc_publish(client, TB_MQTT_TOPIC_PROVISION_REQUESTC, payload, qos, retain);
+     /*int message_id =*/ _tbcm_publish(client, TB_MQTT_TOPIC_PROVISION_REQUESTC, payload, qos, retain);
      return request_id; /*return message_id;*/
 }
 
@@ -940,7 +940,7 @@ int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
  *      Topic: 'v1/devices/me/rpc/request/$request_id'
  *      Data:  '{"method":"getTime","params":{}}'
  *
- * @param request_id_   0 on first f/w request(chunk_id is 0), otherwise if it is result of last tbmc_otaupdate_request()
+ * @param request_id_   0 on first f/w request(chunk_id is 0), otherwise if it is result of last tbcm_otaupdate_request()
  * @param chunk_id      0,1,2,3,...           
  * @param on_otaupdate_response    f/w update response callback
  * @param on_otaupdate_timeout     f/w update response timeout callback
@@ -950,14 +950,14 @@ int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
  * @return rpc_request_id of the subscribe message on success
  *        -1 if error
  */
-int tbmc_otaupdate_request(tbmc_handle_t client_,
+int tbcm_otaupdate_request(tbcm_handle_t client_,
                           int request_id_, int chunk_id, const char *payload, //?payload
                           void *context,
-                          tbmc_on_otaupdate_response_t on_otaupdate_response,
-                          tbmc_on_otaupdate_timeout_t on_otaupdate_timeout,
+                          tbcm_on_otaupdate_response_t on_otaupdate_response,
+                          tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -972,7 +972,7 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
           return -1;
      }*/
 
-     int request_id = _request_list_create_and_append(client, TBMC_REQUEST_FWUPDATE, request_id_, context,
+     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_FWUPDATE, request_id_, context,
                                            on_otaupdate_response, on_otaupdate_timeout);
      if (request_id <= 0) {
           TBC_LOGE("Unable to take semaphore");
@@ -980,7 +980,7 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
      }
 
      int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
-     char *topic = TBMC_MALLOC(size);
+     char *topic = TBCM_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -993,8 +993,8 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbmc_publish(client, topic, payload, qos, retain);
-     TBMC_FREE(topic);
+     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     TBCM_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -1015,9 +1015,9 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
  * @return message_id of the subscribe message on success
  *         -1 on failure
  */
-/*static*/ int _tbmc_subscribe(tbmc_handle_t client_, const char *topic, int qos /*=0*/) // subscribe()
+/*static*/ int _tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/) // subscribe()
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -1048,9 +1048,9 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
  *         0 if cannot publish
  *        -1 if error
  */
-static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/) // publish()
+static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/) // publish()
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -1068,7 +1068,7 @@ static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *p
 // The callback for when a MQTT event is received.
 static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
-     tbmc_t *client = (tbmc_t*)handler_args;
+     tbcm_t *client = (tbcm_t*)handler_args;
      esp_mqtt_event_handle_t event = event_data;
      if (!client) {
           TBC_LOGE("client is NULL!");
@@ -1089,17 +1089,17 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
      case MQTT_EVENT_CONNECTED:
           TBC_LOGI("MQTT_EVENT_CONNECTED");
           TBC_LOGI("client->mqtt_handle = %p", client->mqtt_handle);
-          msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+          msg_id = _tbcm_subscribe(client, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-          msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
+          msg_id = _tbcm_subscribe(client, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
-          msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
+          msg_id = _tbcm_subscribe(client, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
-          msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
+          msg_id = _tbcm_subscribe(client, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
-          msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
+          msg_id = _tbcm_subscribe(client, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
-          client->state = TBMC_STATE_CONNECTED;
+          client->state = TBCM_STATE_CONNECTED;
           TBC_LOGI("before call on_connected()...");
           ////if(xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) == pdTRUE) {
           if (client->on_connected) {
@@ -1112,7 +1112,7 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
 
      case MQTT_EVENT_DISCONNECTED:
           TBC_LOGI("MQTT_EVENT_DISCONNECTED");
-          client->state = TBMC_STATE_DISCONNECTED;
+          client->state = TBCM_STATE_DISCONNECTED;
           ////if(xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) == pdTRUE) {
           if (client->on_disconnected) {
                client->on_disconnected(client->context);
@@ -1149,10 +1149,10 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
 }
 
 // Processes MQTT_EVENT_DATA message
-static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t event) //_onDataEventProcess(); //MQTT_EVENT_DATA
+static void _on_DataEventProcess(tbcm_handle_t client_, esp_mqtt_event_handle_t event) //_onDataEventProcess(); //MQTT_EVENT_DATA
 {
 
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -1163,19 +1163,19 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
      }
 
      // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
-     tbmc_rx_msg_info rx_msg = {0};
+     tbcm_rx_msg_info rx_msg = {0};
      rx_msg.topic = event->topic;          /*!< Topic associated with this event */
      rx_msg.payload = event->data;         /*!< Data associated with this event */
      rx_msg.topic_len = event->topic_len;  /*!< Length of the topic for this event associated with this event */
      rx_msg.payload_len = event->data_len;                       /*!< Length of the data for this event */
      rx_msg.total_payload_len = event->total_data_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
      rx_msg.current_payload_offset = event->current_data_offset; /*!< Actual offset for the data associated with this event */
-     tbmc_payload_buffer_pocess(&client->buffer, &rx_msg, _on_PayloadProcess, client_);
+     tbcm_payload_buffer_pocess(&client->buffer, &rx_msg, _on_PayloadProcess, client_);
 }
 
-static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg)
+static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg)
 {
-    tbmc_t *client = (tbmc_t*)context/*client*/;
+    tbcm_t *client = (tbcm_t*)context/*client*/;
     if (!client) {
          TBC_LOGE("client is NULL!");
          return;
@@ -1199,14 +1199,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
                   request_id, payload_len, payload);
          }
     
-         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-         if (tbmc_request) {
-              if (tbmc_request->on_response) {
-                   tbmc_on_response_t on_response = tbmc_request->on_response;
+         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
+         if (tbcm_request) {
+              if (tbcm_request->on_response) {
+                   tbcm_on_response_t on_response = tbcm_request->on_response;
                    on_response(client->context, request_id, payload, payload_len);
               }
-              _request_destroy(tbmc_request);
-              tbmc_request = NULL;
+              _request_destroy(tbcm_request);
+              tbcm_request = NULL;
          } else {
               TBC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
@@ -1257,14 +1257,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
                   request_id, payload_len, payload);
          }
     
-         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-         if (tbmc_request) {
-              if (tbmc_request->on_response) {
-                   tbmc_on_response_t on_response = tbmc_request->on_response;
+         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
+         if (tbcm_request) {
+              if (tbcm_request->on_response) {
+                   tbcm_on_response_t on_response = tbcm_request->on_response;
                    on_response(client->context, request_id, payload, payload_len);
               }
-              _request_destroy(tbmc_request);
-              tbmc_request = NULL;
+              _request_destroy(tbcm_request);
+              tbcm_request = NULL;
          } else {
               TBC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
@@ -1290,14 +1290,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
                    request_id, payload_len);
          }
     
-         tbmc_request_t *tbmc_request = _request_list_search_and_remove(client, request_id);
-         if (tbmc_request) {
-              tbmc_on_otaupdate_response_t on_otaupdate_response = tbmc_request->on_response;
+         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
+         if (tbcm_request) {
+              tbcm_on_otaupdate_response_t on_otaupdate_response = tbcm_request->on_response;
               if (on_otaupdate_response) {
                    on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
               }
-              _request_destroy(tbmc_request);
-              tbmc_request = NULL;
+              _request_destroy(tbcm_request);
+              tbcm_request = NULL;
          } else {
               TBC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
                         request_id,
@@ -1309,20 +1309,20 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
          if (client->config.log_rxtx_package) {
              TBC_LOGI("[Provision][Rx] request_type=%d, payload_len=%d",
-                   TBMC_REQUEST_PROVISION, payload_len);
+                   TBCM_REQUEST_PROVISION, payload_len);
          }
 
-         tbmc_request_t *tbmc_request = _request_list_search_and_remove_by_type(client, TBMC_REQUEST_PROVISION);
-         if (tbmc_request) {
-              tbmc_on_provision_response_t on_provision_response = tbmc_request->on_response;
+         tbcm_request_t *tbcm_request = _request_list_search_and_remove_by_type(client, TBCM_REQUEST_PROVISION);
+         if (tbcm_request) {
+              tbcm_on_provision_response_t on_provision_response = tbcm_request->on_response;
               if (on_provision_response) {
-                   on_provision_response(client->context, tbmc_request->request_id, payload, payload_len);
+                   on_provision_response(client->context, tbcm_request->request_id, payload, payload_len);
               }
-              _request_destroy(tbmc_request);
-              tbmc_request = NULL;
+              _request_destroy(tbcm_request);
+              tbcm_request = NULL;
          } else {
               TBC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
-                        TBMC_REQUEST_PROVISION,
+                        TBCM_REQUEST_PROVISION,
                         topic_len, topic, payload_len, payload);
               return; // -1;
          }
@@ -1335,7 +1335,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
 
 }
 
-/*static*/ bool _request_is_equal(const tbmc_request_t *a, const tbmc_request_t *b)
+/*static*/ bool _request_is_equal(const tbcm_request_t *a, const tbcm_request_t *b)
 {
      if (!a & !b) {
           return true;
@@ -1353,12 +1353,12 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
 }
 
 //return request_id on successful, otherwise return -1
-static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_type_t type, int request_id,
+static int _request_list_create_and_append(tbcm_handle_t client_, tbcm_request_type_t type, int request_id,
                                            void *context,
-                                           void *on_response, /*tbmc_on_response_t*/
-                                           void *on_timeout) /*tbmc_on_timeout_t*/
+                                           void *on_response, /*tbcm_on_response_t*/
+                                           void *on_timeout) /*tbcm_on_timeout_t*/
 {
-     tbmc_t *client = (tbmc_t*)client_;
+     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -1391,8 +1391,8 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      }
 
      // Create request
-     tbmc_request_t *tbmc_request = _request_create(type, request_id, context, on_response, on_timeout);
-     if (!tbmc_request) {
+     tbcm_request_t *tbcm_request = _request_create(type, request_id, context, on_response, on_timeout);
+     if (!tbcm_request) {
           // Give semaphore
           xSemaphoreGive(client->lock);
           TBC_LOGE("Unable to create request: No memory!");
@@ -1400,10 +1400,10 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      }
 
      // Insert request to list
-     tbmc_request_t *it, *last = NULL;
+     tbcm_request_t *it, *last = NULL;
      if (LIST_FIRST(&client->request_list) == NULL) {
           // Insert head
-          LIST_INSERT_HEAD(&client->request_list, tbmc_request, entry);
+          LIST_INSERT_HEAD(&client->request_list, tbcm_request, entry);
      } else {
           // Insert last
           LIST_FOREACH(it, &client->request_list, entry) {
@@ -1411,7 +1411,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
           }
           if (it == NULL) {
                assert(last);
-               LIST_INSERT_AFTER(last, tbmc_request, entry);
+               LIST_INSERT_AFTER(last, tbcm_request, entry);
           }
      }
 
@@ -1420,9 +1420,9 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      return request_id;
 }
 
-static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, int request_id)
+static tbcm_request_t *_request_list_search_and_remove(tbcm_handle_t client_, int request_id)
 {
-     tbmc_t *client = (tbmc_t *)client_;
+     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return NULL;
@@ -1435,29 +1435,29 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
      }
 
      // Search item
-     tbmc_request_t *tbmc_request = NULL;
-     LIST_FOREACH(tbmc_request, &client->request_list, entry) {
-          if (tbmc_request && tbmc_request->request_id == request_id) {
+     tbcm_request_t *tbcm_request = NULL;
+     LIST_FOREACH(tbcm_request, &client->request_list, entry) {
+          if (tbcm_request && tbcm_request->request_id == request_id) {
                break;
           }
      }
 
      /// Remove form list
-     if (tbmc_request) {
-          LIST_REMOVE(tbmc_request, entry);
+     if (tbcm_request) {
+          LIST_REMOVE(tbcm_request, entry);
      } else {
           TBC_LOGW("Unable to remove request:%d!", request_id);
      }
 
      // Give semaphore
      xSemaphoreGive(client->lock);
-     return tbmc_request;
+     return tbcm_request;
 }
 
 
-static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t client_, tbmc_request_type_t type)
+static tbcm_request_t *_request_list_search_and_remove_by_type(tbcm_handle_t client_, tbcm_request_type_t type)
 {
-     tbmc_t *client = (tbmc_t *)client_;
+     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return NULL;
@@ -1470,30 +1470,30 @@ static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t cli
      }
 
      // Search item
-     tbmc_request_t *tbmc_request = NULL;
-     LIST_FOREACH(tbmc_request, &client->request_list, entry) {
-          if (tbmc_request && tbmc_request->type == type) {
+     tbcm_request_t *tbcm_request = NULL;
+     LIST_FOREACH(tbcm_request, &client->request_list, entry) {
+          if (tbcm_request && tbcm_request->type == type) {
                break;
           }
      }
 
      /// Remove form list
-     if (tbmc_request) {
-          LIST_REMOVE(tbmc_request, entry);
+     if (tbcm_request) {
+          LIST_REMOVE(tbcm_request, entry);
      } else {
           TBC_LOGW("Unable to remove request: type=%d!", type);
      }
 
      // Give semaphore
      xSemaphoreGive(client->lock);
-     return tbmc_request;
+     return tbcm_request;
 }
 
 // return  count of timeout_request_list
-static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t timestamp,
-                              tbmc_request_list_t *timeout_request_list)
+static int _request_list_move_all_of_timeout(tbcm_handle_t client_, uint64_t timestamp,
+                              tbcm_request_list_t *timeout_request_list)
 {
-     tbmc_t *client = (tbmc_t *)client_;
+     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return 0;
@@ -1511,16 +1511,16 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t tim
 
      // Search & move item
      int count = 0;
-     tbmc_request_t *tbmc_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbmc_request, &client->request_list, entry, next) {
-          if (tbmc_request && tbmc_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+     tbcm_request_t *tbcm_request = NULL, *next;
+     LIST_FOREACH_SAFE(tbcm_request, &client->request_list, entry, next) {
+          if (tbcm_request && tbcm_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                // remove from request list
-               LIST_REMOVE(tbmc_request, entry);
+               LIST_REMOVE(tbcm_request, entry);
 
                // append to timeout list
-               tbmc_request_t *it, *last = NULL;
+               tbcm_request_t *it, *last = NULL;
                if (LIST_FIRST(timeout_request_list) == NULL) {
-                    LIST_INSERT_HEAD(timeout_request_list, tbmc_request, entry);
+                    LIST_INSERT_HEAD(timeout_request_list, tbcm_request, entry);
                     count++;
                } else {
                     LIST_FOREACH(it, timeout_request_list, entry) {
@@ -1528,7 +1528,7 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t tim
                     }
                     if (it == NULL) {
                          assert(last);
-                         LIST_INSERT_AFTER(last, tbmc_request, entry);
+                         LIST_INSERT_AFTER(last, tbcm_request, entry);
                          count++;
                     }
                }
@@ -1540,43 +1540,43 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t tim
      return count;
 }
 
-//return tbmc_request on successful, otherwise return NULL.
-static tbmc_request_t *_request_create(tbmc_request_type_t type,
+//return tbcm_request on successful, otherwise return NULL.
+static tbcm_request_t *_request_create(tbcm_request_type_t type,
                                        uint32_t request_id,
                                        void *context,
-                                       void *on_response, /*tbmc_on_response_t*/
-                                       void *on_timeout) /*tbmc_on_timeout_t*/
+                                       void *on_response, /*tbcm_on_response_t*/
+                                       void *on_timeout) /*tbcm_on_timeout_t*/
 {
-     tbmc_request_t *tbmc_request = TBMC_MALLOC(sizeof(tbmc_request_t));
-     if (!tbmc_request) {
+     tbcm_request_t *tbcm_request = TBCM_MALLOC(sizeof(tbcm_request_t));
+     if (!tbcm_request) {
           TBC_LOGE("Unable to malloc memory!");
           return NULL;
      }
 
-     memset(tbmc_request, 0x00, sizeof(tbmc_request_t));
-     tbmc_request->type = type;
-     tbmc_request->request_id = request_id;
-     tbmc_request->timestamp = (uint64_t)time(NULL);
-     tbmc_request->context = context;
-     tbmc_request->on_response = on_response;
-     tbmc_request->on_timeout = on_timeout;
+     memset(tbcm_request, 0x00, sizeof(tbcm_request_t));
+     tbcm_request->type = type;
+     tbcm_request->request_id = request_id;
+     tbcm_request->timestamp = (uint64_t)time(NULL);
+     tbcm_request->context = context;
+     tbcm_request->on_response = on_response;
+     tbcm_request->on_timeout = on_timeout;
 
-     return tbmc_request;
+     return tbcm_request;
 }
 
-static void _request_destroy(tbmc_request_t *tbmc_request)
+static void _request_destroy(tbcm_request_t *tbcm_request)
 {
-     if (!tbmc_request) {
+     if (!tbcm_request) {
           TBC_LOGE("Invalid argument!");
           return; 
      }
 
-     tbmc_request->type = 0;
-     tbmc_request->request_id = 0;
-     tbmc_request->timestamp = 0;
-     tbmc_request->context = NULL;
-     tbmc_request->on_response = NULL;
-     tbmc_request->on_timeout = NULL;
-     TBMC_FREE(tbmc_request);
+     tbcm_request->type = 0;
+     tbcm_request->request_id = 0;
+     tbcm_request->timestamp = 0;
+     tbcm_request->context = NULL;
+     tbcm_request->on_response = NULL;
+     tbcm_request->on_timeout = NULL;
+     TBCM_FREE(tbcm_request);
 }
 

@@ -32,24 +32,24 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper shared attribute
  */
-typedef struct tbmch_sharedattribute
+typedef struct tbcmh_sharedattribute
 {
-     tbmch_handle_t client; /*!< ThingsBoard MQTT Client Helper */
+     tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
      char *key; /*!< Key */
 
      void *context;                         /*!< Context of getting/setting value*/
-     tbmch_sharedattribute_on_set_t on_set; /*!< Callback of setting value to context */
+     tbcmh_sharedattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
-     LIST_ENTRY(tbmch_sharedattribute) entry;
-} tbmch_sharedattribute_t;
+     LIST_ENTRY(tbcmh_sharedattribute) entry;
+} tbcmh_sharedattribute_t;
 
-tbmch_sharedattribute_t *_tbmch_sharedattribute_init(tbmch_handle_t client, const char *key, void *context,
-                                                    tbmch_sharedattribute_on_set_t on_set);
-tbmch_err_t _tbmch_sharedattribute_destroy(tbmch_sharedattribute_t *sharedattribute); /*!< Destroys the tbmc key-value handle */
+tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, const char *key, void *context,
+                                                    tbcmh_sharedattribute_on_set_t on_set);
+tbcmh_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute); /*!< Destroys the tbmc key-value handle */
 
-const char *_tbmch_sharedattribute_get_key(tbmch_sharedattribute_t *sharedattribute); /*!< Get key of the tbmc tbmch_attribute handle */
-tbmch_err_t _tbmch_sharedattribute_do_set(tbmch_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */
+const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattribute); /*!< Get key of the tbmc tbcmh_attribute handle */
+tbcmh_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

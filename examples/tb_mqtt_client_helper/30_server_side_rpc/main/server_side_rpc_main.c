@@ -30,9 +30,9 @@ static double setpoint = 25.5;
 // return NULL or cJSON* of object
 // free return-value by caller/(tbmch library)!
 // free params by caller/(tbmch library)!
-tbmch_rpc_results_t *tb_serverrpc_on_request_change_setpoint(tbmch_handle_t client,
+tbcmh_rpc_results_t *tb_serverrpc_on_request_change_setpoint(tbcmh_handle_t client,
                             void *context, int request_id, 
-                            const char *method, const tbmch_rpc_params_t *params)
+                            const char *method, const tbcmh_rpc_params_t *params)
 {
     if (!client || !method || !params) {
         ESP_LOGW(TAG, "client, method or params is NULL in %s()!", __FUNCTION__);
@@ -60,9 +60,9 @@ tbmch_rpc_results_t *tb_serverrpc_on_request_change_setpoint(tbmch_handle_t clie
 // return NULL or cJSON* of object
 // free return-value by caller/(tbmch library)!
 // free params by caller/(tbmch library)!
-tbmch_rpc_results_t *tb_serverrpc_on_request_query_setpoint(tbmch_handle_t client,
+tbcmh_rpc_results_t *tb_serverrpc_on_request_query_setpoint(tbcmh_handle_t client,
                             void *context, int request_id, 
-                            const char *method, const tbmch_rpc_params_t *params)
+                            const char *method, const tbcmh_rpc_params_t *params)
 {
     if (!client || !method ) {
         ESP_LOGW(TAG, "client or method is NULL in %s()!", __FUNCTION__);
@@ -77,20 +77,20 @@ tbmch_rpc_results_t *tb_serverrpc_on_request_query_setpoint(tbmch_handle_t clien
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
+void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)
 {
-	tbmch_err_t err;
+	tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -157,21 +157,21 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbmch!");
         return;
     }
 
     ESP_LOGI(TAG, "Append server RPC: rpcChangeSetpoint...");
-    err = tbmch_serverrpc_append(client, SERVER_RPC_CHANGE_SETPOINT, NULL,
+    err = tbcmh_serverrpc_append(client, SERVER_RPC_CHANGE_SETPOINT, NULL,
                                  tb_serverrpc_on_request_change_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append server RPC: %s!", SERVER_RPC_CHANGE_SETPOINT);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append server RPC: rpcQuerySetpoint...");
-    err = tbmch_serverrpc_append(client, SERVER_RPC_QUERY_SETPOINT, NULL,
+    err = tbcmh_serverrpc_append(client, SERVER_RPC_QUERY_SETPOINT, NULL,
                                  tb_serverrpc_on_request_query_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append server RPC: %s!", SERVER_RPC_QUERY_SETPOINT);
@@ -184,7 +184,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
     };
-    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;
@@ -194,23 +194,23 @@ static void mqtt_app_start(void)
     ESP_LOGI(TAG, "connect tbmch ...");
     int i = 0;
     while (i<20) {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (!tbmch_is_connected(client)) {
+        if (!tbcmh_is_connected(client)) {
             ESP_LOGI(TAG, "Still NOT connected to server!");
         }
         sleep(1);
     }
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
-    tbmch_disconnect(client);
+    tbcmh_disconnect(client);
 
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbmch ...");
-    tbmch_destroy(client);
+    tbcmh_destroy(client);
 #endif
 }
 

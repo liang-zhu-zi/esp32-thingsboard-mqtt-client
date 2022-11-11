@@ -23,23 +23,23 @@
 
 const static char *TAG = "attributes_request";
 
-/*!< Initialize tbmch_attributesrequest */
-tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, int request_id, void *context,
-                                                         tbmch_attributesrequest_on_response_t on_response,
-                                                         tbmch_attributesrequest_on_timeout_t on_timeout)
+/*!< Initialize tbcmh_attributesrequest */
+tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, int request_id, void *context,
+                                                         tbcmh_attributesrequest_on_response_t on_response,
+                                                         tbcmh_attributesrequest_on_timeout_t on_timeout)
 {
     if (!on_response) {
         TBC_LOGE("on_response is NULL");
         return NULL;
     }
     
-    tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
+    tbcmh_attributesrequest_t *attributesrequest = TBCMH_MALLOC(sizeof(tbcmh_attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(attributesrequest, 0x00, sizeof(tbmch_attributesrequest_t));
+    memset(attributesrequest, 0x00, sizeof(tbcmh_attributesrequest_t));
     attributesrequest->client = client;
     attributesrequest->request_id = request_id;
     attributesrequest->context = context;
@@ -48,20 +48,20 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
     return attributesrequest;
 }
 
-tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_attributesrequest_t *src)
+tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_attributesrequest_t *src)
 {
     if (!src) {
         TBC_LOGE("src is NULL");
         return NULL;
     }
     
-    tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
+    tbcmh_attributesrequest_t *attributesrequest = TBCMH_MALLOC(sizeof(tbcmh_attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(attributesrequest, 0x00, sizeof(tbmch_attributesrequest_t));
+    memset(attributesrequest, 0x00, sizeof(tbcmh_attributesrequest_t));
     attributesrequest->client = src->client;
     attributesrequest->request_id = src->request_id;
     attributesrequest->context = src->context;
@@ -70,19 +70,19 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_att
     return attributesrequest;
 }
 
-/*!< Destroys the tbmch_attributesrequest */
-tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
+/*!< Destroys the tbcmh_attributesrequest */
+tbcmh_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
         TBC_LOGE("attributesrequest is NULL");
         return ESP_FAIL;
     }
 
-    TBMCH_FREE(attributesrequest);
+    TBCMH_FREE(attributesrequest);
     return ESP_OK;
 }
 
-int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attributesrequest)
+int _tbcmh_attributesrequest_get_request_id(tbcmh_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
         TBC_LOGE("attributesrequest is NULL");
@@ -92,7 +92,7 @@ int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attribute
 }
 
 //(none/resend/destroy/_destroy_all_attributes)?
-void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesrequest)
+void _tbcmh_attributesrequest_do_response(tbcmh_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
         TBC_LOGE("attributesrequest is NULL");
@@ -110,7 +110,7 @@ void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesr
 }
 
 //(none/resend/destroy/_destroy_all_attributes)? 
-void _tbmch_attributesrequest_do_timeout(tbmch_attributesrequest_t *attributesrequest)
+void _tbcmh_attributesrequest_do_timeout(tbcmh_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
         TBC_LOGE("attributesrequest is NULL");

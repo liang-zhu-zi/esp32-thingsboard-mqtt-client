@@ -23,8 +23,8 @@
 
 const static char *TAG = "timeseries_data";
 
-/*!< Initialize tbmch_tsdata of TBMC_JSON */
-tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void *context, tbmch_tsdata_on_get_t on_get)
+/*!< Initialize tbcmh_tsdata of TBCM_JSON */
+tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
 {
     if (!key) {
         TBC_LOGE("key is NULL");
@@ -35,15 +35,15 @@ tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void 
         return NULL;
     }
     
-    tbmch_tsdata_t *tsdata = TBMCH_MALLOC(sizeof(tbmch_tsdata_t));
+    tbcmh_tsdata_t *tsdata = TBCMH_MALLOC(sizeof(tbcmh_tsdata_t));
     if (!tsdata) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(tsdata, 0x00, sizeof(tbmch_tsdata_t));
+    memset(tsdata, 0x00, sizeof(tbcmh_tsdata_t));
     tsdata->client = client;
-    tsdata->key = TBMCH_MALLOC(strlen(key)+1);
+    tsdata->key = TBCMH_MALLOC(strlen(key)+1);
     if (tsdata->key) {
         strcpy(tsdata->key, key);
     }
@@ -53,20 +53,20 @@ tbmch_tsdata_t *_tbmch_tsdata_init(tbmch_handle_t client, const char *key, void 
 }
 
 /*!< Destroys the tbmc key-value handle */
-tbmch_err_t _tbmch_tsdata_destroy(tbmch_tsdata_t *tsdata)
+tbcmh_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");
         return ESP_FAIL;
     }
 
-    TBMCH_FREE(tsdata->key);
-    TBMCH_FREE(tsdata);
+    TBCMH_FREE(tsdata->key);
+    TBCMH_FREE(tsdata);
     return ESP_OK;
 }
 
 /*!< Get key of the tbmc time-series data handle */
-const char *_tbmch_tsdata_get_key(tbmch_tsdata_t *tsdata)
+const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");
@@ -76,7 +76,7 @@ const char *_tbmch_tsdata_get_key(tbmch_tsdata_t *tsdata)
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_tsdata_go_get(tbmch_tsdata_t *tsdata, cJSON *object)
+tbcmh_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");

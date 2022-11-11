@@ -25,25 +25,25 @@
 
 const static char *TAG = "provision";
 
-/*!< Initialize tbmch_provision_t */
-tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
-                                         const tbmch_provision_params_t *params,
+/*!< Initialize tbcmh_provision_t */
+tbcmh_provision_t *_tbcmh_provision_init(tbcmh_handle_t client, int request_id,
+                                         const tbcmh_provision_params_t *params,
                                          void *context,
-                                         tbmch_provision_on_response_t on_response,
-                                         tbmch_provision_on_timeout_t on_timeout)
+                                         tbcmh_provision_on_response_t on_response,
+                                         tbcmh_provision_on_timeout_t on_timeout)
 {
     if (!on_response) {
         TBC_LOGE("on_response is NULL");
         return NULL;
     }
     
-    tbmch_provision_t *provision = TBMCH_MALLOC(sizeof(tbmch_provision_t));
+    tbcmh_provision_t *provision = TBCMH_MALLOC(sizeof(tbcmh_provision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(provision, 0x00, sizeof(tbmch_provision_t));
+    memset(provision, 0x00, sizeof(tbcmh_provision_t));
     provision->client = client;
     provision->params = cJSON_Duplicate(params, true);
     provision->request_id = request_id;
@@ -53,20 +53,20 @@ tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
     return provision;
 }
 
-tbmch_provision_t *_tbmch_provision_clone_wo_listentry(tbmch_provision_t *src)
+tbcmh_provision_t *_tbcmh_provision_clone_wo_listentry(tbcmh_provision_t *src)
 {
     if (!src) {
         TBC_LOGE("src is NULL");
         return NULL;
     }
     
-    tbmch_provision_t *provision = TBMCH_MALLOC(sizeof(tbmch_provision_t));
+    tbcmh_provision_t *provision = TBCMH_MALLOC(sizeof(tbcmh_provision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(provision, 0x00, sizeof(tbmch_provision_t));
+    memset(provision, 0x00, sizeof(tbcmh_provision_t));
     provision->client = src->client;
     provision->params = cJSON_Duplicate(src->params, true);
     provision->request_id = src->request_id;
@@ -76,7 +76,7 @@ tbmch_provision_t *_tbmch_provision_clone_wo_listentry(tbmch_provision_t *src)
     return provision;
 }
 
-int _tbmch_provision_get_request_id(tbmch_provision_t *provision)
+int _tbcmh_provision_get_request_id(tbcmh_provision_t *provision)
 {
     if (!provision) {
         TBC_LOGE("provision is NULL");
@@ -86,8 +86,8 @@ int _tbmch_provision_get_request_id(tbmch_provision_t *provision)
     return provision->request_id;
 }
 
-/*!< Destroys the tbmch_provision_t */
-tbmch_err_t _tbmch_provision_destroy(tbmch_provision_t *provision)
+/*!< Destroys the tbcmh_provision_t */
+tbcmh_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision)
 {
     if (!provision) {
         TBC_LOGE("provision is NULL");
@@ -96,7 +96,7 @@ tbmch_err_t _tbmch_provision_destroy(tbmch_provision_t *provision)
 
     cJSON_Delete(provision->params);
     provision->params = NULL;
-    TBMCH_FREE(provision);
+    TBCMH_FREE(provision);
     return ESP_OK;
 }
 
@@ -118,7 +118,7 @@ static char *_parse_string_item(const cJSON *object, const char* key)
     return string_value;
 }
 
-static int _parse_provision_response(const tbmch_provision_results_t *results,
+static int _parse_provision_response(const tbcmh_provision_results_t *results,
                                           tbc_transport_credentials_config_t *credentials)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(results, ESP_FAIL);
@@ -209,7 +209,7 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
     return ESP_OK;
 }
 
-void _tbmch_provision_do_response(tbmch_provision_t *provision, const tbmch_provision_results_t *results)
+void _tbcmh_provision_do_response(tbcmh_provision_t *provision, const tbcmh_provision_results_t *results)
 {
     if (!provision) {
         TBC_LOGE("provision is NULL");
@@ -233,7 +233,7 @@ void _tbmch_provision_do_response(tbmch_provision_t *provision, const tbmch_prov
     return; // ESP_OK;
 }
 
-void _tbmch_provision_do_timeout(tbmch_provision_t *provision)
+void _tbcmh_provision_do_timeout(tbcmh_provision_t *provision)
 {
     if (!provision) {
         TBC_LOGE("provision is NULL");

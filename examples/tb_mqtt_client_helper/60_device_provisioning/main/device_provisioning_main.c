@@ -28,9 +28,9 @@
 
 static const char *TAG = "DEVICE_PROVISION_MAIN";
 
-extern tbmch_handle_t tbmch_frontconn_create(const tbc_transport_config_t *transport,
+extern tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                             const tbc_provison_config_t *provision);
-extern tbmch_handle_t tbmch_normalconn_create(const tbc_transport_config_t *transport);
+extern tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport);
 
 /*
  * Define psk key and hint as defined in mqtt broker
@@ -281,7 +281,7 @@ static tbc_transport_authentication_config_t _authentication = /*!< Client authe
 #if CONFIG_TBC_TRANSPORT_WITH_PROVISION
 static void mqtt_app_start()
 {
-    tbmch_handle_t client = NULL;
+    tbcmh_handle_t client = NULL;
     bool is_front_connection = false;
 
     tbc_transport_credentials_memory_init();
@@ -296,20 +296,20 @@ static void mqtt_app_start()
     transport.log_rxtx_package = true;  /*!< print Rx/Tx MQTT package */
 
     // create_front_connect(client)
-    client = tbmch_frontconn_create(&transport, &_provision);
+    client = tbcmh_frontconn_create(&transport, &_provision);
     is_front_connection = true;
 
     int i = 0;
     while (client && i<40) // TB_MQTT_TIMEOUT is 30 seconds!
     {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         if (is_front_connection==true && tbc_transport_credentials_memory_is_existed()) {
             // destory_front_conn(client)
-            if (client) tbmch_disconnect(client);
-            if (client) tbmch_destroy(client);
+            if (client) tbcmh_disconnect(client);
+            if (client) tbcmh_destroy(client);
             client = NULL;
 
             // create_normal_connect(client) // If the credentials type is X.509, the front connection (provisioing) is one-way SSL, but the normal connection is two-way (mutual) SSL.
@@ -317,12 +317,12 @@ static void mqtt_app_start()
             _transport_credentials_config_copy(&transport.credentials, tbc_transport_credentials_memory_get()); //memcpy(&transport.credentials, &_credentials, sizeof(_credentials));
             memcpy(&transport.verification, &_verification, sizeof(_verification));
             memcpy(&transport.authentication, &_authentication, sizeof(_authentication));
-            client = tbmch_normalconn_create(&transport);
+            client = tbcmh_normalconn_create(&transport);
             is_front_connection = false;
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
             //no code
         } else {
             ESP_LOGI(TAG, "Still NOT connected to server!");
@@ -332,11 +332,11 @@ static void mqtt_app_start()
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
     if (client) {
-        tbmch_disconnect(client);
+        tbcmh_disconnect(client);
     }
     ESP_LOGI(TAG, "Destroy tbmch ...");
     if (client) {
-        tbmch_destroy(client);
+        tbcmh_destroy(client);
         client = NULL;
     }
 
@@ -347,7 +347,7 @@ static void mqtt_app_start()
 
 static void mqtt_app_start()
 {
-    tbmch_handle_t client = NULL;
+    tbcmh_handle_t client = NULL;
     //bool is_front_connection = false;
 
     //tbc_transport_credentials_memory_init();
@@ -362,18 +362,18 @@ static void mqtt_app_start()
     transport.log_rxtx_package = true;  /*!< print Rx/Tx MQTT package */
 
     // create_normal_connect(client)
-    client = tbmch_normalconn_create(&transport);
+    client = tbcmh_normalconn_create(&transport);
     //is_front_connection = false;
 
     int i = 0;
     while (client && i<40) // TB_MQTT_TIMEOUT is 30 seconds!
     {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
             //no code
         } else {
             ESP_LOGI(TAG, "Still NOT connected to server!");
@@ -383,11 +383,11 @@ static void mqtt_app_start()
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
     if (client) {
-        tbmch_disconnect(client);
+        tbcmh_disconnect(client);
     }
     ESP_LOGI(TAG, "Destroy tbmch ...");
     if (client) {
-        tbmch_destroy(client);
+        tbcmh_destroy(client);
         client = NULL;
     }
 
@@ -463,7 +463,7 @@ static char *get_string_from_stdin(const char* descriptiton, char* buffer, size_
 
 static void mqtt_config_get(void)
 {
-	//tbmch_err_t err;
+	//tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL

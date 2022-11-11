@@ -23,9 +23,9 @@
 
 const static char *TAG = "client_attribute";
 
-tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, const char *key, void *context,
-                                                    tbmch_clientattribute_on_get_t on_get,
-                                                    tbmch_clientattribute_on_set_t on_set)
+tbcmh_clientattribute_t *_tbcmh_clientattribute_init(tbcmh_handle_t client, const char *key, void *context,
+                                                    tbcmh_clientattribute_on_get_t on_get,
+                                                    tbcmh_clientattribute_on_set_t on_set)
 {
     if (!key) {
         TBC_LOGE("key is NULL");
@@ -36,15 +36,15 @@ tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, cons
         return NULL;
     }
     
-    tbmch_clientattribute_t *clientattribute = TBMCH_MALLOC(sizeof(tbmch_clientattribute_t));
+    tbcmh_clientattribute_t *clientattribute = TBCMH_MALLOC(sizeof(tbcmh_clientattribute_t));
     if (!clientattribute) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientattribute, 0x00, sizeof(tbmch_clientattribute_t));
+    memset(clientattribute, 0x00, sizeof(tbcmh_clientattribute_t));
     clientattribute->client = client;
-    clientattribute->key = TBMCH_MALLOC(strlen(key)+1);
+    clientattribute->key = TBCMH_MALLOC(strlen(key)+1);
     if (clientattribute->key) {
         strcpy(clientattribute->key, key);
     }
@@ -54,21 +54,21 @@ tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, cons
     return clientattribute;
 }
 
-/*!< Destroys tbmch_clientattribute */
-tbmch_err_t _tbmch_clientattribute_destroy(tbmch_clientattribute_t *clientattribute)
+/*!< Destroys tbcmh_clientattribute */
+tbcmh_err_t _tbcmh_clientattribute_destroy(tbcmh_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
         return ESP_FAIL;
     }
 
-    TBMCH_FREE(clientattribute->key);
-    TBMCH_FREE(clientattribute);
+    TBCMH_FREE(clientattribute->key);
+    TBCMH_FREE(clientattribute);
     return ESP_OK;
 }
 
 /*!< Has it a set value callback? A shared attribute is always true; a client-side attribute is true or false. */
-bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattribute)
+bool _tbcmh_clientattribute_has_set_value_cb(tbcmh_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
@@ -78,8 +78,8 @@ bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattr
     return clientattribute->on_set ? true : false;
 }
 
-/*!< Get key of the tbmc tbmch_attribute handle */
-const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattribute)
+/*!< Get key of the tbmc tbcmh_attribute handle */
+const char *_tbcmh_clientattribute_get_key(tbcmh_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
@@ -89,7 +89,7 @@ const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattrib
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribute, cJSON *object)
+tbcmh_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribute, cJSON *object)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
@@ -111,7 +111,7 @@ tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribu
 }
 
 /*!< add item value to json object */
-tbmch_err_t _tbmch_clientattribute_do_set(tbmch_clientattribute_t *clientattribute, cJSON *value)
+tbcmh_err_t _tbcmh_clientattribute_do_set(tbcmh_clientattribute_t *clientattribute, cJSON *value)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");

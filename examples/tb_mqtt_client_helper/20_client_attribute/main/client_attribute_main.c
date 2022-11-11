@@ -27,7 +27,7 @@ static const char *TAG = "CLIENT_ATTRIBUTE";
 
 //Don't call TBMCH API in these callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_clientattribute_on_get_model(tbmch_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_model(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get model (a client attribute)");
     
@@ -36,34 +36,34 @@ tbmch_value_t* tb_clientattribute_on_get_model(tbmch_handle_t client, void *cont
 
 //Don't call TBMCH API in these callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_clientattribute_on_get_setpoint(tbmch_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get setpoint (a client attribute)");
     
     return cJSON_CreateNumber(25.5);
 }
 
-void tb_clientattribute_send(tbmch_handle_t client)
+void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s, %s",CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
-    tbmch_clientattribute_send(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
+    tbcmh_clientattribute_send(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
+void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)
 {
-	tbmch_err_t err;
+	tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -130,20 +130,20 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbmch!");
         return;
     }
 
     ESP_LOGI(TAG, "Append client attribute: model...");
-    err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
+    err = tbcmh_clientattribute_append(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbmch_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL,
+    err = tbcmh_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL,
                             tb_clientattribute_on_get_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
@@ -156,7 +156,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true                /*!< print Rx/Tx MQTT package */
      };
-    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;
@@ -166,12 +166,12 @@ static void mqtt_app_start(void)
     ESP_LOGI(TAG, "connect tbmch ...");
     int i = 0;
     while (i<20) {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
             if (i%5 == 0){
                 tb_clientattribute_send(client);
             }
@@ -183,11 +183,11 @@ static void mqtt_app_start(void)
 
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
-    tbmch_disconnect(client);
+    tbcmh_disconnect(client);
 
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbmch ...");
-    tbmch_destroy(client);
+    tbcmh_destroy(client);
 #endif
 }
 

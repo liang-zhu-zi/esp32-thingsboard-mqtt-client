@@ -24,12 +24,12 @@
 extern "C" {
 #endif
 
-#define MAX_TBMC_RX_MSG_LENGTH (128*1024)
+#define MAX_TBCM_RX_MSG_LENGTH (128*1024)
 
 /**
  * ThingsBoard MQTT Client receiving msg info
  */
-typedef struct tbmc_rx_msg_info
+typedef struct tbcm_rx_msg_info
 {
     char *topic;            /*!< Topic associated with this event */
     char *payload;          /*!< Payload/Data associated with this event */
@@ -37,12 +37,12 @@ typedef struct tbmc_rx_msg_info
     int payload_len;            /*!< Length of the data for this event */
     int total_payload_len;      /*!< Total length of the data (longer data are supplied with multiple events) */
     int current_payload_offset; /*!< Actual offset for the data associated with this event */
-} tbmc_rx_msg_info;
+} tbcm_rx_msg_info;
 
 /**
  * ThingsBoard MQTT Client payload buffer
  */
-typedef struct tbmc_payload_buffer {
+typedef struct tbcm_payload_buffer {
     char *topic;            /*!< Topic associated with this event */
     char *payload;          /*!< Payload/Data associated with this event */
     int topic_len;          /*!< Length of the topic for this event associated with this event */
@@ -51,14 +51,14 @@ typedef struct tbmc_payload_buffer {
     //int current_payload_offset; /*!< Actual offset for the data associated with this event */
 
     int received_len;           /*!< Alread received payload/data length */
-} tbmc_payload_buffer_t;
+} tbcm_payload_buffer_t;
 
-typedef void (*tbmc_payload_buffer_on_process_t)(void *context/*client*/, tbmc_rx_msg_info* rx_msg);
+typedef void (*tbcm_payload_buffer_on_process_t)(void *context/*client*/, tbcm_rx_msg_info* rx_msg);
 
-void tbmc_payload_buffer_init(tbmc_payload_buffer_t *buffer);
-void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info *rx_msg,
-                tbmc_payload_buffer_on_process_t on_payload_process, void *context/*client*/);
-void tbmc_payload_buffer_clear(tbmc_payload_buffer_t *buffer);
+void tbcm_payload_buffer_init(tbcm_payload_buffer_t *buffer);
+void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info *rx_msg,
+                tbcm_payload_buffer_on_process_t on_payload_process, void *context/*client*/);
+void tbcm_payload_buffer_clear(tbcm_payload_buffer_t *buffer);
 
 #ifdef __cplusplus
 }

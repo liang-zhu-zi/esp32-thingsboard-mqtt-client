@@ -29,7 +29,7 @@ static bool g_attributes_are_initialized_from_server = false;
 
 //Don't call TBMCH API in these callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_clientattribute_on_get_setpoint(tbmch_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get setpoint (a client attribute)");
     
@@ -38,7 +38,7 @@ tbmch_value_t* tb_clientattribute_on_get_setpoint(tbmch_handle_t client, void *c
 
 //Don't call TBMCH API in these callback!
 //Free value by caller/(tbmch library)!
-void tb_clientattribute_on_set_setpoint(tbmch_handle_t client, void *context, const tbmch_value_t *value)
+void tb_clientattribute_on_set_setpoint(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set setpoint (a client-side attribute)");
     if (!value) {
@@ -56,15 +56,15 @@ void tb_clientattribute_on_set_setpoint(tbmch_handle_t client, void *context, co
     }
 }
 
-void tb_clientattribute_send(tbmch_handle_t client)
+void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s", CLIENTATTRIBUTE_SETPOINT);
-    tbmch_clientattribute_send(client, 1, CLIENTATTRIBUTE_SETPOINT);
+    tbcmh_clientattribute_send(client, 1, CLIENTATTRIBUTE_SETPOINT);
 }
 
 //Don't call TBMCH API in this callback!
 //Free value by caller/(tbmch library)!
-tbmch_err_t tb_sharedattribute_on_set_sntp_server(tbmch_handle_t client, void *context, const tbmch_value_t *value)
+tbcmh_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");
     if (!value) {
@@ -84,30 +84,30 @@ tbmch_err_t tb_sharedattribute_on_set_sntp_server(tbmch_handle_t client, void *c
     return ESP_OK;
 }
 
-void tb_attributesrequest_on_response(tbmch_handle_t client, void *context, int request_id)
+void tb_attributesrequest_on_response(tbcmh_handle_t client, void *context, int request_id)
 {
     ESP_LOGI(TAG, "Receiving response of the attribute request! request_id=%d", request_id);
 
     g_attributes_are_initialized_from_server = true;
 }
-void tb_attributesrequest_on_timeout(tbmch_handle_t client, void *context, int request_id)
+void tb_attributesrequest_on_timeout(tbcmh_handle_t client, void *context, int request_id)
 {
     ESP_LOGI(TAG, "Timeout of the attribute request! request_id=%d", request_id);
 }
 
-void tb_attributesrequest_send(tbmch_handle_t client)
+void tb_attributesrequest_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Request attributes, client attributes: %s; shared attributes: %s",
         CLIENTATTRIBUTE_SETPOINT, SHAREDATTRIBUTE_SNTP_SERVER);
 
-    tbmch_attributesrequest_send(client, NULL,
+    tbcmh_attributesrequest_send(client, NULL,
                                      tb_attributesrequest_on_response,
                                      tb_attributesrequest_on_timeout,
                                      2, CLIENTATTRIBUTE_SETPOINT, SHAREDATTRIBUTE_SNTP_SERVER);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
+void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 
@@ -115,14 +115,14 @@ void tb_on_connected(tbmch_handle_t client, void *context)
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)
 {
-	tbmch_err_t err;
+	tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -189,14 +189,14 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbmch!");
         return;
     }
 
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbmch_clientattribute_with_set_append(client, CLIENTATTRIBUTE_SETPOINT, NULL, 
+    err = tbcmh_clientattribute_with_set_append(client, CLIENTATTRIBUTE_SETPOINT, NULL, 
                             tb_clientattribute_on_get_setpoint, tb_clientattribute_on_set_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
@@ -204,7 +204,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    err = tbmch_sharedattribute_append(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
+    err = tbcmh_sharedattribute_append(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
                             tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
@@ -217,7 +217,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
     };
-    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;
@@ -226,12 +226,12 @@ static void mqtt_app_start(void)
     // Do...
     int i = 0;
     while (i<20) {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
 			if (g_attributes_are_initialized_from_server) {
 	            if (i%5 == 0){
 	                tb_clientattribute_send(client);
@@ -245,11 +245,11 @@ static void mqtt_app_start(void)
 
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
-    tbmch_disconnect(client);
+    tbcmh_disconnect(client);
 
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbmch ...");
-    tbmch_destroy(client);
+    tbcmh_destroy(client);
 #endif
 }
 

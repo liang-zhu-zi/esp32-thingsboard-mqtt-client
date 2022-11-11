@@ -44,7 +44,7 @@
 //#include "provision_observer.h"
 //#include "ota_update_observer.h"
 
-//#include "tbmch_provision.h"
+//#include "tbcmh_provision.h"
 
 /**
  * Reference tbc_provison_config_t
@@ -136,7 +136,7 @@ static void *_provision_storage_copy_to_config(const tbc_provison_storage_t *sto
     return config;
 }
 
-static void _tb_provision_on_response(tbmch_handle_t client, void *context,
+static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
                                 int request_id, const tbc_transport_credentials_config_t *credentials)
 {
    TBC_CHECK_PTR(client);
@@ -147,28 +147,28 @@ static void _tb_provision_on_response(tbmch_handle_t client, void *context,
    TBC_LOGE("Provision failurs and the device will not work!");
 }
 
-static void _tb_provision_on_timeout(tbmch_handle_t client, void *context, int request_id)
+static void _tb_provision_on_timeout(tbcmh_handle_t client, void *context, int request_id)
 {
    TBC_LOGE("Provision timeout and the device will not work!");
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_frontconn_on_connected(tbmch_handle_t client, void *context)
+void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "FRONT CONN: Connected to thingsboard server!");
 
-    tbmch_subscribe(client, TB_MQTT_TOPIC_PROVISION_RESPONSE);
+    tbcmh_subscribe(client, TB_MQTT_TOPIC_PROVISION_RESPONSE);
     sleep(1);
 
     tbc_provison_config_t provision_config = {0};
     _provision_storage_copy_to_config(&_provision_storage, &provision_config);
-    tbmch_provision_request(client, &provision_config, NULL,
+    tbcmh_provision_request(client, &provision_config, NULL,
                             _tb_provision_on_response,
                             _tb_provision_on_timeout);
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_frontconn_on_disconnected(tbmch_handle_t client, void *context)
+void tb_frontconn_on_disconnected(tbcmh_handle_t client, void *context)
 {
    ESP_LOGI(TAG, "FRONT CONN: Disconnected from thingsboard server!");
 }
@@ -177,7 +177,7 @@ void tb_frontconn_on_disconnected(tbmch_handle_t client, void *context)
 // X.509:
 // self._username = "provision"
 // self.tls_set(ca_certs="mqttserver.pub.pem", tls_version=ssl.PROTOCOL_TLSv1_2)
-tbmch_handle_t tbmch_frontconn_create(const tbc_transport_config_t *transport,
+tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                       const tbc_provison_config_t *provision)
 {
     if (!transport) {
@@ -190,7 +190,7 @@ tbmch_handle_t tbmch_frontconn_create(const tbc_transport_config_t *transport,
     }
 
     ESP_LOGI(TAG, "FRONT CONN: Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "FRONT CONN: Failure to init tbmch!");
         return NULL;
@@ -205,13 +205,13 @@ tbmch_handle_t tbmch_frontconn_create(const tbc_transport_config_t *transport,
     temp.credentials.username   = TB_MQTT_PARAM_PROVISION_USERNAME;     /*!< MQTT/HTTP.      username */
     temp.credentials.password   = NULL;                                 /*!< MQTT/HTTP.      password */
     temp.credentials.token      = NULL;                                 /*!< MQTT/HTTP/CoAP: username/path param/path param */
-    bool result = tbmch_connect_ex(client, &temp, NULL,
+    bool result = tbcmh_connect_ex(client, &temp, NULL,
                                    tb_frontconn_on_connected,
                                    tb_frontconn_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "FRONT CONN: failure to connect to tbmch!");
         ESP_LOGI(TAG, "FRONT CONN: Destroy tbmch ...");
-        tbmch_destroy(client);
+        tbcmh_destroy(client);
         return NULL;
     }
 

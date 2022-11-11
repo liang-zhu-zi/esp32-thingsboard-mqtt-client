@@ -22,12 +22,12 @@
 
 const static char *TAG = "client_rpc";
 
-/*!< Initialize tbmch_clientrpc_t */
-tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
-                                         const char *method, ////tbmch_rpc_params_t *params,
+/*!< Initialize tbcmh_clientrpc_t */
+tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
+                                         const char *method, ////tbcmh_rpc_params_t *params,
                                          void *context,
-                                         tbmch_clientrpc_on_response_t on_response,
-                                         tbmch_clientrpc_on_timeout_t on_timeout)
+                                         tbcmh_clientrpc_on_response_t on_response,
+                                         tbcmh_clientrpc_on_timeout_t on_timeout)
 {
     if (!method) {
         TBC_LOGE("method is NULL");
@@ -38,15 +38,15 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
         return NULL;
     }
     
-    tbmch_clientrpc_t *clientrpc = TBMCH_MALLOC(sizeof(tbmch_clientrpc_t));
+    tbcmh_clientrpc_t *clientrpc = TBCMH_MALLOC(sizeof(tbcmh_clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientrpc, 0x00, sizeof(tbmch_clientrpc_t));
+    memset(clientrpc, 0x00, sizeof(tbcmh_clientrpc_t));
     clientrpc->client = client;
-    clientrpc->method = TBMCH_MALLOC(strlen(method)+1);
+    clientrpc->method = TBCMH_MALLOC(strlen(method)+1);
     if (clientrpc->method) {
         strcpy(clientrpc->method, method);
     }
@@ -57,22 +57,22 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
     return clientrpc;
 }
 
-tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src)
+tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src)
 {
     if (!src) {
         TBC_LOGE("src is NULL");
         return NULL;
     }
     
-    tbmch_clientrpc_t *clientrpc = TBMCH_MALLOC(sizeof(tbmch_clientrpc_t));
+    tbcmh_clientrpc_t *clientrpc = TBCMH_MALLOC(sizeof(tbcmh_clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientrpc, 0x00, sizeof(tbmch_clientrpc_t));
+    memset(clientrpc, 0x00, sizeof(tbcmh_clientrpc_t));
     clientrpc->client = src->client;
-    clientrpc->method = TBMCH_MALLOC(strlen(src->method)+1);
+    clientrpc->method = TBCMH_MALLOC(strlen(src->method)+1);
     if (clientrpc->method) {
         strcpy(clientrpc->method, src->method);
     }
@@ -83,7 +83,7 @@ tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src)
     return clientrpc;
 }
 
-int _tbmch_clientrpc_get_request_id(tbmch_clientrpc_t *clientrpc)
+int _tbcmh_clientrpc_get_request_id(tbcmh_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
         TBC_LOGE("clientrpc is NULL");
@@ -93,20 +93,20 @@ int _tbmch_clientrpc_get_request_id(tbmch_clientrpc_t *clientrpc)
     return clientrpc->request_id;
 }
 
-/*!< Destroys the tbmch_clientrpc_t */
-tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
+/*!< Destroys the tbcmh_clientrpc_t */
+tbcmh_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
         TBC_LOGE("clientrpc is NULL");
         return ESP_FAIL;
     }
 
-    TBMCH_FREE(clientrpc->method);
-    TBMCH_FREE(clientrpc);
+    TBCMH_FREE(clientrpc->method);
+    TBCMH_FREE(clientrpc);
     return ESP_OK;
 }
 
-void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, const tbmch_rpc_results_t *results)
+void _tbcmh_clientrpc_do_response(tbcmh_clientrpc_t *clientrpc, const tbcmh_rpc_results_t *results)
 {
     if (!clientrpc) {
         TBC_LOGE("clientrpc is NULL");
@@ -123,7 +123,7 @@ void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, const tbmch_rpc_
     return; // ESP_OK;
 }
 
-void _tbmch_clientrpc_do_timeout(tbmch_clientrpc_t *clientrpc)
+void _tbcmh_clientrpc_do_timeout(tbcmh_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
         TBC_LOGE("clientrpc is NULL");

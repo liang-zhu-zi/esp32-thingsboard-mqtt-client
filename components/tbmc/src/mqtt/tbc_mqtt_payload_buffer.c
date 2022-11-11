@@ -29,9 +29,9 @@
 
 #include "tbc_mqtt_payload_buffer.h"
 
-const static char *TAG = "tbmc_payload_buffer";
+const static char *TAG = "tbcm_payload_buffer";
 
-void tbmc_payload_buffer_init(tbmc_payload_buffer_t *buffer)
+void tbcm_payload_buffer_init(tbcm_payload_buffer_t *buffer)
 {
     if (!buffer) {
          TBC_LOGE("buffer is NULL!");
@@ -47,7 +47,7 @@ void tbmc_payload_buffer_init(tbmc_payload_buffer_t *buffer)
 
     buffer->received_len = 0;
 }
-static void _tbmc_payload_buffer_free(tbmc_payload_buffer_t *buffer)
+static void _tbcm_payload_buffer_free(tbcm_payload_buffer_t *buffer)
 {
     if (!buffer) {
          TBC_LOGE("buffer is NULL!");
@@ -55,11 +55,11 @@ static void _tbmc_payload_buffer_free(tbmc_payload_buffer_t *buffer)
     }
 
     if (buffer->topic) {
-        TBMC_FREE(buffer->topic);
+        TBCM_FREE(buffer->topic);
         buffer->topic = NULL;       /*!< Topic associated with this event */
     }
     if (buffer->payload) {
-        TBMC_FREE(buffer->payload);
+        TBCM_FREE(buffer->payload);
         buffer->payload = NULL;     /*!< Payload/Data associated with this event */
     }
     buffer->topic_len = 0;              /*!< Length of the topic for this event associated with this event */
@@ -70,7 +70,7 @@ static void _tbmc_payload_buffer_free(tbmc_payload_buffer_t *buffer)
     buffer->received_len = 0;
 }
 
-static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info *rx_msg)
+static void _tbcm_payload_buffer_feed(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info *rx_msg)
 {
     if (!buffer) {
          TBC_LOGE("buffer is NULL!");
@@ -84,12 +84,12 @@ static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg
     // copy topic
     if (rx_msg->topic && (rx_msg->topic_len>0)) {
         if (buffer->topic) {
-            TBMC_FREE(buffer->topic);
+            TBCM_FREE(buffer->topic);
             buffer->topic = NULL;
             buffer->topic_len = 0;
         }
 
-        buffer->topic = TBMC_MALLOC(rx_msg->topic_len);
+        buffer->topic = TBCM_MALLOC(rx_msg->topic_len);
         if (!buffer->topic) {
             TBC_LOGE("buffer->topic is NULL!");
             return;
@@ -104,7 +104,7 @@ static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg
         if (!buffer->payload) {
             buffer->total_payload_len = 0;
             buffer->received_len = 0;
-            buffer->payload = TBMC_MALLOC(rx_msg->total_payload_len);
+            buffer->payload = TBCM_MALLOC(rx_msg->total_payload_len);
             if (buffer->payload) {
                 buffer->total_payload_len = rx_msg->total_payload_len;
                 buffer->received_len += rx_msg->payload_len;
@@ -123,7 +123,7 @@ static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg
     }
 }
 
-static bool _tbmc_rx_msg_is_completion(tbmc_rx_msg_info *rx_msg)
+static bool _tbcm_rx_msg_is_completion(tbcm_rx_msg_info *rx_msg)
 {
     if (!rx_msg) {
         return false;
@@ -144,7 +144,7 @@ static bool _tbmc_rx_msg_is_completion(tbmc_rx_msg_info *rx_msg)
 
     return true;
 }
-static bool _tbmc_payload_buffer_is_completion(tbmc_payload_buffer_t *buffer)
+static bool _tbcm_payload_buffer_is_completion(tbcm_payload_buffer_t *buffer)
 {
     if (!buffer) {
         return false;
@@ -170,8 +170,8 @@ static bool _tbmc_payload_buffer_is_completion(tbmc_payload_buffer_t *buffer)
     return true;
 }
 
-void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info *rx_msg,
-                tbmc_payload_buffer_on_process_t on_payload_process, void *context/*client*/)
+void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info *rx_msg,
+                tbcm_payload_buffer_on_process_t on_payload_process, void *context/*client*/)
 {
     // 0: if parameter is invalid, then return.
     if (!buffer || !rx_msg || !on_payload_process) {
@@ -181,9 +181,9 @@ void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info 
     }
     
     // 1: if new msg(rx_msg)->total_payload_len is too long(128K), then return.
-    if (rx_msg->total_payload_len > MAX_TBMC_RX_MSG_LENGTH) {
-        TBC_LOGE("rx_msg->total_payload_len(%d) is bigger than MAX_TBMC_RX_MSG_LENGTH(%d)",
-            rx_msg->total_payload_len, MAX_TBMC_RX_MSG_LENGTH);
+    if (rx_msg->total_payload_len > MAX_TBCM_RX_MSG_LENGTH) {
+        TBC_LOGE("rx_msg->total_payload_len(%d) is bigger than MAX_TBCM_RX_MSG_LENGTH(%d)",
+            rx_msg->total_payload_len, MAX_TBCM_RX_MSG_LENGTH);
         return;
     }
     // check rx_msg->current_payload_offset
@@ -197,21 +197,21 @@ void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info 
     // 2: if new msg(rx_msg)->topic is NOT NULL, then clear old un-completion msg.
     if (rx_msg->topic) {
         TBC_LOGD("rx_msg->topic(%.*s) is NOT NULL! free payload buffer!", rx_msg->topic_len, rx_msg->topic);
-        _tbmc_payload_buffer_free(buffer);
+        _tbcm_payload_buffer_free(buffer);
     }
 
     // 3: if new msg(rx_msg) is completion, then process it, return.
-    if (_tbmc_rx_msg_is_completion(rx_msg)) {
+    if (_tbcm_rx_msg_is_completion(rx_msg)) {
         on_payload_process(context/*client*/, rx_msg);
         return;
     }
 
     // 4: feed new msg(rx_msg) to buffer.
-    _tbmc_payload_buffer_feed(buffer, rx_msg);
+    _tbcm_payload_buffer_feed(buffer, rx_msg);
 
     // 5: if buffer is completion, then process it, return.
-    if (_tbmc_payload_buffer_is_completion(buffer)) {
-        tbmc_rx_msg_info temp_rx_msg;
+    if (_tbcm_payload_buffer_is_completion(buffer)) {
+        tbcm_rx_msg_info temp_rx_msg;
         temp_rx_msg.topic       = buffer->topic;        /*!< Topic associated with this event */
         temp_rx_msg.topic_len   = buffer->topic_len;    /*!< Length of the topic for this event associated with this event */
         temp_rx_msg.payload             = buffer->payload;          /*!< Payload/Data associated with this event */
@@ -219,13 +219,13 @@ void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info 
         temp_rx_msg.total_payload_len   = buffer->total_payload_len;/*!< Total length of the data (longer data are supplied with multiple events) */
         temp_rx_msg.current_payload_offset = 0;                     /*!< Actual offset for the data associated with this event */
         on_payload_process(context/*client*/, &temp_rx_msg);
-        _tbmc_payload_buffer_free(buffer);
+        _tbcm_payload_buffer_free(buffer);
         return;
     }
 }
 
-void tbmc_payload_buffer_clear(tbmc_payload_buffer_t *buffer)
+void tbcm_payload_buffer_clear(tbcm_payload_buffer_t *buffer)
 {
-    _tbmc_payload_buffer_free(buffer);
+    _tbcm_payload_buffer_free(buffer);
 }
 

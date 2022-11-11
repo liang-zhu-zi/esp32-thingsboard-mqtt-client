@@ -38,23 +38,23 @@
 //#include "provision_observer.h"
 //#include "ota_update_observer.h"
 
-//#include "tbmch_provision.h"
+//#include "tbcmh_provision.h"
 
 static const char *TAG = "NORMAL-CONN";
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_normalconn_on_connected(tbmch_handle_t client, void *context)
+void tb_normalconn_on_connected(tbcmh_handle_t client, void *context)
 {
    ESP_LOGI(TAG, "NORMAL CONN: Connected to thingsboard server!");
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_normalconn_on_disconnected(tbmch_handle_t client, void *context)
+void tb_normalconn_on_disconnected(tbcmh_handle_t client, void *context)
 {
    ESP_LOGI(TAG, "NORMAL CONN: Disconnected from thingsboard server!");
 }
 
-tbmch_handle_t tbmch_normalconn_create(const tbc_transport_config_t *transport)
+tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport)
 {
     if (!transport) {
         ESP_LOGE(TAG, "NORMAL CONN: transport is NULL!");
@@ -62,20 +62,20 @@ tbmch_handle_t tbmch_normalconn_create(const tbc_transport_config_t *transport)
     }
         
     ESP_LOGI(TAG, "NORMAL CONN: Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "NORMAL CONN: Failure to init tbmch!");
         return NULL;
     }
 
     ESP_LOGI(TAG, "NORMAL CONN: Connect tbmch ...");
-    bool result = tbmch_connect_ex(client, transport, NULL,
+    bool result = tbcmh_connect_ex(client, transport, NULL,
                                    tb_normalconn_on_connected,
                                    tb_normalconn_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "NORMAL CONN: failure to connect to tbmch!");
         ESP_LOGI(TAG, "NORMAL CONN: Destroy tbmch ...");
-        tbmch_destroy(client);
+        tbcmh_destroy(client);
     }
 
     return client;

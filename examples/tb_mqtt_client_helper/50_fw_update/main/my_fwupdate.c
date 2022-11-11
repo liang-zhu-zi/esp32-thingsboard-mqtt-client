@@ -91,7 +91,7 @@ static bool ____fwupdate_diagnostic(void)
 }
 
 //Don't call TBMCH API in the callback!
-static const char* _my_fwupdate_on_get_current_title(tbmch_handle_t client, void *context)
+static const char* _my_fwupdate_on_get_current_title(tbcmh_handle_t client, void *context)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -110,7 +110,7 @@ static const char* _my_fwupdate_on_get_current_title(tbmch_handle_t client, void
     return NULL; //CURRENT_FW_TITLE;
 }
 //Don't call TBMCH API in the callback!
-static const char* _my_fwupdate_on_get_current_version(tbmch_handle_t client, void *context)
+static const char* _my_fwupdate_on_get_current_version(tbcmh_handle_t client, void *context)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -131,7 +131,7 @@ static const char* _my_fwupdate_on_get_current_version(tbmch_handle_t client, vo
 
 //Don't call TBMCH API in the callback!
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-static tbmch_err_t _my_fwupdate_on_negotiate(tbmch_handle_t client, void *context,
+static tbcmh_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
         const char *fw_title, const char *fw_version, int fw_size,
         const char *fw_checksum, const char *fw_checksum_algorithm,
         char *fw_error, int error_size)
@@ -173,7 +173,7 @@ static tbmch_err_t _my_fwupdate_on_negotiate(tbmch_handle_t client, void *contex
 
 //Don't call TBMCH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbmch_err_t _my_fwupdate_on_write(tbmch_handle_t client, void *context,
+static tbcmh_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
                 int request_id, int chunk_id, const void *fw_data, int data_read,
                 char *fw_error, int error_size)
 {
@@ -265,7 +265,7 @@ static tbmch_err_t _my_fwupdate_on_write(tbmch_handle_t client, void *context,
 
 //Don't call TBMCH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbmch_err_t _my_fwupdate_on_end(tbmch_handle_t client, void *context,
+static tbcmh_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
                                 int request_id, int chunk_id, char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
@@ -299,7 +299,7 @@ static tbmch_err_t _my_fwupdate_on_end(tbmch_handle_t client, void *context,
 }
 
 //Don't call TBMCH API in the callback!
-static void _my_fwupdate_on_abort(tbmch_handle_t client, void *context,
+static void _my_fwupdate_on_abort(tbcmh_handle_t client, void *context,
                                 int request_id, int chunk_id/*current chunk_id*/)
 {
     // TODO: division F/W or S/W !!!!
@@ -311,7 +311,7 @@ static void _my_fwupdate_on_abort(tbmch_handle_t client, void *context,
     ____fwupdate_reset();
 }
 
-tbmch_err_t my_fwupdate_init(tbmch_handle_t client_)
+tbcmh_err_t my_fwupdate_init(tbcmh_handle_t client_)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -368,8 +368,8 @@ tbmch_err_t my_fwupdate_init(tbmch_handle_t client_)
     ESP_LOGI(TAG, "Update partition type %d subtype %d (offset 0x%08x)",
             _my_fwupdate.update_partition->type, _my_fwupdate.update_partition->subtype, _my_fwupdate.update_partition->address);
 
-    tbmch_otaupdate_config_t otaupdate_config = {
-        .ota_type = TBMCH_OTAUPDATE_TYPE_FW, /*!< FW/TBMCH_OTAUPDATE_TYPE_FW or SW/TBMCH_OTAUPDATE_TYPE_SW  */
+    tbcmh_otaupdate_config_t otaupdate_config = {
+        .ota_type = TBCMH_OTAUPDATE_TYPE_FW, /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
         .chunk_size = 16*1024,               /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
     
         .context = &_my_fwupdate, //NULL,
@@ -382,7 +382,7 @@ tbmch_err_t my_fwupdate_init(tbmch_handle_t client_)
 
         ////.is_first_boot = _my_fwupdate.runnning_app_was_first_boot
     };
-    tbmch_err_t err = tbmch_otaupdate_append(client_, FW_DESCRIPTION, &otaupdate_config);
+    tbcmh_err_t err = tbcmh_otaupdate_append(client_, FW_DESCRIPTION, &otaupdate_config);
     return err;
 }
 

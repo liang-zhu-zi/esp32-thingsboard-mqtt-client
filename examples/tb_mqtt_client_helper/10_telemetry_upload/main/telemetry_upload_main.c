@@ -27,7 +27,7 @@ static const char *TAG = "TELEMETRY_UPLOAD";
 
 //Don't call TBMCH API in this callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_telemetry_on_get_temperature(tbmch_handle_t client, void *context)
+tbcmh_value_t* tb_telemetry_on_get_temperature(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get temperature (a time-series data)");
     static float temp_array[] = {25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 27.5, 27.0, 26.5};
@@ -42,7 +42,7 @@ tbmch_value_t* tb_telemetry_on_get_temperature(tbmch_handle_t client, void *cont
 
 //Don't call TBMCH API in this callback!
 //Free return value by caller/(tbmch library)!
-tbmch_value_t* tb_telemetry_on_get_humidity(tbmch_handle_t client, void *context)
+tbcmh_value_t* tb_telemetry_on_get_humidity(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Get humidity (a time-series data)");
 
@@ -56,28 +56,28 @@ tbmch_value_t* tb_telemetry_on_get_humidity(tbmch_handle_t client, void *context
     return humi;
 }
 
-void tb_telemetry_send(tbmch_handle_t client)
+void tb_telemetry_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 
-    tbmch_telemetry_send(client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
+    tbcmh_telemetry_send(client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
-void tb_on_connected(tbmch_handle_t client, void *context)
+void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
-void tb_on_disconnected(tbmch_handle_t client, void *context)
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Disconnected from thingsboard server!");
 }
 
 static void mqtt_app_start(void)
 {
-	tbmch_err_t err;
+	tbcmh_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -144,20 +144,20 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbmch ...");
-    tbmch_handle_t client = tbmch_init();
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbmch!");
         return;
     }
 
     ESP_LOGI(TAG, "Append telemetry: temprature...");
-    err = tbmch_telemetry_append(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
+    err = tbcmh_telemetry_append(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_TEMPRATUE);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append telemetry: humidity...");
-    err = tbmch_telemetry_append(client, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
+    err = tbcmh_telemetry_append(client, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_HUMIDITY);
         goto exit_destroy;
@@ -169,7 +169,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true                /*!< print Rx/Tx MQTT package */
      };
-    bool result = tbmch_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbmch!");
         goto exit_destroy;
@@ -179,12 +179,12 @@ static void mqtt_app_start(void)
     ESP_LOGI(TAG, "connect tbmch ...");
     int i = 0;
     while (i<20) {
-        if (tbmch_has_events(client)) {
-            tbmch_run(client);
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
         }
 
         i++;
-        if (tbmch_is_connected(client)) {
+        if (tbcmh_is_connected(client)) {
             if (i%5 == 0){
                 tb_telemetry_send(client);
             }
@@ -196,11 +196,11 @@ static void mqtt_app_start(void)
 
 
     ESP_LOGI(TAG, "Disconnect tbmch ...");
-    tbmch_disconnect(client);
+    tbcmh_disconnect(client);
 
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbmch ...");
-    tbmch_destroy(client);
+    tbcmh_destroy(client);
 #endif
 }
 
