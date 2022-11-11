@@ -21,7 +21,7 @@
 //#include "esp_flash_partitions.h"
 //#include "esp_partition.h"
 
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
 extern tbmch_err_t my_fwupdate_init(tbmch_handle_t client_);

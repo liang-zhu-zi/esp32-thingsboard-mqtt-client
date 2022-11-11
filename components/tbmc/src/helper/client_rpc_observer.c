@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 #include "esp_err.h"
 
 #include "client_rpc_observer.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "client_rpc";
 
@@ -30,17 +30,17 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
                                          tbmch_clientrpc_on_timeout_t on_timeout)
 {
     if (!method) {
-        TBMCH_LOGE("method is NULL");
+        TBC_LOGE("method is NULL");
         return NULL;
     }
     if (!on_response) {
-        TBMCH_LOGE("on_response is NULL");
+        TBC_LOGE("on_response is NULL");
         return NULL;
     }
     
     tbmch_clientrpc_t *clientrpc = TBMCH_MALLOC(sizeof(tbmch_clientrpc_t));
     if (!clientrpc) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -60,13 +60,13 @@ tbmch_clientrpc_t *_tbmch_clientrpc_init(tbmch_handle_t client, int request_id,
 tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src)
 {
     if (!src) {
-        TBMCH_LOGE("src is NULL");
+        TBC_LOGE("src is NULL");
         return NULL;
     }
     
     tbmch_clientrpc_t *clientrpc = TBMCH_MALLOC(sizeof(tbmch_clientrpc_t));
     if (!clientrpc) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -86,7 +86,7 @@ tbmch_clientrpc_t *_tbmch_clientrpc_clone_wo_listentry(tbmch_clientrpc_t *src)
 int _tbmch_clientrpc_get_request_id(tbmch_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
-        TBMCH_LOGE("clientrpc is NULL");
+        TBC_LOGE("clientrpc is NULL");
         return -1;
     }
 
@@ -97,7 +97,7 @@ int _tbmch_clientrpc_get_request_id(tbmch_clientrpc_t *clientrpc)
 tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
-        TBMCH_LOGE("clientrpc is NULL");
+        TBC_LOGE("clientrpc is NULL");
         return ESP_FAIL;
     }
 
@@ -109,13 +109,13 @@ tbmch_err_t _tbmch_clientrpc_destroy(tbmch_clientrpc_t *clientrpc)
 void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, const tbmch_rpc_results_t *results)
 {
     if (!clientrpc) {
-        TBMCH_LOGE("clientrpc is NULL");
+        TBC_LOGE("clientrpc is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, clientrpc->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", clientrpc->key);
+        TBC_LOGW("value is NULL! key=%s", clientrpc->key);
         return; // ESP_FAIL;
     }*/
 
@@ -126,13 +126,13 @@ void _tbmch_clientrpc_do_response(tbmch_clientrpc_t *clientrpc, const tbmch_rpc_
 void _tbmch_clientrpc_do_timeout(tbmch_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
-        TBMCH_LOGE("clientrpc is NULL");
+        TBC_LOGE("clientrpc is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, clientrpc->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", clientrpc->key);
+        TBC_LOGW("value is NULL! key=%s", clientrpc->key);
         return; // ESP_FAIL;
     }*/
 

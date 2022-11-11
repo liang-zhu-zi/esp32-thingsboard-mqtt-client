@@ -22,12 +22,12 @@ state "Front Connection" as FrontConn {
 }
 state "Normal Connection" as NormalConn
 
-[*] --> checkCredentials : tbc_transport_credentials_get()
+[*] --> checkCredentials : tbc_transport_credentials_memory_get()
 
 checkCredentials --> FrontConn : [no credentials]
 checkCredentials --> NormalConn : [has credentials]
 
-FrontConn : [Entry]/ tbc_transport_credentials_clean()
+FrontConn : [Entry]/ tbc_transport_credentials_memory_clean()
 
     Connecting: connect_retry_times = 0;
     Connecting: [Entry]/ _provision_connect()
@@ -42,12 +42,12 @@ FrontConn : [Entry]/ tbc_transport_credentials_clean()
 
         ProvisionRequest: request_retry_times = 0;
         ProvisionRequest: [Entry]/ sendRequest()
-        ProvisionRequest --> NormalConn : [response successed]/ tbc_transport_credentials_save()
+        ProvisionRequest --> NormalConn : [response successed]/ tbc_transport_credentials_memory_save()
         ProvisionRequest --> CheckRetryRequestTimes: [response failed or Timeout]/
 
         CheckRetryRequestTimes --> ProvisionRequest : [request_retry_times++<=9]/
         CheckRetryRequestTimes --> [*] : [request_retry_times++>9]/
 
-NormalConn : [Entry]/ tbc_transport_credentials_get()
+NormalConn : [Entry]/ tbc_transport_credentials_memory_get()
 NormalConn --> [*]
 ```

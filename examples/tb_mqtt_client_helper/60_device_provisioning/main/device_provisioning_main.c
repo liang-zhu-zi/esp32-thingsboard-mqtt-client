@@ -17,14 +17,14 @@
 #include "esp_event.h"
 #include "esp_log.h"
 
-#include "tbc_util.h"
+#include "tbc_utils.h"
 
 #include "tbc_transport_config.h"
 
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
-#include "tbc_transport_credentials.h"
+#include "tbc_transport_credentials_memory.h"
 
 static const char *TAG = "DEVICE_PROVISION_MAIN";
 
@@ -284,8 +284,8 @@ static void mqtt_app_start()
     tbmch_handle_t client = NULL;
     bool is_front_connection = false;
 
-    tbc_transport_credentials_init();
-    tbc_transport_credentials_clean();
+    tbc_transport_credentials_memory_init();
+    tbc_transport_credentials_memory_clean();
 
     //init transport
     tbc_transport_config_t transport = {0};
@@ -306,7 +306,7 @@ static void mqtt_app_start()
             tbmch_run(client);
         }
 
-        if (is_front_connection==true && tbc_transport_credentials_is_existed()) {
+        if (is_front_connection==true && tbc_transport_credentials_memory_is_existed()) {
             // destory_front_conn(client)
             if (client) tbmch_disconnect(client);
             if (client) tbmch_destroy(client);
@@ -314,7 +314,7 @@ static void mqtt_app_start()
 
             // create_normal_connect(client) // If the credentials type is X.509, the front connection (provisioing) is one-way SSL, but the normal connection is two-way (mutual) SSL.
             memcpy(&transport.address, &_address, sizeof(_address));
-            _transport_credentials_config_copy(&transport.credentials, tbc_transport_credentials_get()); //memcpy(&transport.credentials, &_credentials, sizeof(_credentials));
+            _transport_credentials_config_copy(&transport.credentials, tbc_transport_credentials_memory_get()); //memcpy(&transport.credentials, &_credentials, sizeof(_credentials));
             memcpy(&transport.verification, &_verification, sizeof(_verification));
             memcpy(&transport.authentication, &_authentication, sizeof(_authentication));
             client = tbmch_normalconn_create(&transport);
@@ -340,7 +340,7 @@ static void mqtt_app_start()
         client = NULL;
     }
 
-    tbc_transport_credentials_uninit();
+    tbc_transport_credentials_memory_uninit();
 }
 
 #else // !CONFIG_TBC_TRANSPORT_WITH_PROVISION
@@ -350,8 +350,8 @@ static void mqtt_app_start()
     tbmch_handle_t client = NULL;
     //bool is_front_connection = false;
 
-    //tbc_transport_credentials_init();
-    //tbc_transport_credentials_clean();
+    //tbc_transport_credentials_memory_init();
+    //tbc_transport_credentials_memory_clean();
 
     //init transport
     tbc_transport_config_t transport = {0};
@@ -391,7 +391,7 @@ static void mqtt_app_start()
         client = NULL;
     }
 
-    //tbc_transport_credentials_uninit();
+    //tbc_transport_credentials_memory_uninit();
 }
 #endif
 

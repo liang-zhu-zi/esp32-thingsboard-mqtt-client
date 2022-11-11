@@ -27,14 +27,14 @@
 #include "esp_system.h"
 #include "esp_event.h"
 
-#include "tbc_util.h"
+#include "tbc_utils.h"
 
-#include "tb_mqtt_client.h"
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt.h"
+#include "tbc_mqtt_helper.h"
 
-#include "tbc_transport_credentials.h"
+#include "tbc_transport_credentials_memory.h"
 
-//#include "tb_mqtt_client_helper_log.h"
+//#include "tbc_utils.h"
 //#include "timeseries_data_helper.h"
 //#include "client_attribute_helper.h"
 //#include "shared_attribute_observer.h"
@@ -142,7 +142,7 @@ static void _tb_provision_on_response(tbmch_handle_t client, void *context,
    TBC_CHECK_PTR(client);
    TBC_CHECK_PTR(credentials);
 
-   tbc_transport_credentials_save(credentials);
+   tbc_transport_credentials_memory_save(credentials);
 
    TBC_LOGE("Provision failurs and the device will not work!");
 }

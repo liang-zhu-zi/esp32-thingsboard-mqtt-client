@@ -27,14 +27,14 @@
 /* using uri parser */
 #include "http_parser.h"
 
-#include "tbc_util.h"
+#include "tbc_utils.h"
 #include "tbc_transport_config.h"
 #include "tbc_transport_storage.h"
 
-#include "tb_mqtt_client.h"
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt.h"
+#include "tbc_mqtt_helper.h"
 
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 #include "timeseries_data_helper.h"
 #include "client_attribute_helper.h"
 #include "shared_attribute_observer.h"
@@ -192,7 +192,7 @@ tbmch_handle_t tbmch_init(void)
 {
      tbmch_t *client = (tbmch_t *)TBMCH_MALLOC(sizeof(tbmch_t));
      if (!client) {
-          TBMCH_LOGE("Unable to malloc memory! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to malloc memory! %s()", __FUNCTION__);
           return NULL;
      }
      memset(client, 0x00, sizeof(tbmch_t));
@@ -201,7 +201,7 @@ tbmch_handle_t tbmch_init(void)
      // Create a queue capable of containing 20 tbmch_msg_t structures. These should be passed by pointer as they contain a lot of data.
      client->_xQueue = xQueueCreate(40, sizeof(tbmch_msg_t));
      if (client->_xQueue == NULL) {
-          TBMCH_LOGE("failed to create the queue! %s()", __FUNCTION__);
+          TBC_LOGE("failed to create the queue! %s()", __FUNCTION__);
      }
      _response_timer_create(client);
 
@@ -212,7 +212,7 @@ tbmch_handle_t tbmch_init(void)
 
      client->_lock = xSemaphoreCreateMutex();
      if (client->_lock == NULL)  {
-          TBMCH_LOGE("failed to create the lock!");
+          TBC_LOGE("failed to create the lock!");
      }
      
      memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list)); //client->tsdata_list = LIST_HEAD_INITIALIZER(client->tsdata_list);
@@ -229,7 +229,7 @@ void tbmch_destroy(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -268,7 +268,7 @@ tbmc_handle_t _tbmch_get_tbmc_handle(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return NULL;
      }
      return client->tbmqttclient;    
@@ -282,7 +282,7 @@ static char *_create_string(const char *ptr, int len)
     }
     ret = calloc(1, len + 1);
     if (!ret) {
-        TBMCH_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
+        TBC_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
         return NULL;
     }
 
@@ -317,7 +317,7 @@ static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
         }
 
         if (!address->path) {
-            TBMCH_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
+            TBC_LOGE("%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted");
             return ESP_ERR_NO_MEM;
         }
     }
@@ -352,15 +352,15 @@ bool tbmch_connect(tbmch_handle_t client_, const tbc_transport_config_esay_t *co
                    tbmch_on_disconnected_t on_disconnected)
 {
     if (!config) {
-         TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("config is NULL! %s()", __FUNCTION__);
          return false;
     }
     if (!config->uri) {
-         TBMCH_LOGE("config->uri is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("config->uri is NULL! %s()", __FUNCTION__);
          return false;
     }
     if (!config->access_token) {
-         TBMCH_LOGE("config->access_token is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("config->access_token is NULL! %s()", __FUNCTION__);
          return false;
     }
 
@@ -369,7 +369,7 @@ bool tbmch_connect(tbmch_handle_t client_, const tbc_transport_config_esay_t *co
     tbc_transport_credentials_storage_t credentials = {0};
     tbc_transport_config_t transport = {0};
     if (_parse_uri(&address, &credentials, config->uri) != ESP_OK) {
-        TBMCH_LOGE("parse config->uri(%s) failure! %s()", config->uri, __FUNCTION__);
+        TBC_LOGE("parse config->uri(%s) failure! %s()", config->uri, __FUNCTION__);
         goto fail_exit;
     }
     transport.address.schema = address.schema;
@@ -399,24 +399,24 @@ bool tbmch_connect_ex(tbmch_handle_t client_, const tbc_transport_config_t* conf
 {
     tbmch_t *client = (tbmch_t *)client_;
     if (!client) {
-         TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return false;
     }
     if (!config) {
-         TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("config is NULL! %s()", __FUNCTION__);
          return false;
     }
     if (!client->tbmqttclient) {
-         TBMCH_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
          return false;
     }
     if (!tbmc_is_disconnected(client->tbmqttclient)) {
-         TBMCH_LOGI("It already connected to thingsboard MQTT server!");
+         TBC_LOGI("It already connected to thingsboard MQTT server!");
          return false;
     }
     
     // connect
-    TBMCH_LOGI("connecting to %s://%s:%d ...",
+    TBC_LOGI("connecting to %s://%s:%d ...",
                 config->address.schema, config->address.host, config->address.port);
     bool result = tbmc_connect(client->tbmqttclient, config,
                                client,
@@ -425,7 +425,7 @@ bool tbmch_connect_ex(tbmch_handle_t client_, const tbc_transport_config_t* conf
                                _tbmch_on_sharedattr_received,
                                _tbmch_on_serverrpc_request);
     if (!result) {
-         TBMCH_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
+         TBC_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
          return false;
     }
     
@@ -442,19 +442,19 @@ void tbmch_disconnect(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!client->tbmqttclient) {
-          TBMCH_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client->tbmqttclient is NULL! %s()", __FUNCTION__);
           return;
      }
      if (tbmc_is_disconnected(client->tbmqttclient)) {
-          TBMCH_LOGI("It already disconnected from thingsboard MQTT server!");
+          TBC_LOGI("It already disconnected from thingsboard MQTT server!");
           return;
      }
 
-     TBMCH_LOGI("disconnecting from %s://%s:%d ...",
+     TBC_LOGI("disconnecting from %s://%s:%d ...",
                 client->config.address.schema, client->config.address.host, client->config.address.port);
      // empty msg queue
      while (tbmch_has_events(client_)) {
@@ -495,13 +495,13 @@ static void _tbmch_connected_on(tbmch_handle_t client_) //onConnected() // First
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;
      }
 
@@ -523,13 +523,13 @@ static void _tbmch_disonnected_on(tbmch_handle_t client_) //onDisonnected() // F
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;
      }
 
@@ -549,13 +549,13 @@ tbmch_err_t tbmch_subscribe(tbmch_handle_t client_, const char *topic)
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -572,13 +572,13 @@ tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -587,7 +587,7 @@ tbmch_err_t tbmch_telemetry_append(tbmch_handle_t client_, const char *key, void
      if (!tsdata) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGE("Init tsdata failure! key=%s. %s()", key, __FUNCTION__);
+          TBC_LOGE("Init tsdata failure! key=%s. %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -615,13 +615,13 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !key) {
-          TBMCH_LOGE("client or key is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -633,7 +633,7 @@ tbmch_err_t tbmch_telemetry_clear(tbmch_handle_t client_, const char *key)
           }
      }
      if (!tsdata) {
-          TBMCH_LOGW("Unable to remove time-series data:%s! %s()", key, __FUNCTION__);
+          TBC_LOGW("Unable to remove time-series data:%s! %s()", key, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -652,14 +652,14 @@ static tbmch_err_t _tbmch_telemetry_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -681,17 +681,17 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (count <= 0) {
-          TBMCH_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
+          TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -714,7 +714,7 @@ tbmch_err_t tbmch_telemetry_send(tbmch_handle_t client_, int count, /*const char
           if (tsdata) {
                _tbmch_tsdata_go_get(tsdata, object); // add item to json object
           } else {
-               TBMCH_LOGW("Unable to find&send time-series data:%s! %s()", key, __FUNCTION__);
+               TBC_LOGW("Unable to find&send time-series data:%s! %s()", key, __FUNCTION__);
           }
      }
      va_end(ap);
@@ -741,7 +741,7 @@ tbmch_err_t tbmch_clientattribute_with_set_append(tbmch_handle_t client_, const 
                                                   tbmch_clientattribute_on_set_t on_set)
 {
      if (!on_set)  {
-          TBMCH_LOGE("on_set is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("on_set is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      return _tbmch_clientattribute_xx_append(client_, key, context, on_get, on_set);
@@ -753,13 +753,13 @@ static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, cons
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -768,7 +768,7 @@ static tbmch_err_t _tbmch_clientattribute_xx_append(tbmch_handle_t client_, cons
      if (!clientattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGE("Init clientattribute failure! key=%s. %s()", key, __FUNCTION__);
+          TBC_LOGE("Init clientattribute failure! key=%s. %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -796,13 +796,13 @@ tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !key) {
-          TBMCH_LOGE("client or key is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -814,7 +814,7 @@ tbmch_err_t tbmch_clientattribute_clear(tbmch_handle_t client_, const char *key)
           }
      }
      if (!clientattribute) {
-          TBMCH_LOGW("Unable to remove client attribute: %s! %s()", key, __FUNCTION__);
+          TBC_LOGW("Unable to remove client attribute: %s! %s()", key, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -832,14 +832,14 @@ static tbmch_err_t _tbmch_clientattribute_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -860,17 +860,17 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (count <= 0) {
-          TBMCH_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
+          TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -893,7 +893,7 @@ tbmch_err_t tbmch_clientattribute_send(tbmch_handle_t client_, int count, /*cons
           if (clientattribute) {
                _tbmch_clientattribute_do_get(clientattribute, object); // add item to json object
           } else {
-               TBMCH_LOGW("Unable to find client-side attribute:%s! %s()", key, __FUNCTION__);
+               TBC_LOGW("Unable to find client-side attribute:%s! %s()", key, __FUNCTION__);
           }
      }
      va_end(ap);
@@ -914,13 +914,13 @@ static void _tbmch_clientattribute_on_received(tbmch_handle_t client_, const cJS
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -948,13 +948,13 @@ tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -963,7 +963,7 @@ tbmch_err_t tbmch_sharedattribute_append(tbmch_handle_t client_, const char *key
      if (!sharedattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGE("Init sharedattribute failure! key=%s. %s()", key, __FUNCTION__);
+          TBC_LOGE("Init sharedattribute failure! key=%s. %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -993,13 +993,13 @@ tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !key) {
-          TBMCH_LOGE("client or key is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1011,7 +1011,7 @@ tbmch_err_t tbmch_sharedattribute_clear(tbmch_handle_t client_, const char *key)
           }
      }
      if (!sharedattribute) {
-          TBMCH_LOGW("Unable to remove shared-attribute:%s! %s()", key, __FUNCTION__);
+          TBC_LOGW("Unable to remove shared-attribute:%s! %s()", key, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -1029,14 +1029,14 @@ static tbmch_err_t _tbmch_sharedattribute_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -1060,13 +1060,13 @@ static void _tbmch_sharedattribute_on_received(tbmch_handle_t client_, const cJS
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1120,14 +1120,14 @@ static tbmch_err_t _tbmch_attributesrequest_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -1159,17 +1159,17 @@ int tbmch_attributesrequest_send(tbmch_handle_t client_,
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (count <= 0) {
-          TBMCH_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
+          TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore, malloc client_keys & shared_keys
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      char *client_keys = TBMCH_MALLOC(MAX_KEYS_LEN);
@@ -1219,7 +1219,7 @@ next_attribute_key:
                }
           }
 
-          TBMCH_LOGW("Unable to find attribute in request:%s! %s()", key, __FUNCTION__);
+          TBC_LOGW("Unable to find attribute in request:%s! %s()", key, __FUNCTION__);
      }
      va_end(ap);
 
@@ -1230,14 +1230,14 @@ next_attribute_key:
                                _tbmch_on_attrrequest_timeout,
                                1/*qos*/, 0/*retain*/);
      if (request_id<0) {
-          TBMCH_LOGE("Init tbmc_attributes_request failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init tbmc_attributes_request failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
      }
 
      // Create attributesrequest
      tbmch_attributesrequest_t *attributesrequest = _tbmch_attributesrequest_init(client_, request_id, context, on_response, on_timeout);
      if (!attributesrequest) {
-          TBMCH_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
      }
 
@@ -1285,17 +1285,17 @@ static int _tbmch_attributesrequest_send_4_ota_sharedattributes(tbmch_handle_t c
 
       tbmch_t *client = (tbmch_t*)client_;
       if (!client) {
-           TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
            return ESP_FAIL;
       }
       if (count <= 0) {
-           TBMCH_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
+           TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
            return ESP_FAIL;
       }
  
       // Take semaphore, malloc client_keys & shared_keys
       //if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-      //     TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+      //     TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
       //     return ESP_FAIL;
       //}
       char *shared_keys = TBMCH_MALLOC(MAX_KEYS_LEN);
@@ -1330,14 +1330,14 @@ static int _tbmch_attributesrequest_send_4_ota_sharedattributes(tbmch_handle_t c
                                 _tbmch_on_attrrequest_timeout,
                                 1/*qos*/, 0/*retain*/);
       if (request_id<0) {
-           TBMCH_LOGE("Init tbmc_attributes_request failure! %s()", __FUNCTION__);
+           TBC_LOGE("Init tbmc_attributes_request failure! %s()", __FUNCTION__);
            goto attributesrequest_fail;
       }
  
       // Create attributesrequest
       tbmch_attributesrequest_t *attributesrequest = _tbmch_attributesrequest_init(client_, request_id, context, on_response, on_timeout);
       if (!attributesrequest) {
-           TBMCH_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
+           TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
            goto attributesrequest_fail;
       }
  
@@ -1376,13 +1376,13 @@ static void _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int req
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1396,7 +1396,7 @@ static void _tbmch_attributesrequest_on_response(tbmch_handle_t client_, int req
      if (!attributesrequest) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1428,13 +1428,13 @@ static void _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int requ
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1448,7 +1448,7 @@ static void _tbmch_attributesrequest_on_timeout(tbmch_handle_t client_, int requ
      if (!attributesrequest) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1475,13 +1475,13 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1490,7 +1490,7 @@ tbmch_err_t tbmch_serverrpc_append(tbmch_handle_t client_, const char *method,
      if (!serverrpc) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGE("Init serverrpc failure! method=%s. %s()", method, __FUNCTION__);
+          TBC_LOGE("Init serverrpc failure! method=%s. %s()", method, __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1520,13 +1520,13 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !method) {
-          TBMCH_LOGE("client or method is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or method is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1538,7 +1538,7 @@ tbmch_err_t tbmch_serverrpc_clear(tbmch_handle_t client_, const char *method)
           }
      }
      if (!serverrpc)  {
-          TBMCH_LOGW("Unable to remove server-rpc:%s! %s()", method, __FUNCTION__);
+          TBC_LOGW("Unable to remove server-rpc:%s! %s()", method, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -1556,14 +1556,14 @@ static tbmch_err_t _tbmch_serverrpc_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -1587,7 +1587,7 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1599,7 +1599,7 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1611,7 +1611,7 @@ static void _tbmch_serverrpc_on_request(tbmch_handle_t client_, int request_id, 
           }
      }
      if (!serverrpc) {
-          TBMCH_LOGW("Unable to deal server-rpc:%s! %s()", method, __FUNCTION__);
+          TBC_LOGW("Unable to deal server-rpc:%s! %s()", method, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return;// ESP_OK;
@@ -1653,14 +1653,14 @@ static tbmch_err_t _tbmch_clientrpc_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -1687,11 +1687,11 @@ int tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!method) {
-          TBMCH_LOGE("method is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("method is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1722,7 +1722,7 @@ int tbmch_clientrpc_of_oneway_request(tbmch_handle_t client_, const char *method
      }
      //cJSON_Delete(object); // delete json object
      if (request_id<0) {
-          TBMCH_LOGE("Init tbmc_clientrpc_request failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init tbmc_clientrpc_request failure! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1737,17 +1737,17 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!method) {
-          TBMCH_LOGE("method is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("method is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1777,7 +1777,7 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
      }
      //cJSON_Delete(object); // delete json object
      if (request_id<0) {
-          TBMCH_LOGE("Init tbmc_clientrpc_request failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init tbmc_clientrpc_request failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
@@ -1785,7 +1785,7 @@ int tbmch_clientrpc_of_twoway_request(tbmch_handle_t client_, const char *method
      // Create clientrpc
      tbmch_clientrpc_t *clientrpc = _tbmch_clientrpc_init(client, request_id, method, context, on_response, on_timeout);
      if (!clientrpc) {
-          TBMCH_LOGE("Init clientrpc failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init clientrpc failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
@@ -1816,13 +1816,13 @@ static void _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id,
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1836,7 +1836,7 @@ static void _tbmch_clientrpc_on_response(tbmch_handle_t client_, int request_id,
      if (!clientrpc) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1859,13 +1859,13 @@ static void _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1879,7 +1879,7 @@ static void _tbmch_clientrpc_on_timeout(tbmch_handle_t client_, int request_id)
      if (!clientrpc) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -1904,13 +1904,13 @@ tbmch_err_t tbmch_claiming_device_using_device_side_key(tbmch_handle_t client_,
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -1937,14 +1937,14 @@ static tbmch_err_t _tbmch_provision_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -1968,11 +1968,11 @@ static tbmch_err_t _tbmch_provision_empty(tbmch_handle_t client_)
 // return ESP_OK on successful, ESP_FAIL on failure
 static int _params_of_credentials_generated_by_server(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBC_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
 
     if (config->deviceName) {
          cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
@@ -1989,12 +1989,12 @@ static int _params_of_credentials_generated_by_server(tbmch_provision_params_t *
 // return ESP_OK on successful, ESP_FAIL on failure
 static int _params_of_devices_supplies_access_token(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->token, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBC_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->token, ESP_FAIL);
 
     if (config->deviceName) {
          cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
@@ -2015,13 +2015,13 @@ static int _params_of_devices_supplies_access_token(tbmch_provision_params_t *pa
 // return ESP_OK on successful, ESP_FAIL on failure
 static int _params_of_devices_supplies_basic_mqtt_credentials(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBC_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
     if (!config->clientId && !config->username) {
-         TBMCH_LOGE("config->clientId and config->username are NULL! %s()", __FUNCTION__);
+         TBC_LOGE("config->clientId and config->username are NULL! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
 
@@ -2051,12 +2051,12 @@ static int _params_of_devices_supplies_basic_mqtt_credentials(tbmch_provision_pa
 // return ESP_OK on successful, ESP_FAIL on failure
 static int _params_of_devices_supplies_x509_certificate(tbmch_provision_params_t *params, const tbc_provison_config_t *config)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    // TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config->hash, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    // TBC_CHECK_PTR_WITH_RETURN_VALUE(config->deviceName, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceKey, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->provisionDeviceSecret, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->hash, ESP_FAIL);
 
     if (config->deviceName) {
          cJSON_AddStringToObject(params, TB_MQTT_KEY_PROVISION_DEVICE_NAME, config->deviceName);
@@ -2082,17 +2082,17 @@ static int _tbmch_provision_request(tbmch_handle_t client_,
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!params) {
-          TBMCH_LOGE("params is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("params is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -2114,7 +2114,7 @@ static int _tbmch_provision_request(tbmch_handle_t client_,
      cJSON_free(params_str); // free memory
      //cJSON_Delete(object); // delete json object
      if (request_id<0) {
-          TBMCH_LOGE("Init tbmc_provision_request failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init tbmc_provision_request failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
@@ -2122,7 +2122,7 @@ static int _tbmch_provision_request(tbmch_handle_t client_,
      // Create provision
      tbmch_provision_t *provision = _tbmch_provision_init(client, request_id, params, context, on_response, on_timeout);
      if (!provision) {
-          TBMCH_LOGE("Init provision failure! %s()", __FUNCTION__);
+          TBC_LOGE("Init provision failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
      }
@@ -2155,12 +2155,12 @@ int tbmch_provision_request(tbmch_handle_t client_,
                                     tbmch_provision_on_response_t on_response,
                                     tbmch_provision_on_timeout_t on_timeout)
 {
-    //TBMCH_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(client_, ESP_FAIL);
+    //TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client_, ESP_FAIL);
 
     tbmch_provision_params_t *params = cJSON_CreateObject();
     if (!params) {
-         TBMCH_LOGE("create params is error(NULL)!");
+         TBC_LOGE("create params is error(NULL)!");
          return ESP_FAIL;
     }
     int ret = ESP_FAIL;
@@ -2173,7 +2173,7 @@ int tbmch_provision_request(tbmch_handle_t client_,
     } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS) { // Devices supplies X.509 Certificate)
          ret = _params_of_devices_supplies_x509_certificate(params, config);
     } else {
-         TBMCH_LOGE("config->provisionType(%d) is error!", config->provisionType);
+         TBC_LOGE("config->provisionType(%d) is error!", config->provisionType);
          ret = ESP_FAIL;
     }
 
@@ -2182,7 +2182,7 @@ int tbmch_provision_request(tbmch_handle_t client_,
          ret = _tbmch_provision_request(client_, params, context,
                                        on_response, on_timeout);
     } else {
-         // TBMCH_LOGE("ret is error!", ret);
+         // TBC_LOGE("ret is error!", ret);
          ret = ESP_FAIL;
     }
 
@@ -2195,13 +2195,13 @@ static void _tbmch_provision_on_response(tbmch_handle_t client_, int request_id,
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !object) {
-          TBMCH_LOGE("client or object is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2215,7 +2215,7 @@ static void _tbmch_provision_on_response(tbmch_handle_t client_, int request_id,
      if (!provision) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2238,13 +2238,13 @@ static void _tbmch_provision_on_timeout(tbmch_handle_t client_, int request_id)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2258,7 +2258,7 @@ static void _tbmch_provision_on_timeout(tbmch_handle_t client_, int request_id)
      if (!provision) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2283,21 +2283,21 @@ tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_descr
 {
      tbmch_t *client = (tbmch_t*)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!ota_description) {
-          TBMCH_LOGE("ota_description is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("ota_description is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!config) {
-          TBMCH_LOGE("config is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("config is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -2306,7 +2306,7 @@ tbmch_err_t tbmch_otaupdate_append(tbmch_handle_t client_, const char *ota_descr
      if (!otaupdate) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
-          TBMCH_LOGE("Init otaupdate failure! ota_description=%s. %s()", ota_description, __FUNCTION__);
+          TBC_LOGE("Init otaupdate failure! ota_description=%s. %s()", ota_description, __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -2334,13 +2334,13 @@ tbmch_err_t tbmch_otaupdate_clear(tbmch_handle_t client_, const char *ota_descri
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !ota_description) {
-          TBMCH_LOGE("client or ota_description is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or ota_description is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
@@ -2352,7 +2352,7 @@ tbmch_err_t tbmch_otaupdate_clear(tbmch_handle_t client_, const char *ota_descri
           }
      }
      if (!otaupdate) {
-          TBMCH_LOGW("Unable to remove ota_update data:%s! %s()", ota_description, __FUNCTION__);
+          TBC_LOGW("Unable to remove ota_update data:%s! %s()", ota_description, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -2370,14 +2370,14 @@ static tbmch_err_t _tbmch_otaupdate_empty(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
 
      // TODO: How to add lock??
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return ESP_FAIL;
      // }
 
@@ -2416,7 +2416,7 @@ static void _tbmch_otaupdate_on_connected(tbmch_handle_t client_)
 
     tbmch_t *client = (tbmch_t *)client_;
     if (!client) {
-         TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return;// ESP_FAIL;
     }
 
@@ -2475,7 +2475,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !ota_title) {
-          TBMCH_LOGE("client or ota_title is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client or ota_title is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
      
@@ -2483,7 +2483,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           _tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, "Device code is error!");
           return;// ESP_FAIL;
      }
@@ -2498,7 +2498,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
           }
      }
      if (!otaupdate) {
-          TBMCH_LOGW("Unable to find ota_update:%s! %s()", ota_title, __FUNCTION__);
+          TBC_LOGW("Unable to find ota_update:%s! %s()", ota_title, __FUNCTION__);
           _tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, "Device code is error!");
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -2514,7 +2514,7 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
         _tbmch_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);
         result = _tbmch_otaupdate_request_chunk(otaupdate, _tbmch_on_otaupdate_response, _tbmch_on_otaupdate_timeout);
         if (result != 0) { //failure to request chunk
-            TBMCH_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
+            TBC_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
             _tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, "Request OTA chunk failure!");
             _tbmch_otaupdate_do_abort(otaupdate);
             _tbmch_otaupdate_reset(otaupdate);
@@ -2524,14 +2524,14 @@ static void _tbmch_otaupdate_on_sharedattributes(tbmch_handle_t client_, tbmch_o
         //if (strlen(ota_error)>0) {
         //    ota_error_ = ota_error;
         //}
-        //TBMCH_LOGE("ota_error (%s) of _tbmch_otaupdate_do_negotiate()!", ota_error_);
+        //TBC_LOGE("ota_error (%s) of _tbmch_otaupdate_do_negotiate()!", ota_error_);
         //_tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, ota_error_);
      }
      else { //-1/ESP_FAIL: negotiate failure
         if (strlen(ota_error)>0) {
             ota_error_ = ota_error;
         }
-        TBMCH_LOGE("ota_error (%s) of _tbmch_otaupdate_do_negotiate()!", ota_error_);
+        TBC_LOGE("ota_error (%s) of _tbmch_otaupdate_do_negotiate()!", ota_error_);
         _tbmch_otaupdate_publish_early_failed_status(tbmc_handle, ota_type, ota_error_);
      }
 
@@ -2544,13 +2544,13 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2562,7 +2562,7 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
           }
      }
      if (!otaupdate) {
-          TBMCH_LOGW("Unable to find ota_update:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find ota_update:%d! %s()", request_id, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return;// ESP_FAIL;
@@ -2590,7 +2590,7 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
                     if (strlen(ota_error)>0) {
                         ota_error_ = ota_error;
                     }
-                    TBMCH_LOGE("Unknow result (%d, %s) of _tbmch_otaupdate_do_write()!", result, ota_error_);
+                    TBC_LOGE("Unknow result (%d, %s) of _tbmch_otaupdate_do_write()!", result, ota_error_);
                     _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
                     _tbmch_otaupdate_do_abort(otaupdate);
                     _tbmch_otaupdate_reset(otaupdate);
@@ -2614,14 +2614,14 @@ static void _tbmch_otaupdate_on_response(tbmch_handle_t client_, int request_id,
         if (strlen(ota_error)>0) {
             ota_error_ = ota_error;
         }
-        TBMCH_LOGE("ota_error (%s) of _tbmch_otaupdate_do_write()!", ota_error_);
+        TBC_LOGE("ota_error (%s) of _tbmch_otaupdate_do_write()!", ota_error_);
         _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
         _tbmch_otaupdate_do_abort(otaupdate);
         _tbmch_otaupdate_reset(otaupdate);
         break;
         
      default: //Unknow error
-        TBMCH_LOGE("Unknow result (%d) of _tbmch_otaupdate_do_write()!", result);
+        TBC_LOGE("Unknow result (%d) of _tbmch_otaupdate_do_write()!", result);
         _tbmch_otaupdate_publish_late_failed_status(otaupdate, ota_error_);
         _tbmch_otaupdate_do_abort(otaupdate);
         _tbmch_otaupdate_reset(otaupdate);
@@ -2635,13 +2635,13 @@ static void _tbmch_otaupdate_on_timeout(tbmch_handle_t client_, int request_id)
 {
       tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client  is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client  is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMCH_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
 
@@ -2653,7 +2653,7 @@ static void _tbmch_otaupdate_on_timeout(tbmch_handle_t client_, int request_id)
           }
      }
      if (!otaupdate) {
-          TBMCH_LOGW("Unable to find ota_update:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find ota_update:%d! %s()", request_id, __FUNCTION__);
           // Give semaphore
           xSemaphoreGive(client->_lock);
           return;// ESP_FAIL;
@@ -2673,7 +2673,7 @@ bool tbmch_has_events(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return false;
      }
 
@@ -2697,11 +2697,11 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
      if (!msg) {
-          TBMCH_LOGE("msg is NULL!");
+          TBC_LOGE("msg is NULL!");
           return ESP_FAIL;
      }
 
@@ -2712,11 +2712,11 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
           break;
 
      case TBMCH_MSGID_CONNECTED:            //
-          TBMCH_LOGI("Connected to thingsboard MQTT server!");
+          TBC_LOGI("Connected to thingsboard MQTT server!");
           _tbmch_connected_on(client_);
           break;
      case TBMCH_MSGID_DISCONNECTED:         //
-          TBMCH_LOGI("Disconnected to thingsboard MQTT server!");
+          TBC_LOGI("Disconnected to thingsboard MQTT server!");
           _tbmch_disonnected_on(client_);
           break;
 
@@ -2770,7 +2770,7 @@ static int32_t _tbmch_deal_msg(tbmch_handle_t client_, tbmch_msg_t *msg)
           break;
 
      default:
-          TBMCH_LOGE("msg->type(%d) is error!\r\n", msg->id);
+          TBC_LOGE("msg->type(%d) is error!\r\n", msg->id);
           return ESP_FAIL;
      }
 
@@ -2783,14 +2783,14 @@ void tbmch_run(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return; // false;
      }
 
      // TODO: whether to insert lock?
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return false;
      // }
 
@@ -2821,14 +2821,14 @@ static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client || !client->_xQueue || !msg) {
-          TBMCH_LOGE("client, client->_xQueue or msg is NULL!");
+          TBC_LOGE("client, client->_xQueue or msg is NULL!");
           return false;
      }
 
      // TODO: whether/how to insert lock?
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBMCH_LOGE("Unable to take semaphore!");
+     //      TBC_LOGE("Unable to take semaphore!");
      //      return false;
      // }
 
@@ -2840,11 +2840,11 @@ static bool _tbmch_sendTbmqttMsg2Queue(tbmch_handle_t client_, tbmch_msg_t *msg)
           i++;
 
           if (sendResult != pdTRUE) {
-               TBMCH_LOGW("_xQueue is full!");
+               TBC_LOGW("_xQueue is full!");
           }
      } while (i < 20 && sendResult != pdTRUE);
      if (i >= 20) {
-          TBMCH_LOGW("send innermsg timeout! %s()", __FUNCTION__);
+          TBC_LOGW("send innermsg timeout! %s()", __FUNCTION__);
      }
 
      // Give semaphore
@@ -2858,7 +2858,7 @@ static void _tbmch_on_connected(void *context) //onConnected() // First receive
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -2870,7 +2870,7 @@ static void _tbmch_on_disonnected(void *context) //onDisonnected() // First rece
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -2883,15 +2883,15 @@ static void _tbmch_on_sharedattr_received(void *context, const char* payload, in
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);;
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);;
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -2907,15 +2907,15 @@ static void _tbmch_on_attrrequest_response(void *context, int request_id, const 
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -2930,7 +2930,7 @@ static void _tbmch_on_attrrequest_timeout(void *context, int request_id)
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -2945,15 +2945,15 @@ static void _tbmch_on_serverrpc_request(void *context, int request_id, const cha
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -2969,15 +2969,15 @@ static void _tbmch_on_clientrpc_response(void *context, int request_id, const ch
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -2992,7 +2992,7 @@ static void _tbmch_on_clientrpc_timeout(void *context, int request_id)
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3007,15 +3007,15 @@ static void _tbmch_on_provision_response(void *context, int request_id, const ch
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -3030,7 +3030,7 @@ static void _tbmch_on_provision_timeout(void *context, int request_id)
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3045,15 +3045,15 @@ static void _tbmch_on_otaupdate_response(void *context, int request_id, int chun
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client ) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
      if (!payload) {
-          TBMCH_LOGE("payload is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("payload is NULL! %s()", __FUNCTION__);
           return;
      }
      if (length<=0) {
-          TBMCH_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
+          TBC_LOGE("payload length(%d) is error! %s()", length, __FUNCTION__);
           return;
      }
 
@@ -3073,7 +3073,7 @@ static void _tbmch_on_otaupdate_timeout(void *context, int request_id)
 {
      tbmch_t *client = (tbmch_t *)context;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3087,7 +3087,7 @@ static void __response_timer_timerout(void *client_/*timer_arg*/)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3100,7 +3100,7 @@ static void _response_timer_create(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3115,7 +3115,7 @@ static void _response_timer_start(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3125,7 +3125,7 @@ static void _response_timer_stop(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 
@@ -3135,7 +3135,7 @@ static void _response_timer_destroy(tbmch_handle_t client_)
 {
      tbmch_t *client = (tbmch_t *)client_;
      if (!client) {
-          TBMCH_LOGE("client is NULL! %s()", __FUNCTION__);
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
 

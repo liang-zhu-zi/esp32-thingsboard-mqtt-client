@@ -23,11 +23,11 @@
 #include "esp_err.h"
 //#include "mqtt_client.h"
 
-#include "tbc_util.h"
+#include "tbc_utils.h"
 
-#include "tb_mqtt_client.h"
+#include "tbc_mqtt.h"
 
-#include "tb_mqtt_client_log.h"
+#include "tbc_utils.h"
 
 #include "tbc_transport_config.h"
 #include "tbc_transport_storage.h"
@@ -38,8 +38,8 @@ static void *_transport_address_storage_fill_from_config(tbc_transport_address_s
                                              const tbc_transport_address_config_t *config)
 {
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
 
     //storage->tlsEnabled = config->tlsEnabled;
     TBC_FIELD_STRDUP(storage->schema, config->schema);
@@ -53,8 +53,8 @@ static void *_transport_credentials_storage_fill_from_config(tbc_transport_crede
                                       const tbc_transport_credentials_config_t *config)
 {
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
 
     storage->type = config->type;
     TBC_FIELD_STRDUP(storage->client_id, config->client_id);
@@ -68,8 +68,8 @@ static void *_transport_verification_storage_fill_from_config(tbc_transport_veri
                                 const tbc_transport_verification_config_t *config)
 {
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
 
     //storage->use_global_ca_store = config->use_global_ca_store;
     //storage->crt_bundle_attach = config->crt_bundle_attach;
@@ -90,8 +90,8 @@ static void *_transport_authentication_storage_fill_from_config(tbc_transport_au
                         const tbc_transport_authentication_config_t *config)
 {
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
 
     if (config->client_cert_len>0) {
         TBC_FIELD_MEMDUP(storage->client_cert_pem, config->client_cert_pem, config->client_cert_len); /*!< Pointer to certificate data in PEM or DER format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in client_cert_len. */
@@ -123,8 +123,8 @@ static void *_transport_authentication_storage_fill_from_config(tbc_transport_au
 void *tbc_transport_storage_fill_from_config(tbc_transport_storage_t *storage,
                                              const tbc_transport_config_t *config)
 {
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(storage, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(config, NULL);
 
     _transport_address_storage_fill_from_config(&storage->address, &config->address);
     _transport_credentials_storage_fill_from_config(&storage->credentials, &config->credentials);
@@ -137,7 +137,7 @@ void *tbc_transport_storage_fill_from_config(tbc_transport_storage_t *storage,
 
 static void _transport_address_storage_free_fields(tbc_transport_address_storage_t *address)
 {
-    TBMC_CHECK_PTR(address);
+    TBC_CHECK_PTR(address);
 
     //address->tlsEnabled = false;    /*!< Enabled TLS/SSL or DTLS */
     TBC_FIELD_FREE(address->schema);
@@ -148,7 +148,7 @@ static void _transport_address_storage_free_fields(tbc_transport_address_storage
 
 static void _transport_credentials_storage_free_fields(tbc_transport_credentials_storage_t *credentials)
 {
-    TBMC_CHECK_PTR(credentials);
+    TBC_CHECK_PTR(credentials);
 
     credentials->type = 0;
     TBC_FIELD_FREE(credentials->client_id);
@@ -160,7 +160,7 @@ static void _transport_credentials_storage_free_fields(tbc_transport_credentials
 
 static void _transport_verification_storage_free_fields(tbc_transport_verification_storage_t *verification)
 {
-    TBMC_CHECK_PTR(verification);
+    TBC_CHECK_PTR(verification);
 
     //bool      use_global_ca_store;    /*!< Use a global ca_store, look esp-tls documentation for details. */
     //esp_err_t (*crt_bundle_attach)(void *conf); 
@@ -178,7 +178,7 @@ static void _transport_verification_storage_free_fields(tbc_transport_verificati
 
 static void _transport_authentication_storage_free_fields(tbc_transport_authentication_storage_t *authentication)
 {
-    TBMC_CHECK_PTR(authentication);
+    TBC_CHECK_PTR(authentication);
 
     TBC_FIELD_FREE(authentication->client_cert_pem);        /*!< Pointer to certificate data in PEM or DER format for SSL mutual authentication, default is NULL, not required if mutual authentication is not needed. If it is not NULL, also `client_key_pem` has to be provided. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in client_cert_len. */
     authentication->client_cert_len = 0;                /*!< Length of the buffer pointed to by client_cert_pem. May be 0 for null-terminated pem */
@@ -192,7 +192,7 @@ static void _transport_authentication_storage_free_fields(tbc_transport_authenti
 
 void tbc_transport_storage_free_fields(tbc_transport_storage_t *storage)
 {
-    TBMC_CHECK_PTR(storage);
+    TBC_CHECK_PTR(storage);
 
     _transport_address_storage_free_fields(&storage->address);
     _transport_credentials_storage_free_fields(&storage->credentials);

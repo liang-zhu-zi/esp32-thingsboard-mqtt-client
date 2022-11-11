@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard MQTT Client high layer API
+// ThingsBoard Client MQTT high layer API
 
-#ifndef _TB_MQTT_CLIENT_HELPER_H_
-#define _TB_MQTT_CLIENT_HELPER_H_
+#ifndef _TBC_MQTT_HELPER_H_
+#define _TBC_MQTT_HELPER_H_
 
 #include <stdint.h>
 #include <stdbool.h>

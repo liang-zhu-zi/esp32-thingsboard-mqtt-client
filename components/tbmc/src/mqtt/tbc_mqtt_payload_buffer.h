@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard MQTT Client payload buffer API
+// ThingsBoard Client MQTT payload buffer API
 
-#ifndef _TBMC_PAYLOAD_BUFFER_H_
-#define _TBMC_PAYLOAD_BUFFER_H_
+#ifndef _TBC_MQTT_PAYLOAD_BUFFER_H_
+#define _TBC_MQTT_PAYLOAD_BUFFER_H_
 
 //#include <stdint.h>
 //#include <stdbool.h>

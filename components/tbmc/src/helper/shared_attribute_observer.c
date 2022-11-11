@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 
 #include "esp_err.h"
 
 #include "shared_attribute_observer.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "shared_attribute";
 
@@ -27,13 +27,13 @@ tbmch_sharedattribute_t *_tbmch_sharedattribute_init(tbmch_handle_t client, cons
                                                      tbmch_sharedattribute_on_set_t on_set)
 {
     if (!key) {
-        TBMCH_LOGE("key is NULL");
+        TBC_LOGE("key is NULL");
         return NULL;
     }
     
     tbmch_sharedattribute_t *sharedattribute = TBMCH_MALLOC(sizeof(tbmch_sharedattribute_t));
     if (!sharedattribute) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -52,7 +52,7 @@ tbmch_sharedattribute_t *_tbmch_sharedattribute_init(tbmch_handle_t client, cons
 tbmch_err_t _tbmch_sharedattribute_destroy(tbmch_sharedattribute_t *sharedattribute)
 {
     if (!sharedattribute) {
-        TBMCH_LOGE("sharedattribute is NULL");
+        TBC_LOGE("sharedattribute is NULL");
         return ESP_FAIL;
     }
 
@@ -65,7 +65,7 @@ tbmch_err_t _tbmch_sharedattribute_destroy(tbmch_sharedattribute_t *sharedattrib
 const char *_tbmch_sharedattribute_get_key(tbmch_sharedattribute_t *sharedattribute)
 {
     if (!sharedattribute) {
-        TBMCH_LOGE("sharedattribute is NULL");
+        TBC_LOGE("sharedattribute is NULL");
         return NULL;
     }
     return sharedattribute->key;
@@ -75,17 +75,17 @@ const char *_tbmch_sharedattribute_get_key(tbmch_sharedattribute_t *sharedattrib
 tbmch_err_t _tbmch_sharedattribute_do_set(tbmch_sharedattribute_t *sharedattribute, cJSON *value)                                               
 {
     if (!sharedattribute) {
-        TBMCH_LOGE("sharedattribute is NULL");
+        TBC_LOGE("sharedattribute is NULL");
         return ESP_FAIL;
     }
     if (!value) {
-        TBMCH_LOGE("value is NULL");
+        TBC_LOGE("value is NULL");
         return ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, sharedattribute->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", sharedattribute->key);
+        TBC_LOGW("value is NULL! key=%s", sharedattribute->key);
         return ESP_FAIL;
     }*/
 

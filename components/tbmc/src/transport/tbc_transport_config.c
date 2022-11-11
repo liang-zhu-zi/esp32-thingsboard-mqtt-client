@@ -23,10 +23,10 @@
 #include "esp_err.h"
 //#include "mqtt_client.h"
 
-#include "tbc_util.h"
-#include "tb_mqtt_client.h"
+#include "tbc_utils.h"
+#include "tbc_mqtt.h"
 
-#include "tb_mqtt_client_log.h"
+#include "tbc_utils.h"
 
 #include "tbc_transport_config.h"
 
@@ -35,8 +35,8 @@ static const char *TAG = "TBC_TRANSPORT_CONFIG";
 static void *_transport_address_config_copy(tbc_transport_address_config_t *dest,
                                         const tbc_transport_address_config_t *src)
 {
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
 
     //dest->tlsEnabled = src->tlsEnabled;
     dest->schema = src->schema;
@@ -48,8 +48,8 @@ static void *_transport_address_config_copy(tbc_transport_address_config_t *dest
 void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
                                               const tbc_transport_credentials_config_t *src)
 {
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
 
     dest->type = src->type;
 
@@ -63,8 +63,8 @@ void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *des
 static void *_transport_verification_config_copy(tbc_transport_verification_config_t *dest,
                                               const tbc_transport_verification_config_t *src)
 {
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
 
     //dest->use_global_ca_store = src->use_global_ca_store;
     //dest->crt_bundle_attach = src->crt_bundle_attach;
@@ -80,8 +80,8 @@ static void *_transport_verification_config_copy(tbc_transport_verification_conf
 static void *_transport_authentication_config_copy(tbc_transport_authentication_config_t *dest,
                                               const tbc_transport_authentication_config_t *src)
 {
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
 
     dest->client_cert_pem = src->client_cert_pem;
     dest->client_cert_len = src->client_cert_len;
@@ -98,27 +98,27 @@ void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transpor
 {
     void *result;
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
 
     result = _transport_address_config_copy(&dest->address, &src->address);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
     result = _transport_credentials_config_copy(&dest->credentials, &src->credentials);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
     result = _transport_verification_config_copy(&dest->verification, &src->verification);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
     result = _transport_authentication_config_copy(&dest->authentication, &src->authentication);
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
 
     dest->log_rxtx_package = src->log_rxtx_package;
     return dest;
 }
 
 tbc_transport_credentials_config_t *tbc_transport_credentials_clone(
-                                        tbc_transport_credentials_config_t *credentials)
+                                        const tbc_transport_credentials_config_t *credentials)
 {
 
-    TBMC_CHECK_PTR_WITH_RETURN_VALUE(credentials, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(credentials, NULL);
 
     tbc_transport_credentials_config_t *new_credentials = calloc(1, sizeof(tbc_transport_credentials_config_t));
     TBC_MEM_CHECK(TAG, new_credentials, return NULL);

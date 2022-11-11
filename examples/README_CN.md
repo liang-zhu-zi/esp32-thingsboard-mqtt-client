@@ -1,9 +1,9 @@
 # 示例
 
 * Hello world: [00_hello_world](./tb_mqtt_client_helper/00_hello_world)
-* 使用底层 API -- tb_mqtt_client.h
+* 使用底层 API -- tbc_mqtt.h
   * *TODO: ...*
-* 采用高层 API -- tb_mqtt_client_helper.h
+* 采用高层 API -- tbc_mqtt_helper.h
   * Telemetry upload API: [10_telemetry_upload](./tb_mqtt_client_helper/10_telemetry_upload)
   * Attributes API
     * Publish attribute update to the server: [20_client_attribute](./tb_mqtt_client_helper/20_client_attribute)

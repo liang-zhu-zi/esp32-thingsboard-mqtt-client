@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 
@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include "ota_update_observer.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "ota_update";
 
@@ -32,45 +32,45 @@ tbmch_otaupdate_t *_tbmch_otaupdate_init(tbmch_handle_t client,  const char *ota
                         const tbmch_otaupdate_config_t *config)
 {
     if (!client) {
-        TBMCH_LOGE("client is NULL");
+        TBC_LOGE("client is NULL");
         return NULL;
     }
     if (!ota_description) {
-        TBMCH_LOGE("ota_description is NULL");
+        TBC_LOGE("ota_description is NULL");
         return NULL;
     }
     if (!config) {
-        TBMCH_LOGE("config is NULL");
+        TBC_LOGE("config is NULL");
         return NULL;
     }
     if (!config->on_get_current_ota_title) {
-        TBMCH_LOGE("config->on_get_current_ota_title is NULL");
+        TBC_LOGE("config->on_get_current_ota_title is NULL");
         return NULL;
     }
     if (!config->on_get_current_ota_version) {
-        TBMCH_LOGE("config->on_get_current_ota_version is NULL");
+        TBC_LOGE("config->on_get_current_ota_version is NULL");
         return NULL;
     }
     if (!config->on_ota_negotiate ) {
-        TBMCH_LOGE("config->on_ota_negotiate is NULL");
+        TBC_LOGE("config->on_ota_negotiate is NULL");
         return NULL;
     }
     if (!config->on_ota_write) {
-        TBMCH_LOGE("config->on_ota_write is NULL");
+        TBC_LOGE("config->on_ota_write is NULL");
         return NULL;
     }
     if (!config->on_ota_end ) {
-        TBMCH_LOGE("config->on_ota_end is NULL");
+        TBC_LOGE("config->on_ota_end is NULL");
         return NULL;
     }
     if (!config->on_ota_abort ) {
-        TBMCH_LOGE("config->on_ota_abort is NULL");
+        TBC_LOGE("config->on_ota_abort is NULL");
         return NULL;
     }
 
     tbmch_otaupdate_t *otaupdate = TBMCH_MALLOC(sizeof(tbmch_otaupdate_t));
     if (!otaupdate) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
     memset(otaupdate, 0x00, sizeof(tbmch_otaupdate_t));
@@ -109,7 +109,7 @@ tbmch_otaupdate_t *_tbmch_otaupdate_init(tbmch_handle_t client,  const char *ota
 tbmch_err_t _tbmch_otaupdate_destroy(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return ESP_FAIL;
     }
 
@@ -160,7 +160,7 @@ tbmch_err_t _tbmch_otaupdate_destroy(tbmch_otaupdate_t *otaupdate)
 tbmch_otaupdate_type_t _tbmch_otaupdate_get_type(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return TBMCH_OTAUPDATE_TYPE_FW;
     }
 
@@ -169,7 +169,7 @@ tbmch_otaupdate_type_t _tbmch_otaupdate_get_type(tbmch_otaupdate_t *otaupdate)
 const char *_tbmch_otaupdate_get_description(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return NULL;
     }
 
@@ -179,11 +179,11 @@ const char *_tbmch_otaupdate_get_description(tbmch_otaupdate_t *otaupdate)
 const char *_tbmch_otaupdate_get_current_title(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return NULL;
     }
     if (!otaupdate->config.on_get_current_ota_title) {
-        TBMCH_LOGE("otaupdate->config.on_get_current_ota_title is NULL");
+        TBC_LOGE("otaupdate->config.on_get_current_ota_title is NULL");
         return NULL;
     }
 
@@ -193,7 +193,7 @@ const char *_tbmch_otaupdate_get_current_title(tbmch_otaupdate_t *otaupdate)
 int _tbmch_otaupdate_get_request_id(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return -1;
     }
 
@@ -203,7 +203,7 @@ int _tbmch_otaupdate_get_request_id(tbmch_otaupdate_t *otaupdate)
 void _tbmch_otaupdate_reset(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return;
     }
     
@@ -238,7 +238,7 @@ tbmch_err_t _tbmch_otaupdate_request_chunk(tbmch_otaupdate_t *otaupdate,
 {
     char payload[20] = {0};
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return -1;
     }
 
@@ -262,7 +262,7 @@ tbmch_err_t _tbmch_otaupdate_request_chunk(tbmch_otaupdate_t *otaupdate,
     }
 
     if (request_id<0){
-        TBMCH_LOGW("Request OTA chunk(%d) failure! request_id=%d %s()", otaupdate->state.chunk_id, request_id, __FUNCTION__);
+        TBC_LOGW("Request OTA chunk(%d) failure! request_id=%d %s()", otaupdate->state.chunk_id, request_id, __FUNCTION__);
     }
 
     return (request_id<0)?-1:0;
@@ -272,7 +272,7 @@ tbmch_err_t _tbmch_otaupdate_request_chunk(tbmch_otaupdate_t *otaupdate,
 bool _tbmch_otaupdate_is_received_all(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return false;
     }
 
@@ -286,7 +286,7 @@ bool _tbmch_otaupdate_is_received_all(tbmch_otaupdate_t *otaupdate)
 bool _tbmch_otaupdate_checksum_verification(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return false;
     }
 
@@ -313,7 +313,7 @@ bool _tbmch_otaupdate_checksum_verification(tbmch_otaupdate_t *otaupdate)
     if (checksum_int == ota_checksum) {
         return true;
     } else {
-        TBMCH_LOGW("checksum(%s, %#x) is NOT equal to otaupdate->attribute.ota_checksum(%s, %#x)!", 
+        TBC_LOGW("checksum(%s, %#x) is NOT equal to otaupdate->attribute.ota_checksum(%s, %#x)!", 
             checksum_str, checksum_int, 
             otaupdate->attribute.ota_checksum, ota_checksum);
         return false;
@@ -324,7 +324,7 @@ bool _tbmch_otaupdate_checksum_verification(tbmch_otaupdate_t *otaupdate)
 void _tbmch_otaupdate_publish_early_current_version(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return;
     }
 
@@ -361,7 +361,7 @@ void _tbmch_otaupdate_publish_early_failed_status(tbmc_handle_t tbmc_handle,
                                 tbmch_otaupdate_type_t ota_type, const char *ota_error)
 {
     if (!tbmc_handle) {
-        TBMCH_LOGE("tbmc_handle is NULL!");
+        TBC_LOGE("tbmc_handle is NULL!");
         return;
     }
 
@@ -393,7 +393,7 @@ void _tbmch_otaupdate_publish_early_failed_status(tbmc_handle_t tbmc_handle,
 void _tbmch_otaupdate_publish_late_failed_status(tbmch_otaupdate_t *otaupdate, const char *ota_error)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return;
     }
 
@@ -427,11 +427,11 @@ void _tbmch_otaupdate_publish_late_failed_status(tbmch_otaupdate_t *otaupdate, c
 void _tbmch_otaupdate_publish_going_status(tbmch_otaupdate_t *otaupdate, const char *ota_state)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return;
     }
     if (!ota_state) {
-        TBMCH_LOGE("ota_state is NULL!");
+        TBC_LOGE("ota_state is NULL!");
         return;
     }
 
@@ -469,12 +469,12 @@ void _tbmch_otaupdate_publish_going_status(tbmch_otaupdate_t *otaupdate, const c
 void _tbmch_otaupdate_publish_updated_status(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return;
     }
 
     /*if (!otaupdate->config.is_first_boot) {
-        TBMCH_LOGI("otaupdate is NOT first boot! ota update type=%d(0:F/W, 1:S/W)",TBMCH_OTAUPDATE_TYPE_FW);
+        TBC_LOGI("otaupdate is NOT first boot! ota update type=%d(0:F/W, 1:S/W)",TBMCH_OTAUPDATE_TYPE_FW);
         return;
     }*/
 
@@ -512,7 +512,7 @@ tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
                                         char *ota_error, int error_size)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         strncpy(ota_error, "Device's code is error!", error_size);
         return -1;
     }
@@ -520,7 +520,7 @@ tbmch_err_t _tbmch_otaupdate_do_negotiate(tbmch_otaupdate_t *otaupdate,
     // TODO: support multi-ALG! 
     // only support CRC32
     if (strcasecmp(ota_checksum_algorithm, TB_MQTTT_VALUE_FW_SW_CHECKSUM_ALG_CRC32)!=0) { // Not CRC32
-        TBMCH_LOGW("Only support CRC32 for ota_update! Don't support %s! %s()", ota_checksum_algorithm, __FUNCTION__);
+        TBC_LOGW("Only support CRC32 for ota_update! Don't support %s! %s()", ota_checksum_algorithm, __FUNCTION__);
         strncpy(ota_error, "Only support CRC checksum!", error_size);
         return -1;
     }
@@ -565,17 +565,17 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
                                             char *ota_error, int error_size)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         strncpy(ota_error, "Device's code is error!", error_size);
         return -1; //code error
     }
     if (chunk_id != otaupdate->state.chunk_id) {
-        TBMCH_LOGE("chunk_id(%d) is not equal to otaupdate->state.chunk_id(%d)!", chunk_id, otaupdate->state.chunk_id);
+        TBC_LOGE("chunk_id(%d) is not equal to otaupdate->state.chunk_id(%d)!", chunk_id, otaupdate->state.chunk_id);
         strncpy(ota_error, "Chunk ID is error!", error_size);
         return -1; //chunk_id error
     }
     if (!ota_data || !data_size) {
-        TBMCH_LOGE("ota_data(%p) or data_size(%d) is error!", ota_data, data_size);
+        TBC_LOGE("ota_data(%p) or data_size(%d) is error!", ota_data, data_size);
         strncpy(ota_error, "OTA data is empty!", error_size);
         return -1; //ota_data is empty
     }
@@ -585,7 +585,7 @@ tbmch_err_t _tbmch_otaupdate_do_write(tbmch_otaupdate_t *otaupdate, int chunk_id
                             otaupdate->state.request_id, chunk_id, ota_data, data_size,
                             ota_error, error_size);
     if (result != ESP_OK) {
-        TBMCH_LOGW("fail to call on_ota_write()!");
+        TBC_LOGW("fail to call on_ota_write()!");
         return -1; //payload error & end
     }
     
@@ -601,7 +601,7 @@ tbmch_err_t _tbmch_otaupdate_do_end(tbmch_otaupdate_t *otaupdate, char *ota_erro
 {
     int ret = 0;
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL!");
+        TBC_LOGE("otaupdate is NULL!");
         return -1;
     }
 
@@ -617,7 +617,7 @@ tbmch_err_t _tbmch_otaupdate_do_end(tbmch_otaupdate_t *otaupdate, char *ota_erro
 void _tbmch_otaupdate_do_abort(tbmch_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
-        TBMCH_LOGE("otaupdate is NULL");
+        TBC_LOGE("otaupdate is NULL");
         return;
     }
 

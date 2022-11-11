@@ -173,9 +173,8 @@ typedef struct tbc_transport_config
 
 void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
                                               const tbc_transport_credentials_config_t *src);
-tbc_transport_credentials_config_t *tbc_transport_credentials_clone(tbc_transport_credentials_config_t *credentials);
+tbc_transport_credentials_config_t *tbc_transport_credentials_clone(const tbc_transport_credentials_config_t *credentials);
 void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src);
-
 
 #ifdef __cplusplus
 }

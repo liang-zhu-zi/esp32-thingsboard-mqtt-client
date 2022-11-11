@@ -21,18 +21,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "tbc_transport_credentials.h"
+#include "tbc_transport_credentials_memory.h"
 
 static tbc_transport_credentials_config_t *_memory_credentials = NULL;
 
-void tbc_transport_credentials_init(void)
+void tbc_transport_credentials_memory_init(void)
 {
      // TODO: SPIFFS/NVS: init SPIFFS or NVS flash/partition.
 
      _memory_credentials = NULL;
 }
 
-void tbc_transport_credentials_uninit(void)
+void tbc_transport_credentials_memory_uninit(void)
 {
     // TODO: SPIFFS/NVS: free _credentials
 
@@ -42,7 +42,7 @@ void tbc_transport_credentials_uninit(void)
     }
 }
 
-const tbc_transport_credentials_config_t *tbc_transport_credentials_get(void)
+const tbc_transport_credentials_config_t *tbc_transport_credentials_memory_get(void)
 {
      // TODO: SPIFFS/NVS: read credentials from file/flash, cache credentials
      /*
@@ -63,7 +63,7 @@ const tbc_transport_credentials_config_t *tbc_transport_credentials_get(void)
      return _memory_credentials;
 }
 
-bool tbc_transport_credentials_save(const tbc_transport_credentials_config_t *credentials)
+bool tbc_transport_credentials_memory_save(const tbc_transport_credentials_config_t *credentials)
 {
     // TODO: SPIFFS/NVS: save to file/flash , free cache, duplicate credentials
     /*
@@ -84,7 +84,7 @@ bool tbc_transport_credentials_save(const tbc_transport_credentials_config_t *cr
     return _memory_credentials ? true : false;
 }
 
-void tbc_transport_credentials_clean(void)
+void tbc_transport_credentials_memory_clean(void)
 {
      // TODO: SPIFFS/NVS: remove file &  free cache
      /*
@@ -97,7 +97,7 @@ void tbc_transport_credentials_clean(void)
      }
 }
 
-bool tbc_transport_credentials_is_existed(void)
+bool tbc_transport_credentials_memory_is_existed(void)
 {
     //SPIFFS/NVS: Note: Don't read file/falsh every time!
     return _memory_credentials ? true : false;

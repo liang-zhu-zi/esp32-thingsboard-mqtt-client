@@ -25,10 +25,10 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "tb_mqtt_client.h"
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt.h"
+#include "tbc_mqtt_helper.h"
 
-//#include "tb_mqtt_client_helper_log.h"
+//#include "tbc_utils.h"
 //#include "timeseries_data_helper.h"
 //#include "client_attribute_helper.h"
 //#include "shared_attribute_observer.h"

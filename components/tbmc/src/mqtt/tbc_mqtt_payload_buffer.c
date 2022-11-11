@@ -23,18 +23,18 @@
 #include "esp_err.h"
 //#include "mqtt_client.h"
 
-#include "tb_mqtt_client.h"
+#include "tbc_mqtt.h"
 
-#include "tb_mqtt_client_log.h"
+#include "tbc_utils.h"
 
-#include "tbmc_payload_buffer.h"
+#include "tbc_mqtt_payload_buffer.h"
 
 const static char *TAG = "tbmc_payload_buffer";
 
 void tbmc_payload_buffer_init(tbmc_payload_buffer_t *buffer)
 {
     if (!buffer) {
-         TBMC_LOGE("buffer is NULL!");
+         TBC_LOGE("buffer is NULL!");
          return;
     }
 
@@ -50,7 +50,7 @@ void tbmc_payload_buffer_init(tbmc_payload_buffer_t *buffer)
 static void _tbmc_payload_buffer_free(tbmc_payload_buffer_t *buffer)
 {
     if (!buffer) {
-         TBMC_LOGE("buffer is NULL!");
+         TBC_LOGE("buffer is NULL!");
          return;
     }
 
@@ -73,11 +73,11 @@ static void _tbmc_payload_buffer_free(tbmc_payload_buffer_t *buffer)
 static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info *rx_msg)
 {
     if (!buffer) {
-         TBMC_LOGE("buffer is NULL!");
+         TBC_LOGE("buffer is NULL!");
          return;
     }
     if (!rx_msg) {
-         TBMC_LOGE("rx_msg is NULL!");
+         TBC_LOGE("rx_msg is NULL!");
          return;
     }
 
@@ -91,7 +91,7 @@ static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg
 
         buffer->topic = TBMC_MALLOC(rx_msg->topic_len);
         if (!buffer->topic) {
-            TBMC_LOGE("buffer->topic is NULL!");
+            TBC_LOGE("buffer->topic is NULL!");
             return;
         } else {
             memcpy(buffer->topic, rx_msg->topic, rx_msg->topic_len);
@@ -112,7 +112,7 @@ static void _tbmc_payload_buffer_feed(tbmc_payload_buffer_t *buffer, tbmc_rx_msg
             }
         } else {
             if (buffer->total_payload_len != rx_msg->total_payload_len) {
-                TBMC_LOGI("buffer->total_payload_len(%d) != rx_msg->total_payload_len(%d)",
+                TBC_LOGI("buffer->total_payload_len(%d) != rx_msg->total_payload_len(%d)",
                     buffer->total_payload_len, rx_msg->total_payload_len);
                 return;
             }
@@ -129,15 +129,15 @@ static bool _tbmc_rx_msg_is_completion(tbmc_rx_msg_info *rx_msg)
         return false;
     }
     if (!rx_msg->topic) {
-        TBMC_LOGD("rx_msg->topic is NULL!");
+        TBC_LOGD("rx_msg->topic is NULL!");
         return false;
     }
     if (rx_msg->topic_len <= 0) {
-        TBMC_LOGD("rx_msg->topic_len(%d) is less than 0!", rx_msg->topic_len);
+        TBC_LOGD("rx_msg->topic_len(%d) is less than 0!", rx_msg->topic_len);
         return false;
     }
     if (rx_msg->payload_len < rx_msg->total_payload_len) {
-        TBMC_LOGD("rx_msg->payload_len(%d) is less then rx_msg->total_payload_len(%d)!",
+        TBC_LOGD("rx_msg->payload_len(%d) is less then rx_msg->total_payload_len(%d)!",
             rx_msg->payload_len, rx_msg->total_payload_len);
         return false;
     }
@@ -150,19 +150,19 @@ static bool _tbmc_payload_buffer_is_completion(tbmc_payload_buffer_t *buffer)
         return false;
     }
     if (!buffer->topic) {
-        TBMC_LOGD("buffer->topic is NULL!");
+        TBC_LOGD("buffer->topic is NULL!");
         return false;
     }
     if (buffer->topic_len <= 0) {
-        TBMC_LOGD("buffer->topic_len(%d) is less than 0!", buffer->topic_len);
+        TBC_LOGD("buffer->topic_len(%d) is less than 0!", buffer->topic_len);
         return false;
     }
     if (!buffer->payload) {
-        TBMC_LOGD("buffer->payload is NULL!");
+        TBC_LOGD("buffer->payload is NULL!");
         return false;
     }
     if (buffer->received_len < buffer->total_payload_len) {
-        TBMC_LOGD("buffer->received_len(%d) is less then buffer->total_payload_len(%d)!",
+        TBC_LOGD("buffer->received_len(%d) is less then buffer->total_payload_len(%d)!",
             buffer->received_len, buffer->total_payload_len);
         return false;
     }
@@ -175,28 +175,28 @@ void tbmc_payload_buffer_pocess(tbmc_payload_buffer_t *buffer, tbmc_rx_msg_info 
 {
     // 0: if parameter is invalid, then return.
     if (!buffer || !rx_msg || !on_payload_process) {
-        TBMC_LOGE("buffer(%p), rx_msg(%p) or on_payload_process(%p) is NULL", 
+        TBC_LOGE("buffer(%p), rx_msg(%p) or on_payload_process(%p) is NULL", 
             buffer, rx_msg, on_payload_process);
         return;
     }
     
     // 1: if new msg(rx_msg)->total_payload_len is too long(128K), then return.
     if (rx_msg->total_payload_len > MAX_TBMC_RX_MSG_LENGTH) {
-        TBMC_LOGE("rx_msg->total_payload_len(%d) is bigger than MAX_TBMC_RX_MSG_LENGTH(%d)",
+        TBC_LOGE("rx_msg->total_payload_len(%d) is bigger than MAX_TBMC_RX_MSG_LENGTH(%d)",
             rx_msg->total_payload_len, MAX_TBMC_RX_MSG_LENGTH);
         return;
     }
     // check rx_msg->current_payload_offset
     if (rx_msg->current_payload_offset>0 &&
         rx_msg->current_payload_offset>=rx_msg->total_payload_len) {
-        TBMC_LOGI("rx_msg->current_payload_offset(%d) >= rx_msg->total_payload_len(%d)",
+        TBC_LOGI("rx_msg->current_payload_offset(%d) >= rx_msg->total_payload_len(%d)",
             rx_msg->current_payload_offset, rx_msg->total_payload_len);
         return;
     }
 
     // 2: if new msg(rx_msg)->topic is NOT NULL, then clear old un-completion msg.
     if (rx_msg->topic) {
-        TBMC_LOGD("rx_msg->topic(%.*s) is NOT NULL! free payload buffer!", rx_msg->topic_len, rx_msg->topic);
+        TBC_LOGD("rx_msg->topic(%.*s) is NOT NULL! free payload buffer!", rx_msg->topic_len, rx_msg->topic);
         _tbmc_payload_buffer_free(buffer);
     }
 

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 
 #include "esp_err.h"
 
 #include "client_attribute_helper.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "client_attribute";
 
@@ -28,17 +28,17 @@ tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, cons
                                                     tbmch_clientattribute_on_set_t on_set)
 {
     if (!key) {
-        TBMCH_LOGE("key is NULL");
+        TBC_LOGE("key is NULL");
         return NULL;
     }
     if (!on_get) {
-        TBMCH_LOGE("on_get is NULL");
+        TBC_LOGE("on_get is NULL");
         return NULL;
     }
     
     tbmch_clientattribute_t *clientattribute = TBMCH_MALLOC(sizeof(tbmch_clientattribute_t));
     if (!clientattribute) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -58,7 +58,7 @@ tbmch_clientattribute_t *_tbmch_clientattribute_init(tbmch_handle_t client, cons
 tbmch_err_t _tbmch_clientattribute_destroy(tbmch_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
-        TBMCH_LOGE("clientattribute is NULL");
+        TBC_LOGE("clientattribute is NULL");
         return ESP_FAIL;
     }
 
@@ -71,7 +71,7 @@ tbmch_err_t _tbmch_clientattribute_destroy(tbmch_clientattribute_t *clientattrib
 bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
-        TBMCH_LOGE("clientattribute is NULL");
+        TBC_LOGE("clientattribute is NULL");
         return false;
     }
 
@@ -82,7 +82,7 @@ bool _tbmch_clientattribute_has_set_value_cb(tbmch_clientattribute_t *clientattr
 const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
-        TBMCH_LOGE("clientattribute is NULL");
+        TBC_LOGE("clientattribute is NULL");
         return NULL;
     }
     return clientattribute->key;
@@ -92,17 +92,17 @@ const char *_tbmch_clientattribute_get_key(tbmch_clientattribute_t *clientattrib
 tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribute, cJSON *object)
 {
     if (!clientattribute) {
-        TBMCH_LOGE("clientattribute is NULL");
+        TBC_LOGE("clientattribute is NULL");
         return ESP_FAIL;
     }
     if (!object) {
-        TBMCH_LOGE("object is NULL");
+        TBC_LOGE("object is NULL");
         return ESP_FAIL;
     }
 
     cJSON *value = clientattribute->on_get(clientattribute->client, clientattribute->context);
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", clientattribute->key);
+        TBC_LOGW("value is NULL! key=%s", clientattribute->key);
         return ESP_FAIL;
     }
 
@@ -114,17 +114,17 @@ tbmch_err_t _tbmch_clientattribute_do_get(tbmch_clientattribute_t *clientattribu
 tbmch_err_t _tbmch_clientattribute_do_set(tbmch_clientattribute_t *clientattribute, cJSON *value)
 {
     if (!clientattribute) {
-        TBMCH_LOGE("clientattribute is NULL");
+        TBC_LOGE("clientattribute is NULL");
         return ESP_FAIL;
     }
     if (!value) {
-        TBMCH_LOGE("value is NULL");
+        TBC_LOGE("value is NULL");
         return ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, clientattribute->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", clientattribute->key);
+        TBC_LOGW("value is NULL! key=%s", clientattribute->key);
         return ESP_FAIL;
     }*/
 

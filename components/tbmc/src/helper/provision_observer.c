@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 #include "esp_err.h"
@@ -20,8 +20,8 @@
 #include "cJSON.h"
 
 #include "provision_observer.h"
-#include "tb_mqtt_client.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_mqtt.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "provision";
 
@@ -33,13 +33,13 @@ tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
                                          tbmch_provision_on_timeout_t on_timeout)
 {
     if (!on_response) {
-        TBMCH_LOGE("on_response is NULL");
+        TBC_LOGE("on_response is NULL");
         return NULL;
     }
     
     tbmch_provision_t *provision = TBMCH_MALLOC(sizeof(tbmch_provision_t));
     if (!provision) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -56,13 +56,13 @@ tbmch_provision_t *_tbmch_provision_init(tbmch_handle_t client, int request_id,
 tbmch_provision_t *_tbmch_provision_clone_wo_listentry(tbmch_provision_t *src)
 {
     if (!src) {
-        TBMCH_LOGE("src is NULL");
+        TBC_LOGE("src is NULL");
         return NULL;
     }
     
     tbmch_provision_t *provision = TBMCH_MALLOC(sizeof(tbmch_provision_t));
     if (!provision) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -79,7 +79,7 @@ tbmch_provision_t *_tbmch_provision_clone_wo_listentry(tbmch_provision_t *src)
 int _tbmch_provision_get_request_id(tbmch_provision_t *provision)
 {
     if (!provision) {
-        TBMCH_LOGE("provision is NULL");
+        TBC_LOGE("provision is NULL");
         return -1;
     }
 
@@ -90,7 +90,7 @@ int _tbmch_provision_get_request_id(tbmch_provision_t *provision)
 tbmch_err_t _tbmch_provision_destroy(tbmch_provision_t *provision)
 {
     if (!provision) {
-        TBMCH_LOGE("provision is NULL");
+        TBC_LOGE("provision is NULL");
         return ESP_FAIL;
     }
 
@@ -102,17 +102,17 @@ tbmch_err_t _tbmch_provision_destroy(tbmch_provision_t *provision)
 
 static char *_parse_string_item(const cJSON *object, const char* key)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(object, NULL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(object, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
 
     cJSON *item = cJSON_GetObjectItem(object, key);
     if (!item) {
-        TBMCH_LOGW("%s is not existed!", key);
+        TBC_LOGW("%s is not existed!", key);
         return NULL;
     }
     char *string_value = cJSON_GetStringValue(item);
     if (!string_value) {
-        TBMCH_LOGW("%s is NULL!", key);
+        TBC_LOGW("%s is NULL!", key);
         return NULL;
     }
     return string_value;
@@ -121,8 +121,8 @@ static char *_parse_string_item(const cJSON *object, const char* key)
 static int _parse_provision_response(const tbmch_provision_results_t *results,
                                           tbc_transport_credentials_config_t *credentials)
 {
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(results, ESP_FAIL);
-    TBMCH_CHECK_PTR_WITH_RETURN_VALUE(credentials, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(results, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(credentials, ESP_FAIL);
 
     bool isSuccess = false;
     cJSON *status = cJSON_GetObjectItem(results, TB_MQTT_KEY_PROVISION_STATUS);
@@ -139,14 +139,14 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
     }
     if (!isSuccess) {
         char *results_str = cJSON_PrintUnformatted(results); //cJSON_Print(object);
-        TBMCH_LOGW("provision response is failure! %s", results_str);
+        TBC_LOGW("provision response is failure! %s", results_str);
         cJSON_free(results_str); // free memory
         return ESP_FAIL;
     }
 
     char *credentialsTypeStr = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE);
     if (!credentialsTypeStr) {
-        TBMCH_LOGW("credentialsType is error!");
+        TBC_LOGW("credentialsType is error!");
         return ESP_FAIL;
     }
 
@@ -159,7 +159,7 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
         credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
         credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
         if (!credentials->token){
-            TBMCH_LOGW("credentialsValue is error!");
+            TBC_LOGW("credentialsValue is error!");
             return ESP_FAIL;
         }
 
@@ -176,7 +176,7 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
         credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_BASIC_MQTT;
         cJSON *credentialsValue = cJSON_GetObjectItem(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
         if (!credentialsValue){
-            TBMCH_LOGW("credentialsValue is NOT existed!");
+            TBC_LOGW("credentialsValue is NOT existed!");
             return ESP_FAIL;
         }
         credentials->client_id = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_CLIENT_ID);
@@ -197,12 +197,12 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
         credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_X509;
         credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
         if (!credentials->token){
-            TBMCH_LOGW("credentialsValue is error!");
+            TBC_LOGW("credentialsValue is error!");
             return ESP_FAIL;
         }
 
     } else {
-        TBMCH_LOGW("credentialsType(%s) is error!", credentialsTypeStr);
+        TBC_LOGW("credentialsType(%s) is error!", credentialsTypeStr);
         return ESP_FAIL;
     }
     
@@ -212,13 +212,13 @@ static int _parse_provision_response(const tbmch_provision_results_t *results,
 void _tbmch_provision_do_response(tbmch_provision_t *provision, const tbmch_provision_results_t *results)
 {
     if (!provision) {
-        TBMCH_LOGE("provision is NULL");
+        TBC_LOGE("provision is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, provision->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", provision->key);
+        TBC_LOGW("value is NULL! key=%s", provision->key);
         return; // ESP_FAIL;
     }*/
 
@@ -236,13 +236,13 @@ void _tbmch_provision_do_response(tbmch_provision_t *provision, const tbmch_prov
 void _tbmch_provision_do_timeout(tbmch_provision_t *provision)
 {
     if (!provision) {
-        TBMCH_LOGE("provision is NULL");
+        TBC_LOGE("provision is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, provision->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", provision->key);
+        TBC_LOGW("value is NULL! key=%s", provision->key);
         return; // ESP_FAIL;
     }*/
 

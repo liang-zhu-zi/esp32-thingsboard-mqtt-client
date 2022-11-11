@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #ifndef _OTA_OBSERBER_H_
 #define _OTA_OBSERBER_H_
@@ -22,8 +22,8 @@
 
 #include "sys/queue.h"
 
-#include "tb_mqtt_client.h"
-#include "tb_mqtt_client_helper.h"
+#include "tbc_mqtt.h"
+#include "tbc_mqtt_helper.h"
 
 #ifdef __cplusplus
 extern "C" {

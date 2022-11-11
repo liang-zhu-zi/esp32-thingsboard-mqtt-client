@@ -12,13 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard Client transport config API
+// ThingsBoard Client utils API
 
-#ifndef _TBC_UTIL_H_
-#define _TBC_UTIL_H_
+#ifndef _TBC_UTILS_H_
+#define _TBC_UTILS_H_
 
 #include <stdint.h>
 #include <stdbool.h>
+
+#include "esp_log.h"
 
 #ifdef __cplusplus
 extern "C" {

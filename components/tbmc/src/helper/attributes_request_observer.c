@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tb_mqtt_client_helper.c/.h.
+// This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
 
 #include "esp_err.h"
 
 #include "attributes_request_observer.h"
-#include "tb_mqtt_client_helper_log.h"
+#include "tbc_utils.h"
 
 const static char *TAG = "attributes_request";
 
@@ -29,13 +29,13 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
                                                          tbmch_attributesrequest_on_timeout_t on_timeout)
 {
     if (!on_response) {
-        TBMCH_LOGE("on_response is NULL");
+        TBC_LOGE("on_response is NULL");
         return NULL;
     }
     
     tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
     if (!attributesrequest) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -51,13 +51,13 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_init(tbmch_handle_t client, 
 tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_attributesrequest_t *src)
 {
     if (!src) {
-        TBMCH_LOGE("src is NULL");
+        TBC_LOGE("src is NULL");
         return NULL;
     }
     
     tbmch_attributesrequest_t *attributesrequest = TBMCH_MALLOC(sizeof(tbmch_attributesrequest_t));
     if (!attributesrequest) {
-        TBMCH_LOGE("Unable to malloc memeory!");
+        TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
@@ -74,7 +74,7 @@ tbmch_attributesrequest_t *_tbmch_attributesrequest_clone_wo_listentry(tbmch_att
 tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCH_LOGE("attributesrequest is NULL");
+        TBC_LOGE("attributesrequest is NULL");
         return ESP_FAIL;
     }
 
@@ -85,7 +85,7 @@ tbmch_err_t _tbmch_attributesrequest_destroy(tbmch_attributesrequest_t *attribut
 int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCH_LOGE("attributesrequest is NULL");
+        TBC_LOGE("attributesrequest is NULL");
         return -1;
     }
     return attributesrequest->request_id;
@@ -95,13 +95,13 @@ int _tbmch_attributesrequest_get_request_id(tbmch_attributesrequest_t *attribute
 void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCH_LOGE("attributesrequest is NULL");
+        TBC_LOGE("attributesrequest is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, attributesrequest->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", attributesrequest->key);
+        TBC_LOGW("value is NULL! key=%s", attributesrequest->key);
         return; // ESP_FAIL;
     }*/
 
@@ -113,13 +113,13 @@ void _tbmch_attributesrequest_do_response(tbmch_attributesrequest_t *attributesr
 void _tbmch_attributesrequest_do_timeout(tbmch_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
-        TBMCH_LOGE("attributesrequest is NULL");
+        TBC_LOGE("attributesrequest is NULL");
         return; // ESP_FAIL;
     }
 
     /*cJSON *value = cJSON_GetObjectItem(object, attributesrequest->key);;
     if (!value) {
-        TBMCH_LOGW("value is NULL! key=%s", attributesrequest->key);
+        TBC_LOGW("value is NULL! key=%s", attributesrequest->key);
         return; // ESP_FAIL;
     }*/
 

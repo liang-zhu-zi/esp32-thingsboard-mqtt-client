@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard Client transprot authenticaiton API
+// ThingsBoard Client transprot credentials in memory API
 
-#ifndef _MY_TRANSPORT_AUTH_CONFIG_H_
-#define _MY_TRANSPORT_AUTH_CONFIG_H_
+#ifndef _TBC_TRANSPORT_CREDENTIALS_MEMORY_H_
+#define _TBC_TRANSPORT_CREDENTIALS_MEMORY_H_
 
 #include "tbc_transport_config.h"
 
@@ -25,12 +25,12 @@ extern "C" {
 
 //#define TBC_TRANSPORT_AUTH_CONFIG_PATH "xxxx"
 
-void tbc_transport_credentials_init(void);
-void tbc_transport_credentials_uninit(void);
-const tbc_transport_credentials_config_t *tbc_transport_credentials_get(void);
-bool tbc_transport_credentials_save(const tbc_transport_credentials_config_t *credentials);
-void tbc_transport_credentials_clean(void);
-bool tbc_transport_credentials_is_existed(void);
+void tbc_transport_credentials_memory_init(void);
+void tbc_transport_credentials_memory_uninit(void);
+const tbc_transport_credentials_config_t *tbc_transport_credentials_memory_get(void);
+bool tbc_transport_credentials_memory_save(const tbc_transport_credentials_config_t *credentials);
+void tbc_transport_credentials_memory_clean(void);
+bool tbc_transport_credentials_memory_is_existed(void);
 
 #ifdef __cplusplus
 }

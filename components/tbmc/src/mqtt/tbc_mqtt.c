@@ -26,11 +26,11 @@
 #include "tbc_transport_config.h"
 #include "tbc_transport_storage.h"
 
-#include "tb_mqtt_client.h"
+#include "tbc_mqtt.h"
 
-#include "tb_mqtt_client_log.h"
+#include "tbc_utils.h"
 
-#include "tbmc_payload_buffer.h"
+#include "tbc_mqtt_payload_buffer.h"
 
 
 typedef enum
@@ -109,11 +109,11 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
                                                       esp_mqtt_client_config_t *mqtt_config)
 {
     if (!mqtt_config) {
-         TBMC_LOGE("mqtt_config is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("mqtt_config is NULL! %s()", __FUNCTION__);
          return NULL;
     }
     if (!transport) {
-         TBMC_LOGE("transport is NULL! %s()", __FUNCTION__);
+         TBC_LOGE("transport is NULL! %s()", __FUNCTION__);
          return NULL;
     }
 
@@ -159,7 +159,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
         break;
     case TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN: // Access Token
         if (!transport->credentials.token) {
-             TBMC_LOGE("credentials->token is NULL! %s()", __FUNCTION__);
+             TBC_LOGE("credentials->token is NULL! %s()", __FUNCTION__);
              return NULL;
         }
         mqtt_config->username = transport->credentials.token;
@@ -167,7 +167,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
         
     case TBC_TRANSPORT_CREDENTIALS_TYPE_BASIC_MQTT: // Basic MQTT Credentials.for MQTT
         if (!transport->credentials.client_id && !transport->credentials.username) {
-             TBMC_LOGE("credentials->client_id && credentials->username are NULL in Basic MQTT authentication! %s()",
+             TBC_LOGE("credentials->client_id && credentials->username are NULL in Basic MQTT authentication! %s()",
                 __FUNCTION__);
              return NULL;
         }
@@ -178,7 +178,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
         
     case TBC_TRANSPORT_CREDENTIALS_TYPE_X509:      // X.509 Certificate
         if (!tlsEnabled) {
-            TBMC_LOGE("credentials->type(%d) and address->schema(%s) is not match! ()%s",
+            TBC_LOGE("credentials->type(%d) and address->schema(%s) is not match! ()%s",
                 transport->credentials.type, transport->address.schema, __FUNCTION__);
             return NULL;
         }
@@ -193,7 +193,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
     //authentication
     if (tlsEnabled) {
         if (!transport->verification.cert_pem) {
-            TBMC_LOGE("verification->cert_pem is request but it is NULL! %s()", __FUNCTION__);
+            TBC_LOGE("verification->cert_pem is request but it is NULL! %s()", __FUNCTION__);
             return NULL;
         }
         mqtt_config->cert_pem = transport->verification.cert_pem;
@@ -203,11 +203,11 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
         // SSL mutual authentication (two-way SSL)
         if (transport->credentials.type == TBC_TRANSPORT_CREDENTIALS_TYPE_X509) {
             if (!transport->authentication.client_cert_pem) {
-                TBMC_LOGE("authentication->client_cert_pem is request but it is NULL! %s()", __FUNCTION__);
+                TBC_LOGE("authentication->client_cert_pem is request but it is NULL! %s()", __FUNCTION__);
                 return NULL;
             }
             if (!transport->authentication.client_key_pem) {
-                TBMC_LOGE("authentication->client_key_pem is request but it is NULL! %s()", __FUNCTION__);
+                TBC_LOGE("authentication->client_key_pem is request but it is NULL! %s()", __FUNCTION__);
                 return NULL;
             }
             mqtt_config->client_cert_pem         = transport->authentication.client_cert_pem;
@@ -228,7 +228,7 @@ tbmc_handle_t tbmc_init(void)
 {
      tbmc_t *client = TBMC_MALLOC(sizeof(tbmc_t));
      if (!client) {
-          TBMC_LOGE("Unable to malloc memeory!");
+          TBC_LOGE("Unable to malloc memeory!");
           return NULL;
      }
 
@@ -256,7 +256,7 @@ void tbmc_destroy(tbmc_handle_t client_)
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return;
      }
 
@@ -294,13 +294,13 @@ bool tbmc_connect(tbmc_handle_t client_,
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
      if (!client_ || !config) {
-          TBMC_LOGW("one argument isn't NULL!");
+          TBC_LOGW("one argument isn't NULL!");
           return false;
      }
 
      tbmc_t *client = (tbmc_t*)client_;
      if (client->mqtt_handle) {
-          TBMC_LOGW("unable to re-connect mqtt client: client isn't NULL!");
+          TBC_LOGW("unable to re-connect mqtt client: client isn't NULL!");
           return false; //!!
      }
 
@@ -322,7 +322,7 @@ bool tbmc_connect(tbmc_handle_t client_,
      client->mqtt_handle = esp_mqtt_client_init(&mqtt_cfg);
      if (!client->mqtt_handle)
      {
-          TBMC_LOGW("unable to init mqtt client");
+          TBC_LOGW("unable to init mqtt client");
           return false;
      }
      /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
@@ -330,7 +330,7 @@ bool tbmc_connect(tbmc_handle_t client_,
      int32_t result = esp_mqtt_client_start(client->mqtt_handle);
      if (result != ESP_OK)
      {
-          TBMC_LOGW("unable to start mqtt client");
+          TBC_LOGW("unable to start mqtt client");
           esp_mqtt_client_destroy(client->mqtt_handle);
           client->mqtt_handle = NULL;
           return false;
@@ -351,25 +351,25 @@ void tbmc_disconnect(tbmc_handle_t client_) // disconnect()//...stop()
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return;
      }
      if (!client->mqtt_handle) {
-          TBMC_LOGW("unable to disconnect mqtt client: mqtt client is NULL!");
+          TBC_LOGW("unable to disconnect mqtt client: mqtt client is NULL!");
           return;
      }
      void *context = client->context;
 
-     TBMC_LOGI("tbmc_disconnect(): call esp_mqtt_client_stop()...");
+     TBC_LOGI("tbmc_disconnect(): call esp_mqtt_client_stop()...");
      int32_t result = esp_mqtt_client_stop(client->mqtt_handle);
      if (result != ESP_OK) {
-          TBMC_LOGE("unable to stop mqtt client");
+          TBC_LOGE("unable to stop mqtt client");
           return;
      }
-     TBMC_LOGI("tbmc_disconnect(): call esp_mqtt_client_destroy()...");
+     TBC_LOGI("tbmc_disconnect(): call esp_mqtt_client_destroy()...");
      result = esp_mqtt_client_destroy(client->mqtt_handle);
      if (result != ESP_OK) {
-          TBMC_LOGE("unable to stop mqtt client");
+          TBC_LOGE("unable to stop mqtt client");
           return;
      }
      client->mqtt_handle = NULL;
@@ -407,7 +407,7 @@ bool tbmc_is_connected(tbmc_handle_t client_) // isConnected
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return false;
      }
      return client->state == TBMC_STATE_CONNECTED; 
@@ -422,7 +422,7 @@ bool tbmc_is_disconnected(tbmc_handle_t client_)
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return false;
      }
      return client->state == TBMC_STATE_DISCONNECTED; 
@@ -432,7 +432,7 @@ tbmc_state_t tbmc_get_state(tbmc_handle_t client_)
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL");
+          TBC_LOGE("client is NULL");
           return TBMC_STATE_DISCONNECTED;
      }
      return client->state;
@@ -442,7 +442,7 @@ void tbmc_check_timeout(tbmc_handle_t client_) // Executes an event loop for Pub
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL");
+          TBC_LOGE("client is NULL");
           return;
      }
 
@@ -496,12 +496,12 @@ int tbmc_telemetry_publish(tbmc_handle_t client_, const char *telemetry,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
+        TBC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
      }
 
      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
@@ -530,12 +530,12 @@ int tbmc_clientattributes_publish(tbmc_handle_t client_, const char *attributes,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Client-Side Attributes][Tx] %.*s", strlen(attributes), attributes);
+        TBC_LOGI("[Client-Side Attributes][Tx] %.*s", strlen(attributes), attributes);
      }
 
      int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH, attributes, qos, retain);
@@ -568,37 +568,37 @@ int tbmc_attributes_request(tbmc_handle_t client_, const char *payload,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (!client->mqtt_handle) {
-          TBMC_LOGE("mqtt client is NULL");
+          TBC_LOGE("mqtt client is NULL");
           return -1;
      }
      if (!payload) {
-          TBMC_LOGW("There are no payload to request");
+          TBC_LOGW("There are no payload to request");
           return -1;
      }
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_ATTR, 0 /*request_id*/, context,
                                            on_attrrequest_response, on_attrrequest_timeout);
      if (request_id <= 0) {
-          TBMC_LOGE("Unable to take semaphore");
+          TBC_LOGE("Unable to take semaphore");
           return -1;
      }
 
      int size = strlen(TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX) + 20;
      char *topic = TBMC_MALLOC(size);
      if (!topic) {
-          TBMC_LOGE("Unable to malloc memory");
+          TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Attributes Request][Tx] RequestID=%d, %.*s",
+        TBC_LOGI("[Attributes Request][Tx] RequestID=%d, %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -634,7 +634,7 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
@@ -647,7 +647,7 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
           shared_len = strlen(shared_keys);
      }
      if ((client_len>0) && (shared_len>0)) {
-          TBMC_LOGW("There are no keys to request");
+          TBC_LOGW("There are no keys to request");
           return -1;
      }
 
@@ -656,7 +656,7 @@ int tbmc_attributes_request_ex(tbmc_handle_t client_, const char *client_keys, c
      char *payload = TBMC_MALLOC(size);
      if (!payload)
      {
-          TBMC_LOGE("Unable to malloc memory");
+          TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(payload, 0x00, size);
@@ -700,26 +700,26 @@ int tbmc_serverrpc_response(tbmc_handle_t client_, int request_id, const char *r
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
      
      if (!client->mqtt_handle) {
-          TBMC_LOGE("MQTT client is NULL!");
+          TBC_LOGE("MQTT client is NULL!");
           return -1;
      }
 
      int size = strlen(TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX) + 20;
      char *topic = TBMC_MALLOC(size);
      if (!topic) {
-          TBMC_LOGE("Unable to malloc memory!");
+          TBC_LOGE("Unable to malloc memory!");
           return -1;
      }
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Server-Side RPC][Tx] RequestID=%d Payload=%.*s",
+        TBC_LOGI("[Server-Side RPC][Tx] RequestID=%d Payload=%.*s",
               request_id, strlen(response), response);
      }
 
@@ -755,37 +755,37 @@ int tbmc_clientrpc_request(tbmc_handle_t client_, const char *payload,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (!client->mqtt_handle) {
-          TBMC_LOGE("mqtt client is NULL!");
+          TBC_LOGE("mqtt client is NULL!");
           return -1;
      }
      if (!payload) {
-          TBMC_LOGW("There are no payload to request!");
+          TBC_LOGW("There are no payload to request!");
           return -1;
      }
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_CLIENTRPC, 0/*request_id*/, context,
                                            on_clientrpc_response, on_clientrpc_timeout);
      if (request_id <= 0) {
-          TBMC_LOGE("Unable to take semaphore");
+          TBC_LOGE("Unable to take semaphore");
           return -1;
      }
 
      int size = strlen(TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX) + 20;
      char *topic = TBMC_MALLOC(size);
      if (!topic) {
-          TBMC_LOGE("Unable to malloc memory");
+          TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[Client-Side RPC][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[Client-Side RPC][Tx] RequestID=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -821,14 +821,14 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      int size = strlen(TB_MQTT_KEY_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_KEY_RPC_PARAMS) + strlen(params) + 20;
      char *payload = TBMC_MALLOC(size);
      if (!payload) {
-          TBMC_LOGE("Unable to malloc memory");
+          TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(payload, 0x00, size);
@@ -864,12 +864,12 @@ int tbmc_clientrpc_request_ex(tbmc_handle_t client_, const char *method, const c
  {
       tbmc_t *client = (tbmc_t*)client_;
       if (!client) {
-           TBMC_LOGE("client is NULL!");
+           TBC_LOGE("client is NULL!");
            return -1;
       }
  
       if (client->config.log_rxtx_package) {
-         TBMC_LOGI("[Claiming][Tx] %.*s", strlen(claiming), claiming);
+         TBC_LOGI("[Claiming][Tx] %.*s", strlen(claiming), claiming);
       }
  
       int message_id = _tbmc_publish(client, TB_MQTT_TOPIC_CLAIMING_DEVICE, claiming, qos, retain);
@@ -902,28 +902,28 @@ int tbmc_provision_request(tbmc_handle_t client_, const char *payload,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (!client->mqtt_handle) {
-          TBMC_LOGE("mqtt client is NULL");
+          TBC_LOGE("mqtt client is NULL");
           return -1;
      }
      if (!payload) {
-          TBMC_LOGW("There are no payload to request");
+          TBC_LOGW("There are no payload to request");
           return -1;
      }
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_PROVISION, -1, context,
                                            on_provision_response, on_provision_timeout);
      if (request_id <= 0) {
-          TBMC_LOGE("Unable to take semaphore");
+          TBC_LOGE("Unable to take semaphore");
           return -1;
      }
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[FW update][Tx] RequestID=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -959,37 +959,37 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      if (!client->mqtt_handle) {
-          TBMC_LOGE("mqtt client is NULL");
+          TBC_LOGE("mqtt client is NULL");
           return -1;
      }
      /*if (!payload) {
-          TBMC_LOGW("There are no payload to request");
+          TBC_LOGW("There are no payload to request");
           return -1;
      }*/
 
      int request_id = _request_list_create_and_append(client, TBMC_REQUEST_FWUPDATE, request_id_, context,
                                            on_otaupdate_response, on_otaupdate_timeout);
      if (request_id <= 0) {
-          TBMC_LOGE("Unable to take semaphore");
+          TBC_LOGE("Unable to take semaphore");
           return -1;
      }
 
      int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
      char *topic = TBMC_MALLOC(size);
      if (!topic) {
-          TBMC_LOGE("Unable to malloc memory");
+          TBC_LOGE("Unable to malloc memory");
           return -1;
      }
      memset(topic, 0x00, size);
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
-        TBMC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[FW update][Tx] RequestID=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -1019,7 +1019,7 @@ int tbmc_otaupdate_request(tbmc_handle_t client_,
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
@@ -1052,7 +1052,7 @@ static int _tbmc_publish(tbmc_handle_t client_, const char *topic, const char *p
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
@@ -1071,47 +1071,47 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
      tbmc_t *client = (tbmc_t*)handler_args;
      esp_mqtt_event_handle_t event = event_data;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return;// -1;
      }
      if (!event) {
-          TBMC_LOGE("event is NULL!");
+          TBC_LOGE("event is NULL!");
           return;// -1;
      }
 
      int msg_id;
      switch (event->event_id) {
      case MQTT_EVENT_BEFORE_CONNECT:
-          TBMC_LOGI("MQTT_EVENT_BEFORE_CONNECT, msg_id=%d, topic_len=%d, data_len=%d",
+          TBC_LOGI("MQTT_EVENT_BEFORE_CONNECT, msg_id=%d, topic_len=%d, data_len=%d",
               event->msg_id, event->topic_len, event->data_len);
           break;
 
      case MQTT_EVENT_CONNECTED:
-          TBMC_LOGI("MQTT_EVENT_CONNECTED");
-          TBMC_LOGI("client->mqtt_handle = %p", client->mqtt_handle);
+          TBC_LOGI("MQTT_EVENT_CONNECTED");
+          TBC_LOGI("client->mqtt_handle = %p", client->mqtt_handle);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
-          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
+          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
-          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
-          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
           msg_id = _tbmc_subscribe(client, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
-          TBMC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
           client->state = TBMC_STATE_CONNECTED;
-          TBMC_LOGI("before call on_connected()...");
+          TBC_LOGI("before call on_connected()...");
           ////if(xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) == pdTRUE) {
           if (client->on_connected) {
                client->on_connected(client->context);
           }
           ////xSemaphoreGive(client->lock);
           ////}
-          TBMC_LOGI("after call on_connected()");
+          TBC_LOGI("after call on_connected()");
           break;
 
      case MQTT_EVENT_DISCONNECTED:
-          TBMC_LOGI("MQTT_EVENT_DISCONNECTED");
+          TBC_LOGI("MQTT_EVENT_DISCONNECTED");
           client->state = TBMC_STATE_DISCONNECTED;
           ////if(xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) == pdTRUE) {
           if (client->on_disconnected) {
@@ -1122,27 +1122,27 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
           break;
 
      case MQTT_EVENT_SUBSCRIBED:
-          TBMC_LOGI("MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+          TBC_LOGI("MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
           break;
      case MQTT_EVENT_UNSUBSCRIBED:
-          TBMC_LOGI("MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+          TBC_LOGI("MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
           break;
      case MQTT_EVENT_PUBLISHED:
-          TBMC_LOGI("MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+          TBC_LOGI("MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
           break;
 
      case MQTT_EVENT_DATA:
-          TBMC_LOGI("MQTT_EVENT_DATA");
-          ////TBMC_LOGI("TOPIC=%.*s", event->topic_len, event->topic);
-          ////TBMC_LOGI("DATA=%.*s", event->data_len, event->data);
+          TBC_LOGI("MQTT_EVENT_DATA");
+          ////TBC_LOGI("TOPIC=%.*s", event->topic_len, event->topic);
+          ////TBC_LOGI("DATA=%.*s", event->data_len, event->data);
           _on_DataEventProcess(client, event);
           break;
 
      case MQTT_EVENT_ERROR:
-          TBMC_LOGW("MQTT_EVENT_ERROR");
+          TBC_LOGW("MQTT_EVENT_ERROR");
           break;
      default:
-          TBMC_LOGW("Other event id:%d", event->event_id);
+          TBC_LOGW("Other event id:%d", event->event_id);
           break;
      }
      return;// ESP_OK;
@@ -1154,11 +1154,11 @@ static void _on_DataEventProcess(tbmc_handle_t client_, esp_mqtt_event_handle_t 
 
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return;
      }
      if (!event) {
-          TBMC_LOGE("!event is NULL!");
+          TBC_LOGE("!event is NULL!");
           return;
      }
 
@@ -1177,7 +1177,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
 {
     tbmc_t *client = (tbmc_t*)context/*client*/;
     if (!client) {
-         TBMC_LOGE("client is NULL!");
+         TBC_LOGE("client is NULL!");
          return;
     }
 
@@ -1195,7 +1195,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
          int request_id = atoi(temp);
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[Attributes Request][Rx] RequestID=%d %.*s",
+             TBC_LOGI("[Attributes Request][Rx] RequestID=%d %.*s",
                   request_id, payload_len, payload);
          }
     
@@ -1208,7 +1208,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
               _request_destroy(tbmc_request);
               tbmc_request = NULL;
          } else {
-              TBMC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
+              TBC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
               return; // -1;
          }
@@ -1218,13 +1218,13 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
     
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
+             TBC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
          }
     
          if (client->on_sharedattr_received) {
               client->on_sharedattr_received(client->context, payload, payload_len);
          } else {
-              TBMC_LOGW("Unable to find shared-attributes, (%.*s, %.*s)",
+              TBC_LOGW("Unable to find shared-attributes, (%.*s, %.*s)",
                       topic_len, topic, payload_len, payload);
          }
     
@@ -1235,14 +1235,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
          int request_id = atoi(temp);
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[Server-Side RPC][Rx] RequestID=%d Payload=%.*s",
+             TBC_LOGI("[Server-Side RPC][Rx] RequestID=%d Payload=%.*s",
                   request_id, payload_len, payload);
          }
     
          if (client->on_serverrpc_request) {
               client->on_serverrpc_request(client->context, request_id, payload, payload_len);
          } else {
-              TBMC_LOGW("Unable to find server-rpc request(%d), (%.*s, %.*s)", request_id,
+              TBC_LOGW("Unable to find server-rpc request(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
          }
     
@@ -1253,7 +1253,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
          int request_id = atoi(temp);
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[Client-Side RPC][Rx] RequestID=%d %.*s",
+             TBC_LOGI("[Client-Side RPC][Rx] RequestID=%d %.*s",
                   request_id, payload_len, payload);
          }
     
@@ -1266,7 +1266,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
               _request_destroy(tbmc_request);
               tbmc_request = NULL;
          } else {
-              TBMC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
+              TBC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
               return; // -1;
          }
@@ -1286,7 +1286,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
          }
 
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[FW update][Rx] RequestID=%d payload_len=%d",
+             TBC_LOGI("[FW update][Rx] RequestID=%d payload_len=%d",
                    request_id, payload_len);
          }
     
@@ -1299,7 +1299,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
               _request_destroy(tbmc_request);
               tbmc_request = NULL;
          } else {
-              TBMC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
+              TBC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
                         request_id,
                         topic_len, topic, payload_len, payload);
               return; // -1;
@@ -1308,7 +1308,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
     } else if (strncmp(topic, TB_MQTT_TOPIC_PROVISION_RESPONSE, strlen(TB_MQTT_TOPIC_PROVISION_RESPONSE)) == 0) {
          // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
          if (client->config.log_rxtx_package) {
-             TBMC_LOGI("[Provision][Rx] request_type=%d, payload_len=%d",
+             TBC_LOGI("[Provision][Rx] request_type=%d, payload_len=%d",
                    TBMC_REQUEST_PROVISION, payload_len);
          }
 
@@ -1321,7 +1321,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
               _request_destroy(tbmc_request);
               tbmc_request = NULL;
          } else {
-              TBMC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
+              TBC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
                         TBMC_REQUEST_PROVISION,
                         topic_len, topic, payload_len, payload);
               return; // -1;
@@ -1329,7 +1329,7 @@ static void _on_PayloadProcess(void *context/*client*/, tbmc_rx_msg_info* rx_msg
     
     }  else {
          // Payload is too long, then Serial.*/
-         TBMC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d, total_payload_len=%d, current_payload_offset=%d",
+         TBC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d, total_payload_len=%d, current_payload_offset=%d",
                    topic_len, topic, payload_len, payload, payload_len, total_payload_len, current_payload_offset);
     }
 
@@ -1360,13 +1360,13 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
 {
      tbmc_t *client = (tbmc_t*)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return -1;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMC_LOGE("Unable to take semaphore!");
+          TBC_LOGE("Unable to take semaphore!");
           return -1;
      }
 
@@ -1386,7 +1386,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      if (!on_response && !on_timeout) {
           // Give semaphore
           xSemaphoreGive(client->lock);
-          TBMC_LOGI("Don't append to request list if no response & no timeout!");
+          TBC_LOGI("Don't append to request list if no response & no timeout!");
           return request_id;
      }
 
@@ -1395,7 +1395,7 @@ static int _request_list_create_and_append(tbmc_handle_t client_, tbmc_request_t
      if (!tbmc_request) {
           // Give semaphore
           xSemaphoreGive(client->lock);
-          TBMC_LOGE("Unable to create request: No memory!");
+          TBC_LOGE("Unable to create request: No memory!");
           return -1;
      }
 
@@ -1424,13 +1424,13 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return NULL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMC_LOGE("Unable to take semaphore!");
+          TBC_LOGE("Unable to take semaphore!");
           return NULL;
      }
 
@@ -1446,7 +1446,7 @@ static tbmc_request_t *_request_list_search_and_remove(tbmc_handle_t client_, in
      if (tbmc_request) {
           LIST_REMOVE(tbmc_request, entry);
      } else {
-          TBMC_LOGW("Unable to remove request:%d!", request_id);
+          TBC_LOGW("Unable to remove request:%d!", request_id);
      }
 
      // Give semaphore
@@ -1459,13 +1459,13 @@ static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t cli
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return NULL;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMC_LOGE("Unable to take semaphore!");
+          TBC_LOGE("Unable to take semaphore!");
           return NULL;
      }
 
@@ -1481,7 +1481,7 @@ static tbmc_request_t *_request_list_search_and_remove_by_type(tbmc_handle_t cli
      if (tbmc_request) {
           LIST_REMOVE(tbmc_request, entry);
      } else {
-          TBMC_LOGW("Unable to remove request: type=%d!", type);
+          TBC_LOGW("Unable to remove request: type=%d!", type);
      }
 
      // Give semaphore
@@ -1495,17 +1495,17 @@ static int _request_list_move_all_of_timeout(tbmc_handle_t client_, uint64_t tim
 {
      tbmc_t *client = (tbmc_t *)client_;
      if (!client) {
-          TBMC_LOGE("client is NULL!");
+          TBC_LOGE("client is NULL!");
           return 0;
      }
      if (!timeout_request_list) {
-          TBMC_LOGE("timeout_request_list is NULL!");
+          TBC_LOGE("timeout_request_list is NULL!");
           return 0;
      }
 
      // Take semaphore
      if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBMC_LOGE("Unable to take semaphore!");
+          TBC_LOGE("Unable to take semaphore!");
           return 0;
      }
 
@@ -1549,7 +1549,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
 {
      tbmc_request_t *tbmc_request = TBMC_MALLOC(sizeof(tbmc_request_t));
      if (!tbmc_request) {
-          TBMC_LOGE("Unable to malloc memory!");
+          TBC_LOGE("Unable to malloc memory!");
           return NULL;
      }
 
@@ -1567,7 +1567,7 @@ static tbmc_request_t *_request_create(tbmc_request_type_t type,
 static void _request_destroy(tbmc_request_t *tbmc_request)
 {
      if (!tbmc_request) {
-          TBMC_LOGE("Invalid argument!");
+          TBC_LOGE("Invalid argument!");
           return; 
      }
 
