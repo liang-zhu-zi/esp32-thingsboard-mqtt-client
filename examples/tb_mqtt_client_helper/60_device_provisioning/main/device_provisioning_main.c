@@ -56,8 +56,8 @@ static const psk_hint_key_t psk_hint_key = {
 // #endif
 // extern const uint8_t mqtt_eclipseprojects_io_pem_end[]   asm("_binary_mqtt_eclipseprojects_io_pem_end");
 
-extern const uint8_t server_cert_pem_start[] asm("_binary_mosquitto_org_crt_start");
-extern const uint8_t server_cert_pem_end[] asm("_binary_mosquitto_org_crt_end");
+extern const uint8_t server_cert_pem_start[] asm("_binary_cert_pem_start");
+extern const uint8_t server_cert_pem_end[] asm("_binary_cert_pem_end");
 
 extern const uint8_t client_cert_pem_start[] asm("_binary_client_crt_start");
 extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
