@@ -52,18 +52,18 @@ extern "C" {
 #define TBC_MEM_CHECK(TAG, a, action) \
                 if (!(a)) {                                                      \
                     ESP_LOGE(TAG, "%s(%d): %s",  __FUNCTION__, __LINE__, "Memory exhausted"); \
-                    action;                                                                                         \
+                    action; \
                 }
 
 #define TBC_CHECK_PTR_WITH_RETURN_VALUE(pointer, returnValue) \
                  if (!pointer) { \
-                      ESP_LOGE(TAG, #pointer" is NULL! %s()", __FUNCTION__); \
+                      ESP_LOGE(TAG, #pointer" is NULL! %s() %d", __FUNCTION__, __LINE__); \
                       return returnValue; \
                  }
             
 #define TBC_CHECK_PTR(pointer) \
                  if (!pointer) { \
-                      ESP_LOGE(TAG, #pointer" is NULL! %s()", __FUNCTION__); \
+                      ESP_LOGE(TAG, #pointer" is NULL! %s() %d", __FUNCTION__, __LINE__); \
                       return; \
                  }
 
