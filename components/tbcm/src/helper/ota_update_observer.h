@@ -14,15 +14,13 @@
 
 // This file is called by tbc_mqtt_helper.c/.h.
 
-#ifndef _OTA_OBSERBER_H_
-#define _OTA_OBSERBER_H_
+#ifndef _OTA_UPDATE_OBSERBER_H_
+#define _OTA_UPDATE_OBSERBER_H_
 
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "sys/queue.h"
-
-#include "tbc_mqtt.h"
+#include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
 #ifdef __cplusplus
@@ -90,38 +88,43 @@ typedef struct tbcmh_otaupdate
      LIST_ENTRY(tbcmh_otaupdate) entry;
 } tbcmh_otaupdate_t;
 
-tbcmh_otaupdate_t *_tbcmh_otaupdate_init(tbcmh_handle_t client,  const char *ota_description, const tbcmh_otaupdate_config_t *config); /*!< Initialize tbcmh_otaupdate_t */
-tbc_err_t        _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate);                   /*!< Destroys the tbcmh_otaupdate_t */
-void               _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate);
+// static tbcmh_otaupdate_t *_tbcmh_otaupdate_init(tbcmh_handle_t client,  const char *ota_description, const tbcmh_otaupdate_config_t *config); /*!< Initialize tbcmh_otaupdate_t */
+// static tbc_err_t        _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate);                   /*!< Destroys the tbcmh_otaupdate_t */
+// static void               _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate);
 
-tbcmh_otaupdate_type_t _tbcmh_otaupdate_get_type(tbcmh_otaupdate_t *otaupdate);
-const char*            _tbcmh_otaupdate_get_description(tbcmh_otaupdate_t *otaupdate);
-const char*            _tbcmh_otaupdate_get_current_title(tbcmh_otaupdate_t *otaupdate);  
-int _tbcmh_otaupdate_get_request_id(tbcmh_otaupdate_t *otaupdate);
+// static tbcmh_otaupdate_type_t _tbcmh_otaupdate_get_type(tbcmh_otaupdate_t *otaupdate);
+// static const char*            _tbcmh_otaupdate_get_description(tbcmh_otaupdate_t *otaupdate);
+// static const char*            _tbcmh_otaupdate_get_current_title(tbcmh_otaupdate_t *otaupdate);  
+// static int _tbcmh_otaupdate_get_request_id(tbcmh_otaupdate_t *otaupdate);
 
-void _tbcmh_otaupdate_publish_early_current_version(tbcmh_otaupdate_t *otaupdate);
-void _tbcmh_otaupdate_publish_early_failed_status(tbcm_handle_t tbcm_handle, 
-                                tbcmh_otaupdate_type_t ota_type, const char *ota_error);
-void _tbcmh_otaupdate_publish_late_failed_status(tbcmh_otaupdate_t *otaupdate, const char *ota_error);
-void _tbcmh_otaupdate_publish_going_status(tbcmh_otaupdate_t *otaupdate, const char *ota_state);
-void _tbcmh_otaupdate_publish_updated_status(tbcmh_otaupdate_t *otaupdate);
+// static void _tbcmh_otaupdate_publish_early_current_version(tbcmh_otaupdate_t *otaupdate);
+// static void _tbcmh_otaupdate_publish_early_failed_status(tbcm_handle_t tbcm_handle, 
+//                                 tbcmh_otaupdate_type_t ota_type, const char *ota_error);
+// static void _tbcmh_otaupdate_publish_late_failed_status(tbcmh_otaupdate_t *otaupdate, const char *ota_error);
+// static void _tbcmh_otaupdate_publish_going_status(tbcmh_otaupdate_t *otaupdate, const char *ota_state);
+// static void _tbcmh_otaupdate_publish_updated_status(tbcmh_otaupdate_t *otaupdate);
 
-tbc_err_t  _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
-                                            tbcm_on_otaupdate_response_t on_otaupdate_response,
-                                            tbcm_on_otaupdate_timeout_t on_otaupdate_timeout);
-bool _tbcmh_otaupdate_is_received_all(tbcmh_otaupdate_t *otaupdate);
-bool _tbcmh_otaupdate_checksum_verification(tbcmh_otaupdate_t *otaupdate);
+// static tbc_err_t  _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
+//                                             tbcm_on_otaupdate_response_t on_otaupdate_response,
+//                                             tbcm_on_otaupdate_timeout_t on_otaupdate_timeout);
+// static bool _tbcmh_otaupdate_is_received_all(tbcmh_otaupdate_t *otaupdate);
+// static bool _tbcmh_otaupdate_checksum_verification(tbcmh_otaupdate_t *otaupdate);
 
-//return 0 on successful, -1 on failure
-tbc_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate, const char *ota_title, const char *ota_version, int ota_size,
-                                         const char *ota_checksum, const char *ota_checksum_algorithm,
-                                         char *ota_error, int error_size);
-//return 0 on successful, -1 on failure
-tbc_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, const void *ota_data, int data_size,
-                                         char *ota_error, int error_size);
-//return 0 on successful, -1 on failure
-tbc_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size);
-void        _tbcmh_otaupdate_do_abort(tbcmh_otaupdate_t *otaupdate);
+// //return 0 on successful, -1 on failure
+// static tbc_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate, const char *ota_title, const char *ota_version, int ota_size,
+//                                          const char *ota_checksum, const char *ota_checksum_algorithm,
+//                                          char *ota_error, int error_size);
+// //return 0 on successful, -1 on failure
+// static tbc_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, const void *ota_data, int data_size,
+//                                          char *ota_error, int error_size);
+// //return 0 on successful, -1 on failure
+// static tbc_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size);
+// static void        _tbcmh_otaupdate_do_abort(tbcmh_otaupdate_t *otaupdate);
+
+/*static*/ tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_);
+/*static*/ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_);
+/*static*/ void _tbcmh_otaupdate_on_response(tbcmh_handle_t client_, int request_id, int chunk_id, const char* payload, int length);
+/*static*/ void _tbcmh_otaupdate_on_timeout(tbcmh_handle_t client_, int request_id);
 
 #ifdef __cplusplus
 }

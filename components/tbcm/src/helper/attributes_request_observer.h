@@ -52,29 +52,28 @@ typedef struct tbcmh_attributesrequest
      LIST_ENTRY(tbcmh_attributesrequest) entry;
 } tbcmh_attributesrequest_t;
 
-tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, int request_id, void *context,
-                                                               tbcmh_attributesrequest_on_response_t on_response,
-                                                               tbcmh_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbcmh_attributesrequest */
-tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_attributesrequest_t *src);
-tbc_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbcmh_attributesrequest */
+// static tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, int request_id, void *context,
+//                                                                tbcmh_attributesrequest_on_response_t on_response,
+//                                                                tbcmh_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbcmh_attributesrequest */
+// static tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_attributesrequest_t *src);
+// static tbc_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbcmh_attributesrequest */
 
-int _tbcmh_attributesrequest_get_request_id(tbcmh_attributesrequest_t *attributesrequest);
+// static int _tbcmh_attributesrequest_get_request_id(tbcmh_attributesrequest_t *attributesrequest);
 
-void _tbcmh_attributesrequest_do_response(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
-void _tbcmh_attributesrequest_do_timeout(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
+// static void _tbcmh_attributesrequest_do_response(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
+// static void _tbcmh_attributesrequest_do_timeout(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
 
+/*static*/ tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
 
-////tbc_err_t _tbcmh_attributesrequest_add(tbcmh_attributesrequest_t *attributesrequest, int count, /*tbcmh_attribute_handle_t attribute,*/ ...);
+/*static*/ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
+/*static*/ void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id);
 
-////tbc_err_t _tbcmh_attributesrequest_get_client_keys(tbcmh_attributesrequest_t *attributesrequest, char *buffer, int size);
-////tbc_err_t _tbcmh_attributesrequest_get_shared_keys(tbcmh_attributesrequest_t * attributesrequest, char *buffer, int size);
-
-////tbcmh_attribute_handle_t _tbcmh_attributesrequest_search_clientattribute(tbcmh_attributesrequest_t *attributesrequest, const char *clientside_attribute_name); /*!< Search the client-side attribute in request */
-////tbcmh_attribute_handle_t _tbcmh_attributesrequest_search_sharedattribute(tbcmh_attributesrequest_t *attributesrequest, const char *clientside_attribute_name); /*!< Search the shared attribute in request */
-
-//_pack()/_send()!, _unpack()/deal() //_onAttributesResponse()[unpack->queue], [queue->attribute deal],
-//???_destroy_all_attributes(),
-
+// TODO: remove it !
+/*static*/ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
+                                  void *context,
+                                  tbcmh_attributesrequest_on_response_t on_response,
+                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                  int count, /*const char *key,*/...);
 #ifdef __cplusplus
 }
 #endif //__cplusplus

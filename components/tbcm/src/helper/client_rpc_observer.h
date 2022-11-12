@@ -20,7 +20,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "sys/queue.h"
+#include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
 #ifdef __cplusplus
@@ -49,38 +49,21 @@ typedef struct tbcmh_clientrpc
      LIST_ENTRY(tbcmh_clientrpc) entry;
 } tbcmh_clientrpc_t;
 
-tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
-                                         const char *method, ////tbcmh_rpc_params_t *params,
-                                         void *context,
-                                         tbcmh_clientrpc_on_response_t on_response,
-                                         tbcmh_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbcmh_clientrpc_t */
-tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src);
-tbc_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc);                /*!< Destroys the tbcmh_clientrpc_t */
+// static tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
+//                                          const char *method, ////tbcmh_rpc_params_t *params,
+//                                          void *context,
+//                                          tbcmh_clientrpc_on_response_t on_response,
+//                                          tbcmh_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbcmh_clientrpc_t */
+// static tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src);
+// static tbc_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc);                /*!< Destroys the tbcmh_clientrpc_t */
 
-int _tbcmh_clientrpc_get_request_id(tbcmh_clientrpc_t *clientrpc);
-void _tbcmh_clientrpc_do_response(tbcmh_clientrpc_t *clientrpc, const tbcmh_rpc_results_t *results);
-void _tbcmh_clientrpc_do_timeout(tbcmh_clientrpc_t *clientrpc);
+// static int _tbcmh_clientrpc_get_request_id(tbcmh_clientrpc_t *clientrpc);
+// static void _tbcmh_clientrpc_do_response(tbcmh_clientrpc_t *clientrpc, const tbcmh_rpc_results_t *results);
+// static void _tbcmh_clientrpc_do_timeout(tbcmh_clientrpc_t *clientrpc);
 
-//const char *_tbcmh_clientrpc_get_method(tbcmh_clientrpc_t *clientrpc);
-
-//0.   Subscribe topic: client-side RPC response;
-
-//1.    tbcmh_clientrpc_of_oneway_request(...)/tbcmh_clientrpc_of_oneway_request(...)
-//1.1   tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_client_handle_t client, const char* method, tbcmh_rpc_params_t *params, void *context, tbcmh_clientrpc_response_callback_t on_response);
-//1.1  _tbcm.clientrpc_request_pack(...) 
-//1.2  _tbcm.clientrpc_request_send(...); //tbmqttclient_sendClientRpcRequest()
-
-//2    _tbcm.on_clientrpc_response()
-//2.1  _tbcm.on_clientrpc_response_unpack(): parse payload* to cJSON*, then push it to queue;
-//2.2  _tbcm.on_clientrpc_response_deal(on_response): call a server RPC's on_request callback by method name, then send a replay if on_request callback has a return value of tbcmh_rpc_results_t.
-
-//3.   _tbcm.on_clientrpc_timeout(on_timeout)
-//3.1  _tbcm.on_clientrpc_response_timeout(on_timeout)
-
-//2.f/3.f tbc_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc)
-
-//4     tbcmh_client_destroy(...)
-//4.x   tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_handle_t serverrpc)
+/*static*/ tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
+/*static*/ void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
+/*static*/ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id);
 
 #ifdef __cplusplus
 }

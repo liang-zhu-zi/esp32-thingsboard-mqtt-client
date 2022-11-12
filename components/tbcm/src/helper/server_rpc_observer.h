@@ -20,8 +20,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "sys/queue.h"
-
+#include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
 #ifdef __cplusplus
@@ -47,31 +46,18 @@ typedef struct tbcmh_serverrpc
      LIST_ENTRY(tbcmh_serverrpc) entry;
 } tbcmh_serverrpc_t;
 
-tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *method, void *context,
-                                         tbcmh_serverrpc_on_request_t on_request); /*!< Initialize tbcmh_serverrpc */
-tbcmh_serverrpc_t *_tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src);
-tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc); /*!< Destroys the tbcmh_serverrpc */
+// static tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *method, void *context,
+//                                          tbcmh_serverrpc_on_request_t on_request); /*!< Initialize tbcmh_serverrpc */
+// static tbcmh_serverrpc_t *_tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src);
+// static tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc); /*!< Destroys the tbcmh_serverrpc */
 
-const char *_tbcmh_serverrpc_get_method(tbcmh_serverrpc_t *serverrpc);
+// static const char *_tbcmh_serverrpc_get_method(tbcmh_serverrpc_t *serverrpc);
 
-tbcmh_rpc_results_t *_tbcmh_serverrpc_do_request(tbcmh_serverrpc_t *serverrpc, int request_id, tbcmh_rpc_params_t *params);
+// static tbcmh_rpc_results_t *_tbcmh_serverrpc_do_request(tbcmh_serverrpc_t *serverrpc, int request_id, tbcmh_rpc_params_t *params);
 
-//0.   Subscribe topic: server-side RPC request;
+/*static*/ tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
 
-//1.   tbcmh_serverrpc_observer_append(...);
-//1.1  tbcmh_serverrpc_t *_tbcmh_serverrpc_init(const char* method, void *context, tbcmh_serverrpc_request_callback_t on_request);
-//1.2  create to add to LIST_ENTRY(tbcmh_serverrpc_)
-//1.3  tbmqttclient_addServerRpcEvent()???
-
-//2.     _tbcm.on_serverrpc_request()
-//2.1    _tbcm.on_serverrpc_request_unpack(): parse payload* to cJSON*, then push it to queue;
-//2.2    _tbcm.on_serverrpc_request_deal(): call a server RPC's on_request callback by method name, then send a replay if on_request callback has a return value of tbcmh_rpc_results_t.
-//2.3   send serverrpc response, option:
-//2.3.1  _tbcm.serverrpc_response_pack(...);
-//2.3.2  _tbcm.serverrpc_response_send(...); //tbc_err_t tbcmh_serverrpc_response(tbcmh_client_handle_t client, int request_id, const char* results); //tbmqttclient_sendServerRpcReply()
-
-//3.    tbcmh_client_destroy(...)
-//3.x   tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc);
+/*static*/ void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object);
 
 #ifdef __cplusplus
 }
