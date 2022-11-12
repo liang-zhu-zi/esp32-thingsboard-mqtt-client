@@ -10,5 +10,5 @@ This library provides some simple API to communicate with ThingsBoard platform u
 
 Current client version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard starting from version 3.4.0.
 
-* [Components](./components/tbmc)
+* [Components](./components/tbcm)
 * [Examples](./examples)

@@ -38,7 +38,7 @@ tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
         return NULL;
     }
     
-    tbcmh_clientrpc_t *clientrpc = TBCMH_MALLOC(sizeof(tbcmh_clientrpc_t));
+    tbcmh_clientrpc_t *clientrpc = TBC_MALLOC(sizeof(tbcmh_clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -46,7 +46,7 @@ tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
 
     memset(clientrpc, 0x00, sizeof(tbcmh_clientrpc_t));
     clientrpc->client = client;
-    clientrpc->method = TBCMH_MALLOC(strlen(method)+1);
+    clientrpc->method = TBC_MALLOC(strlen(method)+1);
     if (clientrpc->method) {
         strcpy(clientrpc->method, method);
     }
@@ -64,7 +64,7 @@ tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src)
         return NULL;
     }
     
-    tbcmh_clientrpc_t *clientrpc = TBCMH_MALLOC(sizeof(tbcmh_clientrpc_t));
+    tbcmh_clientrpc_t *clientrpc = TBC_MALLOC(sizeof(tbcmh_clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -72,7 +72,7 @@ tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src)
 
     memset(clientrpc, 0x00, sizeof(tbcmh_clientrpc_t));
     clientrpc->client = src->client;
-    clientrpc->method = TBCMH_MALLOC(strlen(src->method)+1);
+    clientrpc->method = TBC_MALLOC(strlen(src->method)+1);
     if (clientrpc->method) {
         strcpy(clientrpc->method, src->method);
     }
@@ -94,15 +94,15 @@ int _tbcmh_clientrpc_get_request_id(tbcmh_clientrpc_t *clientrpc)
 }
 
 /*!< Destroys the tbcmh_clientrpc_t */
-tbcmh_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc)
+tbc_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc)
 {
     if (!clientrpc) {
         TBC_LOGE("clientrpc is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(clientrpc->method);
-    TBCMH_FREE(clientrpc);
+    TBC_FREE(clientrpc->method);
+    TBC_FREE(clientrpc);
     return ESP_OK;
 }
 

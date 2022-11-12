@@ -168,7 +168,7 @@ static void _response_timer_start(tbcmh_handle_t client_);
 static void _response_timer_stop(tbcmh_handle_t client_);
 static void _response_timer_destroy(tbcmh_handle_t client_);
 
-static tbcmh_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const char *key, void *context,
+static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set);
 static void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_);
@@ -176,21 +176,21 @@ static void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_o
                                                  const char *ota_title, const char *ota_version, int ota_size,
                                                  const char *ota_checksum, const char *ota_checksum_algorithm);
 
-static tbcmh_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_provision_empty(tbcmh_handle_t client_);
-static tbcmh_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_);
+static tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_);
 
 const static char *TAG = "tb_mqtt_client_helper";
 
-//====0.tbmc client====================================================================================================
+//====0.tbcm client====================================================================================================
 tbcmh_handle_t tbcmh_init(void)
 {
-     tbcmh_t *client = (tbcmh_t *)TBCMH_MALLOC(sizeof(tbcmh_t));
+     tbcmh_t *client = (tbcmh_t *)TBC_MALLOC(sizeof(tbcmh_t));
      if (!client) {
           TBC_LOGE("Unable to malloc memory! %s()", __FUNCTION__);
           return NULL;
@@ -261,7 +261,7 @@ void tbcmh_destroy(tbcmh_handle_t client_)
      }
      tbcm_destroy(client->tbmqttclient);
 
-     TBCMH_FREE(client);
+     TBC_FREE(client);
 }
 
 tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client_)
@@ -342,10 +342,6 @@ static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
     return ESP_OK;
 }
 
-
-//~~tbcmh_config(); //move to tbcmh_connect()
-//~~tbcmh_set_ConnectedEvent(evtConnected); //move to tbcmh_init()
-//~~tbcmh_set_DisconnectedEvent(evtDisconnected); //move to tbcmh_init()
 bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
                    void *context,
                    tbcmh_on_connected_t on_connected,
@@ -545,7 +541,7 @@ static void _tbcmh_disonnected_on(tbcmh_handle_t client_) //onDisonnected() // F
      return;
 }
 
-tbcmh_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
+tbc_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
 {
      tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
@@ -566,9 +562,8 @@ tbcmh_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
      return result==ESP_OK ? ESP_OK : ESP_FAIL;
 }
 
-
 //====10.Publish Telemetry time-series data==============================================================================
-tbcmh_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
+tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
 {
      tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
@@ -611,7 +606,7 @@ tbcmh_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-tbcmh_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
@@ -648,7 +643,7 @@ tbcmh_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key)
      return ESP_OK;
 }
 
-static tbcmh_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -676,8 +671,8 @@ static tbcmh_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_)
      // xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-////tbmqttlink.h.tbcmh_sendTelemetry();
-tbcmh_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...)
+
+tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -731,12 +726,12 @@ tbcmh_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char
 }
 
 //====20.Publish client-side device attributes to the server============================================================
-tbcmh_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
                                          tbcmh_clientattribute_on_get_t on_get)
 {
      return _tbcmh_clientattribute_xx_append(client_, key, context, on_get, NULL);
 }
-tbcmh_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set)
 {
@@ -747,7 +742,7 @@ tbcmh_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const 
      return _tbcmh_clientattribute_xx_append(client_, key, context, on_get, on_set);
 }
 // tbcmh_attribute_of_clientside_init()
-static tbcmh_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const char *key, void *context,
+static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set)
 {
@@ -792,7 +787,7 @@ static tbcmh_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, cons
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-tbcmh_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
@@ -828,7 +823,7 @@ tbcmh_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key)
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-static tbcmh_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -856,7 +851,7 @@ static tbcmh_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_)
      // xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-tbcmh_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...) ////tbmqttlink.h.tbcmh_sendClientAttributes();
+tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -924,7 +919,7 @@ static void _tbcmh_clientattribute_on_received(tbcmh_handle_t client_, const cJS
           return;// ESP_FAIL;
      }
 
-     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      tbcmh_clientattribute_t *clientattribute = NULL;
      const char* key = NULL;
      LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
@@ -942,8 +937,8 @@ static void _tbcmh_clientattribute_on_received(tbcmh_handle_t client_, const cJS
 }
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-////tbmqttlink.h.tbcmh_addSubAttrEvent(); //Call it before connect() //tbcmh_shared_attribute_list_t
-tbcmh_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+//Call it before connect() //tbcmh_shared_attribute_list_t
+tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
                                          tbcmh_sharedattribute_on_set_t on_set)
 {
      tbcmh_t *client = (tbcmh_t*)client_;
@@ -989,7 +984,7 @@ tbcmh_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key
 }
 
 // remove shared_attribute from tbcmh_shared_attribute_list_t
-tbcmh_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
@@ -1025,7 +1020,7 @@ tbcmh_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-static tbcmh_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -1055,7 +1050,6 @@ static tbcmh_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_)
 }
 
 //unpack & deal
-//onAttrOfSubReply()
 static void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1070,7 +1064,7 @@ static void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJS
           return;// ESP_FAIL;
      }
 
-     // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      tbcmh_sharedattribute_t *sharedattribute = NULL;
      const char* key = NULL;
      LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
@@ -1116,7 +1110,7 @@ static void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJS
 }
 
 //====22.Request client-side or shared device attributes from the server================================================
-static tbcmh_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -1149,7 +1143,7 @@ static tbcmh_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_)
 }
 
 #define MAX_KEYS_LEN (256)
-////tbmqttlink.h.tbcmh_sendAttributesRequest();
+
 ////return request_id on successful, otherwise return -1/ESP_FAIL
 int tbcmh_attributesrequest_send(tbcmh_handle_t client_,
                                  void *context,
@@ -1172,8 +1166,8 @@ int tbcmh_attributesrequest_send(tbcmh_handle_t client_,
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
-     char *client_keys = TBCMH_MALLOC(MAX_KEYS_LEN);
-     char *shared_keys = TBCMH_MALLOC(MAX_KEYS_LEN);
+     char *client_keys = TBC_MALLOC(MAX_KEYS_LEN);
+     char *shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
      if (!client_keys || !shared_keys) {
           goto attributesrequest_fail;
      }
@@ -1259,17 +1253,17 @@ next_attribute_key:
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     TBCMH_FREE(client_keys);
-     TBCMH_FREE(shared_keys);
+     TBC_FREE(client_keys);
+     TBC_FREE(shared_keys);
      return request_id;
 
 attributesrequest_fail:
      xSemaphoreGive(client->_lock);
      if (!client_keys) {
-          TBCMH_FREE(client_keys);
+          TBC_FREE(client_keys);
      }
      if (!shared_keys) {
-          TBCMH_FREE(shared_keys);
+          TBC_FREE(shared_keys);
      }
      return ESP_FAIL;
 }
@@ -1298,7 +1292,7 @@ static int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t c
       //     TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
       //     return ESP_FAIL;
       //}
-      char *shared_keys = TBCMH_MALLOC(MAX_KEYS_LEN);
+      char *shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
       if (!shared_keys) {
            goto attributesrequest_fail;
       }
@@ -1359,19 +1353,17 @@ static int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t c
  
       // Give semaphore
       //xSemaphoreGive(client->_lock);
-      TBCMH_FREE(shared_keys);
+      TBC_FREE(shared_keys);
       return request_id;
  
  attributesrequest_fail:
       //xSemaphoreGive(client->_lock);
       if (!shared_keys) {
-           TBCMH_FREE(shared_keys);
+           TBC_FREE(shared_keys);
       }
       return ESP_FAIL;
  }
 
-
-// onAttributesResponse()=>_attributesResponse()
 static void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1407,11 +1399,11 @@ static void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int req
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
-     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT)) {
           _tbcmh_clientattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
      }
-     // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbmch's funciton in set value callback!
+     // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED)) {
           _tbcmh_sharedattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
      }
@@ -1423,7 +1415,7 @@ static void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int req
 
      return;// ESP_OK;
 }
-// onAttributesResponseTimeout()
+
 static void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1468,8 +1460,8 @@ static void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int requ
 }
 
 //====30.Server-side RPC================================================================================================
-////tbmqttlink.h.tbcmh_addServerRpcEvent(evtServerRpc); //Call it before connect()
-tbcmh_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
+//Call it before connect()
+tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
                                    void *context,
                                    tbcmh_serverrpc_on_request_t on_request)
 {
@@ -1516,7 +1508,7 @@ tbcmh_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
 }
 
 // remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
-tbcmh_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
+tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !method) {
@@ -1552,7 +1544,7 @@ tbcmh_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-static tbcmh_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -1581,8 +1573,6 @@ static tbcmh_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
      return ESP_OK;
 }
 
-
-////parseServerSideRpc(msg)
 static void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1649,7 +1639,7 @@ static void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, 
 }
 
 //====31.Client-side RPC================================================================================================
-static tbcmh_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -1681,7 +1671,7 @@ static tbcmh_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_)
      return ESP_OK;
 }
 
-////tbmqttlink.h.tbcmh_sendClientRpcRequest(); //add list
+//add list
 int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method,
                                                            /*const*/ tbcmh_rpc_params_t *params)
 {
@@ -1728,7 +1718,7 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method
 
      return request_id;
 }
-////tbmqttlink.h.tbcmh_sendClientRpcRequest(); //create to add to LIST_ENTRY(tbcmh_clientrpc_)
+//create to add to LIST_ENTRY(tbcmh_clientrpc_)
 int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method, 
                                                            /*const*/ tbcmh_rpc_params_t *params,
                                                            void *context,
@@ -1811,7 +1801,6 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method
      return request_id;
 }
 
-//onClientRpcResponse()
 static void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1854,7 +1843,7 @@ static void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id,
 
      return;// ESP_OK;
 }
-//onClientRpcResponseTimeout()
+
 static void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1899,7 +1888,7 @@ static void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id)
 }
 
 //====40.Claiming device using device-side key scenario============================================
-tbcmh_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
+tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
                     const char *secret_key, uint32_t *duration_ms)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -1933,7 +1922,7 @@ tbcmh_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
 }
 
 //====50.Device provisioning: Not implemented yet=======================================================================
-static tbcmh_err_t _tbcmh_provision_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -2190,7 +2179,6 @@ int tbcmh_provision_request(tbcmh_handle_t client_,
     return ret;
 }
 
-
 static void _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -2277,9 +2265,8 @@ static void _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id)
      return;// ESP_OK;
 }
 
-
 //====60.Firmware update================================================================================================
-tbcmh_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_description, const tbcmh_otaupdate_config_t *config)
+tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_description, const tbcmh_otaupdate_config_t *config)
 {
      tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
@@ -2330,7 +2317,7 @@ tbcmh_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_descr
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-tbcmh_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description)
+tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !ota_description) {
@@ -2366,7 +2353,7 @@ tbcmh_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_descri
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
-static tbcmh_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_)
+static tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -2763,7 +2750,7 @@ static int32_t _tbcmh_deal_msg(tbcmh_handle_t client_, tbcmh_msg_t *msg)
                msg->body.otaupdate_response.chunk_id, 
                msg->body.otaupdate_response.payload,
                msg->body.otaupdate_response.length);
-          TBCMH_FREE(msg->body.otaupdate_response.payload); //free payload
+          TBC_FREE(msg->body.otaupdate_response.payload); //free payload
           break;
      case TBCMH_MSGID_FWUPDATE_TIMEOUT:     // request_id
           _tbcmh_otaupdate_on_timeout(client_, msg->body.otaupdate_timeout.request_id);
@@ -2778,7 +2765,7 @@ static int32_t _tbcmh_deal_msg(tbcmh_handle_t client_, tbcmh_msg_t *msg)
 }
 
 //recv & deal msg from queue
-//_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
+//recv/parse/sendqueue/ack...
 void tbcmh_run(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
@@ -2812,8 +2799,6 @@ void tbcmh_run(tbcmh_handle_t client_)
 }
 
 //=====================================================================================================================
-//~~static int _tbcmh_sendServerRpcReply(tbcmh_handle_t client_, int request_id, const char* response, int qos=1, int retain=0); //sendServerRpcReply()
-
 //send msg to queue
 //true if the item was successfully posted, otherwise false. //pdTRUE if the item was successfully posted, otherwise errQUEUE_FULL.
 //It runs in MQTT thread.
@@ -2852,9 +2837,7 @@ static bool _tbcmh_sendTbmqttMsg2Queue(tbcmh_handle_t client_, tbcmh_msg_t *msg)
      return sendResult == pdTRUE ? true : false;
 }
 
-//static bool _tbcmh_tbDecodeAttributesJsonPayload(JsonObject& attr_kvs); //_tbDecodeAttributesJsonPayload()
-
-static void _tbcmh_on_connected(void *context) //onConnected() // First receive
+static void _tbcmh_on_connected(void *context) // First receive
 {
      tbcmh_t *client = (tbcmh_t *)context;
      if (!client) {
@@ -2866,7 +2849,7 @@ static void _tbcmh_on_connected(void *context) //onConnected() // First receive
      msg.id = TBCMH_MSGID_CONNECTED;
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
-static void _tbcmh_on_disonnected(void *context) //onDisonnected() // First receive
+static void _tbcmh_on_disonnected(void *context) // First receive
 {
      tbcmh_t *client = (tbcmh_t *)context;
      if (!client) {
@@ -2878,7 +2861,7 @@ static void _tbcmh_on_disonnected(void *context) //onDisonnected() // First rece
      msg.id = TBCMH_MSGID_DISCONNECTED;
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
-//onAttrOfSubReply(); // First receive
+// First receive
 static void _tbcmh_on_sharedattr_received(void *context, const char* payload, int length)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -2901,8 +2884,7 @@ static void _tbcmh_on_sharedattr_received(void *context, const char* payload, in
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
 
-//onAttributesResponse()=>_attributesResponse() // First send
-//~~static bool _attributesResponse(int request_id, const char* payload, int length); //merge to _tbcmh_on_attributesrequest_success()
+// First send
 static void _tbcmh_on_attrrequest_response(void *context, int request_id, const char* payload, int length)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -2925,7 +2907,7 @@ static void _tbcmh_on_attrrequest_response(void *context, int request_id, const 
      msg.body.attrrequest_response.object = cJSON_ParseWithLength(payload, length);  /*!< received palyload. free memory by msg receiver */
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 } 
-//onAttributesResponseTimeout() // First send
+// First send
 static void _tbcmh_on_attrrequest_timeout(void *context, int request_id)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -2940,7 +2922,7 @@ static void _tbcmh_on_attrrequest_timeout(void *context, int request_id)
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
           
-////onServerRpcRequest() // First receive
+// First receive
 static void _tbcmh_on_serverrpc_request(void *context, int request_id, const char* payload, int length)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -2964,7 +2946,7 @@ static void _tbcmh_on_serverrpc_request(void *context, int request_id, const cha
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
 
-//onClientRpcResponse() // First send
+// First send
 static void _tbcmh_on_clientrpc_response(void *context, int request_id, const char* payload, int length)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -2987,7 +2969,7 @@ static void _tbcmh_on_clientrpc_response(void *context, int request_id, const ch
      msg.body.clientrpc_response.object = cJSON_ParseWithLength(payload, length); /*!< received palyload. free memory by msg receiver */;
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 }
-//onClientRpcResponseTimeout() // First send
+// First send
 static void _tbcmh_on_clientrpc_timeout(void *context, int request_id)
 {
      tbcmh_t *client = (tbcmh_t *)context;
@@ -3001,7 +2983,6 @@ static void _tbcmh_on_clientrpc_timeout(void *context, int request_id)
      msg.body.clientrpc_timeout.request_id = request_id;
      _tbcmh_sendTbmqttMsg2Queue(client, &msg);
 } 
-
 
 static void _tbcmh_on_provision_response(void *context, int request_id, const char* payload, int length)
 {
@@ -3061,7 +3042,7 @@ static void _tbcmh_on_otaupdate_response(void *context, int request_id, int chun
      msg.id = TBCMH_MSGID_FWUPDATE_RESPONSE;
      msg.body.otaupdate_response.request_id = request_id;
      msg.body.otaupdate_response.chunk_id = chunk_id;
-     msg.body.otaupdate_response.payload = TBCMH_MALLOC(length); /*!< received palyload. free memory by msg receiver */
+     msg.body.otaupdate_response.payload = TBC_MALLOC(length); /*!< received palyload. free memory by msg receiver */
      if (msg.body.otaupdate_response.payload) {
           memcpy(msg.body.otaupdate_response.payload, payload, length);
      }
@@ -3143,4 +3124,3 @@ static void _response_timer_destroy(tbcmh_handle_t client_)
      esp_timer_delete(client->respone_timer);
      client->respone_timer = NULL;
 }
-

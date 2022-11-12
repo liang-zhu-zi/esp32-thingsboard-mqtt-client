@@ -46,10 +46,10 @@ typedef struct tbcmh_sharedattribute
 
 tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, const char *key, void *context,
                                                     tbcmh_sharedattribute_on_set_t on_set);
-tbcmh_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute); /*!< Destroys the tbmc key-value handle */
+tbc_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute); /*!< Destroys the tbcm key-value handle */
 
-const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattribute); /*!< Get key of the tbmc tbcmh_attribute handle */
-tbcmh_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */
+const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattribute); /*!< Get key of the tbcm tbcmh_attribute handle */
+tbc_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

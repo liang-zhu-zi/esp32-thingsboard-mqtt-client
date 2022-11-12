@@ -211,29 +211,6 @@ extern "C" {
 //second, Client-Side RPC timeout, Attributes Request timeout or otaupdate Request timeout
 #define TB_MQTT_TIMEOUT (30) 
 
-//====tbmc data========================================================================================================
-/* Definitions for error constants. */
-// #define TBCM_OK    0   /*!< tbcm_err_t value indicating success (no error) */
-// #define TBCM_FAIL -1   /*!< Generic tbcm_err_t code indicating failure */
-
-// #define TBCM_ERR_NO_MEM              0x101   /*!< Out of memory */
-// #define TBCM_ERR_INVALID_ARG         0x102   /*!< Invalid argument */
-// #define TBCM_ERR_INVALID_STATE       0x103   /*!< Invalid state */
-// #define TBCM_ERR_INVALID_SIZE        0x104   /*!< Invalid size */
-// #define TBCM_ERR_NOT_FOUND           0x105   /*!< Requested resource not found */
-// #define TBCM_ERR_NOT_SUPPORTED       0x106   /*!< Operation or feature not supported */
-// #define TBCM_ERR_TIMEOUT             0x107   /*!< Operation timed out */
-// #define TBCM_ERR_INVALID_RESPONSE    0x108   /*!< Received response was invalid */
-// #define TBCM_ERR_INVALID_CRC         0x109   /*!< CRC or checksum was invalid */
-// #define TBCM_ERR_INVALID_VERSION     0x10A   /*!< Version was invalid */
-// #define TBCM_ERR_INVALID_MAC         0x10B   /*!< MAC address was invalid */
-// #define TBCM_ERR_NOT_FINISHED        0x10C   /*!< There are items remained to retrieve */
-
-// typedef int tbcm_err_t;
-
-#define TBCM_MALLOC   malloc
-#define TBCM_FREE     free
-
 //====tbmqttlientesp32.h-low===============================================================================================
 
 typedef enum

@@ -36,7 +36,7 @@ tbcmh_clientattribute_t *_tbcmh_clientattribute_init(tbcmh_handle_t client, cons
         return NULL;
     }
     
-    tbcmh_clientattribute_t *clientattribute = TBCMH_MALLOC(sizeof(tbcmh_clientattribute_t));
+    tbcmh_clientattribute_t *clientattribute = TBC_MALLOC(sizeof(tbcmh_clientattribute_t));
     if (!clientattribute) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -44,7 +44,7 @@ tbcmh_clientattribute_t *_tbcmh_clientattribute_init(tbcmh_handle_t client, cons
 
     memset(clientattribute, 0x00, sizeof(tbcmh_clientattribute_t));
     clientattribute->client = client;
-    clientattribute->key = TBCMH_MALLOC(strlen(key)+1);
+    clientattribute->key = TBC_MALLOC(strlen(key)+1);
     if (clientattribute->key) {
         strcpy(clientattribute->key, key);
     }
@@ -55,15 +55,15 @@ tbcmh_clientattribute_t *_tbcmh_clientattribute_init(tbcmh_handle_t client, cons
 }
 
 /*!< Destroys tbcmh_clientattribute */
-tbcmh_err_t _tbcmh_clientattribute_destroy(tbcmh_clientattribute_t *clientattribute)
+tbc_err_t _tbcmh_clientattribute_destroy(tbcmh_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(clientattribute->key);
-    TBCMH_FREE(clientattribute);
+    TBC_FREE(clientattribute->key);
+    TBC_FREE(clientattribute);
     return ESP_OK;
 }
 
@@ -78,7 +78,7 @@ bool _tbcmh_clientattribute_has_set_value_cb(tbcmh_clientattribute_t *clientattr
     return clientattribute->on_set ? true : false;
 }
 
-/*!< Get key of the tbmc tbcmh_attribute handle */
+/*!< Get key of the tbcm tbcmh_attribute handle */
 const char *_tbcmh_clientattribute_get_key(tbcmh_clientattribute_t *clientattribute)
 {
     if (!clientattribute) {
@@ -89,7 +89,7 @@ const char *_tbcmh_clientattribute_get_key(tbcmh_clientattribute_t *clientattrib
 }
 
 /*!< add item value to json object */
-tbcmh_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribute, cJSON *object)
+tbc_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribute, cJSON *object)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");
@@ -111,7 +111,7 @@ tbcmh_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribu
 }
 
 /*!< add item value to json object */
-tbcmh_err_t _tbcmh_clientattribute_do_set(tbcmh_clientattribute_t *clientattribute, cJSON *value)
+tbc_err_t _tbcmh_clientattribute_do_set(tbcmh_clientattribute_t *clientattribute, cJSON *value)
 {
     if (!clientattribute) {
         TBC_LOGE("clientattribute is NULL");

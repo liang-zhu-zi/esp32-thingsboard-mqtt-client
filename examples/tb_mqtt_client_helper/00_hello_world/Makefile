@@ -5,6 +5,6 @@
 
 PROJECT_NAME := hello_world
 
-EXTRA_COMPONENT_DIRS := ../../../components/tbmc
+EXTRA_COMPONENT_DIRS := ../../../components/tbcm
 
 include $(IDF_PATH)/make/project.mk

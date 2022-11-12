@@ -24,9 +24,9 @@ static const char *TAG = "SHARED_ATTR_EXAMPLE";
 
 #define SHAREDATTRIBUTE_SNTP_SERVER     "sntp_server"
 
-//Don't call TBMCH API in this callback!
-//Free value by caller/(tbmch library)!
-tbcmh_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
+//Don't call TBCMH API in this callback!
+//Free value by caller/(tbcmh library)!
+tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");
 
@@ -56,7 +56,7 @@ void tb_on_disconnected(tbcmh_handle_t client, void *context)
 
 static void mqtt_app_start(void)
 {
-	//tbcmh_err_t err;
+	//tbc_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -122,21 +122,21 @@ static void mqtt_app_start(void)
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
 #else
-    ESP_LOGI(TAG, "Init tbmch ...");
+    ESP_LOGI(TAG, "Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "Failure to init tbmch!");
+        ESP_LOGE(TAG, "Failure to init tbcmh!");
         return;
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    tbcmh_err_t err = tbcmh_sharedattribute_append(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, tb_sharedattribute_on_set_sntp_server);
+    tbc_err_t err = tbcmh_sharedattribute_append(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
         goto exit_destroy;
     }
 
-    ESP_LOGI(TAG, "Connect tbmch ...");
+    ESP_LOGI(TAG, "Connect tbcmh ...");
     tbc_transport_config_esay_t config = {
         .uri = uri,                     /*!< Complete ThingsBoard MQTT broker URI */
         .access_token = access_token,   /*!< ThingsBoard Access Token */
@@ -144,7 +144,7 @@ static void mqtt_app_start(void)
     };
     bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "failure to connect to tbmch!");
+        ESP_LOGE(TAG, "failure to connect to tbcmh!");
         goto exit_destroy;
     }
 
@@ -162,11 +162,11 @@ static void mqtt_app_start(void)
         sleep(1);
     }
 
-    ESP_LOGI(TAG, "Disconnect tbmch ...");
+    ESP_LOGI(TAG, "Disconnect tbcmh ...");
     tbcmh_disconnect(client);
 
 exit_destroy:
-    ESP_LOGI(TAG, "Destroy tbmch ...");
+    ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
 #endif
 }

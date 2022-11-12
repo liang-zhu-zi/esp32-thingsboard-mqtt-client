@@ -47,14 +47,14 @@ typedef struct tbcmh_clientattribute
 tbcmh_clientattribute_t *_tbcmh_clientattribute_init(tbcmh_handle_t client, const char *key, void *context,
                                                     tbcmh_clientattribute_on_get_t on_get,
                                                     tbcmh_clientattribute_on_set_t on_set);
-tbcmh_err_t _tbcmh_clientattribute_destroy(tbcmh_clientattribute_t *clientattribute); /*!< Destroys the tbmc key-value handle */
+tbc_err_t _tbcmh_clientattribute_destroy(tbcmh_clientattribute_t *clientattribute); /*!< Destroys the tbcm key-value handle */
 
 bool _tbcmh_clientattribute_has_set_value_cb(tbcmh_clientattribute_t *clientattribute); /*!< Has it a set value callback? A shared attribute is always true;
                                                                                                  a client-side attribute is true or false. */
-const char *_tbcmh_clientattribute_get_key(tbcmh_clientattribute_t *clientattribute);   /*!< Get key of the tbmc tbcmh_attribute handle */
+const char *_tbcmh_clientattribute_get_key(tbcmh_clientattribute_t *clientattribute);   /*!< Get key of the tbcm tbcmh_attribute handle */
 
-tbcmh_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribute, cJSON *object);     /*!< add item value to json object */
-tbcmh_err_t _tbcmh_clientattribute_do_set(tbcmh_clientattribute_t *clientattribute, cJSON *value); /*!< add item value to json object */
+tbc_err_t _tbcmh_clientattribute_do_get(tbcmh_clientattribute_t *clientattribute, cJSON *object);     /*!< add item value to json object */
+tbc_err_t _tbcmh_clientattribute_do_set(tbcmh_clientattribute_t *clientattribute, cJSON *value); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

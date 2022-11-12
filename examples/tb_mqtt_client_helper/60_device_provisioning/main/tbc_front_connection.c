@@ -189,14 +189,14 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
         return NULL;
     }
 
-    ESP_LOGI(TAG, "FRONT CONN: Init tbmch ...");
+    ESP_LOGI(TAG, "FRONT CONN: Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "FRONT CONN: Failure to init tbmch!");
+        ESP_LOGE(TAG, "FRONT CONN: Failure to init tbcmh!");
         return NULL;
     }
 
-    ESP_LOGI(TAG, "FRONT CONN: Connect tbmch ...");
+    ESP_LOGI(TAG, "FRONT CONN: Connect tbcmh ...");
     // prepare credentials for provision
     tbc_transport_config_t temp = {0};
     tbc_transport_config_copy(&temp, transport);
@@ -209,8 +209,8 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                    tb_frontconn_on_connected,
                                    tb_frontconn_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "FRONT CONN: failure to connect to tbmch!");
-        ESP_LOGI(TAG, "FRONT CONN: Destroy tbmch ...");
+        ESP_LOGE(TAG, "FRONT CONN: failure to connect to tbcmh!");
+        ESP_LOGI(TAG, "FRONT CONN: Destroy tbcmh ...");
         tbcmh_destroy(client);
         return NULL;
     }

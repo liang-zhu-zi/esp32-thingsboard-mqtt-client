@@ -24,10 +24,10 @@
 #include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
-extern tbcmh_err_t my_fwupdate_init(tbcmh_handle_t client_);
+extern tbc_err_t my_fwupdate_init(tbcmh_handle_t client_);
 extern bool        my_fwupdate_request_reboot(void);
 
-//extern tbcmh_err_t my_swupdate_init(tbcmh_handle_t client_);
+//extern tbc_err_t my_swupdate_init(tbcmh_handle_t client_);
 //extern bool        my_swupdate_request_reboot(void);
 
 
@@ -47,7 +47,7 @@ void tb_on_disconnected(tbcmh_handle_t client, void *context)
 
 static void mqtt_app_start(void)
 {
-	//tbcmh_err_t err;
+	//tbc_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL
@@ -113,15 +113,15 @@ static void mqtt_app_start(void)
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
     esp_mqtt_client_start(client);
 #else
-    ESP_LOGI(TAG, "Init tbmch ...");
+    ESP_LOGI(TAG, "Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "Failure to init tbmch!");
+        ESP_LOGE(TAG, "Failure to init tbcmh!");
         return;
     }
 
     ESP_LOGI(TAG, "Append F/W OTA Update...");
-    tbcmh_err_t err = my_fwupdate_init(client);
+    tbc_err_t err = my_fwupdate_init(client);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append F/W OTA Update!");
         goto exit_destroy;
@@ -134,7 +134,7 @@ static void mqtt_app_start(void)
         goto exit_destroy;
     }*/
 
-    ESP_LOGI(TAG, "Connect tbmch ...");
+    ESP_LOGI(TAG, "Connect tbcmh ...");
     tbc_transport_config_esay_t config = {
         .uri = uri,                     /*!< Complete ThingsBoard MQTT broker URI */
         .access_token = access_token,   /*!< ThingsBoard Access Token */
@@ -142,7 +142,7 @@ static void mqtt_app_start(void)
     };
     bool result = tbcmh_connect(client, &config, NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "failure to connect to tbmch!");
+        ESP_LOGE(TAG, "failure to connect to tbcmh!");
         goto exit_destroy;
     }
 
@@ -161,11 +161,11 @@ static void mqtt_app_start(void)
         //printf(".");
     }
 
-    ESP_LOGI(TAG, "Disconnect tbmch ...");
+    ESP_LOGI(TAG, "Disconnect tbcmh ...");
     tbcmh_disconnect(client);
 
 exit_destroy:
-    ESP_LOGI(TAG, "Destroy tbmch ...");
+    ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
 
     //restart esp32

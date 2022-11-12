@@ -35,7 +35,7 @@ tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void 
         return NULL;
     }
     
-    tbcmh_tsdata_t *tsdata = TBCMH_MALLOC(sizeof(tbcmh_tsdata_t));
+    tbcmh_tsdata_t *tsdata = TBC_MALLOC(sizeof(tbcmh_tsdata_t));
     if (!tsdata) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -43,7 +43,7 @@ tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void 
 
     memset(tsdata, 0x00, sizeof(tbcmh_tsdata_t));
     tsdata->client = client;
-    tsdata->key = TBCMH_MALLOC(strlen(key)+1);
+    tsdata->key = TBC_MALLOC(strlen(key)+1);
     if (tsdata->key) {
         strcpy(tsdata->key, key);
     }
@@ -52,20 +52,20 @@ tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void 
     return tsdata;
 }
 
-/*!< Destroys the tbmc key-value handle */
-tbcmh_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata)
+/*!< Destroys the tbcm key-value handle */
+tbc_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(tsdata->key);
-    TBCMH_FREE(tsdata);
+    TBC_FREE(tsdata->key);
+    TBC_FREE(tsdata);
     return ESP_OK;
 }
 
-/*!< Get key of the tbmc time-series data handle */
+/*!< Get key of the tbcm time-series data handle */
 const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata)
 {
     if (!tsdata) {
@@ -76,7 +76,7 @@ const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata)
 }
 
 /*!< add item value to json object */
-tbcmh_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object)
+tbc_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");

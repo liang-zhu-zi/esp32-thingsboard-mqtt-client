@@ -61,20 +61,20 @@ tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport)
         return NULL;
     }
         
-    ESP_LOGI(TAG, "NORMAL CONN: Init tbmch ...");
+    ESP_LOGI(TAG, "NORMAL CONN: Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "NORMAL CONN: Failure to init tbmch!");
+        ESP_LOGE(TAG, "NORMAL CONN: Failure to init tbcmh!");
         return NULL;
     }
 
-    ESP_LOGI(TAG, "NORMAL CONN: Connect tbmch ...");
+    ESP_LOGI(TAG, "NORMAL CONN: Connect tbcmh ...");
     bool result = tbcmh_connect_ex(client, transport, NULL,
                                    tb_normalconn_on_connected,
                                    tb_normalconn_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "NORMAL CONN: failure to connect to tbmch!");
-        ESP_LOGI(TAG, "NORMAL CONN: Destroy tbmch ...");
+        ESP_LOGE(TAG, "NORMAL CONN: failure to connect to tbcmh!");
+        ESP_LOGI(TAG, "NORMAL CONN: Destroy tbcmh ...");
         tbcmh_destroy(client);
     }
 

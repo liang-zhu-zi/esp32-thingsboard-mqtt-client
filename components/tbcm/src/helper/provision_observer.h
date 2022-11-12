@@ -54,7 +54,7 @@ tbcmh_provision_t *_tbcmh_provision_init(tbcmh_handle_t client, int request_id,
                                          tbcmh_provision_on_response_t on_response,
                                          tbcmh_provision_on_timeout_t on_timeout); /*!< Initialize tbcmh_provision_t */
 tbcmh_provision_t *_tbcmh_provision_clone_wo_listentry(tbcmh_provision_t *src);
-tbcmh_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision);                /*!< Destroys the tbcmh_provision_t */
+tbc_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision);                /*!< Destroys the tbcmh_provision_t */
 
 int _tbcmh_provision_get_request_id(tbcmh_provision_t *provision);
 void _tbcmh_provision_do_response(tbcmh_provision_t *provision, const tbcmh_provision_results_t *results);

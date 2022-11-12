@@ -60,3 +60,5 @@ build/
 # Sphinx documentation
 docs/_build/
 
+# This project
+log.txt

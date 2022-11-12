@@ -226,7 +226,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transpor
 // Initializes tbcm_handle_t with network client.
 tbcm_handle_t tbcm_init(void)
 {
-     tbcm_t *client = TBCM_MALLOC(sizeof(tbcm_t));
+     tbcm_t *client = TBC_MALLOC(sizeof(tbcm_t));
      if (!client) {
           TBC_LOGE("Unable to malloc memeory!");
           return NULL;
@@ -271,7 +271,7 @@ void tbcm_destroy(tbcm_handle_t client_)
 
      tbcm_payload_buffer_clear(&client->buffer);
 
-     TBCM_FREE(client);
+     TBC_FREE(client);
 }
 
 // Connects to the specified ThingsBoard server and port.
@@ -589,7 +589,7 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
      }
 
      int size = strlen(TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX) + 20;
-     char *topic = TBCM_MALLOC(size);
+     char *topic = TBC_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -603,7 +603,7 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
      }
 
      /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
-     TBCM_FREE(topic);
+     TBC_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -653,7 +653,7 @@ int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, c
 
      int size = strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_CLIENTKEYS) + client_len 
                + strlen(TB_MQTT_KEY_ATTRIBUTES_REQUEST_SHAREDKEYS) + shared_len + 20;
-     char *payload = TBCM_MALLOC(size);
+     char *payload = TBC_MALLOC(size);
      if (!payload)
      {
           TBC_LOGE("Unable to malloc memory");
@@ -673,7 +673,7 @@ int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, c
                                           on_attrrequest_response,
                                           on_attrrequest_timeout,
                                           qos, retain);
-     TBCM_FREE(payload);
+     TBC_FREE(payload);
      return retult;
 }
 
@@ -710,7 +710,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *r
      }
 
      int size = strlen(TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX) + 20;
-     char *topic = TBCM_MALLOC(size);
+     char *topic = TBC_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory!");
           return -1;
@@ -724,7 +724,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *r
      }
 
      int message_id = _tbcm_publish(client, topic, response, qos, retain);
-     TBCM_FREE(topic);
+     TBC_FREE(topic);
      return message_id;
 }
 
@@ -776,7 +776,7 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
      }
 
      int size = strlen(TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX) + 20;
-     char *topic = TBCM_MALLOC(size);
+     char *topic = TBC_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -790,7 +790,7 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
      }
 
      /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
-     TBCM_FREE(topic);
+     TBC_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -826,7 +826,7 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const c
      }
 
      int size = strlen(TB_MQTT_KEY_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_KEY_RPC_PARAMS) + strlen(params) + 20;
-     char *payload = TBCM_MALLOC(size);
+     char *payload = TBC_MALLOC(size);
      if (!payload) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -838,7 +838,7 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const c
                                          on_clientrpc_response,
                                          on_clientrpc_timeout,
                                          qos, retain);
-     TBCM_FREE(payload);
+     TBC_FREE(payload);
      return retult;
 }
  
@@ -980,7 +980,7 @@ int tbcm_otaupdate_request(tbcm_handle_t client_,
      }
 
      int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
-     char *topic = TBCM_MALLOC(size);
+     char *topic = TBC_MALLOC(size);
      if (!topic) {
           TBC_LOGE("Unable to malloc memory");
           return -1;
@@ -994,7 +994,7 @@ int tbcm_otaupdate_request(tbcm_handle_t client_,
      }
 
      /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
-     TBCM_FREE(topic);
+     TBC_FREE(topic);
      return request_id; /*return message_id;*/
 }
 
@@ -1547,7 +1547,7 @@ static tbcm_request_t *_request_create(tbcm_request_type_t type,
                                        void *on_response, /*tbcm_on_response_t*/
                                        void *on_timeout) /*tbcm_on_timeout_t*/
 {
-     tbcm_request_t *tbcm_request = TBCM_MALLOC(sizeof(tbcm_request_t));
+     tbcm_request_t *tbcm_request = TBC_MALLOC(sizeof(tbcm_request_t));
      if (!tbcm_request) {
           TBC_LOGE("Unable to malloc memory!");
           return NULL;
@@ -1577,6 +1577,6 @@ static void _request_destroy(tbcm_request_t *tbcm_request)
      tbcm_request->context = NULL;
      tbcm_request->on_response = NULL;
      tbcm_request->on_timeout = NULL;
-     TBCM_FREE(tbcm_request);
+     TBC_FREE(tbcm_request);
 }
 

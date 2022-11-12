@@ -90,7 +90,7 @@ static bool ____fwupdate_diagnostic(void)
     */
 }
 
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 static const char* _my_fwupdate_on_get_current_title(tbcmh_handle_t client, void *context)
 {
     // TODO: division F/W or S/W !!!!
@@ -109,7 +109,7 @@ static const char* _my_fwupdate_on_get_current_title(tbcmh_handle_t client, void
 
     return NULL; //CURRENT_FW_TITLE;
 }
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 static const char* _my_fwupdate_on_get_current_version(tbcmh_handle_t client, void *context)
 {
     // TODO: division F/W or S/W !!!!
@@ -129,9 +129,9 @@ static const char* _my_fwupdate_on_get_current_version(tbcmh_handle_t client, vo
     return NULL; //CURRENT_FW_VERSION;
 }
 
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-static tbcmh_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
         const char *fw_title, const char *fw_version, int fw_size,
         const char *fw_checksum, const char *fw_checksum_algorithm,
         char *fw_error, int error_size)
@@ -171,9 +171,9 @@ static tbcmh_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *contex
     return 1; //return 1 on negotiate successful(next to F/W OTA)
 }
 
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbcmh_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
                 int request_id, int chunk_id, const void *fw_data, int data_read,
                 char *fw_error, int error_size)
 {
@@ -263,9 +263,9 @@ static tbcmh_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
     return ESP_OK;
 }
 
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbcmh_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
                                 int request_id, int chunk_id, char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
@@ -298,7 +298,7 @@ static tbcmh_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
     return ESP_OK;
 }
 
-//Don't call TBMCH API in the callback!
+//Don't call TBCMH API in the callback!
 static void _my_fwupdate_on_abort(tbcmh_handle_t client, void *context,
                                 int request_id, int chunk_id/*current chunk_id*/)
 {
@@ -311,7 +311,7 @@ static void _my_fwupdate_on_abort(tbcmh_handle_t client, void *context,
     ____fwupdate_reset();
 }
 
-tbcmh_err_t my_fwupdate_init(tbcmh_handle_t client_)
+tbc_err_t my_fwupdate_init(tbcmh_handle_t client_)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -382,7 +382,7 @@ tbcmh_err_t my_fwupdate_init(tbcmh_handle_t client_)
 
         ////.is_first_boot = _my_fwupdate.runnning_app_was_first_boot
     };
-    tbcmh_err_t err = tbcmh_otaupdate_append(client_, FW_DESCRIPTION, &otaupdate_config);
+    tbc_err_t err = tbcmh_otaupdate_append(client_, FW_DESCRIPTION, &otaupdate_config);
     return err;
 }
 

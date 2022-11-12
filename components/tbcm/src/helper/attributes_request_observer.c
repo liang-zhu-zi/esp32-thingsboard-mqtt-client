@@ -33,7 +33,7 @@ tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, 
         return NULL;
     }
     
-    tbcmh_attributesrequest_t *attributesrequest = TBCMH_MALLOC(sizeof(tbcmh_attributesrequest_t));
+    tbcmh_attributesrequest_t *attributesrequest = TBC_MALLOC(sizeof(tbcmh_attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -55,7 +55,7 @@ tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_att
         return NULL;
     }
     
-    tbcmh_attributesrequest_t *attributesrequest = TBCMH_MALLOC(sizeof(tbcmh_attributesrequest_t));
+    tbcmh_attributesrequest_t *attributesrequest = TBC_MALLOC(sizeof(tbcmh_attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -71,14 +71,14 @@ tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_att
 }
 
 /*!< Destroys the tbcmh_attributesrequest */
-tbcmh_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest)
+tbc_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest)
 {
     if (!attributesrequest) {
         TBC_LOGE("attributesrequest is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(attributesrequest);
+    TBC_FREE(attributesrequest);
     return ESP_OK;
 }
 

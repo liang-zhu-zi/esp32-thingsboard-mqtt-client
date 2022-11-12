@@ -10,6 +10,6 @@
 1. Support Claiming devices API; append an example. !!!
 1. Support Device provisioning API; append an example. !!!
 
-1. Append some example of low-level API (tb-mqtt-client.h).
+1. Append some example of low-level API (tbc-mqtt.h).
 
 1. Append some testing case.

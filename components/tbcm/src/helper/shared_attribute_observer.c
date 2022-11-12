@@ -31,7 +31,7 @@ tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, cons
         return NULL;
     }
     
-    tbcmh_sharedattribute_t *sharedattribute = TBCMH_MALLOC(sizeof(tbcmh_sharedattribute_t));
+    tbcmh_sharedattribute_t *sharedattribute = TBC_MALLOC(sizeof(tbcmh_sharedattribute_t));
     if (!sharedattribute) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -39,7 +39,7 @@ tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, cons
 
     memset(sharedattribute, 0x00, sizeof(tbcmh_sharedattribute_t));
     sharedattribute->client = client;
-    sharedattribute->key = TBCMH_MALLOC(strlen(key)+1);
+    sharedattribute->key = TBC_MALLOC(strlen(key)+1);
     if (sharedattribute->key) {
         strcpy(sharedattribute->key, key);
     }
@@ -48,20 +48,20 @@ tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, cons
     return sharedattribute;
 }
 
-/*!< Destroys the tbmc key-value handle */
-tbcmh_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute)
+/*!< Destroys the tbcm key-value handle */
+tbc_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute)
 {
     if (!sharedattribute) {
         TBC_LOGE("sharedattribute is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(sharedattribute->key);
-    TBCMH_FREE(sharedattribute);
+    TBC_FREE(sharedattribute->key);
+    TBC_FREE(sharedattribute);
     return ESP_OK;
 }
 
-/*!< Get key of the tbmc tbcmh_attribute handle */
+/*!< Get key of the tbcm tbcmh_attribute handle */
 const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattribute)
 {
     if (!sharedattribute) {
@@ -72,7 +72,7 @@ const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattrib
 }
 
 /*!< add item value to json object */
-tbcmh_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value)                                               
+tbc_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value)                                               
 {
     if (!sharedattribute) {
         TBC_LOGE("sharedattribute is NULL");

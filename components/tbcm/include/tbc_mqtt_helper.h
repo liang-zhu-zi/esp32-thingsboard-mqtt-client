@@ -22,6 +22,7 @@
 
 #include "cJSON.h"
 
+#include "tbc_utils.h"
 #include "tbc_transport_config.h"
 
 #ifdef __cplusplus
@@ -29,11 +30,6 @@ extern "C" {
 #endif
 
 //=====================================================================================================================
-#define TBCMH_MALLOC   malloc
-#define TBCMH_FREE     free
-
-typedef int tbcmh_err_t;
-
 /**
  * ThingsBoard MQTT Client Helper value type, for example: cJSON_Number, cJSON_String, ...
  */
@@ -78,7 +74,7 @@ typedef cJSON tbcmh_provision_params_t;
  */
 typedef cJSON tbcmh_provision_results_t;
 
-//====0.tbmc client====================================================================================================
+//====0.tbcm client====================================================================================================
 /**
  * ThingsBoard MQTT Client Helper handle
  */
@@ -88,21 +84,21 @@ typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);    /
 typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context); /*!< Callback of disconnected ThingsBoard MQTT */
 
 //====1.telemetry time-series data=====================================================================================
-//Don't call TBMCH API in this callback!
-//Free return value by caller/(tbmch library)!
+//Don't call TBCMH API in this callback!
+//Free return value by caller/(tbcmh library)!
 typedef tbcmh_value_t* (*tbcmh_tsdata_on_get_t)(tbcmh_handle_t client, void *context); /*!< Get tbcmh_value from context */
 
 //====2.client-side attribute==========================================================================================
-//Don't call TBMCH API in these callback!
-//Free return value by caller/(tbmch library)!
+//Don't call TBCMH API in these callback!
+//Free return value by caller/(tbcmh library)!
 typedef tbcmh_value_t* (*tbcmh_clientattribute_on_get_t)(tbcmh_handle_t client, void *context); /*!< Get tbcmh_value from context */
-//Free value by caller/(tbmch library)!
+//Free value by caller/(tbcmh library)!
 typedef void (*tbcmh_clientattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
 
 //====3.shared attribute===============================================================================================
-//Don't call TBMCH API in this callback!
-//Free value by caller/(tbmch library)!
-typedef tbcmh_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
+//Don't call TBCMH API in this callback!
+//Free value by caller/(tbcmh library)!
+typedef tbc_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
 
 //====4.attributes request for client-side_attribute & shared_attribute================================================
 typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
@@ -110,13 +106,13 @@ typedef void (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client, void
 
 //====5.Server-side RPC================================================================================================
 // return NULL or cJSON* of object
-// free return-value by caller/(tbmch library)!
-// free params by caller/(tbmch library)!
+// free return-value by caller/(tbcmh library)!
+// free params by caller/(tbcmh library)!
 typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client, void *context,
                                                              int request_id, const char *method, const tbcmh_rpc_params_t *params);
 
 //====6.Client-side RPC================================================================================================
-// free results by caller/(tbmch library)!
+// free results by caller/(tbcmh library)!
 typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client, void *context,
                                               int request_id, const char *method, const tbcmh_rpc_results_t *results); /*, tbcmh_rpc_params_t *params*/
 typedef void (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client, void *context,
@@ -174,29 +170,30 @@ typedef void (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *contex
  */
 typedef enum
 {
-     TBCMH_OTAUPDATE_TYPE_FW = 0,  /*!< F/W OTA update */
-     TBCMH_OTAUPDATE_TYPE_SW       /*!< S/W OTA update */
+  TBCMH_OTAUPDATE_TYPE_FW = 0, /*!< F/W OTA update */
+  TBCMH_OTAUPDATE_TYPE_SW      /*!< S/W OTA update */
 } tbcmh_otaupdate_type_t;
 
-//Don't call TBMCH API in these callback!
-typedef const char* (*tbcmh_otaupdate_on_get_current_ota_title_t)(tbcmh_handle_t client, void *context);
-typedef const char* (*tbcmh_otaupdate_on_get_current_ota_version_t)(tbcmh_handle_t client, void *context);
-//return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-typedef tbcmh_err_t (*tbcmh_otaupdate_on_negotiate_t)(tbcmh_handle_t client, void *context,
-                  const char *ota_title, const char *ota_version, int ota_size, const char *ota_checksum, const char *ota_checksum_algorithm,
-                  char *ota_error, int error_size);
-//return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbcmh_err_t (*tbcmh_otaupdate_on_write_t)(tbcmh_handle_t client, void *context,
-                  int request_id, int chunk_id/*current chunk_id*/, const void *ota_data, int data_size,
-                  char *ota_error, int error_size);
-//return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbcmh_err_t (*tbcmh_otaupdate_on_end_t)(tbcmh_handle_t client, void *context,
-                                         int request_id, int chunk_id,
-                                         char *ota_error, int error_size);
+// Don't call TBCMH API in these callback!
+typedef const char *(*tbcmh_otaupdate_on_get_current_ota_title_t)(tbcmh_handle_t client, void *context);
+typedef const char *(*tbcmh_otaupdate_on_get_current_ota_version_t)(tbcmh_handle_t client, void *context);
+// return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
+typedef tbc_err_t (*tbcmh_otaupdate_on_negotiate_t)(tbcmh_handle_t client, void *context,
+                                                    const char *ota_title, const char *ota_version, int ota_size,
+                                                    const char *ota_checksum, const char *ota_checksum_algorithm,
+                                                    char *ota_error, int error_size);
+// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
+typedef tbc_err_t (*tbcmh_otaupdate_on_write_t)(tbcmh_handle_t client, void *context,
+                                                int request_id, int chunk_id /*current chunk_id*/, const void *ota_data, int data_size,
+                                                char *ota_error, int error_size);
+// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
+typedef tbc_err_t (*tbcmh_otaupdate_on_end_t)(tbcmh_handle_t client, void *context,
+                                              int request_id, int chunk_id,
+                                              char *ota_error, int error_size);
 typedef void (*tbcmh_otaupdate_on_abort_t)(tbcmh_handle_t client, void *context,
-                                            int request_id, int chunk_id/*current chunk_id*/);
+                                           int request_id, int chunk_id /*current chunk_id*/);
 
-//====0.tbmc client====================================================================================================
+//====0.tbcm client====================================================================================================
 /**
  * ThingsBoard Client transport easy config.
  *
@@ -211,76 +208,73 @@ typedef struct
 
 tbcmh_handle_t tbcmh_init(void);
 void tbcmh_destroy(tbcmh_handle_t client_);
-//~~tbcmh_config(); //move to tbcmh_connect()
-//~~tbcmh_set_ConnectedEvent(evtConnected); //move to tbcmh_init()
-//~~tbcmh_set_DisconnectedEvent(evtDisconnected); //move to tbcmh_init()
 bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
                    void *context,
                    tbcmh_on_connected_t on_connected,
                    tbcmh_on_disconnected_t on_disconnected);
-bool tbcmh_connect_ex(tbcmh_handle_t client_, const tbc_transport_config_t* config,
-                            void *context,
-                            tbcmh_on_connected_t on_connected,
-                            tbcmh_on_disconnected_t on_disconnected);
+bool tbcmh_connect_ex(tbcmh_handle_t client_, const tbc_transport_config_t *config,
+                      void *context,
+                      tbcmh_on_connected_t on_connected,
+                      tbcmh_on_disconnected_t on_disconnected);
 
-void tbcmh_disconnect(tbcmh_handle_t client_);               //_end();
+void tbcmh_disconnect(tbcmh_handle_t client_);
 bool tbcmh_is_connected(tbcmh_handle_t client_);
-bool tbcmh_has_events(tbcmh_handle_t client_); // new function
-void tbcmh_run(tbcmh_handle_t client_);        //_recv()=>recvFromLink()=>parse() //tb_mqtt_client_loop()/checkTimeout(), recv/parse/sendqueue/ack...
-tbcmh_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic);
+bool tbcmh_has_events(tbcmh_handle_t client_);
+void tbcmh_run(tbcmh_handle_t client_); // loop()/checkTimeout(), recv/parse/sendqueue/ack...
+tbc_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic);
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbcmh_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);
-tbcmh_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key);
-tbcmh_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...); ////tbmqttlink.h.tbcmh_sendTelemetry();
+tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);
+tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key);
+tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/...);
 
 //====20.Publish client-side device attributes to the server============================================================
-tbcmh_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
-                                         tbcmh_clientattribute_on_get_t on_get); // tbcmh_attribute_of_clientside_init()
-tbcmh_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
-                                                  tbcmh_clientattribute_on_get_t on_get,
-                                                  tbcmh_clientattribute_on_set_t on_set); // tbcmh_attribute_of_clientside_init()
-tbcmh_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key);
-tbcmh_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...); ////tbmqttlink.h.tbcmh_sendClientAttributes();
+tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+                                       tbcmh_clientattribute_on_get_t on_get);
+tbc_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
+                                                tbcmh_clientattribute_on_get_t on_get,
+                                                tbcmh_clientattribute_on_set_t on_set);
+tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key);
+tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/...);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-tbcmh_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
-                                         tbcmh_sharedattribute_on_set_t on_set); ////tbmqttlink.h.tbcmh_addSubAttrEvent(); //Call it before connect() //tbcmh_shared_attribute_list_t
-tbcmh_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key); // remove shared_attribute from tbcmh_shared_attribute_list_t
+tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+                                       tbcmh_sharedattribute_on_set_t on_set);  // Call it before connect()
+tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key); // remove shared_attribute from tbcmh_shared_attribute_list_t
 
 //====22.Request client-side or shared device attributes from the server================================================
 int tbcmh_attributesrequest_send(tbcmh_handle_t client_,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
-                                 int count, /*const char *key,*/...); ////tbmqttlink.h.tbcmh_sendAttributesRequest(); ////return request_id on successful, otherwise return -1
+                                 int count, /*const char *key,*/...); //return request_id on successful, otherwise return -1
 
 //====30.Server-side RPC================================================================================================
-tbcmh_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
-                                   void *context,
-                                   tbcmh_serverrpc_on_request_t on_request);   ////tbmqttlink.h.tbcmh_addServerRpcEvent(evtServerRpc); //Call it before connect()
-tbcmh_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method); // remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
+                                 void *context,
+                                 tbcmh_serverrpc_on_request_t on_request); //Call it before connect()
+tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method); //remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
 
 //====31.Client-side RPC================================================================================================
 // free params by caller/(user code)!
-int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method, /*const*/ tbcmh_rpc_params_t *params); ////tbmqttlink.h.tbcmh_sendClientRpcRequest(); //add list
+int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method, /*const*/ tbcmh_rpc_params_t *params);//add list
 // free params by caller/(user code)!
 int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method, /*const*/ tbcmh_rpc_params_t *params,
-                                                           void *context,
-                                                           tbcmh_clientrpc_on_response_t on_response,
-                                                           tbcmh_clientrpc_on_timeout_t on_timeout); ////tbmqttlink.h.tbcmh_sendClientRpcRequest(); //create to add to LIST_ENTRY(tbcmh_clientrpc_)
+                                      void *context,
+                                      tbcmh_clientrpc_on_response_t on_response,
+                                      tbcmh_clientrpc_on_timeout_t on_timeout); //create to add to LIST_ENTRY(tbcmh_clientrpc_)
 
 //====40.Claiming device using device-side key scenario============================================
-tbcmh_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
-                    const char *secret_key, uint32_t *duration_ms);
+tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
+                                                      const char *secret_key, uint32_t *duration_ms);
 
 //====50.Device provisioning=======================================================================
 // return request_id or ESP_FAIL
 int tbcmh_provision_request(tbcmh_handle_t client_,
-                                   const tbc_provison_config_t *config,
-                                   void *context,
-                                   tbcmh_provision_on_response_t on_response,
-                                   tbcmh_provision_on_timeout_t on_timeout);
+                            const tbc_provison_config_t *config,
+                            void *context,
+                            tbcmh_provision_on_response_t on_response,
+                            tbcmh_provision_on_timeout_t on_timeout);
 
 //====60.Firmware update================================================================================================
 /**
@@ -288,25 +282,23 @@ int tbcmh_provision_request(tbcmh_handle_t client_,
  */
 typedef struct tbcmh_otaupdate_config
 {
-     tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-     int chunk_size;                  /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
+  tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
+  int chunk_size;                  /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
 
-     void *context;
-     tbcmh_otaupdate_on_get_current_ota_title_t   on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
-     tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version;   /*!< callback of getting current F/W or S/W OTA version */
+  void *context;
+  tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
+  tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
 
-     tbcmh_otaupdate_on_negotiate_t on_ota_negotiate;         /*!< callback of F/W or S/W OTA attributes */
-     tbcmh_otaupdate_on_write_t on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
-     tbcmh_otaupdate_on_end_t on_ota_end;                     /*!< callback of F/W or S/W OTA success & end*/
-     tbcmh_otaupdate_on_abort_t on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
+  tbcmh_otaupdate_on_negotiate_t on_ota_negotiate; /*!< callback of F/W or S/W OTA attributes */
+  tbcmh_otaupdate_on_write_t on_ota_write;         /*!< callback of F/W or S/W OTA doing */
+  tbcmh_otaupdate_on_end_t on_ota_end;             /*!< callback of F/W or S/W OTA success & end*/
+  tbcmh_otaupdate_on_abort_t on_ota_abort;         /*!< callback of F/W or S/W OTA failure & abort */
 
-     ////bool is_first_boot;            /*!< whether first boot after ota update  */
+  ////bool is_first_boot;            /*!< whether first boot after ota update  */
 } tbcmh_otaupdate_config_t;
 
-tbcmh_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_description, const tbcmh_otaupdate_config_t *config);
-tbcmh_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description);
-
-//====end==============================================================================================================
+tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_description, const tbcmh_otaupdate_config_t *config);
+tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description);
 
 #ifdef __cplusplus
 }

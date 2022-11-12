@@ -68,14 +68,14 @@ tbcmh_otaupdate_t *_tbcmh_otaupdate_init(tbcmh_handle_t client,  const char *ota
         return NULL;
     }
 
-    tbcmh_otaupdate_t *otaupdate = TBCMH_MALLOC(sizeof(tbcmh_otaupdate_t));
+    tbcmh_otaupdate_t *otaupdate = TBC_MALLOC(sizeof(tbcmh_otaupdate_t));
     if (!otaupdate) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
     memset(otaupdate, 0x00, sizeof(tbcmh_otaupdate_t));
     otaupdate->client = client;
-    otaupdate->ota_description = TBCMH_MALLOC(strlen(ota_description)+1);
+    otaupdate->ota_description = TBC_MALLOC(strlen(ota_description)+1);
     if (otaupdate->ota_description) {
         strcpy(otaupdate->ota_description, ota_description);
     }
@@ -106,7 +106,7 @@ tbcmh_otaupdate_t *_tbcmh_otaupdate_init(tbcmh_handle_t client,  const char *ota
     return otaupdate;
 }
 /*!< Destroys the tbcmh_otaupdate_t */
-tbcmh_err_t _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate)
+tbc_err_t _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate)
 {
     if (!otaupdate) {
         TBC_LOGE("otaupdate is NULL");
@@ -115,7 +115,7 @@ tbcmh_err_t _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate)
 
     otaupdate->client = NULL;
     if (otaupdate->ota_description) {
-        TBCMH_FREE(otaupdate->ota_description);
+        TBC_FREE(otaupdate->ota_description);
         otaupdate->ota_description = NULL;
     }
 
@@ -131,20 +131,20 @@ tbcmh_err_t _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate)
     ////otaupdate->config.is_first_boot = false;
     
     if (otaupdate->attribute.ota_title) {
-        TBCMH_FREE(otaupdate->attribute.ota_title);
+        TBC_FREE(otaupdate->attribute.ota_title);
         otaupdate->attribute.ota_title = NULL;
     }
     if (otaupdate->attribute.ota_version) {
-        TBCMH_FREE(otaupdate->attribute.ota_version);
+        TBC_FREE(otaupdate->attribute.ota_version);
         otaupdate->attribute.ota_version = NULL;
     }
     otaupdate->attribute.ota_size = 0;
     if (otaupdate->attribute.ota_checksum) {
-        TBCMH_FREE(otaupdate->attribute.ota_checksum);
+        TBC_FREE(otaupdate->attribute.ota_checksum);
         otaupdate->attribute.ota_checksum = NULL;
     }
     if (otaupdate->attribute.ota_checksum_algorithm) {
-        TBCMH_FREE(otaupdate->attribute.ota_checksum_algorithm);
+        TBC_FREE(otaupdate->attribute.ota_checksum_algorithm);
         otaupdate->attribute.ota_checksum_algorithm = NULL;
     }
 
@@ -153,7 +153,7 @@ tbcmh_err_t _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate)
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
 
-    TBCMH_FREE(otaupdate);
+    TBC_FREE(otaupdate);
     return ESP_OK;
 }
 
@@ -208,20 +208,20 @@ void _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate)
     }
     
     if (otaupdate->attribute.ota_title) {
-        TBCMH_FREE(otaupdate->attribute.ota_title);
+        TBC_FREE(otaupdate->attribute.ota_title);
         otaupdate->attribute.ota_title = NULL;
     }
     if (otaupdate->attribute.ota_version) {
-        TBCMH_FREE(otaupdate->attribute.ota_version);
+        TBC_FREE(otaupdate->attribute.ota_version);
         otaupdate->attribute.ota_version = NULL;
     }
     otaupdate->attribute.ota_size = 0;
     if (otaupdate->attribute.ota_checksum) {
-        TBCMH_FREE(otaupdate->attribute.ota_checksum);
+        TBC_FREE(otaupdate->attribute.ota_checksum);
         otaupdate->attribute.ota_checksum = NULL;
     }
     if (otaupdate->attribute.ota_checksum_algorithm) {
-        TBCMH_FREE(otaupdate->attribute.ota_checksum_algorithm);
+        TBC_FREE(otaupdate->attribute.ota_checksum_algorithm);
         otaupdate->attribute.ota_checksum_algorithm = NULL;
     }
 
@@ -232,7 +232,7 @@ void _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate)
 }
 
 // return 0 on success, -1 on failure
-tbcmh_err_t _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
+tbc_err_t _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
                                             tbcm_on_otaupdate_response_t on_otaupdate_response,
                                             tbcm_on_otaupdate_timeout_t on_otaupdate_timeout)
 {
@@ -506,7 +506,7 @@ void _tbcmh_otaupdate_publish_updated_status(tbcmh_otaupdate_t *otaupdate)
 }
 
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-tbcmh_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate,
+tbc_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate,
                                         const char *ota_title, const char *ota_version, int ota_size,
                                         const char *ota_checksum, const char *ota_checksum_algorithm,
                                         char *ota_error, int error_size)
@@ -534,23 +534,23 @@ tbcmh_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate,
                                              ota_error, error_size);
     if (result==1) { // negotiate successful(next to F/W OTA)
         // cache ota_title
-        otaupdate->attribute.ota_title = TBCMH_MALLOC(strlen(ota_title)+1);
+        otaupdate->attribute.ota_title = TBC_MALLOC(strlen(ota_title)+1);
         if (otaupdate->attribute.ota_title) {
             strcpy(otaupdate->attribute.ota_title, ota_title);
         }
         // cache ota_version
-        otaupdate->attribute.ota_version = TBCMH_MALLOC(strlen(ota_version)+1);
+        otaupdate->attribute.ota_version = TBC_MALLOC(strlen(ota_version)+1);
         if (otaupdate->attribute.ota_version) {
             strcpy(otaupdate->attribute.ota_version, ota_version);
         }
         otaupdate->attribute.ota_size = ota_size;
         // cache ota_checksum
-        otaupdate->attribute.ota_checksum = TBCMH_MALLOC(strlen(ota_checksum)+1);
+        otaupdate->attribute.ota_checksum = TBC_MALLOC(strlen(ota_checksum)+1);
         if (otaupdate->attribute.ota_checksum) {
             strcpy(otaupdate->attribute.ota_checksum, ota_checksum);
         }
         // cache ota_checksum_algorithm
-        otaupdate->attribute.ota_checksum_algorithm = TBCMH_MALLOC(strlen(ota_checksum_algorithm)+1);
+        otaupdate->attribute.ota_checksum_algorithm = TBC_MALLOC(strlen(ota_checksum_algorithm)+1);
         if (otaupdate->attribute.ota_checksum_algorithm) {
             strcpy(otaupdate->attribute.ota_checksum_algorithm, ota_checksum_algorithm);
         }
@@ -560,7 +560,7 @@ tbcmh_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate,
 }
 
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-tbcmh_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, 
+tbc_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, 
                                             const void *ota_data, int data_size,
                                             char *ota_error, int error_size)
 {
@@ -580,7 +580,7 @@ tbcmh_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id
         return -1; //ota_data is empty
     }
 
-    tbcmh_err_t result = true;
+    tbc_err_t result = true;
     result = otaupdate->config.on_ota_write(otaupdate->client, otaupdate->config.context,
                             otaupdate->state.request_id, chunk_id, ota_data, data_size,
                             ota_error, error_size);
@@ -597,7 +597,7 @@ tbcmh_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id
 }
 
 //return 0 on successful, -1 on failure
-tbcmh_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size)
+tbc_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size)
 {
     int ret = 0;
     if (!otaupdate) {
@@ -671,7 +671,7 @@ void _tbcmh_otaupdate_do_abort(tbcmh_otaupdate_t *otaupdate)
 {
     // TODO:
 
-    // tbcmh_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+    // tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
     //                                     tbcmh_sharedattribute_on_set_t on_set);
     // key: fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version
     //      sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version

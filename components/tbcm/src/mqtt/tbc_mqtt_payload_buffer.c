@@ -55,11 +55,11 @@ static void _tbcm_payload_buffer_free(tbcm_payload_buffer_t *buffer)
     }
 
     if (buffer->topic) {
-        TBCM_FREE(buffer->topic);
+        TBC_FREE(buffer->topic);
         buffer->topic = NULL;       /*!< Topic associated with this event */
     }
     if (buffer->payload) {
-        TBCM_FREE(buffer->payload);
+        TBC_FREE(buffer->payload);
         buffer->payload = NULL;     /*!< Payload/Data associated with this event */
     }
     buffer->topic_len = 0;              /*!< Length of the topic for this event associated with this event */
@@ -84,12 +84,12 @@ static void _tbcm_payload_buffer_feed(tbcm_payload_buffer_t *buffer, tbcm_rx_msg
     // copy topic
     if (rx_msg->topic && (rx_msg->topic_len>0)) {
         if (buffer->topic) {
-            TBCM_FREE(buffer->topic);
+            TBC_FREE(buffer->topic);
             buffer->topic = NULL;
             buffer->topic_len = 0;
         }
 
-        buffer->topic = TBCM_MALLOC(rx_msg->topic_len);
+        buffer->topic = TBC_MALLOC(rx_msg->topic_len);
         if (!buffer->topic) {
             TBC_LOGE("buffer->topic is NULL!");
             return;
@@ -104,7 +104,7 @@ static void _tbcm_payload_buffer_feed(tbcm_payload_buffer_t *buffer, tbcm_rx_msg
         if (!buffer->payload) {
             buffer->total_payload_len = 0;
             buffer->received_len = 0;
-            buffer->payload = TBCM_MALLOC(rx_msg->total_payload_len);
+            buffer->payload = TBC_MALLOC(rx_msg->total_payload_len);
             if (buffer->payload) {
                 buffer->total_payload_len = rx_msg->total_payload_len;
                 buffer->received_len += rx_msg->payload_len;

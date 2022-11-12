@@ -56,7 +56,7 @@ tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, 
                                                                tbcmh_attributesrequest_on_response_t on_response,
                                                                tbcmh_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbcmh_attributesrequest */
 tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_attributesrequest_t *src);
-tbcmh_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbcmh_attributesrequest */
+tbc_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbcmh_attributesrequest */
 
 int _tbcmh_attributesrequest_get_request_id(tbcmh_attributesrequest_t *attributesrequest);
 
@@ -64,10 +64,10 @@ void _tbcmh_attributesrequest_do_response(tbcmh_attributesrequest_t *attributesr
 void _tbcmh_attributesrequest_do_timeout(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
 
 
-////tbcmh_err_t _tbcmh_attributesrequest_add(tbcmh_attributesrequest_t *attributesrequest, int count, /*tbcmh_attribute_handle_t attribute,*/ ...);
+////tbc_err_t _tbcmh_attributesrequest_add(tbcmh_attributesrequest_t *attributesrequest, int count, /*tbcmh_attribute_handle_t attribute,*/ ...);
 
-////tbcmh_err_t _tbcmh_attributesrequest_get_client_keys(tbcmh_attributesrequest_t *attributesrequest, char *buffer, int size);
-////tbcmh_err_t _tbcmh_attributesrequest_get_shared_keys(tbcmh_attributesrequest_t * attributesrequest, char *buffer, int size);
+////tbc_err_t _tbcmh_attributesrequest_get_client_keys(tbcmh_attributesrequest_t *attributesrequest, char *buffer, int size);
+////tbc_err_t _tbcmh_attributesrequest_get_shared_keys(tbcmh_attributesrequest_t * attributesrequest, char *buffer, int size);
 
 ////tbcmh_attribute_handle_t _tbcmh_attributesrequest_search_clientattribute(tbcmh_attributesrequest_t *attributesrequest, const char *clientside_attribute_name); /*!< Search the client-side attribute in request */
 ////tbcmh_attribute_handle_t _tbcmh_attributesrequest_search_sharedattribute(tbcmh_attributesrequest_t *attributesrequest, const char *clientside_attribute_name); /*!< Search the shared attribute in request */

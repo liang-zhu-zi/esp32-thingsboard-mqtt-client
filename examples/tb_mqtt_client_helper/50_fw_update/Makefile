@@ -4,6 +4,6 @@
 #
 PROJECT_NAME := fw_update
 
-EXTRA_COMPONENT_DIRS = $(IDF_PATH)/examples/common_components/protocol_examples_common  ../../../components/tbmc
+EXTRA_COMPONENT_DIRS = $(IDF_PATH)/examples/common_components/protocol_examples_common  ../../../components/tbcm
 
 include $(IDF_PATH)/make/project.mk

@@ -91,7 +91,7 @@ typedef struct tbcmh_otaupdate
 } tbcmh_otaupdate_t;
 
 tbcmh_otaupdate_t *_tbcmh_otaupdate_init(tbcmh_handle_t client,  const char *ota_description, const tbcmh_otaupdate_config_t *config); /*!< Initialize tbcmh_otaupdate_t */
-tbcmh_err_t        _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate);                   /*!< Destroys the tbcmh_otaupdate_t */
+tbc_err_t        _tbcmh_otaupdate_destroy(tbcmh_otaupdate_t *otaupdate);                   /*!< Destroys the tbcmh_otaupdate_t */
 void               _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate);
 
 tbcmh_otaupdate_type_t _tbcmh_otaupdate_get_type(tbcmh_otaupdate_t *otaupdate);
@@ -106,21 +106,21 @@ void _tbcmh_otaupdate_publish_late_failed_status(tbcmh_otaupdate_t *otaupdate, c
 void _tbcmh_otaupdate_publish_going_status(tbcmh_otaupdate_t *otaupdate, const char *ota_state);
 void _tbcmh_otaupdate_publish_updated_status(tbcmh_otaupdate_t *otaupdate);
 
-tbcmh_err_t  _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
+tbc_err_t  _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
                                             tbcm_on_otaupdate_response_t on_otaupdate_response,
                                             tbcm_on_otaupdate_timeout_t on_otaupdate_timeout);
 bool _tbcmh_otaupdate_is_received_all(tbcmh_otaupdate_t *otaupdate);
 bool _tbcmh_otaupdate_checksum_verification(tbcmh_otaupdate_t *otaupdate);
 
 //return 0 on successful, -1 on failure
-tbcmh_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate, const char *ota_title, const char *ota_version, int ota_size,
+tbc_err_t _tbcmh_otaupdate_do_negotiate(tbcmh_otaupdate_t *otaupdate, const char *ota_title, const char *ota_version, int ota_size,
                                          const char *ota_checksum, const char *ota_checksum_algorithm,
                                          char *ota_error, int error_size);
 //return 0 on successful, -1 on failure
-tbcmh_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, const void *ota_data, int data_size,
+tbc_err_t _tbcmh_otaupdate_do_write(tbcmh_otaupdate_t *otaupdate, int chunk_id, const void *ota_data, int data_size,
                                          char *ota_error, int error_size);
 //return 0 on successful, -1 on failure
-tbcmh_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size);
+tbc_err_t _tbcmh_otaupdate_do_end(tbcmh_otaupdate_t *otaupdate, char *ota_error, int error_size);
 void        _tbcmh_otaupdate_do_abort(tbcmh_otaupdate_t *otaupdate);
 
 #ifdef __cplusplus

@@ -46,9 +46,9 @@ typedef struct tbcmh_tsdata
 
 tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void *context,
                                    tbcmh_tsdata_on_get_t on_get); /*!< Initialize tbcmh_tsdata of TBCM_JSON */
-tbcmh_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata);        /*!< Destroys the tbmc key-value handle */
-const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata);        /*!< Get key of the tbmc time-series data handle */
-tbcmh_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
+tbc_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata);        /*!< Destroys the tbcm key-value handle */
+const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata);        /*!< Get key of the tbcm time-series data handle */
+tbc_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
 
 #ifdef __cplusplus
 }

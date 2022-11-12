@@ -36,7 +36,7 @@ tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *meth
         return NULL;
     }
     
-    tbcmh_serverrpc_t *serverrpc = TBCMH_MALLOC(sizeof(tbcmh_serverrpc_t));
+    tbcmh_serverrpc_t *serverrpc = TBC_MALLOC(sizeof(tbcmh_serverrpc_t));
     if (!serverrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -44,7 +44,7 @@ tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *meth
 
     memset(serverrpc, 0x00, sizeof(tbcmh_serverrpc_t));
     serverrpc->client = client;
-    serverrpc->method = TBCMH_MALLOC(strlen(method)+1);
+    serverrpc->method = TBC_MALLOC(strlen(method)+1);
     if (serverrpc->method) {
         strcpy(serverrpc->method, method);
     }
@@ -60,7 +60,7 @@ tbcmh_serverrpc_t * _tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src)
         return NULL;
     }
 
-    tbcmh_serverrpc_t *serverrpc = TBCMH_MALLOC(sizeof(tbcmh_serverrpc_t));
+    tbcmh_serverrpc_t *serverrpc = TBC_MALLOC(sizeof(tbcmh_serverrpc_t));
     if (!serverrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -68,7 +68,7 @@ tbcmh_serverrpc_t * _tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src)
 
     memset(serverrpc, 0x00, sizeof(tbcmh_serverrpc_t));
     serverrpc->client = src->client;
-    serverrpc->method = TBCMH_MALLOC(strlen(src->method)+1);
+    serverrpc->method = TBC_MALLOC(strlen(src->method)+1);
     if (serverrpc->method) {
         strcpy(serverrpc->method, src->method);
     }
@@ -77,15 +77,15 @@ tbcmh_serverrpc_t * _tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src)
     return serverrpc;
 }
 /*!< Destroys the tbcmh_serverrpc */
-tbcmh_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc)
+tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc)
 {
     if (!serverrpc) {
         TBC_LOGE("serverrpc is NULL");
         return ESP_FAIL;
     }
 
-    TBCMH_FREE(serverrpc->method);
-    TBCMH_FREE(serverrpc);
+    TBC_FREE(serverrpc->method);
+    TBC_FREE(serverrpc);
     return ESP_OK;
 }
 

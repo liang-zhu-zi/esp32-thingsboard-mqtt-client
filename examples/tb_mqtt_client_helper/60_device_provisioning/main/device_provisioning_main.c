@@ -330,11 +330,11 @@ static void mqtt_app_start()
         sleep(1);
     };
 
-    ESP_LOGI(TAG, "Disconnect tbmch ...");
+    ESP_LOGI(TAG, "Disconnect tbcmh ...");
     if (client) {
         tbcmh_disconnect(client);
     }
-    ESP_LOGI(TAG, "Destroy tbmch ...");
+    ESP_LOGI(TAG, "Destroy tbcmh ...");
     if (client) {
         tbcmh_destroy(client);
         client = NULL;
@@ -381,11 +381,11 @@ static void mqtt_app_start()
         sleep(1);
     };
 
-    ESP_LOGI(TAG, "Disconnect tbmch ...");
+    ESP_LOGI(TAG, "Disconnect tbcmh ...");
     if (client) {
         tbcmh_disconnect(client);
     }
-    ESP_LOGI(TAG, "Destroy tbmch ...");
+    ESP_LOGI(TAG, "Destroy tbcmh ...");
     if (client) {
         tbcmh_destroy(client);
         client = NULL;
@@ -463,7 +463,7 @@ static char *get_string_from_stdin(const char* descriptiton, char* buffer, size_
 
 static void mqtt_config_get(void)
 {
-	//tbcmh_err_t err;
+	//tbc_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL

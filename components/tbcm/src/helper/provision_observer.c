@@ -37,7 +37,7 @@ tbcmh_provision_t *_tbcmh_provision_init(tbcmh_handle_t client, int request_id,
         return NULL;
     }
     
-    tbcmh_provision_t *provision = TBCMH_MALLOC(sizeof(tbcmh_provision_t));
+    tbcmh_provision_t *provision = TBC_MALLOC(sizeof(tbcmh_provision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -60,7 +60,7 @@ tbcmh_provision_t *_tbcmh_provision_clone_wo_listentry(tbcmh_provision_t *src)
         return NULL;
     }
     
-    tbcmh_provision_t *provision = TBCMH_MALLOC(sizeof(tbcmh_provision_t));
+    tbcmh_provision_t *provision = TBC_MALLOC(sizeof(tbcmh_provision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
@@ -87,7 +87,7 @@ int _tbcmh_provision_get_request_id(tbcmh_provision_t *provision)
 }
 
 /*!< Destroys the tbcmh_provision_t */
-tbcmh_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision)
+tbc_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision)
 {
     if (!provision) {
         TBC_LOGE("provision is NULL");
@@ -96,7 +96,7 @@ tbcmh_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision)
 
     cJSON_Delete(provision->params);
     provision->params = NULL;
-    TBCMH_FREE(provision);
+    TBC_FREE(provision);
     return ESP_OK;
 }
 
