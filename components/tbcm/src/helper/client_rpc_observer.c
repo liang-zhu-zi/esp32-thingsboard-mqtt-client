@@ -23,10 +23,6 @@
 //#include "client_rpc_observer.h"
 #include "tbc_mqtt_helper_internal.h"
 
-// TODO: remove it!
-void _tbcmh_on_clientrpc_response(void *context, int request_id, const char* payload, int length);
-void _tbcmh_on_clientrpc_timeout(void *context, int request_id);
-
 const static char *TAG = "client_rpc";
 
 /*!< Initialize tbcmh_clientrpc_t */

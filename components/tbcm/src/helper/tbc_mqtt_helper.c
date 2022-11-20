@@ -107,8 +107,8 @@ typedef struct tbcmh_msg {
 } tbcmh_msg_t;
 #endif
 
-static tbcmh_request_t *_request_create(tbcmh_request_type_t type, uint32_t request_id);
-static void _request_destroy(tbcmh_request_t *tbcmh_request);
+//static tbcmh_request_t *_request_create(tbcmh_request_type_t type, uint32_t request_id);
+//static void _request_destroy(tbcmh_request_t *tbcmh_request);
 
 static void _tbcmh_bridge_event_send(tbcma_event_t *event);
 //static void _tbcmh_on_event_handle(tbcma_event_t *event);
@@ -149,6 +149,235 @@ static void _tbcmh_bridge_event_send(tbcma_event_t *event);
 const static char *TAG = "tb_mqtt_client_helper";
 
 //====0.tbcm client====================================================================================================
+//return tbcmh_request on successful, otherwise return NULL.
+static tbcmh_request_t *_request_create(tbcmh_request_type_t type,
+                                       uint32_t request_id)
+{
+     tbcmh_request_t *tbcmh_request = TBC_MALLOC(sizeof(tbcmh_request_t));
+     if (!tbcmh_request) {
+          TBC_LOGE("Unable to malloc memory!");
+          return NULL;
+     }
+
+     memset(tbcmh_request, 0x00, sizeof(tbcmh_request_t));
+     tbcmh_request->type = type;
+     tbcmh_request->request_id = request_id;
+     tbcmh_request->timestamp = (uint64_t)time(NULL);
+
+     return tbcmh_request;
+}
+
+static void _request_destroy(tbcmh_request_t *tbcmh_request)
+{
+     if (!tbcmh_request) {
+          TBC_LOGE("Invalid argument!");
+          return; 
+     }
+
+     tbcmh_request->type = 0;
+     tbcmh_request->request_id = 0;
+     tbcmh_request->timestamp = 0;
+     TBC_FREE(tbcmh_request);
+}
+
+//return request_id on successful, otherwise return -1
+/*static*/ int _request_list_create_and_append(tbcmh_handle_t client_, tbcmh_request_type_t type, int request_id)
+{
+     tbcmh_t *client = (tbcmh_t*)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL!");
+          return -1;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore!");
+          return -1;
+     }
+
+     // Get request ID
+     if (request_id <= 0) {
+          do {
+               if (client->next_request_id <= 0)
+                    client->next_request_id = 1;
+               else
+                    client->next_request_id++;
+          } while (client->next_request_id <= 0);
+
+          request_id = client->next_request_id;
+     }
+
+     // Create request
+     tbcmh_request_t *tbcmh_request = _request_create(type, request_id);
+     if (!tbcmh_request) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBC_LOGE("Unable to create request: No memory!");
+          return -1;
+     }
+
+     // Insert request to list
+     tbcmh_request_t *it, *last = NULL;
+     if (LIST_FIRST(&client->request_list) == NULL) {
+          // Insert head
+          LIST_INSERT_HEAD(&client->request_list, tbcmh_request, entry);
+     } else {
+          // Insert last
+          LIST_FOREACH(it, &client->request_list, entry) {
+               last = it;
+          }
+          if (it == NULL) {
+               assert(last);
+               LIST_INSERT_AFTER(last, tbcmh_request, entry);
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return request_id;
+}
+
+/*static*/ void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id)
+{
+     tbcmh_t *client = (tbcmh_t *)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL!");
+          return;// NULL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore!");
+          return;// NULL;
+     }
+
+     // Search item
+     tbcmh_request_t *tbcmh_request = NULL;
+     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
+          if (tbcmh_request && tbcmh_request->request_id == request_id) {
+               break;
+          }
+     }
+
+     /// Remove form list
+     if (tbcmh_request) {
+          LIST_REMOVE(tbcmh_request, entry);
+     } else {
+          TBC_LOGW("Unable to remove request:%d!", request_id);
+     }
+
+     _request_destroy(tbcmh_request);
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return; // tbcmh_request;
+}
+
+
+/*static*/ void _request_list_search_and_remove_by_type(tbcmh_handle_t client_, tbcmh_request_type_t type)
+{
+     tbcmh_t *client = (tbcmh_t *)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL!");
+          return; // NULL;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore!");
+          return; // NULL;
+     }
+
+     // Search item
+     tbcmh_request_t *tbcmh_request = NULL;
+     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
+          if (tbcmh_request && tbcmh_request->type == type) {
+               break;
+          }
+     }
+
+     /// Remove form list
+     if (tbcmh_request) {
+          LIST_REMOVE(tbcmh_request, entry);
+     } else {
+          TBC_LOGW("Unable to remove request: type=%d!", type);
+     }
+
+     _request_destroy(tbcmh_request);
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     //return tbcmh_request;
+}
+
+// return  count of timeout_request_list
+/*static*/ int _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
+                              tbcmh_request_list_t *timeout_request_list)
+{
+     tbcmh_t *client = (tbcmh_t *)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL!");
+          return 0;
+     }
+     if (!timeout_request_list) {
+          TBC_LOGE("timeout_request_list is NULL!");
+          return 0;
+     }
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore!");
+          return 0;
+     }
+
+     // Search & move item
+     int count = 0;
+     tbcmh_request_t *tbcmh_request = NULL, *next;
+     LIST_FOREACH_SAFE(tbcmh_request, &client->request_list, entry, next) {
+          if (tbcmh_request && tbcmh_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+               // remove from request list
+               LIST_REMOVE(tbcmh_request, entry);
+
+               // append to timeout list
+               tbcmh_request_t *it, *last = NULL;
+               if (LIST_FIRST(timeout_request_list) == NULL) {
+                    LIST_INSERT_HEAD(timeout_request_list, tbcmh_request, entry);
+                    count++;
+               } else {
+                    LIST_FOREACH(it, timeout_request_list, entry) {
+                         last = it;
+                    }
+                    if (it == NULL) {
+                         assert(last);
+                         LIST_INSERT_AFTER(last, tbcmh_request, entry);
+                         count++;
+                    }
+               }
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return count;
+}
+
+/*static*/ bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b)
+{
+   if (!a & !b) {
+        return true;
+   }
+   if (!a || !b) {
+        return false;
+   }
+   if (a->type != b->type) {
+        return false;
+   } else if (a->request_id != b->request_id) {
+        return false;
+   } else { // if (a->timestamp != b->timestamp)
+        return a->timestamp == b->timestamp;
+   }
+}
+
 tbcmh_handle_t tbcmh_init(void)
 {
      tbcmh_t *client = (tbcmh_t *)TBC_MALLOC(sizeof(tbcmh_t));
@@ -539,236 +768,6 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
      // Give semaphore
      xSemaphoreGive(client->_lock);
      return (result > -1) ? ESP_OK : ESP_FAIL;
-}
-
-                    
-/*static*/ bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b)
-{
-     if (!a & !b) {
-          return true;
-     }
-     if (!a || !b) {
-          return false;
-     }
-     if (a->type != b->type) {
-          return false;
-     } else if (a->request_id != b->request_id) {
-          return false;
-     } else { // if (a->timestamp != b->timestamp)
-          return a->timestamp == b->timestamp;
-     }
-}
-
-//return request_id on successful, otherwise return -1
-/*static*/ int _request_list_create_and_append(tbcmh_handle_t client_, tbcmh_request_type_t type, int request_id)
-{
-     tbcmh_t *client = (tbcmh_t*)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return -1;
-     }
-
-     // Get request ID
-     if (request_id <= 0) {
-          do {
-               if (client->next_request_id <= 0)
-                    client->next_request_id = 1;
-               else
-                    client->next_request_id++;
-          } while (client->next_request_id <= 0);
-
-          request_id = client->next_request_id;
-     }
-
-     // Create request
-     tbcmh_request_t *tbcmh_request = _request_create(type, request_id);
-     if (!tbcmh_request) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGE("Unable to create request: No memory!");
-          return -1;
-     }
-
-     // Insert request to list
-     tbcmh_request_t *it, *last = NULL;
-     if (LIST_FIRST(&client->request_list) == NULL) {
-          // Insert head
-          LIST_INSERT_HEAD(&client->request_list, tbcmh_request, entry);
-     } else {
-          // Insert last
-          LIST_FOREACH(it, &client->request_list, entry) {
-               last = it;
-          }
-          if (it == NULL) {
-               assert(last);
-               LIST_INSERT_AFTER(last, tbcmh_request, entry);
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return request_id;
-}
-
-/*static*/ void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id)
-{
-     tbcmh_t *client = (tbcmh_t *)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;// NULL;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return;// NULL;
-     }
-
-     // Search item
-     tbcmh_request_t *tbcmh_request = NULL;
-     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
-          if (tbcmh_request && tbcmh_request->request_id == request_id) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcmh_request) {
-          LIST_REMOVE(tbcmh_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request:%d!", request_id);
-     }
-
-     _request_destroy(tbcmh_request);
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return; // tbcmh_request;
-}
-
-
-/*static*/ void _request_list_search_and_remove_by_type(tbcmh_handle_t client_, tbcmh_request_type_t type)
-{
-     tbcmh_t *client = (tbcmh_t *)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return; // NULL;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return; // NULL;
-     }
-
-     // Search item
-     tbcmh_request_t *tbcmh_request = NULL;
-     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
-          if (tbcmh_request && tbcmh_request->type == type) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcmh_request) {
-          LIST_REMOVE(tbcmh_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request: type=%d!", type);
-     }
-
-     _request_destroy(tbcmh_request);
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     //return tbcmh_request;
-}
-
-// return  count of timeout_request_list
-/*static*/ int _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
-                              tbcmh_request_list_t *timeout_request_list)
-{
-     tbcmh_t *client = (tbcmh_t *)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return 0;
-     }
-     if (!timeout_request_list) {
-          TBC_LOGE("timeout_request_list is NULL!");
-          return 0;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return 0;
-     }
-
-     // Search & move item
-     int count = 0;
-     tbcmh_request_t *tbcmh_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcmh_request, &client->request_list, entry, next) {
-          if (tbcmh_request && tbcmh_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
-               // remove from request list
-               LIST_REMOVE(tbcmh_request, entry);
-
-               // append to timeout list
-               tbcmh_request_t *it, *last = NULL;
-               if (LIST_FIRST(timeout_request_list) == NULL) {
-                    LIST_INSERT_HEAD(timeout_request_list, tbcmh_request, entry);
-                    count++;
-               } else {
-                    LIST_FOREACH(it, timeout_request_list, entry) {
-                         last = it;
-                    }
-                    if (it == NULL) {
-                         assert(last);
-                         LIST_INSERT_AFTER(last, tbcmh_request, entry);
-                         count++;
-                    }
-               }
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return count;
-}
-
-//return tbcmh_request on successful, otherwise return NULL.
-static tbcmh_request_t *_request_create(tbcmh_request_type_t type,
-                                       uint32_t request_id)
-{
-     tbcmh_request_t *tbcmh_request = TBC_MALLOC(sizeof(tbcmh_request_t));
-     if (!tbcmh_request) {
-          TBC_LOGE("Unable to malloc memory!");
-          return NULL;
-     }
-
-     memset(tbcmh_request, 0x00, sizeof(tbcmh_request_t));
-     tbcmh_request->type = type;
-     tbcmh_request->request_id = request_id;
-     tbcmh_request->timestamp = (uint64_t)time(NULL);
-
-     return tbcmh_request;
-}
-
-static void _request_destroy(tbcmh_request_t *tbcmh_request)
-{
-     if (!tbcmh_request) {
-          TBC_LOGE("Invalid argument!");
-          return; 
-     }
-
-     tbcmh_request->type = 0;
-     tbcmh_request->request_id = 0;
-     tbcmh_request->timestamp = 0;
-     TBC_FREE(tbcmh_request);
 }
 
 static void _tbmch_on_payload_handle(tbcma_event_t *event)

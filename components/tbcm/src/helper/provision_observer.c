@@ -24,10 +24,6 @@
 //#include "provision_observer.h"
 #include "tbc_mqtt_helper_internal.h"
 
-// TODO: remove it!
-extern void _tbcmh_on_provision_response(void *context, int request_id, const char* payload, int length);
-extern void _tbcmh_on_provision_timeout(void *context, int request_id);
-
 const static char *TAG = "provision";
 
 /*!< Initialize tbcmh_provision_t */

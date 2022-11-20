@@ -23,10 +23,6 @@
 //#include "attributes_request_observer.h"
 #include "tbc_mqtt_helper_internal.h"
 
-// TODO: remove it!
-/*static*/ void _tbcmh_on_attrrequest_response(void *context, int request_id, const char* payload, int length);
-/*static*/ void _tbcmh_on_attrrequest_timeout(void *context, int request_id);
-
 const static char *TAG = "attributes_request";
 
 /*!< Initialize tbcmh_attributesrequest */
