@@ -31,7 +31,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper client-RPC
  */
-typedef struct tbcmh_clientrpc
+typedef struct client_rpc
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -46,24 +46,12 @@ typedef struct tbcmh_clientrpc
      tbcmh_clientrpc_on_response_t on_response; /*!< Callback of client-rpc response success */
      tbcmh_clientrpc_on_timeout_t on_timeout;   /*!< Callback of client-rpc response timeout */
 
-     LIST_ENTRY(tbcmh_clientrpc) entry;
-} tbcmh_clientrpc_t;
+     LIST_ENTRY(client_rpc) entry;
+} client_rpc_t;
 
-// static tbcmh_clientrpc_t *_tbcmh_clientrpc_init(tbcmh_handle_t client, int request_id,
-//                                          const char *method, ////tbcmh_rpc_params_t *params,
-//                                          void *context,
-//                                          tbcmh_clientrpc_on_response_t on_response,
-//                                          tbcmh_clientrpc_on_timeout_t on_timeout); /*!< Initialize tbcmh_clientrpc_t */
-// static tbcmh_clientrpc_t *_tbcmh_clientrpc_clone_wo_listentry(tbcmh_clientrpc_t *src);
-// static tbc_err_t _tbcmh_clientrpc_destroy(tbcmh_clientrpc_t *clientrpc);                /*!< Destroys the tbcmh_clientrpc_t */
-
-// static int _tbcmh_clientrpc_get_request_id(tbcmh_clientrpc_t *clientrpc);
-// static void _tbcmh_clientrpc_do_response(tbcmh_clientrpc_t *clientrpc, const tbcmh_rpc_results_t *results);
-// static void _tbcmh_clientrpc_do_timeout(tbcmh_clientrpc_t *clientrpc);
-
-/*static*/ tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
-/*static*/ void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-/*static*/ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id);
+tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
+void      _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
+void      _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id);
 
 #ifdef __cplusplus
 }

@@ -29,7 +29,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper Telemetry time-series data
  */
-typedef struct tbcmh_tsdata
+typedef struct timeseries_data
 {
      tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
@@ -38,20 +38,13 @@ typedef struct tbcmh_tsdata
      void *context;                /*!< Context of getting/setting value*/
      tbcmh_tsdata_on_get_t on_get; /*!< Callback of getting value from context */
 
-     LIST_ENTRY(tbcmh_tsdata) entry;
-} tbcmh_tsdata_t;
+     LIST_ENTRY(timeseries_data) entry;
+} timeseries_data_t;
 
-// static tbcmh_tsdata_t *_tbcmh_tsdata_init(tbcmh_handle_t client, const char *key, void *context,
-//                                           tbcmh_tsdata_on_get_t on_get);      /*!< Initialize tbcmh_tsdata of TBCM_JSON */
-// static tbc_err_t _tbcmh_tsdata_destroy(tbcmh_tsdata_t *tsdata);               /*!< Destroys the tbcm key-value handle */
-// static const char *_tbcmh_tsdata_get_key(tbcmh_tsdata_t *tsdata);             /*!< Get key of the tbcm time-series data handle */
-// static tbc_err_t _tbcmh_tsdata_go_get(tbcmh_tsdata_t *tsdata, cJSON *object); /*!< add item value to json object */
-
-/*static*/ tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_);
+tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_);
 
 #ifdef __cplusplus
 }
 #endif //__cplusplus
 
 #endif
-

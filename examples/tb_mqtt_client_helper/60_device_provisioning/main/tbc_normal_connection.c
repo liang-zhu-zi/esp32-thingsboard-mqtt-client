@@ -38,7 +38,7 @@
 //#include "provision_observer.h"
 //#include "ota_update_observer.h"
 
-//#include "tbcmh_provision.h"
+//#include "device_provision.h"
 
 static const char *TAG = "NORMAL-CONN";
 

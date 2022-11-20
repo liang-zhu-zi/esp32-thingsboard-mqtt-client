@@ -31,7 +31,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper client-RPC
  */
-typedef struct tbcmh_provision
+typedef struct device_provision
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -45,24 +45,12 @@ typedef struct tbcmh_provision
      tbcmh_provision_on_response_t on_response; /*!< Callback of provision response success */
      tbcmh_provision_on_timeout_t on_timeout;   /*!< Callback of provision response timeout */
 
-     LIST_ENTRY(tbcmh_provision) entry;
-} tbcmh_provision_t;
+     LIST_ENTRY(device_provision) entry;
+} device_provision_t;
 
-// static tbcmh_provision_t *_tbcmh_provision_init(tbcmh_handle_t client, int request_id,
-//                                          const tbcmh_provision_params_t *params,
-//                                          void *context,
-//                                          tbcmh_provision_on_response_t on_response,
-//                                          tbcmh_provision_on_timeout_t on_timeout); /*!< Initialize tbcmh_provision_t */
-// static tbcmh_provision_t *_tbcmh_provision_clone_wo_listentry(tbcmh_provision_t *src);
-// static tbc_err_t _tbcmh_provision_destroy(tbcmh_provision_t *provision);                /*!< Destroys the tbcmh_provision_t */
-
-// static int _tbcmh_provision_get_request_id(tbcmh_provision_t *provision);
-// static void _tbcmh_provision_do_response(tbcmh_provision_t *provision, const tbcmh_provision_results_t *results);
-// static void _tbcmh_provision_do_timeout(tbcmh_provision_t *provision);
-
-/*static*/ tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_);
-/*static*/ void _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-/*static*/ void _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id);
+tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_);
+void      _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
+void      _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id);
 
 #ifdef __cplusplus
 }

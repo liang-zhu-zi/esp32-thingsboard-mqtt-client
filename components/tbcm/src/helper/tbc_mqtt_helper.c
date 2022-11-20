@@ -584,7 +584,7 @@ void tbcmh_disconnect(tbcmh_handle_t client_)
               _tbcmh_provision_on_timeout(client_, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_otaupdate_chunk_on_timeout(client_, tbcmh_request->request_id);
               break;
           default:
               TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
@@ -702,7 +702,7 @@ void tbcmh_check_timeout(tbcmh_handle_t client_) // Executes an event loop for P
               _tbcmh_provision_on_timeout(client_, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_otaupdate_chunk_on_timeout(client_, tbcmh_request->request_id);
               break;
           default:
               TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
@@ -809,7 +809,7 @@ static void _tbmch_on_payload_handle(tbcma_event_t *event)
          break;
     
     case TBCMA_RX_TOPIC_FW_RESPONSE:          /*!< request_id, chunk_id, payload, payload_len */
-         _tbcmh_otaupdate_on_response(client, event->data.request_id, 
+         _tbcmh_otaupdate_chunk_on_response(client, event->data.request_id, 
               event->data.chunk_id, 
               event->data.payload,
               event->data.payload_len);

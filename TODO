@@ -1,6 +1,6 @@
 # TODO List
 
-1. OTA: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
+1. OTA update support multi-checksum-ALG: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
 1. A new Full example of F/W OTA.
 
 1. Append supported ThingsBoard MQTT API in commonents/README.md.
@@ -10,6 +10,22 @@
 1. Support Claiming devices API; append an example. !!!
 1. Support Device provisioning API; append an example. !!!
 
-1. Append some example of low-level API (tbc-mqtt.h).
-
 1. Append some testing case.
+
+1. Process connected event in every funciton: subscribe, attributes request...
+1. Support multiple client-attributes to receive in a message;
+1. Support multiple shared-attributes to receive in a message, eg: SW/FW shared attributes.
+1. OTA update funciton split ?
+1. Provision testing.
+1. S/W OTA update testing.
+1. security option testing.
+1. Simplified telemetry function.
+1. Device claiming function split.
+1. rename directory, files, function, macro.
+1. lock dead? protected data? thread mode?
+1. docs...
+1. MQTT Gateway API.
+1. CoAP Transport.
+1. HTTP Transport.
+1. Support standalone application thread.
+1. Support dependent MQTT event thread.

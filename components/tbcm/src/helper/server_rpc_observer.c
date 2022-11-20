@@ -26,8 +26,8 @@
 
 const static char *TAG = "server_rpc";
 
-/*!< Initialize tbcmh_serverrpc */
-static tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *method, void *context,
+/*!< Initialize server_rpc */
+static server_rpc_t *_server_rpc_create(tbcmh_handle_t client, const char *method, void *context,
                                          tbcmh_serverrpc_on_request_t on_request)
 {
     if (!method) {
@@ -39,13 +39,13 @@ static tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const cha
         return NULL;
     }
     
-    tbcmh_serverrpc_t *serverrpc = TBC_MALLOC(sizeof(tbcmh_serverrpc_t));
+    server_rpc_t *serverrpc = TBC_MALLOC(sizeof(server_rpc_t));
     if (!serverrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(serverrpc, 0x00, sizeof(tbcmh_serverrpc_t));
+    memset(serverrpc, 0x00, sizeof(server_rpc_t));
     serverrpc->client = client;
     serverrpc->method = TBC_MALLOC(strlen(method)+1);
     if (serverrpc->method) {
@@ -56,20 +56,20 @@ static tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const cha
     return serverrpc;
 }
 
-static tbcmh_serverrpc_t * _tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src)
+static server_rpc_t * _server_rpc_clone_wo_listentry(server_rpc_t *src)
 {
     if (!src) {
         TBC_LOGE("src is NULL");
         return NULL;
     }
 
-    tbcmh_serverrpc_t *serverrpc = TBC_MALLOC(sizeof(tbcmh_serverrpc_t));
+    server_rpc_t *serverrpc = TBC_MALLOC(sizeof(server_rpc_t));
     if (!serverrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(serverrpc, 0x00, sizeof(tbcmh_serverrpc_t));
+    memset(serverrpc, 0x00, sizeof(server_rpc_t));
     serverrpc->client = src->client;
     serverrpc->method = TBC_MALLOC(strlen(src->method)+1);
     if (serverrpc->method) {
@@ -79,8 +79,8 @@ static tbcmh_serverrpc_t * _tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t
     serverrpc->on_request = src->on_request;
     return serverrpc;
 }
-/*!< Destroys the tbcmh_serverrpc */
-static tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc)
+/*!< Destroys the server_rpc */
+static tbc_err_t _server_rpc_destroy(server_rpc_t *serverrpc)
 {
     if (!serverrpc) {
         TBC_LOGE("serverrpc is NULL");
@@ -92,28 +92,7 @@ static tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc)
     return ESP_OK;
 }
 
-static const char *_tbcmh_serverrpc_get_method(tbcmh_serverrpc_t *serverrpc)
-{
-    if (!serverrpc) {
-        TBC_LOGE("serverrpc is NULL");
-        return NULL;
-    }
-    return serverrpc->method;
-}
-
-static tbcmh_rpc_results_t *_tbcmh_serverrpc_do_request(tbcmh_serverrpc_t *serverrpc, int request_id, tbcmh_rpc_params_t *params)
-{
-    if (!serverrpc) {
-        TBC_LOGE("serverrpc is NULL");
-        return NULL;
-    }
-
-    return serverrpc->on_request(serverrpc->client, serverrpc->context,
-                                 request_id, serverrpc->method, params);
-}
-
-
-//====30.Server-side RPC================================================================================================
+//==== Server-side RPC ================================================================================
 //Call it before connect()
 tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
                                    void *context,
@@ -132,7 +111,7 @@ tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
      }
 
      // Create serverrpc
-     tbcmh_serverrpc_t *serverrpc = _tbcmh_serverrpc_init(client, method, context, on_request);
+     server_rpc_t *serverrpc = _server_rpc_create(client, method, context, on_request);
      if (!serverrpc) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -141,7 +120,7 @@ tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
      }
 
      // Insert serverrpc to list
-     tbcmh_serverrpc_t *it, *last = NULL;
+     server_rpc_t *it, *last = NULL;
      if (LIST_FIRST(&client->serverrpc_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->serverrpc_list, serverrpc, entry);
@@ -177,9 +156,9 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      }
 
      // Search item
-     tbcmh_serverrpc_t *serverrpc = NULL;
+     server_rpc_t *serverrpc = NULL;
      LIST_FOREACH(serverrpc, &client->serverrpc_list, entry) {
-          if (serverrpc && strcmp(_tbcmh_serverrpc_get_method(serverrpc), method)==0) {
+          if (serverrpc && strcmp(serverrpc->method, method)==0) {
                break;
           }
      }
@@ -192,14 +171,14 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
 
      // Remove form list
      LIST_REMOVE(serverrpc, entry);
-     _tbcmh_serverrpc_destroy(serverrpc);
+     _server_rpc_destroy(serverrpc);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
-/*static*/ tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
@@ -215,11 +194,11 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      // }
 
      // remove all item in serverrpc_list
-     tbcmh_serverrpc_t *serverrpc = NULL, *next;
+     server_rpc_t *serverrpc = NULL, *next;
      LIST_FOREACH_SAFE(serverrpc, &client->serverrpc_list, entry, next) {
           // remove from serverrpc list and destory
           LIST_REMOVE(serverrpc, entry);
-          _tbcmh_serverrpc_destroy(serverrpc);
+          _server_rpc_destroy(serverrpc);
      }
      memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list));
 
@@ -228,7 +207,7 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      return ESP_OK;
 }
 
-/*static*/ void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object)
+void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
@@ -249,9 +228,9 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      }
 
      // Search item
-     tbcmh_serverrpc_t *serverrpc = NULL;
+     server_rpc_t *serverrpc = NULL;
      LIST_FOREACH(serverrpc, &client->serverrpc_list, entry) {
-          if (serverrpc && strcmp(_tbcmh_serverrpc_get_method(serverrpc), method)==0) {
+          if (serverrpc && strcmp(serverrpc->method, method)==0) {
                break;
           }
      }
@@ -263,13 +242,16 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      }
 
      // Clone serverrpc
-     tbcmh_serverrpc_t *cache = _tbcmh_serverrpc_clone_wo_listentry(serverrpc);
+     server_rpc_t *cache = _server_rpc_clone_wo_listentry(serverrpc);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
      // Do request
-     tbcmh_rpc_results_t *result = _tbcmh_serverrpc_do_request(cache, request_id,
-                                                               cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_PARAMS));
+     tbcmh_rpc_results_t *result = NULL;
+     if (cache && cache->on_request) {
+         result = cache->on_request(cache->client, cache->context, request_id, cache->method,
+                                    cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_PARAMS));
+     }
      // Send reply
      if (result) {
           #if 0
@@ -288,7 +270,7 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
           #endif
      }
      // Free serverrpc
-     _tbcmh_serverrpc_destroy(cache);
+     _server_rpc_destroy(cache);
 
      return;// ESP_OK;
 }

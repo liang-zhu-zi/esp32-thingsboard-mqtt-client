@@ -79,14 +79,14 @@ typedef struct tbcmh_client
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
-     LIST_HEAD(tbcmh_tsdata_list, tbcmh_tsdata) tsdata_list;                              /*!< telemetry time-series data entries */
-     LIST_HEAD(tbcmh_clientattribute_list, tbcmh_clientattribute) clientattribute_list;   /*!< client attributes entries */
-     LIST_HEAD(tbcmh_sharedattribute_list, tbcmh_sharedattribute) sharedattribute_list;   /*!< shared attributes entries */
-     LIST_HEAD(tbcmh_attributesrequest_list, tbcmh_attributesrequest) attributesrequest_list;  /*!< attributes request entries */
-     LIST_HEAD(tbcmh_serverrpc_list, tbcmh_serverrpc) serverrpc_list;  /*!< server side RPC entries */
-     LIST_HEAD(tbcmh_clientrpc_list, tbcmh_clientrpc) clientrpc_list;  /*!< client side RPC entries */
-     LIST_HEAD(tbcmh_provision_list, tbcmh_provision) provision_list;  /*!< provision entries */
-     LIST_HEAD(tbcmh_otaupdate_list, tbcmh_otaupdate) otaupdate_list;    /*!< A device may have multiple firmware */
+     LIST_HEAD(tbcmh_tsdata_list, timeseries_data) tsdata_list;                              /*!< telemetry time-series data entries */
+     LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list;   /*!< client attributes entries */
+     LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list;   /*!< shared attributes entries */
+     LIST_HEAD(tbcmh_attributesrequest_list, attributes_request) attributesrequest_list;  /*!< attributes request entries */
+     LIST_HEAD(tbcmh_serverrpc_list, server_rpc) serverrpc_list;  /*!< server side RPC entries */
+     LIST_HEAD(tbcmh_clientrpc_list, client_rpc) clientrpc_list;  /*!< client side RPC entries */
+     LIST_HEAD(tbcmh_provision_list, device_provision) provision_list;  /*!< provision entries */
+     LIST_HEAD(tbcmh_otaupdate_list, ota_update) otaupdate_list;    /*!< A device may have multiple firmware */
 
      //SemaphoreHandle_t lock;
      int next_request_id;

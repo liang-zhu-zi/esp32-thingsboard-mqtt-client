@@ -231,7 +231,7 @@ tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *
 //====20.Publish client-side device attributes to the server============================================================
 tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
                                        tbcmh_clientattribute_on_get_t on_get);
-tbc_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client_, const char *key, void *context,
                                                 tbcmh_clientattribute_on_get_t on_get,
                                                 tbcmh_clientattribute_on_set_t on_set);
 tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key);

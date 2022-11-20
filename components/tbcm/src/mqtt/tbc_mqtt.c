@@ -819,9 +819,6 @@ int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
  */
 int tbcm_otaupdate_request(tbcm_handle_t client_,
                           int request_id, int chunk_id, const char *payload, //?payload
-                          //void *context,
-                          //tbcm_on_otaupdate_response_t on_otaupdate_response,
-                          //tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      tbcm_t *client = (tbcm_t*)client_;

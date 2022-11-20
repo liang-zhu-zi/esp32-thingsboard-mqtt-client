@@ -31,7 +31,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper server-RPC
  */
-typedef struct tbcmh_serverrpc
+typedef struct server_rpc
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -43,21 +43,11 @@ typedef struct tbcmh_serverrpc
      void *context;                           /*!< Context of callback */
      tbcmh_serverrpc_on_request_t on_request; /*!< Callback of server-rpc request */
 
-     LIST_ENTRY(tbcmh_serverrpc) entry;
-} tbcmh_serverrpc_t;
+     LIST_ENTRY(server_rpc) entry;
+} server_rpc_t;
 
-// static tbcmh_serverrpc_t *_tbcmh_serverrpc_init(tbcmh_handle_t client, const char *method, void *context,
-//                                          tbcmh_serverrpc_on_request_t on_request); /*!< Initialize tbcmh_serverrpc */
-// static tbcmh_serverrpc_t *_tbcmh_serverrpc_clone_wo_listentry(tbcmh_serverrpc_t *src);
-// static tbc_err_t _tbcmh_serverrpc_destroy(tbcmh_serverrpc_t *serverrpc); /*!< Destroys the tbcmh_serverrpc */
-
-// static const char *_tbcmh_serverrpc_get_method(tbcmh_serverrpc_t *serverrpc);
-
-// static tbcmh_rpc_results_t *_tbcmh_serverrpc_do_request(tbcmh_serverrpc_t *serverrpc, int request_id, tbcmh_rpc_params_t *params);
-
-/*static*/ tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
-
-/*static*/ void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object);
+tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
+void      _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object);
 
 #ifdef __cplusplus
 }

@@ -32,7 +32,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper shared attribute
  */
-typedef struct tbcmh_sharedattribute
+typedef struct shared_attribute
 {
      tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
@@ -41,24 +41,11 @@ typedef struct tbcmh_sharedattribute
      void *context;                         /*!< Context of getting/setting value*/
      tbcmh_sharedattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
-     LIST_ENTRY(tbcmh_sharedattribute) entry;
-} tbcmh_sharedattribute_t;
+     LIST_ENTRY(shared_attribute) entry;
+} shared_attribute_t;
 
-// static tbcmh_sharedattribute_t *_tbcmh_sharedattribute_init(tbcmh_handle_t client, const char *key, void *context,
-//                                                     tbcmh_sharedattribute_on_set_t on_set);
-// sattic tbc_err_t _tbcmh_sharedattribute_destroy(tbcmh_sharedattribute_t *sharedattribute); /*!< Destroys the tbcm key-value handle */
-
-const char *_tbcmh_sharedattribute_get_key(tbcmh_sharedattribute_t *sharedattribute); /*!< Get key of the tbcm tbcmh_attribute handle */
-// static tbc_err_t _tbcmh_sharedattribute_do_set(tbcmh_sharedattribute_t *sharedattribute, cJSON *value); /*!< add item value to json object */
-
-/*static*/ tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_);
-
-/*static*/ void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *object);
-
-// TODO: remove it!
-/*static*/ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_otaupdate_type_t ota_type,
-                                                 const char *ota_title, const char *ota_version, int ota_size,
-                                                 const char *ota_checksum, const char *ota_checksum_algorithm);
+tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_);
+void      _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *object);
 
 #ifdef __cplusplus
 }

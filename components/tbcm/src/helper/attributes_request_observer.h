@@ -27,16 +27,12 @@
 extern "C" {
 #endif
 
-//====4.attributes request for client-side_attribute and shared_attribute==============================================
-
-//#include "sys/queue.h"
-//struct track_; // Forward declaration
-//typedef STAILQ_HEAD(track_list, track_) track_list_t;
+//==== attributes request for client-side_attribute and shared_attribute =================
 
 /**
  * ThingsBoard MQTT Client Helper attributes request
  */
-typedef struct tbcmh_attributesrequest
+typedef struct attributes_request
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -46,34 +42,22 @@ typedef struct tbcmh_attributesrequest
      tbcmh_attributesrequest_on_response_t on_response; /*!< Callback of dealing successful */
      tbcmh_attributesrequest_on_timeout_t on_timeout;   /*!< Callback of response timeout */
 
-     ////LIST_HEAD(tbcmh_clientattribute_list, tbcmh_clientattribute) clientattribute_list; /*!< client attributes entries */
-     ////LIST_HEAD(tbcmh_sharedattribute_list, tbcmh_sharedattribute) sharedattribute_list; /*!< shared attributes entries */
+     ////LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list; /*!< client attributes entries */
+     ////LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list; /*!< shared attributes entries */
 
-     LIST_ENTRY(tbcmh_attributesrequest) entry;
-} tbcmh_attributesrequest_t;
+     LIST_ENTRY(attributes_request) entry;
+} attributes_request_t;
 
-// static tbcmh_attributesrequest_t *_tbcmh_attributesrequest_init(tbcmh_handle_t client, int request_id, void *context,
-//                                                                tbcmh_attributesrequest_on_response_t on_response,
-//                                                                tbcmh_attributesrequest_on_timeout_t on_timeout); /*!< Initialize tbcmh_attributesrequest */
-// static tbcmh_attributesrequest_t *_tbcmh_attributesrequest_clone_wo_listentry(tbcmh_attributesrequest_t *src);
-// static tbc_err_t _tbcmh_attributesrequest_destroy(tbcmh_attributesrequest_t *attributesrequest);                          /*!< Destroys the tbcmh_attributesrequest */
-
-// static int _tbcmh_attributesrequest_get_request_id(tbcmh_attributesrequest_t *attributesrequest);
-
-// static void _tbcmh_attributesrequest_do_response(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
-// static void _tbcmh_attributesrequest_do_timeout(tbcmh_attributesrequest_t *attributesrequest); //(none/resend/destroy/_destroy_all_attributes)?
-
-/*static*/ tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
-
-/*static*/ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-/*static*/ void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id);
-
-// TODO: remove it !
-/*static*/ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
+// TODO: merge to tbcmh_attributesrequest_send()
+int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
                                   int count, /*const char *key,*/...);
+tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
+void      _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
+void      _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id);
+
 #ifdef __cplusplus
 }
 #endif //__cplusplus
