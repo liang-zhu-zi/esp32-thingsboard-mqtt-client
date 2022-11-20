@@ -69,7 +69,7 @@ tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport)
     }
 
     ESP_LOGI(TAG, "NORMAL CONN: Connect tbcmh ...");
-    bool result = tbcmh_connect_ex(client, transport, NULL,
+    bool result = tbcmh_connect(client, transport, NULL,
                                    tb_normalconn_on_connected,
                                    tb_normalconn_on_disconnected);
     if (!result) {

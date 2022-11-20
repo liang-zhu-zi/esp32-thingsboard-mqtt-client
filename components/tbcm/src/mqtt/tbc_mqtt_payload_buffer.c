@@ -170,15 +170,24 @@ static bool _tbcm_payload_buffer_is_completion(tbcm_payload_buffer_t *buffer)
     return true;
 }
 
-void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info *rx_msg,
-                tbcm_payload_buffer_on_process_t on_payload_process, void *context/*client*/)
+void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, esp_mqtt_event_handle_t src_event,
+                        void *client, tbcm_payload_buffer_on_process_t on_payload_process)
 {
     // 0: if parameter is invalid, then return.
-    if (!buffer || !rx_msg || !on_payload_process) {
-        TBC_LOGE("buffer(%p), rx_msg(%p) or on_payload_process(%p) is NULL", 
-            buffer, rx_msg, on_payload_process);
+    if (!buffer || !src_event || !on_payload_process) {
+        TBC_LOGE("buffer(%p), src_event(%p), on_payload_process(%p) is NULL", 
+            buffer, src_event, on_payload_process);
         return;
     }
+
+    tbcm_rx_msg_info rx_msg_ = {0};
+    tbcm_rx_msg_info *rx_msg = &rx_msg_;
+    rx_msg->topic = src_event->topic;          /*!< Topic associated with this event */
+    rx_msg->payload = src_event->data;         /*!< Data associated with this event */
+    rx_msg->topic_len = src_event->topic_len;  /*!< Length of the topic for this event associated with this event */
+    rx_msg->payload_len = src_event->data_len;                       /*!< Length of the data for this event */
+    rx_msg->total_payload_len = src_event->total_data_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+    rx_msg->current_payload_offset = src_event->current_data_offset; /*!< Actual offset for the data associated with this event */
     
     // 1: if new msg(rx_msg)->total_payload_len is too long(128K), then return.
     if (rx_msg->total_payload_len > MAX_TBCM_RX_MSG_LENGTH) {
@@ -202,7 +211,7 @@ void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info 
 
     // 3: if new msg(rx_msg) is completion, then process it, return.
     if (_tbcm_rx_msg_is_completion(rx_msg)) {
-        on_payload_process(context/*client*/, rx_msg);
+        on_payload_process(client, src_event, rx_msg->topic, rx_msg->topic_len, rx_msg->payload, rx_msg->payload_len);
         return;
     }
 
@@ -211,14 +220,14 @@ void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info 
 
     // 5: if buffer is completion, then process it, return.
     if (_tbcm_payload_buffer_is_completion(buffer)) {
-        tbcm_rx_msg_info temp_rx_msg;
-        temp_rx_msg.topic       = buffer->topic;        /*!< Topic associated with this event */
-        temp_rx_msg.topic_len   = buffer->topic_len;    /*!< Length of the topic for this event associated with this event */
-        temp_rx_msg.payload             = buffer->payload;          /*!< Payload/Data associated with this event */
-        temp_rx_msg.payload_len         = buffer->received_len;     /*!< Length of the data for this event */
-        temp_rx_msg.total_payload_len   = buffer->total_payload_len;/*!< Total length of the data (longer data are supplied with multiple events) */
-        temp_rx_msg.current_payload_offset = 0;                     /*!< Actual offset for the data associated with this event */
-        on_payload_process(context/*client*/, &temp_rx_msg);
+        // tbcm_rx_msg_info temp_rx_msg;
+        // temp_rx_msg.topic       = buffer->topic;        /*!< Topic associated with this event */
+        // temp_rx_msg.topic_len   = buffer->topic_len;    /*!< Length of the topic for this event associated with this event */
+        // temp_rx_msg.payload             = buffer->payload;          /*!< Payload/Data associated with this event */
+        // temp_rx_msg.payload_len         = buffer->received_len;     /*!< Length of the data for this event */
+        // temp_rx_msg.total_payload_len   = buffer->total_payload_len;/*!< Total length of the data (longer data are supplied with multiple events) */
+        // temp_rx_msg.current_payload_offset = 0;                     /*!< Actual offset for the data associated with this event */
+        on_payload_process(client, src_event, buffer->topic, buffer->topic_len, buffer->payload, buffer->received_len);
         _tbcm_payload_buffer_free(buffer);
         return;
     }

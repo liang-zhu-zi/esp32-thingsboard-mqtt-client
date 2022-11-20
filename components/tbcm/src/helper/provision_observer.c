@@ -429,16 +429,22 @@ static int _tbcmh_provision_request(tbcmh_handle_t client_,
      //else 
      //     cJSON_AddNullToObject(object, TB_MQTT_TEXT_PROVISION_PARAMS);
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
-     int request_id;
      char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
-     request_id = tbcm_provision_request(client->tbmqttclient, params_str,
-                              client,
-                              _tbcmh_on_provision_response,
-                              _tbcmh_on_provision_timeout,
-                               1/*qos*/, 0/*retain*/);
+     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_PROVISION, -1);
+     if (request_id <= 0) {
+          TBC_LOGE("Unable to take semaphore");
+          return -1;
+     }
+
+     int msg_id = tbcm_provision_request(client->tbmqttclient, params_str,
+                              request_id,
+                              //client,
+                              //_tbcmh_on_provision_response,
+                              //_tbcmh_on_provision_timeout,
+                              1/*qos*/, 0/*retain*/);
      cJSON_free(params_str); // free memory
      //cJSON_Delete(object); // delete json object
-     if (request_id<0) {
+     if (msg_id<0) {
           TBC_LOGE("Init tbcm_provision_request failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -522,6 +528,8 @@ int tbcmh_provision_request(tbcmh_handle_t client_,
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
+
+     _request_list_search_and_remove_by_type(client, TBCMH_REQUEST_PROVISION);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {

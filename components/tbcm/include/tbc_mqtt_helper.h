@@ -208,11 +208,11 @@ typedef struct
 
 tbcmh_handle_t tbcmh_init(void);
 void tbcmh_destroy(tbcmh_handle_t client_);
-bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
+bool tbcmh_connect_using_url(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
                    void *context,
                    tbcmh_on_connected_t on_connected,
                    tbcmh_on_disconnected_t on_disconnected);
-bool tbcmh_connect_ex(tbcmh_handle_t client_, const tbc_transport_config_t *config,
+bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_t *config,
                       void *context,
                       tbcmh_on_connected_t on_connected,
                       tbcmh_on_disconnected_t on_disconnected);

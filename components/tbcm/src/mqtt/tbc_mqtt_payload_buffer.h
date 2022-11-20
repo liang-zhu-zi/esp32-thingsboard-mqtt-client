@@ -53,11 +53,14 @@ typedef struct tbcm_payload_buffer {
     int received_len;           /*!< Alread received payload/data length */
 } tbcm_payload_buffer_t;
 
-typedef void (*tbcm_payload_buffer_on_process_t)(void *context/*client*/, tbcm_rx_msg_info* rx_msg);
+typedef void (*tbcm_payload_buffer_on_process_t)
+                                     (void *client, esp_mqtt_event_handle_t src_event,
+                                      char *topic, int topic_len,
+                                      char *payload, int payload_len);
 
 void tbcm_payload_buffer_init(tbcm_payload_buffer_t *buffer);
-void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, tbcm_rx_msg_info *rx_msg,
-                tbcm_payload_buffer_on_process_t on_payload_process, void *context/*client*/);
+void tbcm_payload_buffer_pocess(tbcm_payload_buffer_t *buffer, esp_mqtt_event_handle_t src_event,
+                        void *client, tbcm_payload_buffer_on_process_t on_payload_process);
 void tbcm_payload_buffer_clear(tbcm_payload_buffer_t *buffer);
 
 #ifdef __cplusplus

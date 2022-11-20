@@ -205,7 +205,7 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
     temp.credentials.username   = TB_MQTT_PARAM_PROVISION_USERNAME;     /*!< MQTT/HTTP.      username */
     temp.credentials.password   = NULL;                                 /*!< MQTT/HTTP.      password */
     temp.credentials.token      = NULL;                                 /*!< MQTT/HTTP/CoAP: username/path param/path param */
-    bool result = tbcmh_connect_ex(client, &temp, NULL,
+    bool result = tbcmh_connect(client, &temp, NULL,
                                    tb_frontconn_on_connected,
                                    tb_frontconn_on_disconnected);
     if (!result) {

@@ -244,12 +244,18 @@ next_attribute_key:
      va_end(ap);
 
      // Send msg to server
-     int request_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, shared_keys,
-                               client,
-                               _tbcmh_on_attrrequest_response,
-                               _tbcmh_on_attrrequest_timeout,
+     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_ATTRIBUTES, 0/*request_id*/);
+     if (request_id <= 0) {
+          TBC_LOGE("Unable to take semaphore");
+          return -1;
+     }
+     int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, shared_keys,
+                               request_id,
+                               //client,
+                               //_tbcmh_on_attrrequest_response,
+                               //_tbcmh_on_attrrequest_timeout,
                                1/*qos*/, 0/*retain*/);
-     if (request_id<0) {
+     if (msg_id<0) {
           TBC_LOGE("Init tbcm_attributes_request failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
      }
@@ -344,12 +350,18 @@ attributesrequest_fail:
       va_end(ap);
  
       // Send msg to server
-      int request_id = tbcm_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
-                                client,
-                                _tbcmh_on_attrrequest_response,
-                                _tbcmh_on_attrrequest_timeout,
+      int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_ATTRIBUTES, 0/*request_id*/);
+      if (request_id <= 0) {
+           TBC_LOGE("Unable to create request");
+           goto attributesrequest_fail;
+      }
+      int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
+                                request_id,
+                                //client,
+                                //_tbcmh_on_attrrequest_response,
+                                //_tbcmh_on_attrrequest_timeout,
                                 1/*qos*/, 0/*retain*/);
-      if (request_id<0) {
+      if (msg_id<0) {
            TBC_LOGE("Init tbcm_attributes_request failure! %s()", __FUNCTION__);
            goto attributesrequest_fail;
       }
@@ -397,6 +409,9 @@ attributesrequest_fail:
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
+
+     // Remove it from request list
+     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {

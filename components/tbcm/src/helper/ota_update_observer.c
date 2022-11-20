@@ -26,10 +26,6 @@
 //#include "ota_update_observer.h"
 #include "tbc_mqtt_helper_internal.h"
 
-// TODO: remove it!
-extern void _tbcmh_on_otaupdate_response(void *context, int request_id, int chunk_id, const char* payload, int length);
-extern void _tbcmh_on_otaupdate_timeout(void *context, int request_id);
-
 const static char *TAG = "ota_update";
 
 extern tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client_);
@@ -239,9 +235,7 @@ static void _tbcmh_otaupdate_reset(tbcmh_otaupdate_t *otaupdate)
 }
 
 // return 0 on success, -1 on failure
-static tbc_err_t _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
-                                            tbcm_on_otaupdate_response_t on_otaupdate_response,
-                                            tbcm_on_otaupdate_timeout_t on_otaupdate_timeout)
+static tbc_err_t _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate)
 {
     char payload[20] = {0};
     if (!otaupdate) {
@@ -257,22 +251,29 @@ static tbc_err_t _tbcmh_otaupdate_request_chunk(tbcmh_otaupdate_t *otaupdate,
         chunk_size = otaupdate->config.chunk_size;
     }
     sprintf(payload, "%d", chunk_size);
-    int request_id = tbcm_otaupdate_request(tbcm_handle, otaupdate->state.request_id/*default -1*/, otaupdate->state.chunk_id/*default 0*/,
+    
+    int request_id = _request_list_create_and_append(otaupdate->client, TBCMH_REQUEST_FWUPDATE,
+                                          otaupdate->state.request_id/*default -1*/);
+    if (request_id <= 0) {
+         TBC_LOGE("Unable to create request! %s()", __FUNCTION__);
+         return -1;
+    }
+    int msg_id = tbcm_otaupdate_request(tbcm_handle, request_id, otaupdate->state.chunk_id/*default 0*/,
                           payload, //chunk_size
-                          otaupdate->client, //tbcmh_handle
-                          on_otaupdate_response,
-                          on_otaupdate_timeout,
+                          //otaupdate->client, //tbcmh_handle
+                          //on_otaupdate_response,
+                          //on_otaupdate_timeout,
                           1/*qos*/, 0/*retain*/);
     // First OTA request
     if ((otaupdate->state.request_id<0) && (request_id>0)) {
          otaupdate->state.request_id = request_id;
     }
-
-    if (request_id<0){
-        TBC_LOGW("Request OTA chunk(%d) failure! request_id=%d %s()", otaupdate->state.chunk_id, request_id, __FUNCTION__);
+    if (msg_id<0){
+        TBC_LOGW("Request OTA chunk(%d) failure! request_id=%d, msg_id=%d %s()",
+            otaupdate->state.chunk_id, request_id, msg_id, __FUNCTION__);
     }
 
-    return (request_id<0)?-1:0;
+    return (msg_id<0)?-1:0;
 }
 
 
@@ -869,7 +870,7 @@ static void __tbcmh_otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t cl
                         ota_checksum, ota_checksum_algorithm, ota_error, sizeof(ota_error)-1);
      if (result == 1) { //negotiate successful(next to F/W OTA)
         _tbcmh_otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);
-        result = _tbcmh_otaupdate_request_chunk(otaupdate, _tbcmh_on_otaupdate_response, _tbcmh_on_otaupdate_timeout);
+        result = _tbcmh_otaupdate_request_chunk(otaupdate);
         if (result != 0) { //failure to request chunk
             TBC_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
             _tbcmh_otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Request OTA chunk failure!");
@@ -904,6 +905,9 @@ static void __tbcmh_otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t cl
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
+
+     // Remove it from request list
+     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -958,7 +962,7 @@ static void __tbcmh_otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t cl
                 _tbcmh_otaupdate_reset(otaupdate);
             }
          }else {  //un-receied all f/w or s/w: go on, get next package
-            result = _tbcmh_otaupdate_request_chunk(otaupdate, _tbcmh_on_otaupdate_response, _tbcmh_on_otaupdate_timeout);
+            result = _tbcmh_otaupdate_request_chunk(otaupdate);
             if (result != 0) { //failure to request chunk
                 _tbcmh_otaupdate_publish_late_failed_status(otaupdate, "Request OTA chunk failure!");
                 _tbcmh_otaupdate_do_abort(otaupdate);

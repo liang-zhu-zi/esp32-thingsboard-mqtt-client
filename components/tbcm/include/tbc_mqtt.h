@@ -20,6 +20,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "mqtt_client.h"
+
 #include "tbc_transport_config.h"
 
 #ifdef __cplusplus
@@ -221,10 +223,89 @@ typedef enum
 } tbcm_state_t; //TBMQTT_STATE
 
 /**
- * ThingsBoard MQTT Client handle
+ * ThingsBoard Client MQTT handle
  */
-//typedef tbcm_t *tbcm_handle_t;
 typedef struct tbcm_client *tbcm_handle_t;
+
+/**
+ * @brief TB Client MQTT Adapter Topic ID
+ *
+ */
+typedef enum {
+    TBCMA_RX_TOPIC_ERROR = 0,
+    TBCMA_RX_TOPIC_ATTRIBUTES_RESPONSE,  /*!< request_id,           payload, payload_len */
+    TBCMA_RX_TOPIC_SHARED_ATTRIBUTES,    /*!<                       payload, payload_len */
+    TBCMA_RX_TOPIC_SERVERRPC_REQUEST,    /*!< request_id,           payload, payload_len */
+    TBCMA_RX_TOPIC_CLIENTRPC_RESPONSE,   /*!< request_id,           payload, payload_len */
+    TBCMA_RX_TOPIC_FW_RESPONSE,          /*!< request_id, chunk_id, payload, payload_len */
+    TBCMA_RX_TOPIC_PROVISION_RESPONSE,   /*!< (no request_id)       payload, payload_len */
+
+    // TBMCA_TX_TOPIC_TELEMETRY,            /*!<                       */
+    // TBMCA_TX_TOPIC_CLIENT_ATTRIBUTES,    /*!<                       */
+    // TBMCA_TX_TOPIC_ATTRIBUTES_REQUEST,   /*!< request_id            */
+    // TBMCA_TX_TOPIC_SERVERRPC_RESPONSE,   /*!< request_id            */
+    // TBMCA_TX_TOPIC_CLIENTRPC_REQUEST,    /*!< request_id            */
+    // TBMCA_TX_TOPIC_CLAIMING_DEVICE,      /*!<                       */
+    // TBMCA_TX_TOPIC_FW_REQUEST,           /*!< request_id, chunk_id  */
+    // TBMCA_TX_TOPIC_PROVISION_REQUEST     /*!< (fake_request_id)     */
+} tbcma_topic_id_t;
+
+/**
+ * @brief Extension MQTT event types.
+ *
+ * User event handler receives context data in `esp_mqtt_event_t` structure with
+ *  - `user_context` - user data from `esp_mqtt_client_config_t`
+ *  - `client` - mqtt client handle
+ *  - various other data depending on event type
+ *
+ */
+typedef enum {
+    TBC_MQTT_EVENT_ERROR            = MQTT_EVENT_ERROR, // = 0
+    TBC_MQTT_EVENT_CONNECTED        = MQTT_EVENT_CONNECTED,
+    TBC_MQTT_EVENT_DISCONNECTED     = MQTT_EVENT_DISCONNECTED,
+    TBC_MQTT_EVENT_SUBSCRIBED       = MQTT_EVENT_SUBSCRIBED,
+    TBC_MQTT_EVENT_UNSUBSCRIBED     = MQTT_EVENT_UNSUBSCRIBED,
+    TBC_MQTT_EVENT_PUBLISHED        = MQTT_EVENT_PUBLISHED,
+    TBC_MQTT_EVENT_DATA             = MQTT_EVENT_DATA,
+    TBC_MQTT_EVENT_BEFORE_CONNECT   = MQTT_EVENT_BEFORE_CONNECT,
+    TBC_MQTT_EVENT_DELETED          = MQTT_EVENT_DELETED,
+
+    TBC_MQTT_EVENT_CHECK_TIMEOUT    = MQTT_EVENT_DELETED + 100
+} tbc_mqtt_event_id_t;
+
+
+/**
+ * @brief TB Client MQTT Adapter Publish data of sending or receiving
+ *
+ */
+typedef struct tbcma_publish_data{
+    tbcma_topic_id_t topic;         /*!< Topic associated with this event */
+    int   request_id;               /*!< The first pararm in topic */
+    int   chunk_id;                 /*!< The second pararm in topic */
+    char *payload;                  /*!< Payload associated with this event */
+    int   payload_len;              /*!< Length of the payload for this event */
+} tbcma_publish_data_t;
+
+/**
+ * @brief TB Client MQTT Adapter event configuration structure
+ */
+typedef struct {
+    tbcm_handle_t client;               /*!< TB Client MQTT Adapter handle for this event */
+    void         *user_context;         /*!< User context passed from MQTT client config */
+
+    tbc_mqtt_event_id_t event_id;       /*!< MQTT event type */
+    int  msg_id;                        /*!< MQTT messaged id of message */
+    int  session_present;               /*!< MQTT session_present flag for connection event */
+    bool retain;                        /*!< Retained flag of the message associated with this event */
+
+    esp_mqtt_error_codes_t error_handle;/*!< esp-mqtt error handle including esp-tls errors as well as internal mqtt errors */
+
+    tbcma_publish_data_t data;          /*!< Publish data of sending or receiving */
+} tbcma_event_t;
+
+////////////////////////////////////////////////////////////////////////////
+
+typedef void (*tbcm_on_event_t)(tbcma_event_t *event);
 
 typedef void (*tbcm_on_connected_t)(void *context);                                                       // First receive
 typedef void (*tbcm_on_disconnected_t)(void *context);                                                    // First receive
@@ -247,16 +328,12 @@ tbcm_handle_t tbcm_init(void);
 void tbcm_destroy(tbcm_handle_t client_);
 bool tbcm_connect(tbcm_handle_t client_, const tbc_transport_config_t *config,
                   void *context,
-                  tbcm_on_connected_t on_connected,
-                  tbcm_on_disconnected_t on_disconnected,
-                  tbcm_on_sharedattr_received_t on_sharedattributes_received,
-                  tbcm_on_serverrpc_request_t on_serverrpc_request);  
+                  tbcm_on_event_t on_event);  
 void tbcm_disconnect(tbcm_handle_t client_);
 bool tbcm_is_connected(tbcm_handle_t client_);
 bool tbcm_is_connecting(tbcm_handle_t client_);
 bool tbcm_is_disconnected(tbcm_handle_t client_);
 tbcm_state_t tbcm_get_state(tbcm_handle_t client_);
-void tbcm_check_timeout(tbcm_handle_t client_);
 
 int _tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos/*=0*/);
 
@@ -266,42 +343,47 @@ int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
 int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
                                   int qos /*= 1*/, int retain /*= 0*/);
 int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
-                            void *context,
-                            tbcm_on_attrrequest_response_t on_attrrequest_response,
-                            tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
+                            int request_id,
+                            //void *context,
+                            //tbcm_on_attrrequest_response_t on_attrrequest_response,
+                            //tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/);
 int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, const char *shared_keys,
-                               void *context,
-                               tbcm_on_attrrequest_response_t on_attrrequest_response,
-                               tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
+                               int request_id,
+                               //void *context,
+                               //tbcm_on_attrrequest_response_t on_attrrequest_response,
+                               //tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/);
 int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/);
 int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
-                           void *context,
-                           tbcm_on_clientrpc_response_t on_clientrpc_response,
-                           tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
+                           int request_id,
+                           //void *context,
+                           //tbcm_on_clientrpc_response_t on_clientrpc_response,
+                           //tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
                            int qos /*= 1*/, int retain /*= 0*/);
 int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const char *params,
-                              void *context,
-                              tbcm_on_clientrpc_response_t on_clientrpc_response,
-                              tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
+                              int request_id,
+                              //void *context,
+                              //tbcm_on_clientrpc_response_t on_clientrpc_response,
+                              //tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
                               int qos /*= 1*/, int retain /*= 0*/);
 
 int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
                          int qos /*= 1*/, int retain /*= 0*/);
 
 int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
-                          void *context,
-                          tbcm_on_provision_response_t on_provision_response,
-                          tbcm_on_provision_timeout_t on_provision_timeout,
+                          int request_id,
+                          //void *context,
+                          //tbcm_on_provision_response_t on_provision_response,
+                          //tbcm_on_provision_timeout_t on_provision_timeout,
                           int qos /*= 1*/, int retain /*= 0*/);
 
 int tbcm_otaupdate_request(tbcm_handle_t client_,
-                          int request_id_, int chunk_id, const char *payload, //?payload
-                          void *context,
-                          tbcm_on_otaupdate_response_t on_otaupdate_response,
-                          tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
+                          int request_id, int chunk_id, const char *payload, //?payload
+                          //void *context,
+                          //tbcm_on_otaupdate_response_t on_otaupdate_response,
+                          //tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/);
 
 #define TBCM_TELEMETRY_PUBLISH(client, payload) \

@@ -26,82 +26,43 @@
 #include "tbc_transport_config.h"
 #include "tbc_transport_storage.h"
 
+#include "tbc_utils.h"
 #include "tbc_mqtt.h"
 
-#include "tbc_utils.h"
-
 #include "tbc_mqtt_payload_buffer.h"
-
-
-typedef enum
-{
-     TBCM_REQUEST_ATTR = 1,
-     TBCM_REQUEST_CLIENTRPC,
-     TBCM_REQUEST_FWUPDATE,
-     TBCM_REQUEST_PROVISION
-} tbcm_request_type_t;
-
-typedef struct tbcm_request
-{
-     tbcm_request_type_t type;
-     int request_id;
-
-     uint64_t timestamp; /*!< time stamp at sending request */
-     void *context;
-     void *on_response; /*!< tbcm_on_response_t or tbcm_on_otaupdate_response_t */
-     void *on_timeout; /*!< tbcm_on_timeout_t */
-
-     LIST_ENTRY(tbcm_request) entry;
-} tbcm_request_t;
-
-typedef LIST_HEAD(tbcm_request_list, tbcm_request) tbcm_request_list_t;
 
 /**
  * ThingsBoard MQTT Client
  */
 typedef struct tbcm_client
 {
-     esp_mqtt_client_handle_t mqtt_handle;
+    esp_mqtt_client_handle_t mqtt_handle;
 
-     tbc_transport_storage_t config;                       /*!< ThingsBoard MQTT config */
-     void *context;
-     tbcm_on_connected_t on_connected;                     /*!< Callback of connected ThingsBoard MQTT */
-     tbcm_on_disconnected_t on_disconnected;               /*!< Callback of disconnected ThingsBoard MQTT */
-     tbcm_on_sharedattr_received_t on_sharedattr_received; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
-     tbcm_on_serverrpc_request_t on_serverrpc_request;     /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
+    tbc_transport_storage_t config;     /*!< ThingsBoard MQTT config */
+    void *context;
 
-     volatile tbcm_state_t state; // TBMQTT_STATE state;
+    tbcm_on_event_t on_event;           /*!< Callback of events */
+    volatile tbcm_state_t state;
 
-     SemaphoreHandle_t lock;
-     int next_request_id;
-     uint64_t last_check_timestamp;
-     tbcm_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
+    SemaphoreHandle_t lock;
 
-     tbcm_payload_buffer_t buffer;     /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
+    tbcm_payload_buffer_t buffer;       /*!< If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA! */
+    esp_timer_handle_t respone_timer;   /*!< timer for checking response timeout */
 } tbcm_t;
 
 //static int _tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/);
 static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *payload, int qos /*= 1*/, int retain /*= 0*/);
 
-static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
-static void _on_DataEventProcess(tbcm_handle_t client_, esp_mqtt_event_handle_t event);
-static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg);
+static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+static void _on_payload_handle(void *client_, esp_mqtt_event_handle_t src_event,
+                                      char *topic, int topic_len,
+                                      char *payload, int payload_len);
 
-/*static*/ bool _request_is_equal(const tbcm_request_t *a, const tbcm_request_t *b);
-static int _request_list_create_and_append(tbcm_handle_t client_, tbcm_request_type_t type, int request_id,
-                                           void *context,
-                                           void *on_response, /*tbcm_on_response_t*/
-                                           void *on_timeout); /*tbcm_on_timeout_t*/
-static tbcm_request_t *_request_list_search_and_remove(tbcm_handle_t client_, int request_id);
-static tbcm_request_t *_request_list_search_and_remove_by_type(tbcm_handle_t client_, tbcm_request_type_t type);
-static int _request_list_move_all_of_timeout(tbcm_handle_t client_, uint64_t timestamp,
-                                             tbcm_request_list_t *timeout_request_list);
-static tbcm_request_t *_request_create(tbcm_request_type_t type,
-                                       uint32_t request_id,
-                                       void *context,
-                                       void *on_response, /*tbcm_on_response_t*/
-                                       void *on_timeout); /*tbcm_on_timeout_t*/
-static void _request_destroy(tbcm_request_t *tbcm_request);
+static void _response_timer_create(tbcm_handle_t client_);
+static void _response_timer_start(tbcm_handle_t client_);
+static void _response_timer_stop(tbcm_handle_t client_);
+static void _response_timer_destroy(tbcm_handle_t client_);
+
 
 const static char *TAG = "tb_mqtt_client";
 
@@ -235,19 +196,14 @@ tbcm_handle_t tbcm_init(void)
      client->mqtt_handle = NULL;
      memset(&client->config, 0x00, sizeof(client->config));
      client->context = NULL;
-     client->on_connected = NULL;           /*!< Callback of connected ThingsBoard MQTT */
-     client->on_disconnected = NULL;        /*!< Callback of disconnected ThingsBoard MQTT */
-     client->on_sharedattr_received = NULL; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
-     client->on_serverrpc_request = NULL;   /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
+     client->on_event = NULL;
 
      client->state = TBCM_STATE_DISCONNECTED;
 
      client->lock = xSemaphoreCreateMutex();
-     client->next_request_id = 0;
-     client->last_check_timestamp = (uint64_t)time(NULL);
-     memset(&client->request_list, 0x00, sizeof(client->request_list));//client->request_list = LIST_HEAD_INITIALIZER(client->request_list);
 
      tbcm_payload_buffer_init(&client->buffer);
+     _response_timer_create(client);
      return client;
 }
 
@@ -270,6 +226,8 @@ void tbcm_destroy(tbcm_handle_t client_)
      }
 
      tbcm_payload_buffer_clear(&client->buffer);
+     _response_timer_stop(client);
+     _response_timer_destroy(client);
 
      TBC_FREE(client);
 }
@@ -280,16 +238,7 @@ void tbcm_destroy(tbcm_handle_t client_)
 bool tbcm_connect(tbcm_handle_t client_,
                   const tbc_transport_config_t *config,
                   void *context,
-                  tbcm_on_connected_t on_connected,
-                  tbcm_on_disconnected_t on_disconnected,
-                  tbcm_on_sharedattr_received_t on_sharedattr_received,
-                  // tbcm_on_attrrequest_response_t on_attrrequest_response,
-                  // tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
-                  // tbcm_on_clientrpc_response_t on_clientrpc_response,
-                  // tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
-                  tbcm_on_serverrpc_request_t on_serverrpc_request //,
-                  /* tbcm_on_otaupdate_response_t on_otaupdate_response, */
-                  /* tbcm_on_otaupdate_timeout_t on_otaupdate_timeout */) // connect()//...start()
+                  tbcm_on_event_t on_event)
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
@@ -306,16 +255,8 @@ bool tbcm_connect(tbcm_handle_t client_,
 
      tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
-     client->on_connected = NULL;           /*!< Callback of connected ThingsBoard MQTT */
-     client->on_disconnected = NULL;        /*!< Callback of disconnected ThingsBoard MQTT */
-     client->on_sharedattr_received = NULL; /*!< Callback of receiving ThingsBoard MQTT shared-attribute T*/
-     client->on_serverrpc_request = NULL;   /*!< Callback of receiving ThingsBoard MQTT server-RPC request */
+     client->on_event = NULL;
      client->state = TBCM_STATE_DISCONNECTED;
-
-     // SemaphoreHandle_t lock;
-     // int next_request_id;
-     // uint64_t last_check_timestamp;
-     // tbcm_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
 
      esp_mqtt_client_config_t mqtt_cfg = {0};
      _tbc_transport_config_fill_to_mqtt_client_config(config, &mqtt_cfg);
@@ -326,7 +267,7 @@ bool tbcm_connect(tbcm_handle_t client_,
           return false;
      }
      /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_MqttEventHandle, client);
+     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_mqttevent_handle, client);
      int32_t result = esp_mqtt_client_start(client->mqtt_handle);
      if (result != ESP_OK)
      {
@@ -338,10 +279,7 @@ bool tbcm_connect(tbcm_handle_t client_,
 
      tbc_transport_storage_fill_from_config(&client->config, config);
      client->context = context;
-     client->on_connected = on_connected;
-     client->on_disconnected = on_disconnected;
-     client->on_sharedattr_received = on_sharedattr_received;
-     client->on_serverrpc_request = on_serverrpc_request;
+     client->on_event = on_event;
      client->state = TBCM_STATE_CONNECTING;
      return true;
 }
@@ -358,7 +296,7 @@ void tbcm_disconnect(tbcm_handle_t client_) // disconnect()//...stop()
           TBC_LOGW("unable to disconnect mqtt client: mqtt client is NULL!");
           return;
      }
-     void *context = client->context;
+     //void *context = client->context;
 
      TBC_LOGI("tbcm_disconnect(): call esp_mqtt_client_stop()...");
      int32_t result = esp_mqtt_client_stop(client->mqtt_handle);
@@ -376,30 +314,9 @@ void tbcm_disconnect(tbcm_handle_t client_) // disconnect()//...stop()
 
      tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
-     client->on_connected = NULL;
-     client->on_disconnected = NULL;
-     client->on_sharedattr_received = NULL;
-     client->on_serverrpc_request = NULL;
+     client->on_event = NULL;
 
      client->state = TBCM_STATE_DISCONNECTED;
-
-     // SemaphoreHandle_t lock;
-     // int next_request_id;
-     // uint64_t last_check_timestamp;
-     // remove all item in request_list
-     tbcm_request_t *tbcm_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcm_request, &client->request_list, entry, next) {
-          // exec timeout callback
-          if (tbcm_request->on_timeout) {
-               tbcm_on_timeout_t on_timeout = tbcm_request->on_timeout;
-               on_timeout(context, tbcm_request->request_id);
-          }
-
-          // remove from request list
-          LIST_REMOVE(tbcm_request, entry);
-          _request_destroy(tbcm_request);
-     }
-     memset(&client->request_list, 0x00, sizeof(client->request_list));
 }
 
 // Returns true if connected, false otherwise.
@@ -438,42 +355,6 @@ tbcm_state_t tbcm_get_state(tbcm_handle_t client_)
      return client->state;
 }
 
-void tbcm_check_timeout(tbcm_handle_t client_) // Executes an event loop for PubSub client. //loop()==>checkTimeout()
-{
-     tbcm_t *client = (tbcm_t *)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL");
-          return;
-     }
-
-     // Too early
-     uint64_t timestamp = (uint64_t)time(NULL);
-     if (timestamp < client->last_check_timestamp + TB_MQTT_TIMEOUT + 2) {
-          return;
-     }
-     client->last_check_timestamp = timestamp;
-
-     // move timeout item to timeout_list
-     tbcm_request_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-     int count = _request_list_move_all_of_timeout(client, timestamp, &timeout_list);
-     if (count <=0 ) {
-          return;
-     }
-
-     tbcm_request_t *tbcm_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcm_request, &timeout_list, entry, next) {
-          // exec timeout callback
-          if (tbcm_request->on_timeout) {
-               tbcm_on_timeout_t on_timeout = tbcm_request->on_timeout;
-               on_timeout(client->context, tbcm_request->request_id);
-          }
-
-          // remove from request list
-          LIST_REMOVE(tbcm_request, entry);
-          _request_destroy(tbcm_request);
-     }
-}
-
 /**
  * @brief Client to send a 'Telemetry' publish message to the broker
  *
@@ -487,7 +368,7 @@ void tbcm_check_timeout(tbcm_handle_t client_) // Executes an event loop for Pub
  * @param qos        qos of publish message
  * @param retain     ratain flag
  *
- * @return message_id of the subscribe message on success
+ * @return msg_id of the subscribe message on success
  *         0 if cannot publish
  *        -1 if error
  */
@@ -504,8 +385,8 @@ int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
         TBC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
      }
 
-     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
-     return message_id;
+     int msg_id = _tbcm_publish(client, TB_MQTT_TOPIC_TELEMETRY_PUBLISH, telemetry, qos, retain);
+     return msg_id;
 }
 
 /**
@@ -557,13 +438,14 @@ int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
- * @return request_id of the subscribe message on success
+ * @return msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
-                            void *context,
-                            tbcm_on_attrrequest_response_t on_attrrequest_response,
-                            tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
+                            int request_id,
+                            //void *context,
+                            //tbcm_on_attrrequest_response_t on_attrrequest_response,
+                            //tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                             int qos /*= 1*/, int retain /*= 0*/) // requestAttributes() //request client and shared attributes
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -581,13 +463,6 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_ATTR, 0 /*request_id*/, context,
-                                           on_attrrequest_response, on_attrrequest_timeout);
-     if (request_id <= 0) {
-          TBC_LOGE("Unable to take semaphore");
-          return -1;
-     }
-
      int size = strlen(TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX) + 20;
      char *topic = TBC_MALLOC(size);
      if (!topic) {
@@ -598,13 +473,13 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Attributes Request][Tx] RequestID=%d, %.*s",
-              request_id, strlen(payload), payload);
+        TBC_LOGI("[Attributes Request][Tx] request_id=%d, %.*s",
+            request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     int message_id = _tbcm_publish(client, topic, payload, qos, retain);
      TBC_FREE(topic);
-     return request_id; /*return message_id;*/
+     return message_id;
 }
 
 /**
@@ -623,13 +498,14 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
  * @param qos           qos of publish message
  * @param retain        ratain flag
  *
- * @return request_id of the subscribe message on success
+ * @return msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, const char *shared_keys,
-                               void *context,
-                               tbcm_on_attrrequest_response_t on_attrrequest_response,
-                               tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
+                               int request_id,
+                               //void *context,
+                               //tbcm_on_attrrequest_response_t on_attrrequest_response,
+                               //tbcm_on_attrrequest_timeout_t on_attrrequest_timeout,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -668,13 +544,14 @@ int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, c
      } else if (shared_len>0) {
          snprintf(payload, size - 1, "{\"sharedKeys\":\"%s\"}", shared_keys);
      }
-     int retult = tbcm_attributes_request(client, payload,
-                                          context,
-                                          on_attrrequest_response,
-                                          on_attrrequest_timeout,
+     int msg_id = tbcm_attributes_request(client, payload,
+                                          request_id,
+                                          //context,
+                                          //on_attrrequest_response,
+                                          //on_attrrequest_timeout,
                                           qos, retain);
      TBC_FREE(payload);
-     return retult;
+     return msg_id;
 }
 
 /**
@@ -719,7 +596,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *r
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Server-Side RPC][Tx] RequestID=%d Payload=%.*s",
+        TBC_LOGI("[Server-Side RPC][Tx] request_id=%d Payload=%.*s",
               request_id, strlen(response), response);
      }
 
@@ -744,13 +621,14 @@ int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *r
  * @param qos           qos of publish message
  * @param retain        ratain flag
  *
- * @return rpc_request_id of the subscribe message on success
+ * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
-                               void *context,
-                               tbcm_on_clientrpc_response_t on_clientrpc_response,
-                               tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
+                               int request_id,
+                               //void *context,
+                               //tbcm_on_clientrpc_response_t on_clientrpc_response,
+                               //tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
                                int qos /*= 1*/, int retain /*= 0*/) // sendClientRpcCall() //request client-side RPC
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -768,13 +646,6 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_CLIENTRPC, 0/*request_id*/, context,
-                                           on_clientrpc_response, on_clientrpc_timeout);
-     if (request_id <= 0) {
-          TBC_LOGE("Unable to take semaphore");
-          return -1;
-     }
-
      int size = strlen(TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX) + 20;
      char *topic = TBC_MALLOC(size);
      if (!topic) {
@@ -785,13 +656,13 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Client-Side RPC][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[Client-Side RPC][Tx] request_id=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     int msg_id = _tbcm_publish(client, topic, payload, qos, retain);
      TBC_FREE(topic);
-     return request_id; /*return message_id;*/
+     return msg_id;
 }
 
 /**
@@ -810,13 +681,14 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
  * @param qos           qos of publish message
  * @param retain        ratain flag
  *
- * @return rpc_request_id of the subscribe message on success
+ * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const char *params,
-                                     void *context,
-                                     tbcm_on_clientrpc_response_t on_clientrpc_response,
-                                     tbcm_on_clientrpc_timeout_t on_clientrpc_timeout,
+                                     int request_id,
+                                     //void *context,
+                                     //tbcm_on_clientrpc_response_t on_clientrpc_response,
+                                     //tbcm_on_clientrpc_timeout_t  on_clientrpc_timeout,
                                      int qos /*= 1*/, int retain /*= 0*/)
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -833,13 +705,14 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const c
      }
      memset(payload, 0x00, size);
      snprintf(payload, size - 1, "{\"method\":\"%s\",\"params\":%s}", method, params); //{%s}
-     int retult = tbcm_clientrpc_request(client, payload,
-                                         context,
-                                         on_clientrpc_response,
-                                         on_clientrpc_timeout,
+     int msg_id = tbcm_clientrpc_request(client, payload,
+                                         request_id,
+                                         //context,
+                                         //on_clientrpc_response,
+                                         //on_clientrpc_timeout,
                                          qos, retain);
      TBC_FREE(payload);
-     return retult;
+     return msg_id;
 }
  
  /**
@@ -891,13 +764,14 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const c
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
- * @return rpc_request_id of the subscribe message on success
+ * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
-                          void *context,
-                          tbcm_on_provision_response_t on_provision_response,
-                          tbcm_on_provision_timeout_t on_provision_timeout,
+                          int request_id,
+                          //void *context,
+                          //tbcm_on_provision_response_t on_provision_response,
+                          //tbcm_on_provision_timeout_t on_provision_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -915,20 +789,13 @@ int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
           return -1;
      }
 
-     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_PROVISION, -1, context,
-                                           on_provision_response, on_provision_timeout);
-     if (request_id <= 0) {
-          TBC_LOGE("Unable to take semaphore");
-          return -1;
-     }
-
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[FW update][Tx] request_id=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbcm_publish(client, TB_MQTT_TOPIC_PROVISION_REQUESTC, payload, qos, retain);
-     return request_id; /*return message_id;*/
+     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_PROVISION_REQUESTC, payload, qos, retain);
+     return message_id;
 }
 
 /**
@@ -947,14 +814,14 @@ int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
  * @param qos            qos of publish message
  * @param retain         ratain flag
  *
- * @return rpc_request_id of the subscribe message on success
+ * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
 int tbcm_otaupdate_request(tbcm_handle_t client_,
-                          int request_id_, int chunk_id, const char *payload, //?payload
-                          void *context,
-                          tbcm_on_otaupdate_response_t on_otaupdate_response,
-                          tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
+                          int request_id, int chunk_id, const char *payload, //?payload
+                          //void *context,
+                          //tbcm_on_otaupdate_response_t on_otaupdate_response,
+                          //tbcm_on_otaupdate_timeout_t on_otaupdate_timeout,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      tbcm_t *client = (tbcm_t*)client_;
@@ -972,13 +839,6 @@ int tbcm_otaupdate_request(tbcm_handle_t client_,
           return -1;
      }*/
 
-     int request_id = _request_list_create_and_append(client, TBCM_REQUEST_FWUPDATE, request_id_, context,
-                                           on_otaupdate_response, on_otaupdate_timeout);
-     if (request_id <= 0) {
-          TBC_LOGE("Unable to take semaphore");
-          return -1;
-     }
-
      int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
      char *topic = TBC_MALLOC(size);
      if (!topic) {
@@ -989,13 +849,13 @@ int tbcm_otaupdate_request(tbcm_handle_t client_,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[FW update][Tx] RequestID=%d %.*s",
+        TBC_LOGI("[FW update][Tx] request_id=%d %.*s",
               request_id, strlen(payload), payload);
      }
 
-     /*int message_id =*/ _tbcm_publish(client, topic, payload, qos, retain);
+     int msg_id = _tbcm_publish(client, topic, payload, qos, retain);
      TBC_FREE(topic);
-     return request_id; /*return message_id;*/
+     return msg_id;
 }
 
 /**
@@ -1064,9 +924,151 @@ static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *p
      int len = (payload == NULL) ? 0 : strlen(payload); //// +1
      return esp_mqtt_client_publish(client->mqtt_handle, topic, payload, len, qos, retain); ////return msg_id or -1(failure)
 }
+static bool _convert_timer_event(tbcma_event_t *dst_event)
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dst_event, false);
+    
+    memset(dst_event, 0x00, sizeof(tbcma_event_t));
+    //dst_event->client        = src_event->client;          /*!< TB Client MQTT Adapter handle for this event */
+    //dst_event->user_context  = src_event->user_context;    /*!< User context passed from MQTT client config */
+    dst_event->event_id        = TBC_MQTT_EVENT_CHECK_TIMEOUT;   //src_event->event_id;        /*!< MQTT event type */
+    //dst_event->msg_id          = src_event->msg_id;          /*!< MQTT messaged id of message */
+    //dst_event->session_present = src_event->session_present; /*!< MQTT session_present flag for connection event */
+    //dst_event->retain          = src_event->retain;          /*!< Retained flag of the message associated with this event */
+    //memcpy(&dst_event->error_handle, src_event->error_handle, sizeof(esp_mqtt_error_codes_t));
+                                                    /*!< esp-mqtt error handle including esp-tls errors as well as internal mqtt errors */
+    //dst_event->data.topic       = data->topic;      /*!< Topic associated with this event */
+    //dst_event->data.request_id  = data->request_id; /*!< The first pararm in topic */
+    //dst_event->data.chunk_id    = data->chunk_id;   /*!< The second pararm in topic */
+    //dst_event->data.payload     = data->payload;    /*!< Payload associated with this event */
+    //dst_event->data.payload_len = data->payload_len;/*!< Length of the payload for this event */
 
+    return true;
+}
+
+static bool _convert_data_event(tbcma_event_t *dst_event, 
+                                const esp_mqtt_event_handle_t src_event,
+                                const tbcma_publish_data_t *data)
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(dst_event, false);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src_event, false);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(data, false);
+    
+    memset(dst_event, 0x00, sizeof(tbcma_event_t));
+    //dst_event->client        = src_event->client;          /*!< TB Client MQTT Adapter handle for this event */
+    //dst_event->user_context  = src_event->user_context;    /*!< User context passed from MQTT client config */
+    dst_event->event_id        = src_event->event_id;        /*!< MQTT event type */
+    dst_event->msg_id          = src_event->msg_id;          /*!< MQTT messaged id of message */
+    dst_event->session_present = src_event->session_present; /*!< MQTT session_present flag for connection event */
+    dst_event->retain          = src_event->retain;          /*!< Retained flag of the message associated with this event */
+    memcpy(&dst_event->error_handle, src_event->error_handle, sizeof(esp_mqtt_error_codes_t));
+                                                    /*!< esp-mqtt error handle including esp-tls errors as well as internal mqtt errors */
+    dst_event->data.topic       = data->topic;      /*!< Topic associated with this event */
+    dst_event->data.request_id  = data->request_id; /*!< The first pararm in topic */
+    dst_event->data.chunk_id    = data->chunk_id;   /*!< The second pararm in topic */
+    dst_event->data.payload     = data->payload;    /*!< Payload associated with this event */
+    dst_event->data.payload_len = data->payload_len;/*!< Length of the payload for this event */
+
+    return true;
+}
+
+static bool _convert_nondata_event(tbcma_event_t *dst_event, const esp_mqtt_event_t *src_event)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(dst_event, false);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(src_event, false);
+
+     memset(dst_event, 0x00, sizeof(tbcma_event_t));
+     //dst_event->client        = src_event->client;          /*!< TB Client MQTT Adapter handle for this event */
+     //dst_event->user_context  = src_event->user_context;    /*!< User context passed from MQTT client config */
+     dst_event->event_id        = src_event->event_id;        /*!< MQTT event type */
+     dst_event->msg_id          = src_event->msg_id;          /*!< MQTT messaged id of message */
+     dst_event->session_present = src_event->session_present; /*!< MQTT session_present flag for connection event */
+     memcpy(&dst_event->error_handle, src_event->error_handle, sizeof(esp_mqtt_error_codes_t));
+                                                              /*!< esp-mqtt error handle including esp-tls errors as well as internal mqtt errors */
+     dst_event->retain = src_event->retain; /*!< Retained flag of the message associated with this event */
+     dst_event->data.topic = 0;             /*!< Topic associated with this event */
+     dst_event->data.request_id = 0;        /*!< The first pararm in topic */
+     dst_event->data.chunk_id = 0;          /*!< The second pararm in topic */
+     dst_event->data.payload = NULL;        /*!< Payload associated with this event */
+     dst_event->data.payload_len = 0;       /*!< Length of the payload for this event */
+     return true;
+}
+
+#if 1 // TODO: MOVE_TO_MQTT_HELPER
 // The callback for when a MQTT event is received.
-static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+{
+     tbcm_t *client = (tbcm_t*)handler_args;
+     esp_mqtt_event_handle_t src_event = event_data;
+
+     if (!client) {
+          TBC_LOGE("client is NULL!");
+          return;
+     }
+     if (!src_event) {
+          TBC_LOGE("src_event is NULL!");
+          return;
+     }
+
+     switch (src_event->event_id) {
+     case MQTT_EVENT_DATA:
+          ////TBC_LOGI("MQTT_EVENT_DATA");
+          ////TBC_LOGI("TOPIC=%.*s", event->topic_len, event->topic);
+          ////TBC_LOGI("DATA=%.*s", event->data_len, event->data);
+          {
+              // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
+              tbcm_payload_buffer_pocess(&client->buffer, src_event, client, _on_payload_handle);
+          }
+          break;
+
+    case MQTT_EVENT_CONNECTED:
+        {
+            client->state = TBCM_STATE_CONNECTED;
+            _response_timer_start(client);
+            
+            tbcma_event_t dst_event;
+            _convert_nondata_event(&dst_event, src_event);
+            dst_event.client       = client;
+            dst_event.user_context = client->context;
+            client->on_event(&dst_event);
+        }
+        break;
+
+    case MQTT_EVENT_DISCONNECTED:
+        {
+            client->state = TBCM_STATE_DISCONNECTED;
+
+            tbcma_event_t dst_event;
+            _convert_nondata_event(&dst_event, src_event);
+            dst_event.client       = client;
+            dst_event.user_context = client->context;
+            client->on_event(&dst_event);
+        }
+        break;
+
+    case MQTT_EVENT_SUBSCRIBED:
+    case MQTT_EVENT_UNSUBSCRIBED:
+    case MQTT_EVENT_PUBLISHED:
+    case MQTT_EVENT_DELETED:
+    case MQTT_EVENT_ERROR:
+    case MQTT_EVENT_BEFORE_CONNECT:
+    default:
+        {
+            tbcma_event_t dst_event;
+            _convert_nondata_event(&dst_event, src_event);
+            dst_event.client       = client;
+            dst_event.user_context = client->context;
+            client->on_event(&dst_event);
+        }
+        break;
+     }
+
+     return;// ESP_OK;
+}
+
+#else
+// The callback for when a MQTT event is received.
+static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
      tbcm_t *client = (tbcm_t*)handler_args;
      esp_mqtt_event_handle_t event = event_data;
@@ -1135,7 +1137,17 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
           TBC_LOGI("MQTT_EVENT_DATA");
           ////TBC_LOGI("TOPIC=%.*s", event->topic_len, event->topic);
           ////TBC_LOGI("DATA=%.*s", event->data_len, event->data);
-          _on_DataEventProcess(client, event);
+          {
+              // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
+              tbcm_rx_msg_info rx_msg = {0};
+              rx_msg.topic = event->topic;          /*!< Topic associated with this event */
+              rx_msg.payload = event->data;         /*!< Data associated with this event */
+              rx_msg.topic_len = event->topic_len;  /*!< Length of the topic for this event associated with this event */
+              rx_msg.payload_len = event->data_len;                       /*!< Length of the data for this event */
+              rx_msg.total_payload_len = event->total_data_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+              rx_msg.current_payload_offset = event->current_data_offset; /*!< Actual offset for the data associated with this event */
+              tbcm_payload_buffer_pocess(&client->buffer, &rx_msg, _on_payload_handle, client);
+          }
           break;
 
      case MQTT_EVENT_ERROR:
@@ -1147,33 +1159,235 @@ static void _on_MqttEventHandle(void *handler_args, esp_event_base_t base, int32
      }
      return;// ESP_OK;
 }
+#endif
 
-// Processes MQTT_EVENT_DATA message
-static void _on_DataEventProcess(tbcm_handle_t client_, esp_mqtt_event_handle_t event) //_onDataEventProcess(); //MQTT_EVENT_DATA
+#if 1 // TODO: MOVE_TO_MQTT_HELPER
+static void _on_payload_handle(void *client_, esp_mqtt_event_handle_t src_event,
+                                      char *topic, int topic_len,
+                                      char *payload, int payload_len)
 {
+    tbcm_t *client = (tbcm_t*)client_;
+    tbcma_event_t dst_event = {0};
+    tbcma_publish_data_t publish_data;
 
-     tbcm_t *client = (tbcm_t*)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
-     if (!event) {
-          TBC_LOGE("!event is NULL!");
-          return;
-     }
+    TBC_CHECK_PTR(client);
+    TBC_CHECK_PTR(src_event);
+    TBC_CHECK_PTR(topic);
+    TBC_CHECK_PTR(payload);
 
-     // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
-     tbcm_rx_msg_info rx_msg = {0};
-     rx_msg.topic = event->topic;          /*!< Topic associated with this event */
-     rx_msg.payload = event->data;         /*!< Data associated with this event */
-     rx_msg.topic_len = event->topic_len;  /*!< Length of the topic for this event associated with this event */
-     rx_msg.payload_len = event->data_len;                       /*!< Length of the data for this event */
-     rx_msg.total_payload_len = event->total_data_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
-     rx_msg.current_payload_offset = event->current_data_offset; /*!< Actual offset for the data associated with this event */
-     tbcm_payload_buffer_pocess(&client->buffer, &rx_msg, _on_PayloadProcess, client_);
+    //const char *topic       = rx_msg->topic;        /*!< Topic associated with this event */
+    //const int   topic_len   = rx_msg->topic_len;    /*!< Length of the topic for this event associated with this event */
+    //const char *payload     = rx_msg->payload;      /*!< Data associated with this event */
+    //const int   payload_len = rx_msg->payload_len;  /*!< Length of the data for this event */
+    //const int total_payload_len = rx_msg->total_payload_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+    //const int current_payload_offset = rx_msg->current_payload_offset; /*!< Actual offset for the data associated with this event */
+
+    memset(&dst_event, 0x00, sizeof(dst_event));
+    memset(&publish_data, 0x00, sizeof(publish_data));
+
+    if (strncmp(topic, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX)) == 0) {
+         // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
+
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[Attributes Request][Rx] request_id=%d %.*s",
+                  request_id, payload_len, payload);
+         }
+
+        publish_data.topic = TBCMA_RX_TOPIC_ATTRIBUTES_RESPONSE;  /*!< Topic associated with this event */
+        publish_data.request_id = request_id;                     /*!< The first pararm in topic */
+        publish_data.chunk_id   = 0;                              /*!< The second pararm in topic */
+        publish_data.payload    = payload;                        /*!< Payload associated with this event */
+        publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+        _convert_data_event(&dst_event, src_event, &publish_data);
+        client->on_event(&dst_event);
+
+         /*
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              if (tbcmh_request->on_response) {
+                   tbcm_on_response_t on_response = tbcmh_request->on_response;
+                   on_response(client->context, request_id, payload, payload_len);
+              }
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
+         } else {
+              TBC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+              return; // -1;
+         }*/
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, strlen(TB_MQTT_TOPIC_SHARED_ATTRIBUTES)) == 0) {
+                                            //if (strcmp(topic, TB_MQTT_TOPIC_SHARED_ATTRIBUTES) == 0) {
+         // 1.TB_MQTT_TOPIC_SHARED_ATTRIBUTES
+    
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[Subscribe Shared Attributes][Rx] %.*s", payload_len, payload);
+         }
+
+         publish_data.topic = TBCMA_RX_TOPIC_SHARED_ATTRIBUTES;  /*!< Topic associated with this event */
+         publish_data.request_id = 0;                              /*!< The first pararm in topic */
+         publish_data.chunk_id   = 0;                              /*!< The second pararm in topic */
+         publish_data.payload    = payload;                        /*!< Payload associated with this event */
+         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+         _convert_data_event(&dst_event, src_event, &publish_data);
+         client->on_event(&dst_event);
+
+         /*
+         if (client->on_sharedattr_received) {
+              client->on_sharedattr_received(client->context, payload, payload_len);
+         } else {
+              TBC_LOGW("Unable to find shared-attributes, (%.*s, %.*s)",
+                      topic_len, topic, payload_len, payload);
+         }
+         */
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX, strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX)) == 0) {
+         // 2.TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX
+
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[Server-Side RPC][Rx] request_id=%d Payload=%.*s",
+                  request_id, payload_len, payload);
+         }
+
+         publish_data.topic = TBCMA_RX_TOPIC_SERVERRPC_REQUEST;    /*!< Topic associated with this event */
+         publish_data.request_id = request_id;                     /*!< The first pararm in topic */
+         publish_data.chunk_id   = 0;                              /*!< The second pararm in topic */
+         publish_data.payload    = payload;                        /*!< Payload associated with this event */
+         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+         _convert_data_event(&dst_event, src_event, &publish_data);
+         client->on_event(&dst_event);
+
+         /*
+         if (client->on_serverrpc_request) {
+              client->on_serverrpc_request(client->context, request_id, payload, payload_len);
+         } else {
+              TBC_LOGW("Unable to find server-rpc request(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+         }
+         */
+    } else if (strncmp(topic, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX)) == 0) {
+         // 4.TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX
+    
+         char temp[32] = {0};
+         strncpy(temp, topic+strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX), topic_len-strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
+         int request_id = atoi(temp);
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[Client-Side RPC][Rx] request_id=%d %.*s",
+                  request_id, payload_len, payload);
+         }
+
+         publish_data.topic = TBCMA_RX_TOPIC_CLIENTRPC_RESPONSE;   /*!< Topic associated with this event */
+         publish_data.request_id = request_id;                     /*!< The first pararm in topic */
+         publish_data.chunk_id   = 0;                              /*!< The second pararm in topic */
+         publish_data.payload    = payload;                        /*!< Payload associated with this event */
+         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+         _convert_data_event(&dst_event, src_event, &publish_data);
+         client->on_event(&dst_event);
+
+         /*
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              if (tbcmh_request->on_response) {
+                   tbcm_on_response_t on_response = tbcmh_request->on_response;
+                   on_response(client->context, request_id, payload, payload_len);
+              }
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
+         } else {
+              TBC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
+                      topic_len, topic, payload_len, payload);
+              return; // -1;
+         }*/
+          
+    } else if (strncmp(topic, TB_MQTT_TOPIC_FW_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_FW_RESPONSE_PREFIX)) == 0) {
+         // 5.TB_MQTT_TOPIC_FW_RESPONSE_PREFIX
+         int request_id = 0;
+         sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id);
+
+         int chunk_id = -1;
+         const char *chunk_str = strstr(topic, "/chunk/");
+         if (chunk_str) {
+             char temp[32] = {0};
+             int offset = (uint32_t)chunk_str - (uint32_t)topic;
+             strncpy(temp, topic+offset+strlen("/chunk/"), topic_len-offset-strlen("/chunk/"));
+             chunk_id = atoi(temp);
+         }
+
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[FW update][Rx] request_id=%d, payload_len=%d",
+                   request_id, payload_len);
+         }
+
+         publish_data.topic = TBCMA_RX_TOPIC_FW_RESPONSE;          /*!< Topic associated with this event */
+         publish_data.request_id = request_id;                     /*!< The first pararm in topic */
+         publish_data.chunk_id   = chunk_id;                       /*!< The second pararm in topic */
+         publish_data.payload    = payload;                        /*!< Payload associated with this event */
+         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+         _convert_data_event(&dst_event, src_event, &publish_data);
+         client->on_event(&dst_event);
+
+         /*
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              tbcm_on_otaupdate_response_t on_otaupdate_response = tbcmh_request->on_response;
+              if (on_otaupdate_response) {
+                   on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
+              }
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
+         } else {
+              TBC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
+                        request_id,
+                        topic_len, topic, payload_len, payload);
+              return; // -1;
+         }*/
+    
+    } else if (strncmp(topic, TB_MQTT_TOPIC_PROVISION_RESPONSE, strlen(TB_MQTT_TOPIC_PROVISION_RESPONSE)) == 0) {
+         // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
+         if (client->config.log_rxtx_package) {
+             TBC_LOGI("[Provision][Rx] topic_type=%d, payload_len=%d",
+                   TBCMA_RX_TOPIC_PROVISION_RESPONSE, payload_len);
+         }
+
+         publish_data.topic = TBCMA_RX_TOPIC_PROVISION_RESPONSE;   /*!< Topic associated with this event */
+         publish_data.request_id = 0;                              /*!< The first pararm in topic */
+         publish_data.chunk_id   = 0;                              /*!< The second pararm in topic */
+         publish_data.payload    = payload;                        /*!< Payload associated with this event */
+         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
+         _convert_data_event(&dst_event, src_event, &publish_data);
+         client->on_event(&dst_event);
+
+         /*
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove_by_type(client, TBCMH_REQUEST_PROVISION);
+         if (tbcmh_request) {
+              tbcm_on_provision_response_t on_provision_response = tbcmh_request->on_response;
+              if (on_provision_response) {
+                   on_provision_response(client->context, tbcmh_request->request_id, payload, payload_len);
+              }
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
+         } else {
+              TBC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
+                        TBCMH_REQUEST_PROVISION,
+                        topic_len, topic, payload_len, payload);
+              return; // -1;
+         }*/
+    
+    }  else {
+         // Payload is too long, then Serial
+         TBC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d", //, total_payload_len=%d, current_payload_offset=%d
+                   topic_len, topic, payload_len, payload, payload_len); //, total_payload_len, current_payload_offset
+    }
 }
 
-static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg)
+#else 
+static void _on_payload_handle(void *context/*client*/, tbcm_rx_msg_info* rx_msg)
 {
     tbcm_t *client = (tbcm_t*)context/*client*/;
     if (!client) {
@@ -1181,12 +1395,12 @@ static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg
          return;
     }
 
-    const char *topic = rx_msg->topic;          /*!< Topic associated with this event */
-    const char *payload = rx_msg->payload;      /*!< Data associated with this event */
-    const int topic_len = rx_msg->topic_len;    /*!< Length of the topic for this event associated with this event */
-    const int payload_len = rx_msg->payload_len;                       /*!< Length of the data for this event */
-    const int total_payload_len = rx_msg->total_payload_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
-    const int current_payload_offset = rx_msg->current_payload_offset; /*!< Actual offset for the data associated with this event */
+    const char *topic       = rx_msg->topic;        /*!< Topic associated with this event */
+    const int   topic_len   = rx_msg->topic_len;    /*!< Length of the topic for this event associated with this event */
+    const char *payload     = rx_msg->payload;      /*!< Data associated with this event */
+    const int   payload_len = rx_msg->payload_len;  /*!< Length of the data for this event */
+    //const int total_payload_len = rx_msg->total_payload_len;           /*!< Total length of the data (longer data are supplied with multiple events) */
+    //const int current_payload_offset = rx_msg->current_payload_offset; /*!< Actual offset for the data associated with this event */
 
     if (strncmp(topic, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX, strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX)) == 0) {
          // 3.TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX
@@ -1199,14 +1413,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg
                   request_id, payload_len, payload);
          }
     
-         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
-         if (tbcm_request) {
-              if (tbcm_request->on_response) {
-                   tbcm_on_response_t on_response = tbcm_request->on_response;
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              if (tbcmh_request->on_response) {
+                   tbcm_on_response_t on_response = tbcmh_request->on_response;
                    on_response(client->context, request_id, payload, payload_len);
               }
-              _request_destroy(tbcm_request);
-              tbcm_request = NULL;
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
          } else {
               TBC_LOGE("Unable to find attributes requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
@@ -1257,14 +1471,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg
                   request_id, payload_len, payload);
          }
     
-         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
-         if (tbcm_request) {
-              if (tbcm_request->on_response) {
-                   tbcm_on_response_t on_response = tbcm_request->on_response;
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              if (tbcmh_request->on_response) {
+                   tbcm_on_response_t on_response = tbcmh_request->on_response;
                    on_response(client->context, request_id, payload, payload_len);
               }
-              _request_destroy(tbcm_request);
-              tbcm_request = NULL;
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
          } else {
               TBC_LOGE("Unable to find client-RPC requset(%d), (%.*s, %.*s)", request_id,
                       topic_len, topic, payload_len, payload);
@@ -1290,14 +1504,14 @@ static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg
                    request_id, payload_len);
          }
     
-         tbcm_request_t *tbcm_request = _request_list_search_and_remove(client, request_id);
-         if (tbcm_request) {
-              tbcm_on_otaupdate_response_t on_otaupdate_response = tbcm_request->on_response;
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove(client, request_id);
+         if (tbcmh_request) {
+              tbcm_on_otaupdate_response_t on_otaupdate_response = tbcmh_request->on_response;
               if (on_otaupdate_response) {
                    on_otaupdate_response(client->context, request_id, chunk_id, payload, payload_len);
               }
-              _request_destroy(tbcm_request);
-              tbcm_request = NULL;
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
          } else {
               TBC_LOGE("Unable to find FW update requset(%d), (%.*s, %.*s)",
                         request_id,
@@ -1309,274 +1523,95 @@ static void _on_PayloadProcess(void *context/*client*/, tbcm_rx_msg_info* rx_msg
          // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
          if (client->config.log_rxtx_package) {
              TBC_LOGI("[Provision][Rx] request_type=%d, payload_len=%d",
-                   TBCM_REQUEST_PROVISION, payload_len);
+                   TBCMH_REQUEST_PROVISION, payload_len);
          }
 
-         tbcm_request_t *tbcm_request = _request_list_search_and_remove_by_type(client, TBCM_REQUEST_PROVISION);
-         if (tbcm_request) {
-              tbcm_on_provision_response_t on_provision_response = tbcm_request->on_response;
+         tbcmh_request_t *tbcmh_request = _request_list_search_and_remove_by_type(client, TBCMH_REQUEST_PROVISION);
+         if (tbcmh_request) {
+              tbcm_on_provision_response_t on_provision_response = tbcmh_request->on_response;
               if (on_provision_response) {
-                   on_provision_response(client->context, tbcm_request->request_id, payload, payload_len);
+                   on_provision_response(client->context, tbcmh_request->request_id, payload, payload_len);
               }
-              _request_destroy(tbcm_request);
-              tbcm_request = NULL;
+              _request_destroy(tbcmh_request);
+              tbcmh_request = NULL;
          } else {
               TBC_LOGE("Unable to find Provision request_type(%d), (%.*s, %.*s)",
-                        TBCM_REQUEST_PROVISION,
+                        TBCMH_REQUEST_PROVISION,
                         topic_len, topic, payload_len, payload);
               return; // -1;
          }
     
     }  else {
          // Payload is too long, then Serial.*/
-         TBC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d, total_payload_len=%d, current_payload_offset=%d",
-                   topic_len, topic, payload_len, payload, payload_len, total_payload_len, current_payload_offset);
+         TBC_LOGW("[Unkown-Msg][Rx] topic=%.*s, payload=%.*s, payload_len=%d", //, total_payload_len=%d, current_payload_offset=%d
+                   topic_len, topic, payload_len, payload, payload_len); //, total_payload_len, current_payload_offset
     }
 
 }
+#endif
 
-/*static*/ bool _request_is_equal(const tbcm_request_t *a, const tbcm_request_t *b)
-{
-     if (!a & !b) {
-          return true;
-     }
-     if (!a || !b) {
-          return false;
-     }
-     if (a->type != b->type) {
-          return false;
-     } else if (a->request_id != b->request_id) {
-          return false;
-     } else { // if (a->timestamp != b->timestamp)
-          return a->timestamp == b->timestamp;
-     }
-}
-
-//return request_id on successful, otherwise return -1
-static int _request_list_create_and_append(tbcm_handle_t client_, tbcm_request_type_t type, int request_id,
-                                           void *context,
-                                           void *on_response, /*tbcm_on_response_t*/
-                                           void *on_timeout) /*tbcm_on_timeout_t*/
-{
-     tbcm_t *client = (tbcm_t*)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return -1;
-     }
-
-     // Get request ID
-     if (request_id <= 0) {
-          do {
-               if (client->next_request_id <= 0)
-                    client->next_request_id = 1;
-               else
-                    client->next_request_id++;
-          } while (client->next_request_id <= 0);
-
-          request_id = client->next_request_id;
-     }
-
-     // If no response & no timeout, then it doesn't append to request list!
-     if (!on_response && !on_timeout) {
-          // Give semaphore
-          xSemaphoreGive(client->lock);
-          TBC_LOGI("Don't append to request list if no response & no timeout!");
-          return request_id;
-     }
-
-     // Create request
-     tbcm_request_t *tbcm_request = _request_create(type, request_id, context, on_response, on_timeout);
-     if (!tbcm_request) {
-          // Give semaphore
-          xSemaphoreGive(client->lock);
-          TBC_LOGE("Unable to create request: No memory!");
-          return -1;
-     }
-
-     // Insert request to list
-     tbcm_request_t *it, *last = NULL;
-     if (LIST_FIRST(&client->request_list) == NULL) {
-          // Insert head
-          LIST_INSERT_HEAD(&client->request_list, tbcm_request, entry);
-     } else {
-          // Insert last
-          LIST_FOREACH(it, &client->request_list, entry) {
-               last = it;
-          }
-          if (it == NULL) {
-               assert(last);
-               LIST_INSERT_AFTER(last, tbcm_request, entry);
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->lock);
-     return request_id;
-}
-
-static tbcm_request_t *_request_list_search_and_remove(tbcm_handle_t client_, int request_id)
+#if 1 // MOVE_FROM_MQTT_HELPER
+static void __response_timer_timerout(void *client_/*timer_arg*/)
 {
      tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
-          TBC_LOGE("client is NULL!");
-          return NULL;
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
      }
 
-     // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return NULL;
-     }
-
-     // Search item
-     tbcm_request_t *tbcm_request = NULL;
-     LIST_FOREACH(tbcm_request, &client->request_list, entry) {
-          if (tbcm_request && tbcm_request->request_id == request_id) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcm_request) {
-          LIST_REMOVE(tbcm_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request:%d!", request_id);
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->lock);
-     return tbcm_request;
+     tbcma_event_t dst_event = {0};
+     _convert_timer_event(&dst_event);
+     dst_event.client       = client;
+     dst_event.user_context = client->context;
+     client->on_event(&dst_event);
 }
 
-
-static tbcm_request_t *_request_list_search_and_remove_by_type(tbcm_handle_t client_, tbcm_request_type_t type)
+static void _response_timer_create(tbcm_handle_t client_)
 {
      tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
-          TBC_LOGE("client is NULL!");
-          return NULL;
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
      }
 
-     // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return NULL;
-     }
-
-     // Search item
-     tbcm_request_t *tbcm_request = NULL;
-     LIST_FOREACH(tbcm_request, &client->request_list, entry) {
-          if (tbcm_request && tbcm_request->type == type) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcm_request) {
-          LIST_REMOVE(tbcm_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request: type=%d!", type);
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->lock);
-     return tbcm_request;
+     esp_timer_create_args_t tmr_args = {
+        .callback = &__response_timer_timerout,
+        .arg = client_,
+        .name = "response_timer",
+     };
+     esp_timer_create(&tmr_args, &client->respone_timer);
 }
-
-// return  count of timeout_request_list
-static int _request_list_move_all_of_timeout(tbcm_handle_t client_, uint64_t timestamp,
-                              tbcm_request_list_t *timeout_request_list)
+static void _response_timer_start(tbcm_handle_t client_)
 {
      tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
-          TBC_LOGE("client is NULL!");
-          return 0;
-     }
-     if (!timeout_request_list) {
-          TBC_LOGE("timeout_request_list is NULL!");
-          return 0;
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
      }
 
-     // Take semaphore
-     if (xSemaphoreTake(client->lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return 0;
-     }
-
-     // Search & move item
-     int count = 0;
-     tbcm_request_t *tbcm_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcm_request, &client->request_list, entry, next) {
-          if (tbcm_request && tbcm_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
-               // remove from request list
-               LIST_REMOVE(tbcm_request, entry);
-
-               // append to timeout list
-               tbcm_request_t *it, *last = NULL;
-               if (LIST_FIRST(timeout_request_list) == NULL) {
-                    LIST_INSERT_HEAD(timeout_request_list, tbcm_request, entry);
-                    count++;
-               } else {
-                    LIST_FOREACH(it, timeout_request_list, entry) {
-                         last = it;
-                    }
-                    if (it == NULL) {
-                         assert(last);
-                         LIST_INSERT_AFTER(last, tbcm_request, entry);
-                         count++;
-                    }
-               }
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->lock);
-     return count;
+     esp_timer_start_periodic(client->respone_timer, (uint64_t)TB_MQTT_TIMEOUT * 1000 * 1000);
 }
-
-//return tbcm_request on successful, otherwise return NULL.
-static tbcm_request_t *_request_create(tbcm_request_type_t type,
-                                       uint32_t request_id,
-                                       void *context,
-                                       void *on_response, /*tbcm_on_response_t*/
-                                       void *on_timeout) /*tbcm_on_timeout_t*/
+static void _response_timer_stop(tbcm_handle_t client_)
 {
-     tbcm_request_t *tbcm_request = TBC_MALLOC(sizeof(tbcm_request_t));
-     if (!tbcm_request) {
-          TBC_LOGE("Unable to malloc memory!");
-          return NULL;
+     tbcm_t *client = (tbcm_t *)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
      }
 
-     memset(tbcm_request, 0x00, sizeof(tbcm_request_t));
-     tbcm_request->type = type;
-     tbcm_request->request_id = request_id;
-     tbcm_request->timestamp = (uint64_t)time(NULL);
-     tbcm_request->context = context;
-     tbcm_request->on_response = on_response;
-     tbcm_request->on_timeout = on_timeout;
-
-     return tbcm_request;
+     esp_timer_stop(client->respone_timer);
 }
-
-static void _request_destroy(tbcm_request_t *tbcm_request)
+static void _response_timer_destroy(tbcm_handle_t client_)
 {
-     if (!tbcm_request) {
-          TBC_LOGE("Invalid argument!");
-          return; 
+     tbcm_t *client = (tbcm_t *)client_;
+     if (!client) {
+          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+          return;
      }
 
-     tbcm_request->type = 0;
-     tbcm_request->request_id = 0;
-     tbcm_request->timestamp = 0;
-     tbcm_request->context = NULL;
-     tbcm_request->on_response = NULL;
-     tbcm_request->on_timeout = NULL;
-     TBC_FREE(tbcm_request);
+     esp_timer_stop(client->respone_timer);
+     esp_timer_delete(client->respone_timer);
+     client->respone_timer = NULL;
 }
+#endif
 

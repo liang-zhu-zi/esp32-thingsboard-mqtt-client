@@ -205,24 +205,31 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method
      //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //}
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
-     int request_id;
+     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_CLIENTRPC, 0/*request_id*/);
+     if (request_id <= 0) {
+          TBC_LOGE("Unable to create request!");
+          return -1;
+     }
+     int msg_id;
      if (params) {
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
-         request_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
-                          client,
-                          NULL, //_tbcmh_on_clientrpc_response,
-                          NULL, //_tbcmh_on_clientrpc_timeout,
+         msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
+                          request_id,
+                          //client,
+                          //NULL, //_tbcmh_on_clientrpc_response,
+                          //NULL, //_tbcmh_on_clientrpc_timeout,
                           1/*qos*/, 0/*retain*/);
          cJSON_free(params_str); // free memory
      } else {
-         request_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, "{}",
-                          client,
-                          NULL, //_tbcmh_on_clientrpc_response,
-                          NULL, //_tbcmh_on_clientrpc_timeout,
+         msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, "{}",
+                          request_id,
+                          //client,
+                          //NULL, //_tbcmh_on_clientrpc_response,
+                          //NULL, //_tbcmh_on_clientrpc_timeout,
                           1/*qos*/, 0/*retain*/);     
      }
      //cJSON_Delete(object); // delete json object
-     if (request_id<0) {
+     if (msg_id<0) {
           TBC_LOGE("Init tbcm_clientrpc_request failure! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -260,24 +267,31 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method
      //else 
      //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
-     int request_id;
+     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_CLIENTRPC, 0/*request_id*/);
+     if (request_id <= 0) {
+          TBC_LOGE("Unable to create request!");
+          return -1;
+     }
+     int msg_id;
      if (params) {
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
-         request_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
-                                  client,
-                                  _tbcmh_on_clientrpc_response,
-                                  _tbcmh_on_clientrpc_timeout,
-                                   1/*qos*/, 0/*retain*/);
+         msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
+                                  request_id,
+                                  //client,
+                                  //_tbcmh_on_clientrpc_response,
+                                  //_tbcmh_on_clientrpc_timeout,
+                                  1/*qos*/, 0/*retain*/);
          cJSON_free(params_str); // free memory
      } else {
-         request_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, "{}",
-                                  client,
-                                  _tbcmh_on_clientrpc_response,
-                                  _tbcmh_on_clientrpc_timeout,
-                                   1/*qos*/, 0/*retain*/);
+         msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, "{}",
+                                  request_id,
+                                  //client,
+                                  //_tbcmh_on_clientrpc_response,
+                                  //_tbcmh_on_clientrpc_timeout,
+                                  1/*qos*/, 0/*retain*/);
      }
      //cJSON_Delete(object); // delete json object
-     if (request_id<0) {
+     if (msg_id<0) {
           TBC_LOGE("Init tbcm_clientrpc_request failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
           return ESP_FAIL;
@@ -319,6 +333,9 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
      }
+
+     // Remove it from request list
+     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {

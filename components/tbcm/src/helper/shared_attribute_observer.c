@@ -218,6 +218,9 @@ tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
           return;// ESP_FAIL;
      }
 
+     // Remove it from request list
+     
+
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
