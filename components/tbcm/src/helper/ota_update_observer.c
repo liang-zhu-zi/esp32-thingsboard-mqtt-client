@@ -578,7 +578,7 @@ static tbc_err_t _tbcmh_otaupdate_chunk_request(ota_update_t *otaupdate)
          TBC_LOGE("Unable to create request! %s()", __FUNCTION__);
          return -1;
     }
-    int msg_id = tbcm_otaupdate_request(tbcm_handle, request_id, otaupdate->state.chunk_id/*default 0*/,
+    int msg_id = tbcm_otaupdate_chunk_request(tbcm_handle, request_id, otaupdate->state.chunk_id/*default 0*/,
                           payload, //chunk_size
                           1/*qos*/, 0/*retain*/);
     // First OTA request

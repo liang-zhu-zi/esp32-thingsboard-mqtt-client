@@ -110,8 +110,8 @@ typedef struct tbcmh_msg {
 //static tbcmh_request_t *_request_create(tbcmh_request_type_t type, uint32_t request_id);
 //static void _request_destroy(tbcmh_request_t *tbcmh_request);
 
-static void _tbcmh_bridge_event_send(tbcma_event_t *event);
-//static void _tbcmh_on_event_handle(tbcma_event_t *event);
+static void _tbcmh_bridge_event_send(tbcm_event_t *event);
+//static void _tbcmh_on_event_handle(tbcm_event_t *event);
 
 //static void _tbcmh_on_connected(void *context);
 //static void _tbcmh_on_disonnected(void *context);
@@ -388,8 +388,8 @@ tbcmh_handle_t tbcmh_init(void)
      memset(client, 0x00, sizeof(tbcmh_t));
 
      client->tbmqttclient = tbcm_init();
-     // Create a queue capable of containing 20 tbcma_event_t structures. These should be passed by pointer as they contain a lot of data.
-     client->_xQueue = xQueueCreate(40, sizeof(tbcma_event_t));
+     // Create a queue capable of containing 20 tbcm_event_t structures. These should be passed by pointer as they contain a lot of data.
+     client->_xQueue = xQueueCreate(40, sizeof(tbcm_event_t));
      if (client->_xQueue == NULL) {
           TBC_LOGE("failed to create the queue! %s()", __FUNCTION__);
      }
@@ -729,7 +729,7 @@ tbc_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
           return ESP_FAIL;
      }
 
-     int result = _tbcm_subscribe(client->tbmqttclient, topic, 1/*qos*/);
+     int result = tbcm_subscribe(client->tbmqttclient, topic, 1/*qos*/);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
@@ -770,7 +770,7 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
-static void _tbmch_on_payload_handle(tbcma_event_t *event)
+static void _tbmch_on_payload_handle(tbcm_event_t *event)
 {
     TBC_CHECK_PTR(event);
     TBC_CHECK_PTR(event->user_context);
@@ -778,50 +778,50 @@ static void _tbmch_on_payload_handle(tbcma_event_t *event)
     tbcmh_t *client = (tbcmh_t *)event->user_context;
     cJSON *object = NULL;
 
-    if (event->event_id != TBC_MQTT_EVENT_DATA) {
-        TBC_LOGE("event->event_id(%d) is not TBC_MQTT_EVENT_DATA(%d)!", event->event_id, TBC_MQTT_EVENT_DATA);
+    if (event->event_id != TBCM_EVENT_DATA) {
+        TBC_LOGE("event->event_id(%d) is not TBCM_EVENT_DATA(%d)!", event->event_id, TBCM_EVENT_DATA);
         return;
     }
     
     switch (event->data.topic) {
-    case TBCMA_RX_TOPIC_ATTRIBUTES_RESPONSE:  /*!< request_id,           payload, payload_len */
+    case TBCM_RX_TOPIC_ATTRIBUTES_RESPONSE:  /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
          _tbcmh_attributesrequest_on_response(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
     
-    case TBCMA_RX_TOPIC_SHARED_ATTRIBUTES:    /*!<                       payload, payload_len */
+    case TBCM_RX_TOPIC_SHARED_ATTRIBUTES:    /*!<                       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
          _tbcmh_sharedattribute_on_received(client, object);
          cJSON_Delete(object);
          break;
     
-    case TBCMA_RX_TOPIC_SERVERRPC_REQUEST:    /*!< request_id,           payload, payload_len */
+    case TBCM_RX_TOPIC_SERVERRPC_REQUEST:    /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
          _tbcmh_serverrpc_on_request(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
         
-    case TBCMA_RX_TOPIC_CLIENTRPC_RESPONSE:   /*!< request_id,           payload, payload_len */
+    case TBCM_RX_TOPIC_CLIENTRPC_RESPONSE:   /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
          _tbcmh_clientrpc_on_response(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
     
-    case TBCMA_RX_TOPIC_FW_RESPONSE:          /*!< request_id, chunk_id, payload, payload_len */
+    case TBCM_RX_TOPIC_FW_RESPONSE:          /*!< request_id, chunk_id, payload, payload_len */
          _tbcmh_otaupdate_chunk_on_response(client, event->data.request_id, 
               event->data.chunk_id, 
               event->data.payload,
               event->data.payload_len);
          break;
     
-    case TBCMA_RX_TOPIC_PROVISION_RESPONSE:   /*!< (no request_id)       payload, payload_len */
+    case TBCM_RX_TOPIC_PROVISION_RESPONSE:   /*!< (no request_id)       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
          _tbcmh_provision_on_response(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
 
-    case TBCMA_RX_TOPIC_ERROR:
+    case TBCM_RX_TOPIC_ERROR:
     default:
          TBC_LOGW("Other topic: event->data.topic=%d", event->data.topic);
          break;
@@ -829,7 +829,7 @@ static void _tbmch_on_payload_handle(tbcma_event_t *event)
 }
 
 // The callback for when a MQTT event is received.
-static void _tbcmh_on_event_handle(tbcma_event_t *event)
+static void _tbcmh_on_event_handle(tbcm_event_t *event)
 {
      TBC_CHECK_PTR(event);
      TBC_CHECK_PTR(event->user_context);
@@ -838,22 +838,22 @@ static void _tbcmh_on_event_handle(tbcma_event_t *event)
      int msg_id;
 
      switch (event->event_id) {
-     case TBC_MQTT_EVENT_BEFORE_CONNECT:
-          TBC_LOGI("TBC_MQTT_EVENT_BEFORE_CONNECT, msg_id=%d", event->msg_id);
+     case TBCM_EVENT_BEFORE_CONNECT:
+          TBC_LOGI("TBCM_EVENT_BEFORE_CONNECT, msg_id=%d", event->msg_id);
           break;
 
-     case TBC_MQTT_EVENT_CONNECTED:
-          TBC_LOGI("TBC_MQTT_EVENT_CONNECTED");
+     case TBCM_EVENT_CONNECTED:
+          TBC_LOGI("TBCM_EVENT_CONNECTED");
           TBC_LOGI("client->tbmqttclient = %p", client->tbmqttclient);
-          msg_id = _tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-          msg_id = _tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
+          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
-          msg_id = _tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
+          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
-          msg_id = _tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
+          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
-          msg_id = _tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
+          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
           TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
           TBC_LOGI("before call on_connected()...");
           TBC_LOGI("Connected to thingsboard MQTT server!");
@@ -861,30 +861,30 @@ static void _tbcmh_on_event_handle(tbcma_event_t *event)
           TBC_LOGI("after call on_connected()");
           break;
 
-     case TBC_MQTT_EVENT_DISCONNECTED:
-          TBC_LOGI("TBC_MQTT_EVENT_DISCONNECTED");
+     case TBCM_EVENT_DISCONNECTED:
+          TBC_LOGI("TBCM_EVENT_DISCONNECTED");
           TBC_LOGI("Disconnected to thingsboard MQTT server!");
           _tbcmh_disonnected_on(client);
           break;
 
-     case TBC_MQTT_EVENT_SUBSCRIBED:
-          TBC_LOGI("TBC_MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
+     case TBCM_EVENT_SUBSCRIBED:
+          TBC_LOGI("TBCM_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
           break;
-     case TBC_MQTT_EVENT_UNSUBSCRIBED:
-          TBC_LOGI("TBC_MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+     case TBCM_EVENT_UNSUBSCRIBED:
+          TBC_LOGI("TBCM_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
           break;
-     case TBC_MQTT_EVENT_PUBLISHED:
-          TBC_LOGI("TBC_MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+     case TBCM_EVENT_PUBLISHED:
+          TBC_LOGI("TBCM_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
           break;
 
-     case TBC_MQTT_EVENT_DATA:
-          TBC_LOGI("TBC_MQTT_EVENT_DATA");
+     case TBCM_EVENT_DATA:
+          TBC_LOGI("TBCM_EVENT_DATA");
           ////TBC_LOGI("DATA=%.*s", event->payload_len, event->payload);
           _tbmch_on_payload_handle(event);
           break;
 
-     case TBC_MQTT_EVENT_ERROR:
-          TBC_LOGW("TBC_MQTT_EVENT_ERROR: esp_tls_last_esp_err=%d, esp_tls_stack_err=%d, "
+     case TBCM_EVENT_ERROR:
+          TBC_LOGW("TBCM_EVENT_ERROR: esp_tls_last_esp_err=%d, esp_tls_stack_err=%d, "
              "esp_tls_cert_verify_flags=%d, error_type=%d, "
              "connect_return_code=%d, esp_transport_sock_errno=%d",
              event->error_handle.esp_tls_last_esp_err,              /*!< last esp_err code reported from esp-tls component */
@@ -897,12 +897,12 @@ static void _tbcmh_on_event_handle(tbcma_event_t *event)
              event->error_handle.esp_transport_sock_errno); /*!< errno from the underlying socket */
           break;
 
-     case TBC_MQTT_EVENT_DELETED:
-          TBC_LOGW("TBC_MQTT_EVENT_DELETED: msg_id=%d", event->msg_id);
+     case TBCM_EVENT_DELETED:
+          TBC_LOGW("TBCM_EVENT_DELETED: msg_id=%d", event->msg_id);
           break;
 
-     case TBC_MQTT_EVENT_CHECK_TIMEOUT:
-          TBC_LOGD("TBC_MQTT_EVENT_CHECK_TIMEOUT");
+     case TBCM_EVENT_CHECK_TIMEOUT:
+          TBC_LOGD("TBCM_EVENT_CHECK_TIMEOUT");
           tbcmh_check_timeout(client);
           break;
 
@@ -930,7 +930,7 @@ static void _tbcmh_bridge_event_receive(tbcmh_handle_t client_)
     // }
     
     // read event from queue()
-    tbcma_event_t event;
+    tbcm_event_t event;
     int i = 0;
     if (client->_xQueue != 0) {
          // Receive a message on the created queue.  Block for 0(10) ticks if a message is not immediately available.
@@ -938,7 +938,7 @@ static void _tbcmh_bridge_event_receive(tbcmh_handle_t client_)
               // pcRxedMessage now points to the struct event variable posted by vATask.
               _tbcmh_on_event_handle(&event);
               
-              if ((event.event_id==TBC_MQTT_EVENT_DATA) && event.data.payload && (event.data.payload_len>0)) {
+              if ((event.event_id==TBCM_EVENT_DATA) && event.data.payload && (event.data.payload_len>0)) {
                   TBC_FREE(event.data.payload);
                   event.data.payload = NULL;
               }
@@ -965,7 +965,7 @@ bool tbcmh_has_events(tbcmh_handle_t client_)
           return false;
      }
 
-     tbcma_event_t event;
+     tbcm_event_t event;
      if (client->_xQueue != 0)
      {
           // Peek a message on the created queue.  Block for 10 ticks if a
@@ -989,7 +989,7 @@ bool tbcmh_has_events(tbcmh_handle_t client_)
 //send event to queue
 //true if the item was successfully posted, otherwise false. //pdTRUE if the item was successfully posted, otherwise errQUEUE_FULL.
 //It runs in MQTT thread.
-static bool _tbcmh_sendTbmqttEvent2Queue(tbcmh_handle_t client_, tbcma_event_t *event)
+static bool _tbcmh_sendTbmqttEvent2Queue(tbcmh_handle_t client_, tbcm_event_t *event)
 {
      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !client->_xQueue || !event) {
@@ -1025,14 +1025,14 @@ static bool _tbcmh_sendTbmqttEvent2Queue(tbcmh_handle_t client_, tbcma_event_t *
 }
 
 // send msg to queue with clone event & publish_data
-static void _tbcmh_bridge_event_send(tbcma_event_t *event)
+static void _tbcmh_bridge_event_send(tbcm_event_t *event)
 {
     TBC_CHECK_PTR(event);
     TBC_CHECK_PTR(event->user_context);
 
     tbcmh_t *client = (tbcmh_t *)event->user_context;
 
-    if ((event->event_id==TBC_MQTT_EVENT_DATA) && event->data.payload && (event->data.payload_len>0)) {
+    if ((event->event_id==TBCM_EVENT_DATA) && event->data.payload && (event->data.payload_len>0)) {
         char *payload = TBC_MALLOC(event->data.payload_len);
         if (!payload) {
             TBC_LOGE("malloc(%d) memory failure! %s()", event->data.payload_len, __FUNCTION__);
