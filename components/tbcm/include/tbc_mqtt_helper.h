@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard Client MQTT Helper (high layer) API
+// ThingsBoard MQTT Client helper (high layer) API
 
 #ifndef _TBC_MQTT_HELPER_H_
 #define _TBC_MQTT_HELPER_H_
@@ -221,7 +221,7 @@ void tbcmh_disconnect(tbcmh_handle_t client_);
 bool tbcmh_is_connected(tbcmh_handle_t client_);
 bool tbcmh_has_events(tbcmh_handle_t client_);
 void tbcmh_run(tbcmh_handle_t client_); // loop()/checkTimeout(), recv/parse/sendqueue/ack...
-tbc_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic);
+tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client_, const char *topic);
 
 //====10.Publish Telemetry time-series data==============================================================================
 tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);

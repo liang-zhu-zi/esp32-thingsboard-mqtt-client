@@ -35,14 +35,14 @@
 #include "tbc_transport_credentials_memory.h"
 
 //#include "tbc_utils.h"
-//#include "timeseries_data_helper.h"
-//#include "client_attribute_helper.h"
-//#include "shared_attribute_observer.h"
-//#include "attributes_request_observer.h"
-//#include "server_rpc_observer.h"
-//#include "client_rpc_observer.h"
-//#include "provision_observer.h"
-//#include "ota_update_observer.h"
+//#include "timeseries_data.h"
+//#include "client_attribute.h"
+//#include "shared_attribute.h"
+//#include "attributes_request.h"
+//#include "server_rpc.h"
+//#include "client_rpc.h"
+//#include "device_provision.h"
+//#include "ota_update.h"
 
 //#include "device_provision.h"
 
@@ -157,7 +157,7 @@ void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "FRONT CONN: Connected to thingsboard server!");
 
-    tbcmh_subscribe(client, TB_MQTT_TOPIC_PROVISION_RESPONSE);
+    _tbcmh_subscribe(client, TB_MQTT_TOPIC_PROVISION_RESPONSE);
     sleep(1);
 
     tbc_provison_config_t provision_config = {0};

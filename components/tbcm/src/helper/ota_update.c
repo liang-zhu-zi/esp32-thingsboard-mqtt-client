@@ -23,7 +23,7 @@
 
 #include "tbc_utils.h"
 
-//#include "ota_update_observer.h"
+//#include "ota_update.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "ota_update";

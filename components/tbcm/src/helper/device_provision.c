@@ -21,7 +21,7 @@
 //#include "tbc_mqtt.h"
 
 #include "tbc_utils.h"
-//#include "provision_observer.h"
+//#include "device_provision.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "provision";

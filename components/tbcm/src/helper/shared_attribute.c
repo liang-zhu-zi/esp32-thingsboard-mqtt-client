@@ -20,7 +20,7 @@
 
 #include "tbc_utils.h"
 
-//#include "shared_attribute_observer.h"
+//#include "shared_attribute.h"
 #include "tbc_mqtt_helper_internal.h"
 
 // TODO: remove it!

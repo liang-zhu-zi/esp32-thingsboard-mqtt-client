@@ -20,7 +20,7 @@
 
 #include "tbc_utils.h"
 
-//#include "client_rpc_observer.h"
+//#include "client_rpc.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "client_rpc";

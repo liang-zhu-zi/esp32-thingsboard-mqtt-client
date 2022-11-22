@@ -29,14 +29,14 @@
 #include "tbc_mqtt_helper.h"
 
 //#include "tbc_utils.h"
-//#include "timeseries_data_helper.h"
-//#include "client_attribute_helper.h"
-//#include "shared_attribute_observer.h"
-//#include "attributes_request_observer.h"
-//#include "server_rpc_observer.h"
-//#include "client_rpc_observer.h"
-//#include "provision_observer.h"
-//#include "ota_update_observer.h"
+//#include "timeseries_data.h"
+//#include "client_attribute.h"
+//#include "shared_attribute.h"
+//#include "attributes_request.h"
+//#include "server_rpc.h"
+//#include "client_rpc.h"
+//#include "device_provision.h"
+//#include "ota_update.h"
 
 //#include "device_provision.h"
 

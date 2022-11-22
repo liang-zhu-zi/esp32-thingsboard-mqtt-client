@@ -28,14 +28,14 @@
 #include "tbc_mqtt.h"
 // #include "tbc_mqtt_helper.h"
 
-#include "timeseries_data_helper.h"
-#include "client_attribute_helper.h"
-#include "shared_attribute_observer.h"
-#include "attributes_request_observer.h"
-#include "server_rpc_observer.h"
-#include "client_rpc_observer.h"
-#include "provision_observer.h"
-#include "ota_update_observer.h"
+#include "timeseries_data.h"
+#include "client_attribute.h"
+#include "shared_attribute.h"
+#include "attributes_request.h"
+#include "server_rpc.h"
+#include "client_rpc.h"
+#include "device_provision.h"
+#include "ota_update.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -91,15 +91,14 @@ typedef struct tbcmh_client
      //SemaphoreHandle_t lock;
      int next_request_id;
      uint64_t last_check_timestamp;
-     tbcmh_request_list_t request_list;   /*!< request list: attributes request, client side RPC & ota update request */ ////QueueHandle_t timeoutQueue;
+     tbcmh_request_list_t request_list;   /*!< request list: attributes request, client side RPC & ota update request */
 } tbcmh_t;
 
-
-/*static*/ bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b);
-/*static*/ int  _request_list_create_and_append(tbcmh_handle_t client_, tbcmh_request_type_t type, int request_id);
-/*static*/ void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id);
-/*static*/ void _request_list_search_and_remove_by_type(tbcmh_handle_t client_, tbcmh_request_type_t type);
-/*static*/ int  _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
+bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b);
+int  _request_list_create_and_append(tbcmh_handle_t client_, tbcmh_request_type_t type, int request_id);
+void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id);
+void _request_list_search_and_remove_by_type(tbcmh_handle_t client_, tbcmh_request_type_t type);
+int  _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
                                              tbcmh_request_list_t *timeout_request_list);
 
 #ifdef __cplusplus

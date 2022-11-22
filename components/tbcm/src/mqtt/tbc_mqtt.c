@@ -51,7 +51,7 @@ typedef struct tbcm_client
     esp_timer_handle_t respone_timer;   /*!< timer for checking response timeout */
 } tbcm_t;
 
-static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+static void _on_mqtt_event_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 
 const static char *TAG = "tb_mqtt_client";
 
@@ -392,7 +392,7 @@ bool tbcm_connect(tbcm_handle_t client_,
           return false;
      }
      /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_mqttevent_handle, client);
+     esp_mqtt_client_register_event(client->mqtt_handle, ESP_EVENT_ANY_ID, _on_mqtt_event_handle, client);
      int32_t result = esp_mqtt_client_start(client->mqtt_handle);
      if (result != ESP_OK)
      {
@@ -1040,7 +1040,7 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client_,
      return msg_id;
 }
 
-static void _on_payload_handle(void *client_, esp_mqtt_event_handle_t src_event,
+static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_event,
                                       char *topic, int topic_len,
                                       char *payload, int payload_len)
 {
@@ -1267,7 +1267,7 @@ static void _on_payload_handle(void *client_, esp_mqtt_event_handle_t src_event,
 }
 
 // The callback for when a MQTT event is received.
-static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
+static void _on_mqtt_event_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
      tbcm_t *client = (tbcm_t*)handler_args;
      esp_mqtt_event_handle_t src_event = event_data;
@@ -1288,7 +1288,7 @@ static void _on_mqttevent_handle(void *handler_args, esp_event_base_t base, int3
           ////TBC_LOGI("DATA=%.*s", event->data_len, event->data);
           {
               // If payload may be into multiple packets, then multiple packages need to be merged, eg: F/W OTA!
-              tbcm_payload_buffer_pocess(&client->buffer, src_event, client, _on_payload_handle);
+              tbcm_payload_buffer_pocess(&client->buffer, src_event, client, _on_mqtt_data_handle);
           }
           break;
 

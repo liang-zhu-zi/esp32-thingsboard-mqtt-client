@@ -16,14 +16,15 @@ set(srcs "src/transport/tbc_transport_config.c"
 
 if(CONFIG_TB_MQTT_CLIENT_HELPER_ENABLE)
     list(APPEND srcs "src/helper/tbc_mqtt_helper.c"
-                     "src/helper/attributes_request_observer.c"
-                     "src/helper/client_attribute_helper.c"
-                     "src/helper/client_rpc_observer.c"
-                     "src/helper/provision_observer.c"
-                     "src/helper/ota_update_observer.c"
-                     "src/helper/server_rpc_observer.c"
-                     "src/helper/shared_attribute_observer.c"
-                     "src/helper/timeseries_data_helper.c")
+                     "src/helper/attributes_request.c"
+                     "src/helper/client_attribute.c"
+                     "src/helper/client_rpc.c"
+                     "src/helper/device_provision.c"
+                     "src/helper/ota_update.c"
+                     "src/helper/server_rpc.c"
+                     "src/helper/shared_attribute.c"
+                     "src/helper/timeseries_data.c"
+                     "src/helper/claiming_device.c")
 
     #list(APPEND priv_requires "json")
     #list(APPEND requires "json")

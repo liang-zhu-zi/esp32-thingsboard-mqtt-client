@@ -20,7 +20,7 @@
 
 #include "tbc_utils.h"
 
-//#include "attributes_request_observer.h"
+//#include "attributes_request.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "attributes_request";
