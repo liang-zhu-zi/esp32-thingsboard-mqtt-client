@@ -207,19 +207,20 @@ typedef struct
 } tbc_transport_config_esay_t;
 
 #define TBCMH_FUNCTION_TIMESERIES_DATA      0x00000001
-#define TBCMH_FUNCTION_CLIENT_ATTRIBUTES    0x00000002
-#define TBCMH_FUNCTION_SHARED_ATTRIBUTES    0x00000004
-#define TBCMH_FUNCTION_ATTRIBUTES_REQUEST   0x00000008
+#define TBCMH_FUNCTION_ATTRIBUTES_REQUEST   0x00000002
+#define TBCMH_FUNCTION_CLIENT_ATTRIBUTES    0x00000004
+#define TBCMH_FUNCTION_SHARED_ATTRIBUTES    0x00000008
 #define TBCMH_FUNCTION_SERVER_RPC           0x00000010
 #define TBCMH_FUNCTION_CLIENT_RPC           0x00000020
 #define TBCMH_FUNCTION_CLAIMING_DEVICE      0x00000040
 #define TBCMH_FUNCTION_OTA_UPDATE           0x00000080
 
+#define TBCMH_FUNCTION_DEVICE_PROVISION     0x00001000
+
 #define TBCMH_FUNCTION_FULL_ATTRIBUTES      0x0000000E
-#define TBCMH_FUNCTION_FULL_OTA_UPDATE      0x0000008D
+#define TBCMH_FUNCTION_FULL_OTA_UPDATE      0x0000008A
 
 #define TBCMH_FUNCTION_FULL_GENERAL         0x000000FF
-#define TBCMH_FUNCTION_DEVICE_PROVISION     0x00001000
 
 tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task);
 void tbcmh_destroy(tbcmh_handle_t client);
@@ -238,7 +239,6 @@ void tbcmh_disconnect(tbcmh_handle_t client);
 bool tbcmh_is_connected(tbcmh_handle_t client);
 bool tbcmh_has_events(tbcmh_handle_t client);
 void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout(), recv/parse/sendqueue/ack...
-tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client, const char *topic);
 
 //====10.Publish Telemetry time-series data==============================================================================
 tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);

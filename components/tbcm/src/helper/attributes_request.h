@@ -55,6 +55,8 @@ int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t cl
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
                                   int count, /*const char *key,*/...);
 tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client);
+
+void      _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client);
 void      _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
 void      _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id);
 

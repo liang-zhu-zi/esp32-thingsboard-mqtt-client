@@ -258,6 +258,18 @@ tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client, int count, /*const c
      return (msg_id > -1) ? ESP_OK : ESP_FAIL;
 }
 
+void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    if (!client) {
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;
+    }
+
+    // TODO: ......
+}
+
 //unpack & deal
 void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object)
 {

@@ -35,6 +35,7 @@
 #include "server_rpc.h"
 #include "client_rpc.h"
 #include "device_provision.h"
+#include "claiming_device.h"
 #include "ota_update.h"
 
 #ifdef __cplusplus
@@ -58,7 +59,6 @@ typedef struct tbcmh_request
 } tbcmh_request_t;
 
 typedef LIST_HEAD(tbcmh_request_list, tbcmh_request) tbcmh_request_list_t;
-
 
 /**
  * ThingsBoard MQTT Client Helper 

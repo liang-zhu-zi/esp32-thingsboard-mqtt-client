@@ -157,9 +157,7 @@ void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "FRONT CONN: Connected to thingsboard server!");
 
-    _tbcmh_subscribe(client, TB_MQTT_TOPIC_PROVISION_RESPONSE);
     sleep(1);
-
     tbc_provison_config_t provision_config = {0};
     _provision_storage_copy_to_config(&_provision_storage, &provision_config);
     tbcmh_provision_request(client, &provision_config, NULL,

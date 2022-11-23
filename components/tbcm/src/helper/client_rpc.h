@@ -50,6 +50,8 @@ typedef struct client_rpc
 } client_rpc_t;
 
 tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client);
+
+void      _tbcmh_clientrpc_on_connected(tbcmh_handle_t client);
 void      _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
 void      _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id);
 

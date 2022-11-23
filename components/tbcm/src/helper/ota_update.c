@@ -28,8 +28,6 @@
 
 const static char *TAG = "ota_update";
 
-extern tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client);
-
 /*!< Initialize ota_update_t */
 static ota_update_t *_ota_update_create(tbcmh_handle_t client,
                         const char *ota_description,
@@ -271,7 +269,7 @@ static void _ota_update_publish_early_current_version(ota_update_t *otaupdate)
     cJSON_AddStringToObject(object, current_ota_title_key, current_ota_title_value);
     cJSON_AddStringToObject(object, current_ota_version_key, current_ota_version_value);
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
-    tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+    tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
     /*int result =*/ tbcm_telemetry_publish(tbcm_handle, pack, 1/*qos*/, 0/*retain*/);
     cJSON_free(pack); // free memory
     cJSON_Delete(object); // delete json object
@@ -279,7 +277,7 @@ static void _ota_update_publish_early_current_version(ota_update_t *otaupdate)
 
 //{"fw_state": "FAILED", "fw_error":  "the human readable message about the cause of the error"}
 //{"sw_state": "FAILED", "sw_error":  "the human readable message about the cause of the error"}
-//tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+//tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
 //_tbcmh_otaupdate_publish_fail_status(tbcm_handle, TBCMH_OTAUPDATE_TYPE_FW, "Device's code is error!")
 static void _ota_update_publish_early_failed_status(tbcm_handle_t tbcm_handle, 
                                 tbcmh_otaupdate_type_t ota_type, const char *ota_error)
@@ -338,7 +336,7 @@ static void _ota_update_publish_late_failed_status(ota_update_t *otaupdate, cons
         cJSON_AddStringToObject(object, ota_error_key, ota_error);
     }
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
-    tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+    tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
     /*int result =*/ tbcm_telemetry_publish(tbcm_handle, pack, 1/*qos*/, 0/*retain*/);
     cJSON_free(pack); // free memory
     cJSON_Delete(object); // delete json object
@@ -382,7 +380,7 @@ static void _ota_update_publish_going_status(ota_update_t *otaupdate, const char
     cJSON_AddStringToObject(object, current_ota_version_key, current_ota_version_value);
     cJSON_AddStringToObject(object, ota_state_key, ota_state);
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
-    tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+    tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
     /*int result =*/ tbcm_telemetry_publish(tbcm_handle, pack, 1/*qos*/, 0/*retain*/);
     cJSON_free(pack); // free memory
     cJSON_Delete(object); // delete json object
@@ -421,7 +419,7 @@ static void _ota_update_publish_updated_status(ota_update_t *otaupdate)
     cJSON_AddStringToObject(object, current_ota_version_key, otaupdate->attribute.ota_version);
     cJSON_AddStringToObject(object, ota_state_key, TB_MQTT_VALUE_FW_SW_STATE_UPDATED);
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
-    tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+    tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
     /*int result =*/ tbcm_telemetry_publish(tbcm_handle, pack, 1/*qos*/, 0/*retain*/);
     cJSON_free(pack); // free memory
     cJSON_Delete(object); // delete json object
@@ -563,7 +561,7 @@ static tbc_err_t _tbcmh_otaupdate_chunk_request(ota_update_t *otaupdate)
         return -1;
     }
 
-    tbcm_handle_t tbcm_handle = _tbcmh_get_tbcm_handle(otaupdate->client);
+    tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
     int chunk_size;
     if (otaupdate->attribute.ota_size < otaupdate->config.chunk_size) {
         chunk_size = 0; // full f/w or s/w
@@ -867,6 +865,11 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return;// ESP_FAIL;
     }
+
+    int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
+    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+             msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
 
      // Search item
      ota_update_t *otaupdate = NULL;

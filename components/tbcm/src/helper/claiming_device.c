@@ -65,3 +65,15 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 
+void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    if (!client) {
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;
+    }
+
+    // TODO: ......
+}
+

@@ -14,8 +14,11 @@
 
 // This file is called by tbc_mqtt_helper.c/.h.
 
-#ifndef _TIMESERIES_DATA_HELPER_H_
-#define _TIMESERIES_DATA_HELPER_H_
+#ifndef _CLAIMING_DEVICE_HELPER_H_
+#define _CLAIMING_DEVICE_HELPER_H_
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
@@ -24,26 +27,8 @@
 extern "C" {
 #endif
 
-//====1.telemetry time-series data=====================================================================================
+void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client);
 
-/**
- * ThingsBoard MQTT Client Helper Telemetry time-series data
- */
-typedef struct timeseries_data
-{
-     tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
-
-     char *key; /*!< Key */
-
-     void *context;                /*!< Context of getting/setting value*/
-     tbcmh_tsdata_on_get_t on_get; /*!< Callback of getting value from context */
-
-     LIST_ENTRY(timeseries_data) entry;
-} timeseries_data_t;
-
-tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client);
-
-void _tbcmh_timeseriesdata_on_connected(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

@@ -350,6 +350,20 @@ tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client)
      return ESP_OK;
 }
 
+void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    if (!client) {
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;
+    }
+
+    int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
+    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
+}
 
 static char *_parse_string_item(const cJSON *object, const char* key)
 {
@@ -460,7 +474,7 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
     return ESP_OK;
 }
 
-void _tbcmh_provision_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_deviceprovision_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
@@ -511,7 +525,7 @@ void _tbcmh_provision_on_response(tbcmh_handle_t client, int request_id, const c
      return;// ESP_OK;
 }
 
-void _tbcmh_provision_on_timeout(tbcmh_handle_t client, int request_id)
+void _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id)
 {
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);

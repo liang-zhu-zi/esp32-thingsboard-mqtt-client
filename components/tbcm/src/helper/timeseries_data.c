@@ -231,3 +231,15 @@ tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client, int count, /*const char *k
      return (msg_id > -1) ? ESP_OK : ESP_FAIL;
 }
 
+void _tbcmh_timeseriesdata_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    if (!client) {
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;
+    }
+
+    //......
+}
+

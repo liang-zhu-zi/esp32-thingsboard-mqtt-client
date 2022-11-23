@@ -204,6 +204,20 @@ tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client)
      return ESP_OK;
 }
 
+void _tbcmh_serverrpc_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+
+    if (!client) {
+         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+         return;
+    }
+
+    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
+    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+            msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+}
+
 void _tbcmh_serverrpc_on_request(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
      if (!client || !object) {

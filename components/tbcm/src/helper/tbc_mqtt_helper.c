@@ -355,16 +355,6 @@ void tbcmh_destroy(tbcmh_handle_t client)
      TBC_FREE(client);
 }
 
-tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return NULL;
-     }
-
-     return client->tbmqttclient;    
-}
-
 /**
  * @brief Destroys the client handle
  *
@@ -602,7 +592,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
               _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_PROVISION:
-              _tbcmh_provision_on_timeout(client, tbcmh_request->request_id);
+              _tbcmh_deviceprovision_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
               _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
@@ -627,26 +617,6 @@ bool tbcmh_is_connected(tbcmh_handle_t client)
      return false;
 }
 
-tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client, const char *topic)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     int result = tbcm_subscribe(client->tbmqttclient, topic, 1/*qos*/);
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return result==ESP_OK ? ESP_OK : ESP_FAIL;
-}
-
 static void __on_tbcm_connected(tbcmh_handle_t client)
 {
      if (!client) {
@@ -660,7 +630,33 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
           return;
      }
 
-     _tbcmh_otaupdate_on_connected(client);
+    if (client->function & TBCMH_FUNCTION_TIMESERIES_DATA) {
+        _tbcmh_timeseriesdata_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_ATTRIBUTES_REQUEST) {
+        _tbcmh_attributesrequest_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_CLIENT_ATTRIBUTES) {
+        _tbcmh_clientattribute_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_SHARED_ATTRIBUTES) {
+        _tbcmh_sharedattribute_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_SERVER_RPC) {
+        _tbcmh_serverrpc_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_CLIENT_RPC) {
+        _tbcmh_clientrpc_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_CLAIMING_DEVICE) {
+        _tbcmh_claimingdevice_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_OTA_UPDATE) {
+        _tbcmh_otaupdate_on_connected(client);
+    }
+    if (client->function & TBCMH_FUNCTION_DEVICE_PROVISION) {
+        _tbcmh_deviceprovision_on_connected(client);
+    }
 
      // clone parameter in lock/unlock
      void *context = client->context;
@@ -670,9 +666,11 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
      xSemaphoreGive(client->_lock);
   
      // do callback
+     TBC_LOGI("before call on_connected()...");
      if (on_connected) {
          on_connected(client, context);
      }
+     TBC_LOGI("after call on_connected()");
      return;
 }
 
@@ -735,7 +733,7 @@ static void __on_tbcm_check_timeout(tbcmh_handle_t client)
               _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_PROVISION:
-              _tbcmh_provision_on_timeout(client, tbcmh_request->request_id);
+              _tbcmh_deviceprovision_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
               _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
@@ -798,7 +796,7 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
     
     case TBCM_RX_TOPIC_PROVISION_RESPONSE:   /*!< (no request_id)       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_provision_on_response(client, event->data.request_id, object);
+         _tbcmh_deviceprovision_on_response(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
 
@@ -816,7 +814,6 @@ static void _on_tbcm_event_handle(tbcm_event_t *event)
      TBC_CHECK_PTR(event->user_context);
 
      tbcmh_t *client = (tbcmh_t *)event->user_context;
-     int msg_id;
 
      switch (event->event_id) {
      case TBCM_EVENT_BEFORE_CONNECT:
@@ -826,20 +823,8 @@ static void _on_tbcm_event_handle(tbcm_event_t *event)
      case TBCM_EVENT_CONNECTED:
           TBC_LOGI("TBCM_EVENT_CONNECTED");
           TBC_LOGI("client->tbmqttclient = %p", client->tbmqttclient);
-          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
-          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
-          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
-          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
-          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
-          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
-          msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
-          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s", msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
-          TBC_LOGI("before call on_connected()...");
           TBC_LOGI("Connected to thingsboard MQTT server!");
           __on_tbcm_connected(client);
-          TBC_LOGI("after call on_connected()");
           break;
 
      case TBCM_EVENT_DISCONNECTED:
@@ -931,11 +916,13 @@ static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client)
     // xSemaphoreGive(client->_lock);
 }
 
+// call in user task, NOT mqtt task!
 void tbcmh_run(tbcmh_handle_t client)
 {
     _on_tbcm_event_bridge_receive(client);
 }
 
+// call in user task, NOT mqtt task!
 bool tbcmh_has_events(tbcmh_handle_t client)
 {
      if (!client) {
