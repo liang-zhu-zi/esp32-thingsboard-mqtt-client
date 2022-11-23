@@ -33,10 +33,9 @@
 const static char *TAG = "claiming_device";
 
 
-tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
+tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
                     const char *secret_key, uint32_t *duration_ms)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;

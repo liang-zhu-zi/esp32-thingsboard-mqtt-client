@@ -44,8 +44,8 @@ typedef struct shared_attribute
      LIST_ENTRY(shared_attribute) entry;
 } shared_attribute_t;
 
-tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_);
-void      _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *object);
+tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client);
+void      _tbcmh_sharedattribute_on_received(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

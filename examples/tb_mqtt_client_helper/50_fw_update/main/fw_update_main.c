@@ -24,10 +24,10 @@
 #include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
-extern tbc_err_t my_fwupdate_init(tbcmh_handle_t client_);
+extern tbc_err_t my_fwupdate_init(tbcmh_handle_t client);
 extern bool        my_fwupdate_request_reboot(void);
 
-//extern tbc_err_t my_swupdate_init(tbcmh_handle_t client_);
+//extern tbc_err_t my_swupdate_init(tbcmh_handle_t client);
 //extern bool        my_swupdate_request_reboot(void);
 
 
@@ -114,7 +114,8 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbcmh ...");
-    tbcmh_handle_t client = tbcmh_init();
+    bool is_running_in_mqtt_task = false;
+    tbcmh_handle_t client = tbcmh_init(is_running_in_mqtt_task);
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbcmh!");
         return;
@@ -140,7 +141,8 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
     };
-    bool result = tbcmh_connect_using_url(client, &config, NULL, tb_on_connected, tb_on_disconnected);
+    bool result = tbcmh_connect_using_url(client, &config, TBCMH_FUNCTION_FULL_OTA_UPDATE,
+                        NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbcmh!");
         goto exit_destroy;

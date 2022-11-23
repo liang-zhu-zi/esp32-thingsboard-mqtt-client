@@ -24,7 +24,7 @@
 #include "tbc_mqtt_helper_internal.h"
 
 // TODO: remove it!
-extern void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_otaupdate_type_t ota_type,
+extern void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate_type_t ota_type,
                                                  const char *ota_title, const char *ota_version, int ota_size,
                                                  const char *ota_checksum, const char *ota_checksum_algorithm);
 
@@ -71,10 +71,9 @@ static tbc_err_t _shared_attribute_destroy(shared_attribute_t *sharedattribute)
 
 //==== Subscribe to shared device attribute updates from the server ================================
 //Call it before connect() //tbcmh_shared_attribute_list_t
-tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,
                                          tbcmh_sharedattribute_on_set_t on_set)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -87,7 +86,7 @@ tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, 
      }
 
      // Create sharedattribute
-     shared_attribute_t *sharedattribute = _shared_attribute_create(client_, key, context, on_set);
+     shared_attribute_t *sharedattribute = _shared_attribute_create(client, key, context, on_set);
      if (!sharedattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -117,9 +116,8 @@ tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, 
 }
 
 // remove shared_attribute from tbcmh_shared_attribute_list_t
-tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client, const char *key)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
           TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -154,9 +152,8 @@ tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key)
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -184,9 +181,8 @@ tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client_)
 }
 
 //unpack & deal
-void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *object)
+void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -231,7 +227,7 @@ void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *obj
           int ota_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_SIZE));
           char *ota_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM));
           char *ota_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM_ALG));
-          _tbcmh_otaupdate_on_sharedattributes(client_, TBCMH_OTAUPDATE_TYPE_FW, ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
+          _tbcmh_otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_FW, ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
      } else if (cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_TITLE) &&
          cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_VERSION) &&
          cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_SIZE) &&
@@ -243,8 +239,9 @@ void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client_, const cJSON *obj
           int sw_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_SIZE));
           char *sw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM));
           char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG));
-          _tbcmh_otaupdate_on_sharedattributes(client_, TBCMH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
+          _tbcmh_otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
      }
 
      return;// ESP_OK;
 }
+

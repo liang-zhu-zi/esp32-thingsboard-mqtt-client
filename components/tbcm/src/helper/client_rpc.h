@@ -49,9 +49,9 @@ typedef struct client_rpc
      LIST_ENTRY(client_rpc) entry;
 } client_rpc_t;
 
-tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_);
-void      _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-void      _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id);
+tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client);
+void      _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
+void      _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id);
 
 #ifdef __cplusplus
 }

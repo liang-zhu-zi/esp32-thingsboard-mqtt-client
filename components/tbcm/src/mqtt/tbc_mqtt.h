@@ -122,41 +122,41 @@ typedef struct tbcm_event {
 typedef void (*tbcm_on_event_t)(tbcm_event_t *event);
 
 tbcm_handle_t tbcm_init(void);
-void tbcm_destroy(tbcm_handle_t client_);
-bool tbcm_connect(tbcm_handle_t client_, const tbc_transport_config_t *config,
+void tbcm_destroy(tbcm_handle_t client);
+bool tbcm_connect(tbcm_handle_t client, const tbc_transport_config_t *config,
                   void *context, tbcm_on_event_t on_event);  
-void tbcm_disconnect(tbcm_handle_t client_);
-bool tbcm_is_connected(tbcm_handle_t client_);
-bool tbcm_is_connecting(tbcm_handle_t client_);
-bool tbcm_is_disconnected(tbcm_handle_t client_);
-tbcm_state_t tbcm_get_state(tbcm_handle_t client_);
+void tbcm_disconnect(tbcm_handle_t client);
+bool tbcm_is_connected(tbcm_handle_t client);
+bool tbcm_is_connecting(tbcm_handle_t client);
+bool tbcm_is_disconnected(tbcm_handle_t client);
+tbcm_state_t tbcm_get_state(tbcm_handle_t client);
 
-int tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/);
+int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/);
 
-int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
+int tbcm_telemetry_publish(tbcm_handle_t client, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
+int tbcm_clientattributes_publish(tbcm_handle_t client, const char *attributes,
                                   int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
+int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
                             int request_id,
                             int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, const char *shared_keys,
+int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, const char *shared_keys,
                                int request_id,
                                int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_serverrpc_response(tbcm_handle_t client_, int request_id, const char *response,
+int tbcm_serverrpc_response(tbcm_handle_t client, int request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
+int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
                            int request_id,
                            int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const char *params,
+int tbcm_clientrpc_request_ex(tbcm_handle_t client, const char *method, const char *params,
                               int request_id,
                               int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
+int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
                                  int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
+int tbcm_provision_request(tbcm_handle_t client, const char *payload,
                            int request_id,
                            int qos /*= 1*/, int retain /*= 0*/);
-int tbcm_otaupdate_chunk_request(tbcm_handle_t client_,
+int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
                            int request_id, int chunk_id, const char *payload, //?payload
                            int qos /*= 1*/, int retain /*= 0*/);
 

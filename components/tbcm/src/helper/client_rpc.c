@@ -101,10 +101,9 @@ static tbc_err_t _client_rpc_destroy(client_rpc_t *clientrpc)
 
 //============ Client-side RPC ============================================================
 //add list
-int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method,
+int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
                                                            /*const*/ tbcmh_rpc_params_t *params)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -155,13 +154,12 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method
      return request_id;
 }
 //create to add to LIST_ENTRY(tbcmh_clientrpc_)
-int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method, 
+int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method, 
                                                            /*const*/ tbcmh_rpc_params_t *params,
                                                            void *context,
                                                            tbcmh_clientrpc_on_response_t on_response,
                                                            tbcmh_clientrpc_on_timeout_t on_timeout)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -244,9 +242,8 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method
      return request_id;
 }
 
-tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client)
 {
-    tbcmh_t *client = (tbcmh_t *)client_;
     if (!client) {
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return ESP_FAIL;
@@ -279,9 +276,8 @@ tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client_)
     return ESP_OK;
 }
 
-void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
+void _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;
@@ -330,9 +326,8 @@ void _tbcmh_clientrpc_on_response(tbcmh_handle_t client_, int request_id, const 
      return;
 }
 
-void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client_, int request_id)
+void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;

@@ -70,11 +70,10 @@ static tbc_err_t _client_attribute_destroy(client_attribute_t *clientattribute)
 }
 
 // tbcmh_attribute_of_clientside_init()
-static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const char *key, void *context,
+static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client, const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -87,7 +86,7 @@ static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const 
      }
 
      // Create clientattribute
-     client_attribute_t *clientattribute = _client_attribute_create(client_, key, context, on_get, on_set);
+     client_attribute_t *clientattribute = _client_attribute_create(client, key, context, on_get, on_set);
      if (!clientattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -116,7 +115,7 @@ static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client_, const 
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client, const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set)
 {
@@ -124,18 +123,17 @@ tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client_, const ch
           TBC_LOGE("on_set is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
-     return _tbcmh_clientattribute_xx_append(client_, key, context, on_get, on_set);
+     return _tbcmh_clientattribute_xx_append(client, key, context, on_get, on_set);
 }
 
-tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client, const char *key, void *context,
                                          tbcmh_clientattribute_on_get_t on_get)
 {
-     return _tbcmh_clientattribute_xx_append(client_, key, context, on_get, NULL);
+     return _tbcmh_clientattribute_xx_append(client, key, context, on_get, NULL);
 }
 
-tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
           TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -170,9 +168,8 @@ tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key)
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -199,9 +196,8 @@ tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_)
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...)
+tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -263,9 +259,8 @@ tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const 
 }
 
 //unpack & deal
-void _tbcmh_clientattribute_on_received(tbcmh_handle_t client_, const cJSON *object)
+void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -295,3 +290,4 @@ void _tbcmh_clientattribute_on_received(tbcmh_handle_t client_, const cJSON *obj
      xSemaphoreGive(client->_lock);
      return;// ESP_OK;
 }
+

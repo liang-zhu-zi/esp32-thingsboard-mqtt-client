@@ -68,11 +68,12 @@ typedef struct tbcmh_client
      // TODO: add a lock???
      // create & destroy
      tbcm_handle_t tbmqttclient;
+     bool is_running_in_mqtt_task;           /*!< is these code running in MQTT task? */
      QueueHandle_t _xQueue;
-     //esp_timer_handle_t respone_timer;   // /*!< timer for checking response timeout */
 
      // modify at connect & disconnect
-     tbc_transport_storage_t config;
+     uint32_t function;                      /*!< function modules used. TBCMH_FUNCTION_FULL_GENERAL, ... */
+     tbc_transport_storage_t config;         // TODO: remove it???
      void *context;                          /*!< Context parameter of the below two callbacks */
      tbcmh_on_connected_t on_connected;      /*!< Callback of connected ThingsBoard MQTT */
      tbcmh_on_disconnected_t on_disconnected;/*!< Callback of disconnected ThingsBoard MQTT */
@@ -95,10 +96,10 @@ typedef struct tbcmh_client
 } tbcmh_t;
 
 bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b);
-int  _request_list_create_and_append(tbcmh_handle_t client_, tbcmh_request_type_t type, int request_id);
-void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id);
-void _request_list_search_and_remove_by_type(tbcmh_handle_t client_, tbcmh_request_type_t type);
-int  _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
+int  _request_list_create_and_append(tbcmh_handle_t client, tbcmh_request_type_t type, int request_id);
+void _request_list_search_and_remove(tbcmh_handle_t client, int request_id);
+void _request_list_search_and_remove_by_type(tbcmh_handle_t client, tbcmh_request_type_t type);
+int  _request_list_move_all_of_timeout(tbcmh_handle_t client, uint64_t timestamp,
                                              tbcmh_request_list_t *timeout_request_list);
 
 #ifdef __cplusplus

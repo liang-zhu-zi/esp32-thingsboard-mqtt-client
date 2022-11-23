@@ -48,9 +48,9 @@ typedef struct device_provision
      LIST_ENTRY(device_provision) entry;
 } device_provision_t;
 
-tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_);
-void      _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-void      _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id);
+tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client);
+void      _tbcmh_provision_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
+void      _tbcmh_provision_on_timeout(tbcmh_handle_t client, int request_id);
 
 #ifdef __cplusplus
 }

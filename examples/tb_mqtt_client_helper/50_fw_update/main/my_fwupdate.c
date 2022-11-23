@@ -311,7 +311,7 @@ static void _my_fwupdate_on_abort(tbcmh_handle_t client, void *context,
     ____fwupdate_reset();
 }
 
-tbc_err_t my_fwupdate_init(tbcmh_handle_t client_)
+tbc_err_t my_fwupdate_init(tbcmh_handle_t client)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -382,7 +382,7 @@ tbc_err_t my_fwupdate_init(tbcmh_handle_t client_)
 
         ////.is_first_boot = _my_fwupdate.runnning_app_was_first_boot
     };
-    tbc_err_t err = tbcmh_otaupdate_append(client_, FW_DESCRIPTION, &otaupdate_config);
+    tbc_err_t err = tbcmh_otaupdate_append(client, FW_DESCRIPTION, &otaupdate_config);
     return err;
 }
 

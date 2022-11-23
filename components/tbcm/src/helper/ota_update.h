@@ -88,12 +88,12 @@ typedef struct ota_update
      LIST_ENTRY(ota_update) entry;
 } ota_update_t;
 
-void      _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client_, int request_id, int chunk_id, const char* payload, int length);
-void      _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client_, int request_id);
+void      _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
+void      _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client, int request_id);
 
-tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_);
+tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client);
 
-void      _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_);
+void      _tbcmh_otaupdate_on_connected(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

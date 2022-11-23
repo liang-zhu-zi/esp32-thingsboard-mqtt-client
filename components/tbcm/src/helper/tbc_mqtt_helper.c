@@ -28,6 +28,7 @@
 
 #include "tbc_mqtt_helper_internal.h"
 
+static void _on_tbcm_event_handle(tbcm_event_t *event);
 static void _on_tbcm_event_bridge_send(tbcm_event_t *event);
 
 const static char *TAG = "tb_mqtt_client_helper";
@@ -64,10 +65,9 @@ static void _request_destroy(tbcmh_request_t *tbcmh_request)
 }
 
 //return request_id on successful, otherwise return -1
-int _request_list_create_and_append(tbcmh_handle_t client_,
+int _request_list_create_and_append(tbcmh_handle_t client,
                     tbcmh_request_type_t type, int request_id)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -121,9 +121,8 @@ int _request_list_create_and_append(tbcmh_handle_t client_,
      return request_id;
 }
 
-void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id)
+void _request_list_search_and_remove(tbcmh_handle_t client, int request_id)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -157,10 +156,9 @@ void _request_list_search_and_remove(tbcmh_handle_t client_, int request_id)
      return;
 }
 
-void _request_list_search_and_remove_by_type(tbcmh_handle_t client_,
+void _request_list_search_and_remove_by_type(tbcmh_handle_t client,
                             tbcmh_request_type_t type)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -194,10 +192,9 @@ void _request_list_search_and_remove_by_type(tbcmh_handle_t client_,
 }
 
 // return  count of timeout_request_list
-int _request_list_move_all_of_timeout(tbcmh_handle_t client_, uint64_t timestamp,
+int _request_list_move_all_of_timeout(tbcmh_handle_t client, uint64_t timestamp,
                               tbcmh_request_list_t *timeout_request_list)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return 0;
@@ -261,7 +258,14 @@ bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b)
    }
 }
 
-tbcmh_handle_t tbcmh_init(void)
+/**
+ * @brief Creates thingsboard client mqtt handle
+ *
+ * @param  is_running_in_mqtt_task  Is these code running in MQTT task? 
+ *
+ * @return tbcmh_handle_t if successfully created, NULL on error
+ */
+tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task)
 {
      tbcmh_t *client = (tbcmh_t *)TBC_MALLOC(sizeof(tbcmh_t));
      if (!client) {
@@ -273,9 +277,12 @@ tbcmh_handle_t tbcmh_init(void)
      client->tbmqttclient = tbcm_init();
      // Create a queue capable of containing 20 tbcm_event_t structures.
      // These should be passed by pointer as they contain a lot of data.
-     client->_xQueue = xQueueCreate(40, sizeof(tbcm_event_t));
-     if (client->_xQueue == NULL) {
-          TBC_LOGE("failed to create the queue! %s()", __FUNCTION__);
+     client->is_running_in_mqtt_task = is_running_in_mqtt_task;
+     if (!client->is_running_in_mqtt_task) {
+        client->_xQueue = xQueueCreate(40, sizeof(tbcm_event_t));
+         if (client->_xQueue == NULL) {
+              TBC_LOGE("failed to create the queue! %s()", __FUNCTION__);
+         }
      }
 
      //tbc_transport_storage_free_fields(&client->config);
@@ -302,9 +309,18 @@ tbcmh_handle_t tbcmh_init(void)
 
      return client;
 }
-void tbcmh_destroy(tbcmh_handle_t client_)
+
+/**
+ * @brief Destroys the client handle
+ *
+ * Notes:
+ *  - Cannot be called from the mqtt event handler
+ *
+ * @param  client   ThingsBoard client MQTT handle
+ *
+ */
+void tbcmh_destroy(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -314,14 +330,14 @@ void tbcmh_destroy(tbcmh_handle_t client_)
      tbcmh_disconnect(client);
 
      // empty all 7 list!
-     _tbcmh_telemetry_empty(client_);
-     _tbcmh_clientattribute_empty(client_);
-     _tbcmh_sharedattribute_empty(client_);
-     _tbcmh_attributesrequest_empty(client_);
-     _tbcmh_serverrpc_empty(client_);
-     _tbcmh_clientrpc_empty(client_);
-     _tbcmh_provision_empty(client_);
-     _tbcmh_otaupdate_empty(client_);
+     _tbcmh_telemetry_empty(client);
+     _tbcmh_clientattribute_empty(client);
+     _tbcmh_sharedattribute_empty(client);
+     _tbcmh_attributesrequest_empty(client);
+     _tbcmh_serverrpc_empty(client);
+     _tbcmh_clientrpc_empty(client);
+     _tbcmh_provision_empty(client);
+     _tbcmh_otaupdate_empty(client);
 
      if (client->_lock) {
           vSemaphoreDelete(client->_lock);
@@ -329,19 +345,18 @@ void tbcmh_destroy(tbcmh_handle_t client_)
      }
 
      // config in tbcmh_disconnect()
-
      if (client->_xQueue) {
           vQueueDelete(client->_xQueue);
           client->_xQueue = NULL;
      }
+     client->is_running_in_mqtt_task = false;
      tbcm_destroy(client->tbmqttclient);
 
      TBC_FREE(client);
 }
 
-tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client_)
+tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return NULL;
@@ -350,12 +365,23 @@ tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client_)
      return client->tbmqttclient;    
 }
 
-bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_t* config,
-                            void *context,
-                            tbcmh_on_connected_t on_connected,
-                            tbcmh_on_disconnected_t on_disconnected)
+/**
+ * @brief Destroys the client handle
+ *
+ * Notes:
+ *  - Cannot be called from the mqtt event handler
+ *
+ * @param  function                 function modules used. eg, TBCMH_FUNCTION_FULL_GENERAL,...
+ *
+ * @return trure
+ *         false  on wrong connection
+ */
+bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
+                        uint32_t function,
+                        void *context,
+                        tbcmh_on_connected_t on_connected,
+                        tbcmh_on_disconnected_t on_disconnected)
 {
-    tbcmh_t *client = (tbcmh_t *)client_;
     if (!client) {
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return false;
@@ -381,16 +407,19 @@ bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_t* config,
     // connect
     TBC_LOGI("connecting to %s://%s:%d ...",
                 config->address.schema, config->address.host, config->address.port);
-    bool result = tbcm_connect(client->tbmqttclient, config,
-                               client,
-                               _on_tbcm_event_bridge_send);
-                               //_on_tbcm_event_handle);
+    bool result = false;
+    if (client->is_running_in_mqtt_task) {
+        result = tbcm_connect(client->tbmqttclient, config, client, _on_tbcm_event_handle);
+    } else {
+        result = tbcm_connect(client->tbmqttclient, config, client, _on_tbcm_event_bridge_send);
+    }
     if (!result) {
          TBC_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
          return false;
     }
-    
+
     // cache config & callback
+    client->function = function;
     tbc_transport_storage_fill_from_config(&client->config, config);
     client->context = context;
     client->on_connected = on_connected;       /*!< Callback of connected ThingsBoard MQTT */
@@ -467,7 +496,8 @@ static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
     return ESP_OK;
 }
 
-bool tbcmh_connect_using_url(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
+bool tbcmh_connect_using_url(tbcmh_handle_t client, const tbc_transport_config_esay_t *config,
+                   uint32_t function,
                    void *context,
                    tbcmh_on_connected_t on_connected,
                    tbcmh_on_disconnected_t on_disconnected)
@@ -502,7 +532,7 @@ bool tbcmh_connect_using_url(tbcmh_handle_t client_, const tbc_transport_config_
     transport.credentials.token = config->access_token;
     transport.credentials.type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
     transport.log_rxtx_package = config->log_rxtx_package;
-    result = tbcmh_connect(client_, &transport, context, on_connected, on_disconnected);
+    result = tbcmh_connect(client, &transport, function, context, on_connected, on_disconnected);
 
 fail_exit:
     TBC_FIELD_FREE(address.schema);
@@ -514,9 +544,8 @@ fail_exit:
 }
 
 
-void tbcmh_disconnect(tbcmh_handle_t client_)               
+void tbcmh_disconnect(tbcmh_handle_t client)               
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -533,13 +562,13 @@ void tbcmh_disconnect(tbcmh_handle_t client_)
      TBC_LOGI("disconnecting from %s://%s:%d ...", client->config.address.schema,
                 client->config.address.host, client->config.address.port);
      // empty msg queue
-     while (tbcmh_has_events(client_)) {
-          tbcmh_run(client_);
+     while (tbcmh_has_events(client)) {
+          tbcmh_run(client);
      }
      // disconnect
      tbcm_disconnect(client->tbmqttclient);
-     while (tbcmh_has_events(client_)) {
-          tbcmh_run(client_);
+     while (tbcmh_has_events(client)) {
+          tbcmh_run(client);
      }
 
      // clear config & callback
@@ -549,14 +578,14 @@ void tbcmh_disconnect(tbcmh_handle_t client_)
      client->on_disconnected = NULL;
 
      // empty all request lists;
-     //_tbcmh_telemetry_empty(client_);
-     //_tbcmh_clientattribute_empty(client_);
-     //_tbcmh_sharedattribute_empty(client_);
-     _tbcmh_attributesrequest_empty(client_);
-     //_tbcmh_serverrpc_empty(client_);
-     _tbcmh_clientrpc_empty(client_);
-     _tbcmh_provision_empty(client_);
-     _tbcmh_otaupdate_empty(client_);
+     //_tbcmh_telemetry_empty(client);
+     //_tbcmh_clientattribute_empty(client);
+     //_tbcmh_sharedattribute_empty(client);
+     _tbcmh_attributesrequest_empty(client);
+     //_tbcmh_serverrpc_empty(client);
+     _tbcmh_clientrpc_empty(client);
+     _tbcmh_provision_empty(client);
+     _tbcmh_otaupdate_empty(client);
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
@@ -567,16 +596,16 @@ void tbcmh_disconnect(tbcmh_handle_t client_)
           // deal timeout
           switch (tbcmh_request->type) {
           case TBCMH_REQUEST_ATTRIBUTES:
-              _tbcmh_attributesrequest_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_attributesrequest_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_CLIENTRPC:
-              _tbcmh_clientrpc_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_PROVISION:
-              _tbcmh_provision_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_provision_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_chunk_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
               break;
           default:
               TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
@@ -590,18 +619,16 @@ void tbcmh_disconnect(tbcmh_handle_t client_)
      memset(&client->request_list, 0x00, sizeof(client->request_list));
 }
 
-bool tbcmh_is_connected(tbcmh_handle_t client_)
+bool tbcmh_is_connected(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (client && client->tbmqttclient && tbcm_is_connected(client->tbmqttclient)) {
           return true;
      }
      return false;
 }
 
-tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
+tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client, const char *topic)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -620,9 +647,8 @@ tbc_err_t _tbcmh_subscribe(tbcmh_handle_t client_, const char *topic)
      return result==ESP_OK ? ESP_OK : ESP_FAIL;
 }
 
-static void __on_tbcm_connected(tbcmh_handle_t client_)
+static void __on_tbcm_connected(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -634,7 +660,7 @@ static void __on_tbcm_connected(tbcmh_handle_t client_)
           return;
      }
 
-     _tbcmh_otaupdate_on_connected(client_);
+     _tbcmh_otaupdate_on_connected(client);
 
      // clone parameter in lock/unlock
      void *context = client->context;
@@ -650,9 +676,8 @@ static void __on_tbcm_connected(tbcmh_handle_t client_)
      return;
 }
 
-static void __on_tbcm_disonnected(tbcmh_handle_t client_)
+static void __on_tbcm_disonnected(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -678,9 +703,8 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client_)
      return;
 }
 
-static void __on_tbcm_check_timeout(tbcmh_handle_t client_)
+static void __on_tbcm_check_timeout(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL");
           return;
@@ -705,16 +729,16 @@ static void __on_tbcm_check_timeout(tbcmh_handle_t client_)
           // deal timeout
           switch (tbcmh_request->type) {
           case TBCMH_REQUEST_ATTRIBUTES:
-              _tbcmh_attributesrequest_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_attributesrequest_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_CLIENTRPC:
-              _tbcmh_clientrpc_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_PROVISION:
-              _tbcmh_provision_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_provision_on_timeout(client, tbcmh_request->request_id);
               break;
           case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_chunk_on_timeout(client_, tbcmh_request->request_id);
+              _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
               break;
           default:
               TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
@@ -871,9 +895,8 @@ static void _on_tbcm_event_handle(tbcm_event_t *event)
 
 //recv & deal msg from queue
 //recv/parse/sendqueue/ack...
-static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client_)
+static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client)
 {
-    tbcmh_t *client = (tbcmh_t *)client_;
     if (!client) {
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return; // false;
@@ -908,14 +931,13 @@ static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client_)
     // xSemaphoreGive(client->_lock);
 }
 
-void tbcmh_run(tbcmh_handle_t client_)
+void tbcmh_run(tbcmh_handle_t client)
 {
-    _on_tbcm_event_bridge_receive(client_);
+    _on_tbcm_event_bridge_receive(client);
 }
 
-bool tbcmh_has_events(tbcmh_handle_t client_)
+bool tbcmh_has_events(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return false;

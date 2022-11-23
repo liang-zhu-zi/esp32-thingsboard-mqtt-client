@@ -46,8 +46,8 @@ typedef struct server_rpc
      LIST_ENTRY(server_rpc) entry;
 } server_rpc_t;
 
-tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_);
-void      _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object);
+tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client);
+void      _tbcmh_serverrpc_on_request(tbcmh_handle_t client, int request_id, const cJSON *object);
 
 #ifdef __cplusplus
 }

@@ -88,13 +88,12 @@ static tbc_err_t _attributes_request_destroy(attributes_request_t *attributesreq
 #define MAX_KEYS_LEN (256)
 
 ////return request_id on successful, otherwise return -1/ESP_FAIL
-int tbcmh_attributesrequest_send(tbcmh_handle_t client_,
+int tbcmh_attributesrequest_send(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -175,7 +174,7 @@ next_attribute_key:
      }
 
      // Create attributesrequest
-     attributes_request_t *attributesrequest = _attributes_request_create(client_, request_id, context, on_response, on_timeout);
+     attributes_request_t *attributesrequest = _attributes_request_create(client, request_id, context, on_response, on_timeout);
      if (!attributesrequest) {
           TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
@@ -216,7 +215,7 @@ attributesrequest_fail:
 
 // TODO: merge to tbcmh_attributesrequest_send()
 ////return request_id on successful, otherwise return -1/ESP_FAIL
-int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
+int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -224,7 +223,6 @@ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
 {
       // this funciton is in client->_lock !
 
-      tbcmh_t *client = (tbcmh_t*)client_;
       if (!client) {
            TBC_LOGE("client is NULL! %s()", __FUNCTION__);
            return ESP_FAIL;
@@ -279,7 +277,7 @@ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
       }
  
       // Create attributesrequest
-      attributes_request_t *attributesrequest = _attributes_request_create(client_, request_id, context, on_response, on_timeout);
+      attributes_request_t *attributesrequest = _attributes_request_create(client, request_id, context, on_response, on_timeout);
       if (!attributesrequest) {
            TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
            goto attributesrequest_fail;
@@ -314,9 +312,8 @@ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
       return ESP_FAIL;
 }
 
-tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client)
 {
-   tbcmh_t *client = (tbcmh_t *)client_;
    if (!client) {
         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
         return ESP_FAIL;
@@ -349,9 +346,8 @@ tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_)
 }
 
 
-void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
+void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;
@@ -389,11 +385,11 @@ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id
 
      // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT)) {
-          _tbcmh_clientattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
+          _tbcmh_clientattribute_on_received(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
      }
      // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED)) {
-          _tbcmh_sharedattribute_on_received(client_, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
+          _tbcmh_sharedattribute_on_received(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
      }
 
      // Do response
@@ -407,9 +403,8 @@ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id
      return;
 }
 
-void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id)
+void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;

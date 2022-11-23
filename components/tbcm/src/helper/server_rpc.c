@@ -94,11 +94,10 @@ static tbc_err_t _server_rpc_destroy(server_rpc_t *serverrpc)
 
 //==== Server-side RPC ================================================================================
 //Call it before connect()
-tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
+tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client, const char *method,
                                    void *context,
                                    tbcmh_serverrpc_on_request_t on_request)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -141,9 +140,8 @@ tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
 }
 
 // remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
-tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
+tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client, const char *method)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !method) {
           TBC_LOGE("client or method is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -178,9 +176,8 @@ tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method)
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -207,9 +204,8 @@ tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client_)
      return ESP_OK;
 }
 
-void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const cJSON *object)
+void _tbcmh_serverrpc_on_request(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -264,7 +260,7 @@ void _tbcmh_serverrpc_on_request(tbcmh_handle_t client_, int request_id, const c
           cJSON_Delete(reply); // delete json object
           #else
           char *response = cJSON_PrintUnformatted(result); //cJSON_Print(result);
-          tbcm_serverrpc_response(client_->tbmqttclient, request_id, response, 1/*qos*/, 0/*retain*/);
+          tbcm_serverrpc_response(client->tbmqttclient, request_id, response, 1/*qos*/, 0/*retain*/);
           cJSON_free(response); // free memory
           cJSON_Delete(result); // delete json object
           #endif

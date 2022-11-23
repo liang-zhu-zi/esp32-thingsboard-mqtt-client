@@ -141,9 +141,8 @@ static void __response_timer_timerout(void *client_/*timer_arg*/)
      client->on_event(&dst_event);
 }
 
-static void _response_timer_create(tbcm_handle_t client_)
+static void _response_timer_create(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -151,15 +150,14 @@ static void _response_timer_create(tbcm_handle_t client_)
 
      esp_timer_create_args_t tmr_args = {
         .callback = &__response_timer_timerout,
-        .arg = client_,
+        .arg = client,
         .name = "response_timer",
      };
      esp_timer_create(&tmr_args, &client->respone_timer);
 }
 
-static void _response_timer_start(tbcm_handle_t client_)
+static void _response_timer_start(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -168,9 +166,8 @@ static void _response_timer_start(tbcm_handle_t client_)
      esp_timer_start_periodic(client->respone_timer, (uint64_t)TB_MQTT_TIMEOUT * 1000 * 1000);
 }
 
-static void _response_timer_stop(tbcm_handle_t client_)
+static void _response_timer_stop(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -179,9 +176,8 @@ static void _response_timer_stop(tbcm_handle_t client_)
      esp_timer_stop(client->respone_timer);
 }
 
-static void _response_timer_destroy(tbcm_handle_t client_)
+static void _response_timer_destroy(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -333,9 +329,8 @@ tbcm_handle_t tbcm_init(void)
 }
 
 // Destroys tbcm_handle_t with network client.
-void tbcm_destroy(tbcm_handle_t client_)
+void tbcm_destroy(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -360,19 +355,18 @@ void tbcm_destroy(tbcm_handle_t client_)
 // Connects to the specified ThingsBoard server and port.
 // Access token is used to authenticate a client.
 // Returns true on success, false otherwise.
-bool tbcm_connect(tbcm_handle_t client_,
+bool tbcm_connect(tbcm_handle_t client,
                   const tbc_transport_config_t *config,
                   void *context,
                   tbcm_on_event_t on_event)
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
-     if (!client_ || !config) {
+     if (!client || !config) {
           TBC_LOGW("one argument isn't NULL!");
           return false;
      }
 
-     tbcm_t *client = (tbcm_t*)client_;
      if (client->mqtt_handle) {
           TBC_LOGW("unable to re-connect mqtt client: client isn't NULL!");
           return false; //!!
@@ -410,9 +404,8 @@ bool tbcm_connect(tbcm_handle_t client_,
 }
 
 // Disconnects from ThingsBoard. Returns true on success.
-void tbcm_disconnect(tbcm_handle_t client_) // disconnect()//...stop()
+void tbcm_disconnect(tbcm_handle_t client) // disconnect()//...stop()
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return;
@@ -445,9 +438,8 @@ void tbcm_disconnect(tbcm_handle_t client_) // disconnect()//...stop()
 }
 
 // Returns true if connected, false otherwise.
-bool tbcm_is_connected(tbcm_handle_t client_) // isConnected
+bool tbcm_is_connected(tbcm_handle_t client) // isConnected
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return false;
@@ -460,9 +452,8 @@ bool tbcm_is_connecting(tbcm_handle_t client)
      return client->state == TBCM_STATE_CONNECTING; 
 }
 
-bool tbcm_is_disconnected(tbcm_handle_t client_)
+bool tbcm_is_disconnected(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return false;
@@ -470,9 +461,8 @@ bool tbcm_is_disconnected(tbcm_handle_t client_)
      return client->state == TBCM_STATE_DISCONNECTED; 
 }
 
-tbcm_state_t tbcm_get_state(tbcm_handle_t client_)
+tbcm_state_t tbcm_get_state(tbcm_handle_t client)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL");
           return TBCM_STATE_DISCONNECTED;
@@ -497,9 +487,8 @@ tbcm_state_t tbcm_get_state(tbcm_handle_t client_)
  * @return message_id of the subscribe message on success
  *         -1 on failure
  */
-int tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/)
+int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -530,10 +519,9 @@ int tbcm_subscribe(tbcm_handle_t client_, const char *topic, int qos /*=0*/)
  *         0 if cannot publish
  *        -1 if error
  */
-static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *payload,
+static int _tbcm_publish(tbcm_handle_t client, const char *topic, const char *payload,
                         int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -565,10 +553,9 @@ static int _tbcm_publish(tbcm_handle_t client_, const char *topic, const char *p
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
+int tbcm_telemetry_publish(tbcm_handle_t client, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -599,10 +586,9 @@ int tbcm_telemetry_publish(tbcm_handle_t client_, const char *telemetry,
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
+int tbcm_clientattributes_publish(tbcm_handle_t client, const char *attributes,
                                          int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -634,11 +620,10 @@ int tbcm_clientattributes_publish(tbcm_handle_t client_, const char *attributes,
  * @return msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
+int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
                             int request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -691,11 +676,10 @@ int tbcm_attributes_request(tbcm_handle_t client_, const char *payload,
  * @return msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, const char *shared_keys,
+int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, const char *shared_keys,
                                int request_id,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -759,11 +743,10 @@ int tbcm_attributes_request_ex(tbcm_handle_t client_, const char *client_keys, c
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcm_serverrpc_response(tbcm_handle_t client_, 
+int tbcm_serverrpc_response(tbcm_handle_t client, 
                             int request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -812,11 +795,10 @@ int tbcm_serverrpc_response(tbcm_handle_t client_,
  * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
+int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
                            int request_id,
                            int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -869,11 +851,10 @@ int tbcm_clientrpc_request(tbcm_handle_t client_, const char *payload,
  * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const char *params,
+int tbcm_clientrpc_request_ex(tbcm_handle_t client, const char *method, const char *params,
                               int request_id,
                               int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -914,10 +895,9 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client_, const char *method, const c
   *         0 if cannot publish
   *        -1 if error
   */
-int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
+int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
                                  int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t *)client_;
      if (!client)
      {
           TBC_LOGE("client is NULL!");
@@ -951,11 +931,10 @@ int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
  * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
- int tbcm_provision_request(tbcm_handle_t client_, const char *payload,
+ int tbcm_provision_request(tbcm_handle_t client, const char *payload,
                             int request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
  {
-      tbcm_t *client = (tbcm_t *)client_;
       if (!client)
       {
            TBC_LOGE("client is NULL!");
@@ -1002,11 +981,10 @@ int tbcm_claiming_device_publish(tbcm_handle_t client_, const char *claiming,
  * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_otaupdate_chunk_request(tbcm_handle_t client_,
+int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
                           int request_id, int chunk_id, const char *payload,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
-     tbcm_t *client = (tbcm_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL!");
           return -1;
@@ -1044,7 +1022,7 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
                                       char *topic, int topic_len,
                                       char *payload, int payload_len)
 {
-    tbcm_t *client = (tbcm_t*)client_;
+    tbcm_t *client = (tbcm_t *)client_;
     tbcm_event_t dst_event = {0};
     tbcm_publish_data_t publish_data;
 

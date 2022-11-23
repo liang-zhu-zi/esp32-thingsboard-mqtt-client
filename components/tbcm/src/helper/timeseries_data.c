@@ -68,9 +68,8 @@ static tbc_err_t _timeseries_data_destroy(timeseries_data_t *tsdata)
 }
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
+tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -83,7 +82,7 @@ tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *
      }
 
      // Create tsdata
-     timeseries_data_t *tsdata = _timeseries_data_create(client_, key/*, type*/, context, on_get/*, on_set*/);
+     timeseries_data_t *tsdata = _timeseries_data_create(client, key/*, type*/, context, on_get/*, on_set*/);
      if (!tsdata) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -112,9 +111,8 @@ tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key)
+tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client, const char *key)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !key) {
           TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -149,9 +147,8 @@ tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key)
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -178,10 +175,8 @@ tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_)
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/ ...)
+tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
-
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL)
      if (count <= 0) {
           TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);

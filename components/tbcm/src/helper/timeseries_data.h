@@ -41,7 +41,7 @@ typedef struct timeseries_data
      LIST_ENTRY(timeseries_data) entry;
 } timeseries_data_t;
 
-tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client_);
+tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

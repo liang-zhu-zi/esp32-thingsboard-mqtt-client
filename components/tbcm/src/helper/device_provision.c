@@ -201,13 +201,12 @@ static int _params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t
     return ESP_OK;
 }
 
-static int _provision_request_with_params(tbcmh_handle_t client_,
+static int _provision_request_with_params(tbcmh_handle_t client,
                                 const tbcmh_provision_params_t *params,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
                                 tbcmh_provision_on_timeout_t on_timeout)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -278,14 +277,14 @@ static int _provision_request_with_params(tbcmh_handle_t client_,
 }
 
 // return request_id or ESP_FAIL
-int tbcmh_provision_request(tbcmh_handle_t client_,
+int tbcmh_provision_request(tbcmh_handle_t client,
                                     const tbc_provison_config_t *config,
                                     void *context,
                                     tbcmh_provision_on_response_t on_response,
                                     tbcmh_provision_on_timeout_t on_timeout)
 {
     //TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(client_, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
     tbcmh_provision_params_t *params = cJSON_CreateObject();
     if (!params) {
@@ -313,14 +312,13 @@ int tbcmh_provision_request(tbcmh_handle_t client_,
     }
 
      // request_id
-     ret = _provision_request_with_params(client_, params, context, on_response, on_timeout);
+     ret = _provision_request_with_params(client, params, context, on_response, on_timeout);
      cJSON_Delete(params); // delete json object     
      return ret;
 }
 
-tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -462,9 +460,8 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
     return ESP_OK;
 }
 
-void _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object)
+void _tbcmh_provision_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -514,9 +511,8 @@ void _tbcmh_provision_on_response(tbcmh_handle_t client_, int request_id, const 
      return;// ESP_OK;
 }
 
-void _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id)
+void _tbcmh_provision_on_timeout(tbcmh_handle_t client, int request_id)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -559,3 +555,4 @@ void _tbcmh_provision_on_timeout(tbcmh_handle_t client_, int request_id)
 
      return;// ESP_OK;
 }
+

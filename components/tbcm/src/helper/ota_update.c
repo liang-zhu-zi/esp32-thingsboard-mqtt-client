@@ -28,7 +28,7 @@
 
 const static char *TAG = "ota_update";
 
-extern tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client_);
+extern tbcm_handle_t _tbcmh_get_tbcm_handle(tbcmh_handle_t client);
 
 /*!< Initialize ota_update_t */
 static ota_update_t *_ota_update_create(tbcmh_handle_t client,
@@ -593,9 +593,8 @@ static tbc_err_t _tbcmh_otaupdate_chunk_request(ota_update_t *otaupdate)
     return (msg_id<0)?-1:0;
 }
 
-void _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client_, int request_id, int chunk_id, const char* payload, int length)
+void _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
@@ -688,9 +687,8 @@ void _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client_, int request_id, 
      return;
 }
 
-void _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client_, int request_id)
+void _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client, int request_id)
 {
-      tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client  is NULL! %s()", __FUNCTION__);
           return;
@@ -728,10 +726,9 @@ void _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client_, int request_id)
 
 
 //========== Firmware/Software update API ======================================================================
-tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, 
+tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client, 
                 const char *ota_description, const tbcmh_otaupdate_config_t *config)
 {
-     tbcmh_t *client = (tbcmh_t*)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -781,9 +778,8 @@ tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_,
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description)
+tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client, const char *ota_description)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !ota_description) {
           TBC_LOGE("client or ota_description is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -818,9 +814,8 @@ tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_descript
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client_)
+tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return ESP_FAIL;
@@ -864,11 +859,10 @@ static void __on_sw_attributesrequest_response(tbcmh_handle_t client,
     //no code
 }
 
-void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_)
+void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
 
-    tbcmh_t *client = (tbcmh_t *)client_;
     if (!client) {
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
          return;// ESP_FAIL;
@@ -884,7 +878,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_)
               // send init current f/w info telemetry
               _ota_update_publish_early_current_version(otaupdate);
               // send f/w info attributes request
-              _tbcmh_attributesrequest_send_4_ota_sharedattributes(client_,
+              _tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
                      NULL/*context*/,
                      __on_fw_attributesrequest_response/*on_response*/,
                      NULL/*on_timeout*/,
@@ -906,7 +900,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_)
               // send init current s/w telemetry
               _ota_update_publish_early_current_version(otaupdate);
               // send s/w info attributes request
-              _tbcmh_attributesrequest_send_4_ota_sharedattributes(client_,
+              _tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
                      NULL/*context*/,
                      __on_sw_attributesrequest_response/*on_response*/,
                      NULL/*on_timeout*/,
@@ -921,11 +915,10 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client_)
      }
 }
 
-void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_otaupdate_type_t ota_type,
+void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate_type_t ota_type,
                                          const char *ota_title, const char *ota_version, int ota_size,
                                          const char *ota_checksum, const char *ota_checksum_algorithm)
 {
-     tbcmh_t *client = (tbcmh_t *)client_;
      if (!client || !ota_title) {
           TBC_LOGE("client or ota_title is NULL! %s()", __FUNCTION__);
           return;// ESP_FAIL;
@@ -1009,7 +1002,7 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_otaupdat
       * Payload: `{"sharedKeys": "fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version"}`
 */
 
-/*static*/ void _tbcmh_otaupdate_publish_current_status(tbcmh_handle_t client_)
+/*static*/ void _tbcmh_otaupdate_publish_current_status(tbcmh_handle_t client)
 {
     // TODO:
     //    1. Send telemetry: *current firmware info*
@@ -1031,16 +1024,16 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client_, tbcmh_otaupdat
 {
     // TODO: resend ???
 }
-/*static*/ void _tbcmh_otaupdate_send_attributes_request(tbcmh_handle_t client_)
+/*static*/ void _tbcmh_otaupdate_send_attributes_request(tbcmh_handle_t client)
 {
     // TODO:
 
-    // tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
+    // tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,
     //                                     tbcmh_sharedattribute_on_set_t on_set);
     // key: fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version
     //      sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version
 
-    //int tbcmh_attributesrequest_send(client_,
+    //int tbcmh_attributesrequest_send(client,
     //                                 NULL,
     //                                 __tbcmh_otaupdate_attributesrequest_on_response,
     //                                 __tbcmh_otaupdate_attributesrequest_on_timeout,

@@ -49,14 +49,14 @@ typedef struct attributes_request
 } attributes_request_t;
 
 // TODO: merge to tbcmh_attributesrequest_send()
-int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client_,
+int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
                                   int count, /*const char *key,*/...);
-tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client_);
-void      _tbcmh_attributesrequest_on_response(tbcmh_handle_t client_, int request_id, const cJSON *object);
-void      _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client_, int request_id);
+tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client);
+void      _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
+void      _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id);
 
 #ifdef __cplusplus
 }

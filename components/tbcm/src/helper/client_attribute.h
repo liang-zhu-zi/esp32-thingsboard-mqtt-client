@@ -44,8 +44,8 @@ typedef struct client_attribute
      LIST_ENTRY(client_attribute) entry;
 } client_attribute_t;
 
-tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client_);
-void      _tbcmh_clientattribute_on_received(tbcmh_handle_t client_, const cJSON *object);
+tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client);
+void      _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

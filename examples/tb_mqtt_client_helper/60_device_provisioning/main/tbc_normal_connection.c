@@ -62,14 +62,15 @@ tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport)
     }
         
     ESP_LOGI(TAG, "NORMAL CONN: Init tbcmh ...");
-    tbcmh_handle_t client = tbcmh_init();
+    bool is_running_in_mqtt_task = false;
+    tbcmh_handle_t client = tbcmh_init(is_running_in_mqtt_task);
     if (!client) {
         ESP_LOGE(TAG, "NORMAL CONN: Failure to init tbcmh!");
         return NULL;
     }
 
     ESP_LOGI(TAG, "NORMAL CONN: Connect tbcmh ...");
-    bool result = tbcmh_connect(client, transport, NULL,
+    bool result = tbcmh_connect(client, transport, TBCMH_FUNCTION_FULL_GENERAL, NULL,
                                    tb_normalconn_on_connected,
                                    tb_normalconn_on_disconnected);
     if (!result) {
