@@ -241,9 +241,9 @@ bool tbcmh_has_events(tbcmh_handle_t client);
 void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout(), recv/parse/sendqueue/ack...
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);
-tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client, const char *key);
-tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client, int count, /*const char *key,*/...);
+tbc_err_t tbcmh_timeseriesdata_register(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);
+tbc_err_t tbcmh_timeseriesdata_unregister(tbcmh_handle_t client, const char *key);
+tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
 
 //====20.Publish client-side device attributes to the server============================================================
 tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client, const char *key, void *context,

@@ -44,10 +44,15 @@ typedef struct shared_attribute
      LIST_ENTRY(shared_attribute) entry;
 } shared_attribute_t;
 
+typedef LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list_t;
+
 tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client);
 
+void _tbcmh_sharedattribute_on_create(tbcmh_handle_t client);
+void _tbcmh_sharedattribute_on_destroy(tbcmh_handle_t client);
 void      _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client);
-void      _tbcmh_sharedattribute_on_received(tbcmh_handle_t client, const cJSON *object);
+void      _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client);
+void      _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

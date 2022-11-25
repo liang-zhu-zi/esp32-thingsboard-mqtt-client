@@ -33,229 +33,19 @@ static void _on_tbcm_event_bridge_send(tbcm_event_t *event);
 
 const static char *TAG = "tb_mqtt_client_helper";
 
-//return tbcmh_request on successful, otherwise return NULL.
-static tbcmh_request_t *_request_create(tbcmh_request_type_t type,
-                                       uint32_t request_id)
+int _tbcmh_get_request_id(tbcmh_handle_t client)
 {
-     tbcmh_request_t *tbcmh_request = TBC_MALLOC(sizeof(tbcmh_request_t));
-     if (!tbcmh_request) {
-          TBC_LOGE("Unable to malloc memory!");
-          return NULL;
-     }
+    // call it in a lock!
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
-     memset(tbcmh_request, 0x00, sizeof(tbcmh_request_t));
-     tbcmh_request->type = type;
-     tbcmh_request->request_id = request_id;
-     tbcmh_request->timestamp = (uint64_t)time(NULL);
-
-     return tbcmh_request;
-}
-
-static void _request_destroy(tbcmh_request_t *tbcmh_request)
-{
-     if (!tbcmh_request) {
-          TBC_LOGE("Invalid argument!");
-          return; 
-     }
-
-     tbcmh_request->type = 0;
-     tbcmh_request->request_id = 0;
-     tbcmh_request->timestamp = 0;
-     TBC_FREE(tbcmh_request);
-}
-
-//return request_id on successful, otherwise return -1
-int _request_list_create_and_append(tbcmh_handle_t client,
-                    tbcmh_request_type_t type, int request_id)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return -1;
-     }
-
-     // Get request ID
-     if (request_id <= 0) {
-          do {
-               if (client->next_request_id <= 0)
-                    client->next_request_id = 1;
-               else
-                    client->next_request_id++;
-          } while (client->next_request_id <= 0);
-
-          request_id = client->next_request_id;
-     }
-
-     // Create request
-     tbcmh_request_t *tbcmh_request = _request_create(type, request_id);
-     if (!tbcmh_request) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGE("Unable to create request: No memory!");
-          return -1;
-     }
-
-     // Insert request to list
-     tbcmh_request_t *it, *last = NULL;
-     if (LIST_FIRST(&client->request_list) == NULL) {
-          // Insert head
-          LIST_INSERT_HEAD(&client->request_list, tbcmh_request, entry);
-     } else {
-          // Insert last
-          LIST_FOREACH(it, &client->request_list, entry) {
-               last = it;
-          }
-          if (it == NULL) {
-               assert(last);
-               LIST_INSERT_AFTER(last, tbcmh_request, entry);
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return request_id;
-}
-
-void _request_list_search_and_remove(tbcmh_handle_t client, int request_id)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return;
-     }
-
-     // Search item
-     tbcmh_request_t *tbcmh_request = NULL;
-     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
-          if (tbcmh_request && tbcmh_request->request_id == request_id) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcmh_request) {
-          LIST_REMOVE(tbcmh_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request:%d!", request_id);
-     }
-
-     _request_destroy(tbcmh_request);
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return;
-}
-
-void _request_list_search_and_remove_by_type(tbcmh_handle_t client,
-                            tbcmh_request_type_t type)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return;
-     }
-
-     // Search item
-     tbcmh_request_t *tbcmh_request = NULL;
-     LIST_FOREACH(tbcmh_request, &client->request_list, entry) {
-          if (tbcmh_request && tbcmh_request->type == type) {
-               break;
-          }
-     }
-
-     /// Remove form list
-     if (tbcmh_request) {
-          LIST_REMOVE(tbcmh_request, entry);
-     } else {
-          TBC_LOGW("Unable to remove request: type=%d!", type);
-     }
-
-     _request_destroy(tbcmh_request);
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-}
-
-// return  count of timeout_request_list
-int _request_list_move_all_of_timeout(tbcmh_handle_t client, uint64_t timestamp,
-                              tbcmh_request_list_t *timeout_request_list)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return 0;
-     }
-     if (!timeout_request_list) {
-          TBC_LOGE("timeout_request_list is NULL!");
-          return 0;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore!");
-          return 0;
-     }
-
-     // Search & move item
-     int count = 0;
-     tbcmh_request_t *tbcmh_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcmh_request, &client->request_list, entry, next) {
-          if (tbcmh_request && tbcmh_request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
-               // remove from request list
-               LIST_REMOVE(tbcmh_request, entry);
-
-               // append to timeout list
-               tbcmh_request_t *it, *last = NULL;
-               if (LIST_FIRST(timeout_request_list) == NULL) {
-                    LIST_INSERT_HEAD(timeout_request_list, tbcmh_request, entry);
-                    count++;
-               } else {
-                    LIST_FOREACH(it, timeout_request_list, entry) {
-                         last = it;
-                    }
-                    if (it == NULL) {
-                         assert(last);
-                         LIST_INSERT_AFTER(last, tbcmh_request, entry);
-                         count++;
-                    }
-               }
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return count;
-}
-
-bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b)
-{
-   if (!a & !b) {
-        return true;
-   }
-   if (!a || !b) {
-        return false;
-   }
-   if (a->type != b->type) {
-        return false;
-   } else if (a->request_id != b->request_id) {
-        return false;
-   } else { // if (a->timestamp != b->timestamp)
-        return a->timestamp == b->timestamp;
-   }
+    do {
+         if (client->next_request_id <= 0)
+              client->next_request_id = 1;
+         else
+              client->next_request_id++;
+    } while (client->next_request_id <= 0);
+    
+   return client->next_request_id;
 }
 
 /**
@@ -295,17 +85,19 @@ tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task)
           TBC_LOGE("failed to create the lock!");
      }
      
-     memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list)); //client->tsdata_list = LIST_HEAD_INITIALIZER(client->tsdata_list);
-     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list)); //client->clientattribute_list = LIST_HEAD_INITIALIZER(client->clientattribute_list);
-     memset(&client->sharedattribute_list, 0x00, sizeof(client->sharedattribute_list)); //client->sharedattribute_list = LIST_HEAD_INITIALIZER(client->sharedattribute_list);
-     memset(&client->attributesrequest_list, 0x00, sizeof(client->attributesrequest_list)); //client->attributesrequest_list = LIST_HEAD_INITIALIZER(client->attributesrequest_list);
-     memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list)); //client->serverrpc_list = LIST_HEAD_INITIALIZER(client->serverrpc_list);
-     memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list)); //client->clientrpc_list = LIST_HEAD_INITIALIZER(client->clientrpc_list);
-     memset(&client->otaupdate_list, 0x00, sizeof(client->otaupdate_list)); //client->otaupdate_list = LIST_HEAD_INITIALIZER(client->otaupdate_list);
+     // create all 7/9 list!
+     _tbcmh_timeseriesdata_on_create(client);
+     _tbcmh_clientattribute_on_create(client);
+     _tbcmh_sharedattribute_on_create(client);
+     _tbcmh_attributesrequest_on_create(client);//req-resp
+     _tbcmh_serverrpc_on_create(client);
+     _tbcmh_clientrpc_on_create(client);        //req-resp
+     _tbcmh_otaupdate_on_create(client);        //chunk: req-resp
+     _tbcmh_claimingdevice_on_create(client);
+     _tbcmh_deviceprovision_on_create(client);  //req-resp
 
      client->next_request_id = 0;
      client->last_check_timestamp = (uint64_t)time(NULL);
-     memset(&client->request_list, 0x00, sizeof(client->request_list));//client->request_list = LIST_HEAD_INITIALIZER(client->request_list);
 
      return client;
 }
@@ -329,15 +121,16 @@ void tbcmh_destroy(tbcmh_handle_t client)
      // TODO: dead lock???
      tbcmh_disconnect(client);
 
-     // empty all 7 list!
-     _tbcmh_telemetry_empty(client);
-     _tbcmh_clientattribute_empty(client);
-     _tbcmh_sharedattribute_empty(client);
-     _tbcmh_attributesrequest_empty(client);
-     _tbcmh_serverrpc_empty(client);
-     _tbcmh_clientrpc_empty(client);
-     _tbcmh_provision_empty(client);
-     _tbcmh_otaupdate_empty(client);
+     // empty all 7/9 list!
+     _tbcmh_timeseriesdata_on_destroy(client);
+     _tbcmh_clientattribute_on_destroy(client);
+     _tbcmh_sharedattribute_on_destroy(client);
+     _tbcmh_attributesrequest_on_destroy(client);
+     _tbcmh_serverrpc_on_destroy(client);
+     _tbcmh_clientrpc_on_destroy(client);
+     _tbcmh_otaupdate_on_destroy(client);
+     _tbcmh_claimingdevice_on_destroy(client);
+     _tbcmh_deviceprovision_on_destroy(client);
 
      if (client->_lock) {
           vSemaphoreDelete(client->_lock);
@@ -392,7 +185,6 @@ bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
     // SemaphoreHandle_t lock;
     // int next_request_id;
     // uint64_t last_check_timestamp;
-    // tbcmh_request_list_t request_list; /*!< request list: attributes request, client side RPC & ota update request */
     
     // connect
     TBC_LOGI("connecting to %s://%s:%d ...",
@@ -533,7 +325,6 @@ fail_exit:
     return result;
 }
 
-
 void tbcmh_disconnect(tbcmh_handle_t client)               
 {
      if (!client) {
@@ -567,46 +358,19 @@ void tbcmh_disconnect(tbcmh_handle_t client)
      client->on_connected = NULL;
      client->on_disconnected = NULL;
 
-     // empty all request lists;
-     //_tbcmh_telemetry_empty(client);
-     //_tbcmh_clientattribute_empty(client);
-     //_tbcmh_sharedattribute_empty(client);
-     _tbcmh_attributesrequest_empty(client);
-     //_tbcmh_serverrpc_empty(client);
-     _tbcmh_clientrpc_empty(client);
-     _tbcmh_provision_empty(client);
-     _tbcmh_otaupdate_empty(client);
+     _tbcmh_timeseriesdata_on_disconnected(client);
+     _tbcmh_attributesrequest_on_disconnected(client); //empty all request
+     _tbcmh_clientattribute_on_disconnected(client); 
+     _tbcmh_sharedattribute_on_disconnected(client);
+     _tbcmh_serverrpc_on_disconnected(client);
+     _tbcmh_clientrpc_on_disconnected(client);         //empty all request
+     _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
+     _tbcmh_otaupdate_on_disconnected(client);         //empty all request
+     _tbcmh_claimingdevice_on_disconnected(client);
 
      // SemaphoreHandle_t lock;
      // int next_request_id;
      // uint64_t last_check_timestamp;
-     // remove all item in request_list
-     tbcmh_request_t *tbcmh_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcmh_request, &client->request_list, entry, next) {
-          // deal timeout
-          switch (tbcmh_request->type) {
-          case TBCMH_REQUEST_ATTRIBUTES:
-              _tbcmh_attributesrequest_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_CLIENTRPC:
-              _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_PROVISION:
-              _tbcmh_deviceprovision_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
-              break;
-          default:
-              TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
-              break;
-          }
-
-          // remove from request list
-          LIST_REMOVE(tbcmh_request, entry);
-          _request_destroy(tbcmh_request);
-     }
-     memset(&client->request_list, 0x00, sizeof(client->request_list));
 }
 
 bool tbcmh_is_connected(tbcmh_handle_t client)
@@ -687,66 +451,28 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
           return;
      }
 
+     _tbcmh_timeseriesdata_on_disconnected(client);
+     _tbcmh_attributesrequest_on_disconnected(client); //empty all request
+     _tbcmh_clientattribute_on_disconnected(client); 
+     _tbcmh_sharedattribute_on_disconnected(client);
+     _tbcmh_serverrpc_on_disconnected(client);
+     _tbcmh_clientrpc_on_disconnected(client);         //empty all request
+     _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
+     _tbcmh_otaupdate_on_disconnected(client);         //empty all request
+     _tbcmh_claimingdevice_on_disconnected(client);
+
      // clone parameter in lock/unlock
      void *context = client->context;
      tbcmh_on_disconnected_t on_disconnected = client->on_disconnected;
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-  
+
      // do callback
      if (on_disconnected) {
         on_disconnected(client, context);
      }
      return;
-}
-
-static void __on_tbcm_check_timeout(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL");
-          return;
-     }
-
-     // Too early
-     uint64_t timestamp = (uint64_t)time(NULL);
-     if (timestamp < client->last_check_timestamp + TB_MQTT_TIMEOUT + 2) {
-          return;
-     }
-     client->last_check_timestamp = timestamp;
-
-     // move timeout item to timeout_list
-     tbcmh_request_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-     int count = _request_list_move_all_of_timeout(client, timestamp, &timeout_list);
-     if (count <=0 ) {
-          return;
-     }
-
-     tbcmh_request_t *tbcmh_request = NULL, *next;
-     LIST_FOREACH_SAFE(tbcmh_request, &timeout_list, entry, next) {
-          // deal timeout
-          switch (tbcmh_request->type) {
-          case TBCMH_REQUEST_ATTRIBUTES:
-              _tbcmh_attributesrequest_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_CLIENTRPC:
-              _tbcmh_clientrpc_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_PROVISION:
-              _tbcmh_deviceprovision_on_timeout(client, tbcmh_request->request_id);
-              break;
-          case TBCMH_REQUEST_FWUPDATE:
-              _tbcmh_otaupdate_chunk_on_timeout(client, tbcmh_request->request_id);
-              break;
-          default:
-              TBC_LOGE("tbcmh_request->type(%d) is error!\r\n", tbcmh_request->type);
-              break;
-          }
-
-          // remove from request list
-          LIST_REMOVE(tbcmh_request, entry);
-          _request_destroy(tbcmh_request);
-     }
 }
 
 static void __on_tbcm_data_handle(tbcm_event_t *event)
@@ -765,30 +491,30 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
     switch (event->data.topic) {
     case TBCM_RX_TOPIC_ATTRIBUTES_RESPONSE:  /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_attributesrequest_on_response(client, event->data.request_id, object);
+         _tbcmh_attributesrequest_on_data(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
     
     case TBCM_RX_TOPIC_SHARED_ATTRIBUTES:    /*!<                       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_sharedattribute_on_received(client, object);
+         _tbcmh_sharedattribute_on_data(client, object);
          cJSON_Delete(object);
          break;
     
     case TBCM_RX_TOPIC_SERVERRPC_REQUEST:    /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_serverrpc_on_request(client, event->data.request_id, object);
+         _tbcmh_serverrpc_on_data(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
         
     case TBCM_RX_TOPIC_CLIENTRPC_RESPONSE:   /*!< request_id,           payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_clientrpc_on_response(client, event->data.request_id, object);
+         _tbcmh_clientrpc_on_data(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
     
     case TBCM_RX_TOPIC_FW_RESPONSE:          /*!< request_id, chunk_id, payload, payload_len */
-         _tbcmh_otaupdate_chunk_on_response(client, event->data.request_id, 
+         _tbcmh_otaupdate_chunk_on_data(client, event->data.request_id, 
               event->data.chunk_id, 
               event->data.payload,
               event->data.payload_len);
@@ -796,7 +522,7 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
     
     case TBCM_RX_TOPIC_PROVISION_RESPONSE:   /*!< (no request_id)       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_deviceprovision_on_response(client, event->data.request_id, object);
+         _tbcmh_deviceprovision_on_data(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
 
@@ -805,6 +531,26 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
          TBC_LOGW("Other topic: event->data.topic=%d", event->data.topic);
          break;
     }
+}
+
+static void __on_tbcm_check_timeout(tbcmh_handle_t client)
+{
+     if (!client) {
+          TBC_LOGE("client is NULL");
+          return;
+     }
+
+     // Too early
+     uint64_t timestamp = (uint64_t)time(NULL);
+     if (timestamp < client->last_check_timestamp + TB_MQTT_TIMEOUT + 2) {
+          return;
+     }
+     client->last_check_timestamp = timestamp;
+
+     _tbcmh_attributesrequest_on_check_timeout(client, timestamp);
+     _tbcmh_clientrpc_on_check_timeout(client, timestamp);
+     _tbcmh_deviceprovision_on_check_timeout(client, timestamp);
+     _tbcmh_otaupdate_on_check_chunk_timeout(client, timestamp);
 }
 
 // The callback for when a MQTT event is received.

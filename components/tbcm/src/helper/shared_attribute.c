@@ -180,22 +180,40 @@ tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client)
      return ESP_OK;
 }
 
+void _tbcmh_sharedattribute_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    memset(&client->sharedattribute_list, 0x00, sizeof(client->sharedattribute_list)); //client->sharedattribute_list = LIST_HEAD_INITIALIZER(client->sharedattribute_list);
+}
+
+void _tbcmh_sharedattribute_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_sharedattribute_empty(client);
+}
+
+
+
 void _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;
-    }
-
+    TBC_CHECK_PTR(client)
     int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
             msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
 }
 
-//unpack & deal
-void _tbcmh_sharedattribute_on_received(tbcmh_handle_t client, const cJSON *object)
+void _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    //_tbcmh_sharedattribute_empty(client);
+}
+
+//on received: unpack & deal
+void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
 {
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);

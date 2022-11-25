@@ -66,10 +66,13 @@ typedef struct tbcmh_otaupdate_attribute
  */
 typedef struct tbcmh_otaupdate_state
 {
-     int request_id;    /*!< default is -1 */
-     int chunk_id;      /*!< default is zero, from 0 to n */
+     int request_id;         /*!< default is -1 */
+
      uint32_t received_len;  /*!< lenth of receiving ota data */
      uint32_t checksum;      /*!< only support CRC32  */          // TODO: support multi-ALG! 
+
+     int chunk_id;           /*!< default is zero, from 0 to n */
+     uint64_t timestamp;     /*!< time stamp at sending request */
 } tbcmh_otaupdate_state_t;
 
 /**
@@ -88,12 +91,18 @@ typedef struct ota_update
      LIST_ENTRY(ota_update) entry;
 } ota_update_t;
 
-void      _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
-void      _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client, int request_id);
+typedef LIST_HEAD(tbcmh_otaupdate_list, ota_update) otaupdate_list_t;
+
+void      _tbcmh_otaupdate_chunk_on_data(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
 
 tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client);
 
-void      _tbcmh_otaupdate_on_connected(tbcmh_handle_t client);
+void _tbcmh_otaupdate_on_create(tbcmh_handle_t client);
+void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client);
+void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client);
+void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_otaupdate_on_check_chunk_timeout(tbcmh_handle_t client, uint64_t timestamp);
+
 
 #ifdef __cplusplus
 }

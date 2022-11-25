@@ -44,6 +44,7 @@ static attributes_request_t *_attributes_request_create(tbcmh_handle_t client, i
     memset(attributesrequest, 0x00, sizeof(attributes_request_t));
     attributesrequest->client = client;
     attributesrequest->request_id = request_id;
+    attributesrequest->timestamp = (uint64_t)time(NULL);
     attributesrequest->context = context;
     attributesrequest->on_response = on_response;
     attributesrequest->on_timeout = on_timeout;
@@ -160,9 +161,9 @@ next_attribute_key:
      va_end(ap);
 
      // Send msg to server
-     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_ATTRIBUTES, 0/*request_id*/);
+     int request_id = _tbcmh_get_request_id(client);
      if (request_id <= 0) {
-          TBC_LOGE("Unable to take semaphore");
+          TBC_LOGE("failure to getting request id!");
           return -1;
      }
      int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, shared_keys,
@@ -174,7 +175,8 @@ next_attribute_key:
      }
 
      // Create attributesrequest
-     attributes_request_t *attributesrequest = _attributes_request_create(client, request_id, context, on_response, on_timeout);
+     attributes_request_t *attributesrequest = _attributes_request_create(client, request_id,
+                                context, on_response, on_timeout);
      if (!attributesrequest) {
           TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
@@ -263,10 +265,11 @@ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
       va_end(ap);
  
       // Send msg to server
-      int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_ATTRIBUTES, 0/*request_id*/);
+      // Send msg to server
+      int request_id = _tbcmh_get_request_id(client);
       if (request_id <= 0) {
-           TBC_LOGE("Unable to create request");
-           goto attributesrequest_fail;
+           TBC_LOGE("failure to getting request id!");
+           return -1;
       }
       int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
                                 request_id,
@@ -277,7 +280,8 @@ int _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
       }
  
       // Create attributesrequest
-      attributes_request_t *attributesrequest = _attributes_request_create(client, request_id, context, on_response, on_timeout);
+      attributes_request_t *attributesrequest = _attributes_request_create(client, request_id,
+                                    context, on_response, on_timeout);
       if (!attributesrequest) {
            TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
            goto attributesrequest_fail;
@@ -345,29 +349,43 @@ tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client)
    return ESP_OK;
 }
 
+void _tbcmh_attributesrequest_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    memset(&client->attributesrequest_list, 0x00, sizeof(client->attributesrequest_list)); //client->attributesrequest_list = LIST_HEAD_INITIALIZER(client->attributesrequest_list);
+}
+
+void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_attributesrequest_empty(client);
+}
+
 void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;
-    }
-
+    TBC_CHECK_PTR(client)
     int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
 }
 
-void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_attributesrequest_empty(client);
+}
+
+//on response.
+void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;
      }
-
-     // Remove it from request list
-     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -402,7 +420,7 @@ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id,
      }
      // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED)) {
-          _tbcmh_sharedattribute_on_received(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
+          _tbcmh_sharedattribute_on_data(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED));
      }
 
      // Do response
@@ -416,12 +434,9 @@ void _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id,
      return;
 }
 
-void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id)
+void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+     TBC_CHECK_PTR(client);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -429,35 +444,38 @@ void _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id)
           return;
      }
 
-     // Search attributesrequest
-     attributes_request_t *attributesrequest = NULL;
-     LIST_FOREACH(attributesrequest, &client->attributesrequest_list, entry) {
-          if (attributesrequest && (attributesrequest->request_id==request_id)) {
-               break;
+     // Search & move timeout item to timeout_list
+     attributesrequest_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     attributes_request_t *request = NULL, *next;
+     LIST_FOREACH_SAFE(request, &client->attributesrequest_list, entry, next) {
+          if (request && request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+               LIST_REMOVE(request, entry);
+               // append to timeout list
+               attributes_request_t *it, *last = NULL;
+               if (LIST_FIRST(&timeout_list) == NULL) {
+                    LIST_INSERT_HEAD(&timeout_list, request, entry);
+               } else {
+                    LIST_FOREACH(it, &timeout_list, entry) {
+                         last = it;
+                    }
+                    if (it == NULL) {
+                         assert(last);
+                         LIST_INSERT_AFTER(last, request, entry);
+                    }
+               }
           }
      }
-     if (!attributesrequest) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
-          return;
-     }
 
-     // Cache and remove attributesrequest
-     attributes_request_t *cache = _attributes_request_clone_wo_listentry(attributesrequest);
-     LIST_REMOVE(attributesrequest, entry);
-     _attributes_request_destroy(attributesrequest);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
-     // Do timeout
-     if (cache->on_timeout) {
-         cache->on_timeout(cache->client, cache->context, cache->request_id); //(none/resend/destroy/_destroy_all_attributes)?
+     // Deal timeout
+     LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
+          if (request->on_timeout) {
+              request->on_timeout(request->client, request->context, request->request_id);
+          }
+          LIST_REMOVE(request, entry);
+          _attributes_request_destroy(request);
      }
-
-     // Free attributesrequest
-     _attributes_request_destroy(cache);
-
-     return;
 }
 

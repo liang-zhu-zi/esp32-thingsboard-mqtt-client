@@ -60,7 +60,7 @@ void tb_telemetry_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 
-    tbcmh_telemetry_send(client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
+    tbcmh_timeseriesdata_update(client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -152,13 +152,13 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append telemetry: temprature...");
-    err = tbcmh_telemetry_append(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
+    err = tbcmh_timeseriesdata_register(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_TEMPRATUE);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append telemetry: humidity...");
-    err = tbcmh_telemetry_append(client, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
+    err = tbcmh_timeseriesdata_register(client, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_HUMIDITY);
         goto exit_destroy;

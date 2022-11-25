@@ -34,9 +34,10 @@ extern "C" {
  */
 typedef struct attributes_request
 {
-     tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
+     tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
      int request_id;
+     uint64_t timestamp;    /*!< time stamp at sending request */
 
      void *context;                                     /*!< Context of callback*/
      tbcmh_attributesrequest_on_response_t on_response; /*!< Callback of dealing successful */
@@ -48,6 +49,8 @@ typedef struct attributes_request
      LIST_ENTRY(attributes_request) entry;
 } attributes_request_t;
 
+typedef LIST_HEAD(tbcmh_attributesrequest_list, attributes_request) attributesrequest_list_t;
+
 // TODO: merge to tbcmh_attributesrequest_send()
 int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
                                   void *context,
@@ -56,9 +59,13 @@ int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t cl
                                   int count, /*const char *key,*/...);
 tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client);
 
-void      _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client);
-void      _tbcmh_attributesrequest_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
-void      _tbcmh_attributesrequest_on_timeout(tbcmh_handle_t client, int request_id);
+void _tbcmh_attributesrequest_on_create(tbcmh_handle_t client);
+void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client);
+
+void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client);
+void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
+void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus
 }

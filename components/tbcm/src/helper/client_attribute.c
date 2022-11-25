@@ -258,16 +258,32 @@ tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client, int count, /*const c
      return (msg_id > -1) ? ESP_OK : ESP_FAIL;
 }
 
+void _tbcmh_clientattribute_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list)); //client->clientattribute_list = LIST_HEAD_INITIALIZER(client->clientattribute_list);
+}
+
+void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_clientattribute_empty(client);
+}
+
 void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;
-    }
-
+    TBC_CHECK_PTR(client)
     // TODO: ......
+}
+
+void _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    // TODO: ...
 }
 
 //unpack & deal

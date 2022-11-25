@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-//====1.telemetry time-series data=====================================================================================
-
 /**
  * ThingsBoard MQTT Client Helper Telemetry time-series data
  */
@@ -41,9 +39,12 @@ typedef struct timeseries_data
      LIST_ENTRY(timeseries_data) entry;
 } timeseries_data_t;
 
-tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_tsdata_list, timeseries_data) tsdata_list_t;
 
+void _tbcmh_timeseriesdata_on_create(tbcmh_handle_t client);
+void _tbcmh_timeseriesdata_on_destroy(tbcmh_handle_t client);
 void _tbcmh_timeseriesdata_on_connected(tbcmh_handle_t client);
+void _tbcmh_timeseriesdata_on_disconnected(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

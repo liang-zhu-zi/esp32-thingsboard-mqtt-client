@@ -94,7 +94,6 @@ typedef int tbc_err_t;
                       return; \
                  }
 
-
 #ifdef __cplusplus
 }
 #endif //__cplusplus

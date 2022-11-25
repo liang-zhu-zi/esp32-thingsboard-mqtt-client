@@ -26,16 +26,10 @@
 const static char *TAG = "timeseries_data";
 
 /*!< Initialize timeseries_data of TBCM_JSON */
-static timeseries_data_t *_timeseries_data_create(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
+static timeseries_data_t *_timeseriesdata_create(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
 {
-    if (!key) {
-        TBC_LOGE("key is NULL");
-        return NULL;
-    }
-    if (!on_get) {
-        TBC_LOGE("on_get is NULL");
-        return NULL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get, NULL);
     
     timeseries_data_t *tsdata = TBC_MALLOC(sizeof(timeseries_data_t));
     if (!tsdata) {
@@ -55,7 +49,7 @@ static timeseries_data_t *_timeseries_data_create(tbcmh_handle_t client, const c
 }
 
 /*!< Destroys the tbcm key-value handle */
-static tbc_err_t _timeseries_data_destroy(timeseries_data_t *tsdata)
+static tbc_err_t _timeseriesdata_destroy(timeseries_data_t *tsdata)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");
@@ -68,7 +62,8 @@ static tbc_err_t _timeseries_data_destroy(timeseries_data_t *tsdata)
 }
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
+tbc_err_t tbcmh_timeseriesdata_register(tbcmh_handle_t client, const char *key,
+                    void *context, tbcmh_tsdata_on_get_t on_get)
 {
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
@@ -82,7 +77,7 @@ tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *c
      }
 
      // Create tsdata
-     timeseries_data_t *tsdata = _timeseries_data_create(client, key/*, type*/, context, on_get/*, on_set*/);
+     timeseries_data_t *tsdata = _timeseriesdata_create(client, key/*, type*/, context, on_get/*, on_set*/);
      if (!tsdata) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -111,7 +106,7 @@ tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client, const char *key, void *c
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client, const char *key)
+tbc_err_t tbcmh_timeseriesdata_unregister(tbcmh_handle_t client, const char *key)
 {
      if (!client || !key) {
           TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
@@ -125,57 +120,27 @@ tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client, const char *key)
      }
 
      // Search item
-     timeseries_data_t *tsdata = NULL;
-     LIST_FOREACH(tsdata, &client->tsdata_list, entry) {
+     timeseries_data_t *tsdata = NULL, *next;
+     LIST_FOREACH_SAFE(tsdata, &client->tsdata_list, entry, next) {
           if (tsdata && strcmp(tsdata->key, key)==0) {
-               break;
+             // remove from tsdata list and destory
+             LIST_REMOVE(tsdata, entry);
+             _timeseriesdata_destroy(tsdata);
+             break;
           }
      }
-     if (!tsdata) {
-          TBC_LOGW("Unable to remove time-series data:%s! %s()", key, __FUNCTION__);
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          return ESP_FAIL;
-     }
-
-     // Remove form list
-     LIST_REMOVE(tsdata, entry);
-     _timeseries_data_destroy(tsdata);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     return ESP_OK;
-}
 
-tbc_err_t _tbcmh_telemetry_empty(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+     if (!tsdata) {
+          TBC_LOGW("Unable to remove time-series data:%s! %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
-
-     // TODO: How to add lock??
-     // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBC_LOGE("Unable to take semaphore!");
-     //      return ESP_FAIL;
-     // }
-
-     // remove all item in tsdata_list
-     timeseries_data_t *tsdata = NULL, *next;
-     LIST_FOREACH_SAFE(tsdata, &client->tsdata_list, entry, next) {
-          // remove from tsdata list and destory
-          LIST_REMOVE(tsdata, entry);
-          _timeseries_data_destroy(tsdata);
-     }
-     memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list));
-
-     // Give semaphore
-     // xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
+tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL)
      if (count <= 0) {
@@ -231,15 +196,51 @@ tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client, int count, /*const char *k
      return (msg_id > -1) ? ESP_OK : ESP_FAIL;
 }
 
+void _tbcmh_timeseriesdata_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    // list create
+    memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list)); //client->tsdata_list = LIST_HEAD_INITIALIZER(client->tsdata_list);
+}
+
+void _tbcmh_timeseriesdata_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return ESP_FAIL;
+    // }
+    
+    // items empty - remove all item in tsdata_list
+    timeseries_data_t *tsdata = NULL, *next;
+    LIST_FOREACH_SAFE(tsdata, &client->tsdata_list, entry, next) {
+         // remove from tsdata list and destory
+         LIST_REMOVE(tsdata, entry);
+         _timeseriesdata_destroy(tsdata);
+    }
+    // list destroy
+    memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list));
+    
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
 void _tbcmh_timeseriesdata_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;
-    }
-
+    TBC_CHECK_PTR(client)
     //......
+}
+
+void _tbcmh_timeseriesdata_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    // ...
 }
 

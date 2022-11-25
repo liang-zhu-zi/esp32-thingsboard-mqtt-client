@@ -27,7 +27,6 @@
 extern "C" {
 #endif
 
-//====6.Client-side RPC================================================================================================
 /**
  * ThingsBoard MQTT Client Helper client-RPC
  */
@@ -42,6 +41,8 @@ typedef struct client_rpc
      char *method; /*!< method value */
      ////tbcmh_rpc_params_t *params;
      int request_id;
+     uint64_t timestamp; /*!< time stamp at sending request */
+
      void *context;                             /*!< Context of callback */
      tbcmh_clientrpc_on_response_t on_response; /*!< Callback of client-rpc response success */
      tbcmh_clientrpc_on_timeout_t on_timeout;   /*!< Callback of client-rpc response timeout */
@@ -49,11 +50,17 @@ typedef struct client_rpc
      LIST_ENTRY(client_rpc) entry;
 } client_rpc_t;
 
+typedef LIST_HEAD(tbcmh_clientrpc_list, client_rpc) clientrpc_list_t;
+
 tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client);
 
-void      _tbcmh_clientrpc_on_connected(tbcmh_handle_t client);
-void      _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
-void      _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id);
+void _tbcmh_clientrpc_on_create(tbcmh_handle_t client);
+void _tbcmh_clientrpc_on_destroy(tbcmh_handle_t client);
+
+void _tbcmh_clientrpc_on_connected(tbcmh_handle_t client);
+void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client);
+void      _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
+void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus
 }

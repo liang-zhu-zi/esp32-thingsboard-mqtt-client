@@ -203,6 +203,7 @@ static void _ota_update_reset(ota_update_t *otaupdate)
     otaupdate->state.chunk_id = 0;
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
+    //otaupdate->state.timestamp = (uint64_t)time(NULL);;
 }
 
 static bool _ota_update_checksum_verification(ota_update_t *otaupdate)
@@ -569,37 +570,41 @@ static tbc_err_t _tbcmh_otaupdate_chunk_request(ota_update_t *otaupdate)
         chunk_size = otaupdate->config.chunk_size;
     }
     sprintf(payload, "%d", chunk_size);
-    
-    int request_id = _request_list_create_and_append(otaupdate->client, TBCMH_REQUEST_FWUPDATE,
-                                          otaupdate->state.request_id/*default -1*/);
+
+    // Send msg to server
+    int request_id = otaupdate->state.request_id;
     if (request_id <= 0) {
-         TBC_LOGE("Unable to create request! %s()", __FUNCTION__);
-         return -1;
+        request_id = _tbcmh_get_request_id(otaupdate->client);
+        if (request_id <= 0) {
+             TBC_LOGE("failure to getting request id!");
+             return -1;
+        }
     }
-    int msg_id = tbcm_otaupdate_chunk_request(tbcm_handle, request_id, otaupdate->state.chunk_id/*default 0*/,
+    int msg_id = tbcm_otaupdate_chunk_request(tbcm_handle, request_id,
+                          otaupdate->state.chunk_id/*default 0*/,
                           payload, //chunk_size
                           1/*qos*/, 0/*retain*/);
-    // First OTA request
-    if ((otaupdate->state.request_id<0) && (request_id>0)) {
-         otaupdate->state.request_id = request_id;
-    }
     if (msg_id<0){
         TBC_LOGW("Request OTA chunk(%d) failure! request_id=%d, msg_id=%d %s()",
             otaupdate->state.chunk_id, request_id, msg_id, __FUNCTION__);
     }
+    // First OTA request
+    if ((otaupdate->state.request_id<=0) && (request_id>0)) {
+         otaupdate->state.request_id = request_id;
+    }
+    otaupdate->state.timestamp = (uint64_t)time(NULL);
 
     return (msg_id<0)?-1:0;
 }
 
-void _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length)
+//on response.
+void _tbcmh_otaupdate_chunk_on_data(tbcmh_handle_t client, int request_id,
+                                        int chunk_id, const char* payload, int length)
 {
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
           return;
      }
-
-     // Remove it from request list
-     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -685,6 +690,7 @@ void _tbcmh_otaupdate_chunk_on_response(tbcmh_handle_t client, int request_id, i
      return;
 }
 
+/*
 void _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client, int request_id)
 {
      if (!client) {
@@ -720,8 +726,56 @@ void _tbcmh_otaupdate_chunk_on_timeout(tbcmh_handle_t client, int request_id)
      // Give semaphore
      xSemaphoreGive(client->_lock);
      return;
-}
+}*/
 
+void _tbcmh_otaupdate_on_check_chunk_timeout(tbcmh_handle_t client, uint64_t timestamp)
+{
+     TBC_CHECK_PTR(client);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;
+     }
+
+     // TODO:  How to do  if it upgrade F/W & S/W at a moment?
+
+     // Search timeout item //& move to timeout_list
+     // otaupdate_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     ota_update_t *request = NULL, *next;
+     LIST_FOREACH_SAFE(request, &client->otaupdate_list, entry, next) {
+          if (request && request->state.timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+               break;
+               /*LIST_REMOVE(request, entry);
+               // append to timeout list
+               ota_update_t *it, *last = NULL;
+               if (LIST_FIRST(&timeout_list) == NULL) {
+                    LIST_INSERT_HEAD(&timeout_list, request, entry);
+               } else {
+                    LIST_FOREACH(it, &timeout_list, entry) {
+                         last = it;
+                    }
+                    if (it == NULL) {
+                         assert(last);
+                         LIST_INSERT_AFTER(last, request, entry);
+                    }
+               }*/
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Deal timeout
+     //LIST_FOREACH_SAFE(request, &timeout_list, entry, next)
+     if (request)
+     {
+          // abort ota
+          _ota_update_publish_late_failed_status(request, "OTA response timeout!");
+          _ota_update_do_abort(request);
+          _ota_update_reset(request);
+     }
+}
 
 //========== Firmware/Software update API ======================================================================
 tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client, 
@@ -857,13 +911,27 @@ static void __on_sw_attributesrequest_response(tbcmh_handle_t client,
     //no code
 }
 
+void _tbcmh_otaupdate_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    memset(&client->otaupdate_list, 0x00, sizeof(client->otaupdate_list)); //client->otaupdate_list = LIST_HEAD_INITIALIZER(client->otaupdate_list);
+}
+
+void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_otaupdate_empty(client);
+}
+
 void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
 
     if (!client) {
          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;// ESP_FAIL;
+         return;
     }
 
     int msg_id = tbcm_subscribe(client->tbmqttclient,
@@ -917,6 +985,17 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
           }
      }
 }
+
+void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+
+    // all chunk request timeout!!!!
+    //_tbcmh_otaupdate_empty(client);
+    _tbcmh_otaupdate_on_check_chunk_timeout(client, (uint64_t)time(NULL)+2*TB_MQTT_TIMEOUT);
+}
+
 
 void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate_type_t ota_type,
                                          const char *ota_title, const char *ota_version, int ota_size,

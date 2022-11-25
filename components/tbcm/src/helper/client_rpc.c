@@ -54,6 +54,7 @@ static client_rpc_t *_client_rpc_create(tbcmh_handle_t client, int request_id,
         strcpy(clientrpc->method, method);
     }
     clientrpc->request_id = request_id;
+    clientrpc->timestamp = (uint64_t)time(NULL);
     clientrpc->context = context;
     clientrpc->on_response = on_response;
     clientrpc->on_timeout = on_timeout;
@@ -122,9 +123,10 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
      //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //}
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
-     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_CLIENTRPC, 0/*request_id*/);
+     // Send msg to server
+     int request_id = _tbcmh_get_request_id(client);
      if (request_id <= 0) {
-          TBC_LOGE("Unable to create request!");
+          TBC_LOGE("failure to getting request id!");
           return -1;
      }
      int msg_id;
@@ -132,17 +134,11 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
          msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
                           request_id,
-                          //client,
-                          //NULL, //_tbcmh_on_clientrpc_response,
-                          //NULL, //_tbcmh_on_clientrpc_timeout,
                           1/*qos*/, 0/*retain*/);
          cJSON_free(params_str); // free memory
      } else {
          msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, "{}",
                           request_id,
-                          //client,
-                          //NULL, //_tbcmh_on_clientrpc_response,
-                          //NULL, //_tbcmh_on_clientrpc_timeout,
                           1/*qos*/, 0/*retain*/);     
      }
      //cJSON_Delete(object); // delete json object
@@ -183,9 +179,10 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
      //else 
      //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
-     int request_id = _request_list_create_and_append(client, TBCMH_REQUEST_CLIENTRPC, 0/*request_id*/);
+     // Send msg to server
+     int request_id = _tbcmh_get_request_id(client);
      if (request_id <= 0) {
-          TBC_LOGE("Unable to create request!");
+          TBC_LOGE("failure to getting request id!");
           return -1;
      }
      int msg_id;
@@ -193,9 +190,6 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
          msg_id = tbcm_clientrpc_request_ex(client->tbmqttclient, method, params_str,
                                   request_id,
-                                  //client,
-                                  //_tbcmh_on_clientrpc_response,
-                                  //_tbcmh_on_clientrpc_timeout,
                                   1/*qos*/, 0/*retain*/);
          cJSON_free(params_str); // free memory
      } else {
@@ -276,30 +270,44 @@ tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client)
     return ESP_OK;
 }
 
+void _tbcmh_clientrpc_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list)); //client->clientrpc_list = LIST_HEAD_INITIALIZER(client->clientrpc_list);
+}
+
+void _tbcmh_clientrpc_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_clientrpc_empty(client);
+}
+
 void _tbcmh_clientrpc_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return;
-    }
-
+    TBC_CHECK_PTR(client)
     int msg_id = tbcm_subscribe(client->tbmqttclient,
                                 TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
              msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
 }
 
-void _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client)
+    _tbcmh_clientrpc_empty(client);
+}
+
+//on response
+void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
      if (!client || !object) {
           TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
           return;
      }
-
-     // Remove it from request list
-     _request_list_search_and_remove(client, request_id);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -341,6 +349,7 @@ void _tbcmh_clientrpc_on_response(tbcmh_handle_t client, int request_id, const c
      return;
 }
 
+/*
 void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
 {
      if (!client) {
@@ -384,5 +393,52 @@ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
      _client_rpc_destroy(cache);
 
      return;
+}*/
+
+void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
+{
+     TBC_CHECK_PTR(client);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;
+     }
+
+     // Search & move timeout item to timeout_list
+     clientrpc_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     client_rpc_t *request = NULL, *next;
+     LIST_FOREACH_SAFE(request, &client->clientrpc_list, entry, next) {
+          if (request && request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+               LIST_REMOVE(request, entry);
+               // append to timeout list
+               client_rpc_t *it, *last = NULL;
+               if (LIST_FIRST(&timeout_list) == NULL) {
+                    LIST_INSERT_HEAD(&timeout_list, request, entry);
+               } else {
+                    LIST_FOREACH(it, &timeout_list, entry) {
+                         last = it;
+                    }
+                    if (it == NULL) {
+                         assert(last);
+                         LIST_INSERT_AFTER(last, request, entry);
+                    }
+               }
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Deal timeout
+     LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
+          if (request->on_timeout) {
+              request->on_timeout(request->client, request->context,
+                    request->request_id, request->method);
+          }
+          LIST_REMOVE(request, entry);
+          _client_rpc_destroy(request);
+     }
 }
+
 

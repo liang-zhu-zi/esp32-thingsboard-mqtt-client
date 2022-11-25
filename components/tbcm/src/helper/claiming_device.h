@@ -27,8 +27,11 @@
 extern "C" {
 #endif
 
-void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client);
+void _tbcmh_claimingdevice_on_create(tbcmh_handle_t client);
+void _tbcmh_claimingdevice_on_destroy(tbcmh_handle_t client);
 
+void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client);
+void _tbcmh_claimingdevice_on_disconnected(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

@@ -41,6 +41,8 @@ typedef struct device_provision
      //char *method; /*!< method value */
      tbcmh_provision_params_t *params;
      int request_id;
+     uint64_t timestamp; /*!< time stamp at sending request */
+
      void *context;                             /*!< Context of callback */
      tbcmh_provision_on_response_t on_response; /*!< Callback of provision response success */
      tbcmh_provision_on_timeout_t on_timeout;   /*!< Callback of provision response timeout */
@@ -48,11 +50,19 @@ typedef struct device_provision
      LIST_ENTRY(device_provision) entry;
 } device_provision_t;
 
+typedef LIST_HEAD(tbcmh_provision_list, device_provision) deviceprovision_list_t;
+
+
 tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client);
 
-void      _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client);
-void      _tbcmh_deviceprovision_on_response(tbcmh_handle_t client, int request_id, const cJSON *object);
-void      _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id);
+void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client);
+void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client);
+
+void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client);
+void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client);
+
+void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
+void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus
 }

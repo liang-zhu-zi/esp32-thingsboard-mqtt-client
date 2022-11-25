@@ -80,27 +80,21 @@ typedef struct tbcmh_client
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
-     LIST_HEAD(tbcmh_tsdata_list, timeseries_data) tsdata_list;                              /*!< telemetry time-series data entries */
-     LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list;   /*!< client attributes entries */
-     LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list;   /*!< shared attributes entries */
-     LIST_HEAD(tbcmh_attributesrequest_list, attributes_request) attributesrequest_list;  /*!< attributes request entries */
-     LIST_HEAD(tbcmh_serverrpc_list, server_rpc) serverrpc_list;  /*!< server side RPC entries */
-     LIST_HEAD(tbcmh_clientrpc_list, client_rpc) clientrpc_list;  /*!< client side RPC entries */
-     LIST_HEAD(tbcmh_provision_list, device_provision) provision_list;  /*!< provision entries */
-     LIST_HEAD(tbcmh_otaupdate_list, ota_update) otaupdate_list;    /*!< A device may have multiple firmware */
+     tsdata_list_t          tsdata_list;              /*!< telemetry time-series data entries */
+     clientattribute_list_t   clientattribute_list;   /*!< client attributes entries */
+     sharedattribute_list_t   sharedattribute_list;   /*!< shared attributes entries */
+     attributesrequest_list_t attributesrequest_list; /*!< attributes request entries */
+     serverrpc_list_t serverrpc_list; /*!< server side RPC entries */
+     clientrpc_list_t clientrpc_list; /*!< client side RPC entries */
+     otaupdate_list_t otaupdate_list; /*!< A device may have multiple firmware */
+     deviceprovision_list_t deviceprovision_list;     /*!< device provision entries */
 
      //SemaphoreHandle_t lock;
      int next_request_id;
      uint64_t last_check_timestamp;
-     tbcmh_request_list_t request_list;   /*!< request list: attributes request, client side RPC & ota update request */
 } tbcmh_t;
 
-bool _request_is_equal(const tbcmh_request_t *a, const tbcmh_request_t *b);
-int  _request_list_create_and_append(tbcmh_handle_t client, tbcmh_request_type_t type, int request_id);
-void _request_list_search_and_remove(tbcmh_handle_t client, int request_id);
-void _request_list_search_and_remove_by_type(tbcmh_handle_t client, tbcmh_request_type_t type);
-int  _request_list_move_all_of_timeout(tbcmh_handle_t client, uint64_t timestamp,
-                                             tbcmh_request_list_t *timeout_request_list);
+int _tbcmh_get_request_id(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }
