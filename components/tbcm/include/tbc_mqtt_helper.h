@@ -252,7 +252,7 @@ tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client, const cha
                                                 tbcmh_clientattribute_on_get_t on_get,
                                                 tbcmh_clientattribute_on_set_t on_set);
 tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key);
-tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client, int count, /*const char *key,*/...);
+tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
 tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,

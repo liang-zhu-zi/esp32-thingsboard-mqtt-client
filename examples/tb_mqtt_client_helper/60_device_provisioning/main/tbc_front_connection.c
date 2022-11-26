@@ -35,7 +35,7 @@
 #include "tbc_transport_credentials_memory.h"
 
 //#include "tbc_utils.h"
-//#include "timeseries_data.h"
+//#include "timeseriesdata.h"
 //#include "client_attribute.h"
 //#include "shared_attribute.h"
 //#include "attributes_request.h"

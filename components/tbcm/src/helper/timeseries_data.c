@@ -20,24 +20,25 @@
 
 #include "esp_err.h"
 
-//#include "timeseries_data.h"
+//#include "timeseriesdata.h"
 #include "tbc_mqtt_helper_internal.h"
 
-const static char *TAG = "timeseries_data";
+const static char *TAG = "timeseriesdata";
 
-/*!< Initialize timeseries_data of TBCM_JSON */
-static timeseries_data_t *_timeseriesdata_create(tbcmh_handle_t client, const char *key, void *context, tbcmh_tsdata_on_get_t on_get)
+/*!< Initialize timeseriesdata of TBCM_JSON */
+static timeseriesdata_t *_timeseriesdata_create(tbcmh_handle_t client, const char *key,
+                            void *context, tbcmh_tsdata_on_get_t on_get)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get, NULL);
     
-    timeseries_data_t *tsdata = TBC_MALLOC(sizeof(timeseries_data_t));
+    timeseriesdata_t *tsdata = TBC_MALLOC(sizeof(timeseriesdata_t));
     if (!tsdata) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(tsdata, 0x00, sizeof(timeseries_data_t));
+    memset(tsdata, 0x00, sizeof(timeseriesdata_t));
     tsdata->client = client;
     tsdata->key = TBC_MALLOC(strlen(key)+1);
     if (tsdata->key) {
@@ -49,7 +50,7 @@ static timeseries_data_t *_timeseriesdata_create(tbcmh_handle_t client, const ch
 }
 
 /*!< Destroys the tbcm key-value handle */
-static tbc_err_t _timeseriesdata_destroy(timeseries_data_t *tsdata)
+static tbc_err_t _timeseriesdata_destroy(timeseriesdata_t *tsdata)
 {
     if (!tsdata) {
         TBC_LOGE("tsdata is NULL");
@@ -77,7 +78,7 @@ tbc_err_t tbcmh_timeseriesdata_register(tbcmh_handle_t client, const char *key,
      }
 
      // Create tsdata
-     timeseries_data_t *tsdata = _timeseriesdata_create(client, key/*, type*/, context, on_get/*, on_set*/);
+     timeseriesdata_t *tsdata = _timeseriesdata_create(client, key/*, type*/, context, on_get/*, on_set*/);
      if (!tsdata) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -86,13 +87,13 @@ tbc_err_t tbcmh_timeseriesdata_register(tbcmh_handle_t client, const char *key,
      }
 
      // Insert tsdata to list
-     timeseries_data_t *it, *last = NULL;
-     if (LIST_FIRST(&client->tsdata_list) == NULL) {
+     timeseriesdata_t *it, *last = NULL;
+     if (LIST_FIRST(&client->timeseriesdata_list) == NULL) {
           // Insert head
-          LIST_INSERT_HEAD(&client->tsdata_list, tsdata, entry);
+          LIST_INSERT_HEAD(&client->timeseriesdata_list, tsdata, entry);
      } else {
           // Insert last
-          LIST_FOREACH(it, &client->tsdata_list, entry) {
+          LIST_FOREACH(it, &client->timeseriesdata_list, entry) {
                last = it;
           }
           if (it == NULL) {
@@ -120,8 +121,8 @@ tbc_err_t tbcmh_timeseriesdata_unregister(tbcmh_handle_t client, const char *key
      }
 
      // Search item
-     timeseries_data_t *tsdata = NULL, *next;
-     LIST_FOREACH_SAFE(tsdata, &client->tsdata_list, entry, next) {
+     timeseriesdata_t *tsdata = NULL, *next;
+     LIST_FOREACH_SAFE(tsdata, &client->timeseriesdata_list, entry, next) {
           if (tsdata && strcmp(tsdata->key, key)==0) {
              // remove from tsdata list and destory
              LIST_REMOVE(tsdata, entry);
@@ -163,8 +164,8 @@ tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const 
           const char *key = va_arg(ap, const char*);
 
           // Search item
-          timeseries_data_t *tsdata = NULL;
-          LIST_FOREACH(tsdata, &client->tsdata_list, entry) {
+          timeseriesdata_t *tsdata = NULL;
+          LIST_FOREACH(tsdata, &client->timeseriesdata_list, entry) {
                if (tsdata && strcmp(tsdata->key, key)==0) {
                     break;
                }
@@ -174,7 +175,7 @@ tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const 
           if (tsdata && tsdata->on_get) {
                cJSON *value = tsdata->on_get(tsdata->client, tsdata->context);
                if (value) {
-                   result = cJSON_AddItemToObject(object, tsdata->key, value);
+                   result |= cJSON_AddItemToObject(object, tsdata->key, value);
                }
           } else {
                TBC_LOGW("Unable to find&send time-series data:%s! %s()", key, __FUNCTION__);
@@ -200,8 +201,18 @@ void _tbcmh_timeseriesdata_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return ESP_FAIL;
+    // }
+    
     // list create
-    memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list)); //client->tsdata_list = LIST_HEAD_INITIALIZER(client->tsdata_list);
+    memset(&client->timeseriesdata_list, 0x00, sizeof(client->timeseriesdata_list)); //client->timeseriesdata_list = LIST_HEAD_INITIALIZER(client->timeseriesdata_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_timeseriesdata_on_destroy(tbcmh_handle_t client)
@@ -216,15 +227,15 @@ void _tbcmh_timeseriesdata_on_destroy(tbcmh_handle_t client)
     //      return ESP_FAIL;
     // }
     
-    // items empty - remove all item in tsdata_list
-    timeseries_data_t *tsdata = NULL, *next;
-    LIST_FOREACH_SAFE(tsdata, &client->tsdata_list, entry, next) {
+    // items empty - remove all item in timeseriesdata_list
+    timeseriesdata_t *tsdata = NULL, *next;
+    LIST_FOREACH_SAFE(tsdata, &client->timeseriesdata_list, entry, next) {
          // remove from tsdata list and destory
          LIST_REMOVE(tsdata, entry);
          _timeseriesdata_destroy(tsdata);
     }
     // list destroy
-    memset(&client->tsdata_list, 0x00, sizeof(client->tsdata_list));
+    memset(&client->timeseriesdata_list, 0x00, sizeof(client->timeseriesdata_list));
     
     // Give semaphore
     // xSemaphoreGive(client->_lock);

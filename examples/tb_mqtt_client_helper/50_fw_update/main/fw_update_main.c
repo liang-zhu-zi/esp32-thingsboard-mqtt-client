@@ -202,7 +202,7 @@ void app_main(void)
     esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseries_data", ESP_LOG_VERBOSE);
+    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();

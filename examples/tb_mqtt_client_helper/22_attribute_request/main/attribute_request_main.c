@@ -59,7 +59,7 @@ void tb_clientattribute_on_set_setpoint(tbcmh_handle_t client, void *context, co
 void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s", CLIENTATTRIBUTE_SETPOINT);
-    tbcmh_clientattribute_send(client, 1, CLIENTATTRIBUTE_SETPOINT);
+    tbcmh_clientattribute_update(client, 1, CLIENTATTRIBUTE_SETPOINT);
 }
 
 //Don't call TBCMH API in this callback!
@@ -278,7 +278,7 @@ void app_main(void)
     esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseries_data", ESP_LOG_VERBOSE);
+    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());

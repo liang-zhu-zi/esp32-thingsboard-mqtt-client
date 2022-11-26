@@ -46,8 +46,6 @@ typedef struct client_attribute
 
 typedef LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list_t;
 
-tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client);
-
 void _tbcmh_clientattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client);
 

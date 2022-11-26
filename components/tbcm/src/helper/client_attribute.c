@@ -168,35 +168,7 @@ tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key)
      return ESP_OK;
 }
 
-tbc_err_t _tbcmh_clientattribute_empty(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // TODO: How to add lock??
-     // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBC_LOGE("Unable to take semaphore!");
-     //      return ESP_FAIL;
-     // }
-
-     // remove all item in clientattribute_list
-     client_attribute_t *clientattribute = NULL, *next;
-     LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
-          // remove from clientattribute list and destory
-          LIST_REMOVE(clientattribute, entry);
-          _client_attribute_destroy(clientattribute);
-     }
-     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list));
-
-     // Give semaphore
-     // xSemaphoreGive(client->_lock);
-     return ESP_OK;
-}
-
-tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
+tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
 {
      if (!client) {
           TBC_LOGE("client is NULL! %s()", __FUNCTION__);
@@ -268,9 +240,29 @@ void _tbcmh_clientattribute_on_create(tbcmh_handle_t client)
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_clientattribute_empty(client);
+    TBC_CHECK_PTR(client);
+
+     // TODO: How to add lock??
+     // Take semaphore
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore!");
+     //      return ESP_FAIL;
+     // }
+
+     // remove all item in clientattribute_list
+     client_attribute_t *clientattribute = NULL, *next;
+     LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
+          // remove from clientattribute list and destory
+          LIST_REMOVE(clientattribute, entry);
+          _client_attribute_destroy(clientattribute);
+     }
+     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list));
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+     return ESP_OK;
 }
+
 
 void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client)
 {

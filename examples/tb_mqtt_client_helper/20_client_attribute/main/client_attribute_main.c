@@ -46,7 +46,7 @@ tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *c
 void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s, %s",CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
-    tbcmh_clientattribute_send(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
+    tbcmh_clientattribute_update(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -216,7 +216,7 @@ void app_main(void)
     esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseries_data", ESP_LOG_VERBOSE);
+    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
