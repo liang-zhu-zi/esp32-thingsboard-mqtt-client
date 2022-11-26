@@ -657,7 +657,6 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
-
     int msg_id = tbcm_subscribe(client->tbmqttclient,
                                 TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
@@ -793,38 +792,38 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
      //return;
 }
 
- //on response.
- void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
+//on response
+void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
                                          int chunk_id, const char* payload, int length)
- {
-      TBC_CHECK_PTR(client);
- 
-      // Take semaphore
-      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-           return;
-      }
- 
-      // Search item
-      otaupdate_t *otaupdate = NULL;
-      LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
-           if (otaupdate && (otaupdate->state.request_id==request_id)) {
-                break;
-           }
-      }
-      if (!otaupdate) {
-           TBC_LOGW("Unable to find otaupdate:%d! %s()", request_id, __FUNCTION__);
-           // Give semaphore
-           xSemaphoreGive(client->_lock);
-           return;
-      }
- 
-      // exec ota response
-      char ota_error[128] = {0};
-      const char* ota_error_ = "Unknown error!";
-      int result = _otaupdate_do_write(otaupdate, chunk_id, payload, length, ota_error, sizeof(ota_error)-1);
-      switch (result) {
-      case 0: //return 0: success on response
+{
+     TBC_CHECK_PTR(client);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;
+     }
+
+     // Search item
+     otaupdate_t *otaupdate = NULL;
+     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
+          if (otaupdate && (otaupdate->state.request_id==request_id)) {
+               break;
+          }
+     }
+     if (!otaupdate) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBC_LOGW("Unable to find otaupdate:%d! %s()", request_id, __FUNCTION__);
+          return;
+     }
+
+     // exec ota response
+     char ota_error[128] = {0};
+     const char* ota_error_ = "Unknown error!";
+     int result = _otaupdate_do_write(otaupdate, chunk_id, payload, length, ota_error, sizeof(ota_error)-1);
+     switch (result) {
+     case 0: //return 0: success on response
           if ((otaupdate->state.received_len >= otaupdate->attribute.ota_size))  { //Is it already received all f/w or s/w
              _otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADED);
  
@@ -878,28 +877,28 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
          _otaupdate_reset(otaupdate);
       }
  
-      // Give semaphore
-      xSemaphoreGive(client->_lock);
-      return;
- }
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return;
+}
  
- void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
- {
-      TBC_CHECK_PTR(client);
- 
-      // Take semaphore
-      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-           return;
-      }
- 
-      // TODO:  How to do  if it upgrade F/W & S/W at a moment?
- 
-      // Search timeout item //& move to timeout_list
-      // otaupdate_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-      otaupdate_t *request = NULL, *next;
-      LIST_FOREACH_SAFE(request, &client->otaupdate_list, entry, next) {
-           if (request && request->state.timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
+{
+     TBC_CHECK_PTR(client);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return;
+     }
+
+     // TODO:  How to do  if it upgrade F/W & S/W at a moment?
+
+     // Search timeout item //& move to timeout_list
+     // otaupdate_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     otaupdate_t *request = NULL, *next;
+     LIST_FOREACH_SAFE(request, &client->otaupdate_list, entry, next) {
+          if (request && request->state.timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                 break;
                 /*LIST_REMOVE(request, entry);
                 // append to timeout list
@@ -915,83 +914,20 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
                           LIST_INSERT_AFTER(last, request, entry);
                      }
                 }*/
-           }
-      }
- 
-      // Give semaphore
-      xSemaphoreGive(client->_lock);
- 
-      // Deal timeout
-      //LIST_FOREACH_SAFE(request, &timeout_list, entry, next)
-      if (request)
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     // Deal timeout
+     //LIST_FOREACH_SAFE(request, &timeout_list, entry, next)
+     if (request)
       {
            // abort ota
            _otaupdate_publish_late_failed_status(request, "OTA response timeout!");
            _otaupdate_do_abort(request);
            _otaupdate_reset(request);
-      }
- }
-
-#if 0
-// TODO:
-/* * On connected:
-   1. Subscribe to `v1/devices/me/attributes/response/+`
-   1. Subscribe to `v1/devices/me/attributes`
-   1. Subscribe to `v2/fw/response/+`
-   1. Send telemetry: *current firmware info*
-      * Topic: `v1/devices/me/telemetry`
-      * Payload: `{"current_fw_title":"Initial","current_fw_version":"v0"}`
-
-      Replace `Initial` and `v0` with your F/W title and version.
-
-   1. Send attributes request: *request firmware info*
-      * Topic: `v1/devices/me/attributes/request/{request_id}`
-      * Payload: `{"sharedKeys": "fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version"}`
-*/
-
-/*static*/ void _tbcmh_otaupdate_publish_current_status(tbcmh_handle_t client)
-{
-    // TODO:
-    //    1. Send telemetry: *current firmware info*
-    //       * Topic: `v1/devices/me/telemetry`
-    //       * Payload: `{"current_fw_title":"Initial","current_fw_version":"v0"}`
-
-    //    1. Send telemetry: *current firmware info*
-    //       * Topic: `v1/devices/me/telemetry`
-    //       * Payload: `{"current_sw_title":"Initial","current_sw_version":"v0"}`
+     }
 }
-
-/*static*/ void __tbcmh_otaupdate_attributesrequest_on_response(tbcmh_handle_t client, 
-                    void *context, int request_id)
-{
-    // no code!
-}
-/*static*/ void __tbcmh_otaupdate_attributesrequest_on_timeout(tbcmh_handle_t client,
-                    void *context, int request_id)
-{
-    // TODO: resend ???
-}
-/*static*/ void _tbcmh_otaupdate_send_attributes_request(tbcmh_handle_t client)
-{
-    // TODO:
-
-    // tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client, const char *key, void *context,
-    //                                     tbcmh_sharedattribute_on_set_t on_set);
-    // key: fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version
-    //      sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version
-
-    //int tbcmh_attributesrequest_send(client,
-    //                                 NULL,
-    //                                 __tbcmh_otaupdate_attributesrequest_on_response,
-    //                                 __tbcmh_otaupdate_attributesrequest_on_timeout,
-    //                                int count, /*const char *key,*/...)
-    //    Send attributes request: *request firmware info*
-    //      * Topic: `v1/devices/me/attributes/request/{request_id}`
-    //      * Payload: `{"sharedKeys": "fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version"}`
-
-    //      * Topic: `v1/devices/me/attributes/request/{request_id}`
-    //      * Payload: `{"sharedKeys": "sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version"}`
-
-}
-#endif
 

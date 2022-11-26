@@ -338,8 +338,9 @@ void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client)
 void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
+    TBC_CHECK_PTR(client);
+    int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
 }
@@ -374,7 +375,6 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
     // Give semaphore
     // xSemaphoreGive(client->_lock);
 }
-
 
 //on response
 void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
