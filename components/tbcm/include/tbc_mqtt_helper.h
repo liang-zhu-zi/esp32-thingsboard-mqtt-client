@@ -294,7 +294,7 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
 
 //====50.Device provisioning=======================================================================
 // return request_id or ESP_FAIL
-int tbcmh_provision_request(tbcmh_handle_t client,
+int tbcmh_deviceprovision_request(tbcmh_handle_t client,
                             const tbc_provison_config_t *config,
                             void *context,
                             tbcmh_provision_on_response_t on_response,

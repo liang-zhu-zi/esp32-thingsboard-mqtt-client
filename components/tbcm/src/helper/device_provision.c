@@ -15,36 +15,29 @@
 // This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
+
 #include "esp_err.h"
 
-//#include "cJSON.h"
-//#include "tbc_mqtt.h"
-
-#include "tbc_utils.h"
-//#include "device_provision.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "provision";
 
-/*!< Initialize device_provision_t */
-static device_provision_t *_device_provision_create(tbcmh_handle_t client, int request_id,
+/*!< Initialize deviceprovision_t */
+static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client, int request_id,
                                          const tbcmh_provision_params_t *params,
                                          void *context,
                                          tbcmh_provision_on_response_t on_response,
                                          tbcmh_provision_on_timeout_t on_timeout)
 {
-    if (!on_response) {
-        TBC_LOGE("on_response is NULL");
-        return NULL;
-    }
-    
-    device_provision_t *provision = TBC_MALLOC(sizeof(device_provision_t));
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_response, NULL);
+
+    deviceprovision_t *provision = TBC_MALLOC(sizeof(deviceprovision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(provision, 0x00, sizeof(device_provision_t));
+    memset(provision, 0x00, sizeof(deviceprovision_t));
     provision->client = client;
     provision->params = cJSON_Duplicate(params, true);
     provision->request_id = request_id;
@@ -55,20 +48,17 @@ static device_provision_t *_device_provision_create(tbcmh_handle_t client, int r
     return provision;
 }
 
-static device_provision_t *_device_provision_clone_wo_listentry(device_provision_t *src)
+static deviceprovision_t *_deviceprovision_clone_wo_listentry(deviceprovision_t *src)
 {
-    if (!src) {
-        TBC_LOGE("src is NULL");
-        return NULL;
-    }
-    
-    device_provision_t *provision = TBC_MALLOC(sizeof(device_provision_t));
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
+
+    deviceprovision_t *provision = TBC_MALLOC(sizeof(deviceprovision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(provision, 0x00, sizeof(device_provision_t));
+    memset(provision, 0x00, sizeof(deviceprovision_t));
     provision->client = src->client;
     provision->params = cJSON_Duplicate(src->params, true);
     provision->request_id = src->request_id;
@@ -78,13 +68,10 @@ static device_provision_t *_device_provision_clone_wo_listentry(device_provision
     return provision;
 }
 
-/*!< Destroys the device_provision_t */
-static tbc_err_t _device_provision_destroy(device_provision_t *provision)
+/*!< Destroys the deviceprovision_t */
+static tbc_err_t _deviceprovision_destroy(deviceprovision_t *provision)
 {
-    if (!provision) {
-        TBC_LOGE("provision is NULL");
-        return ESP_FAIL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(provision, ESP_FAIL);
 
     cJSON_Delete(provision->params);
     provision->params = NULL;
@@ -92,9 +79,8 @@ static tbc_err_t _device_provision_destroy(device_provision_t *provision)
     return ESP_OK;
 }
 
-//==== Device provisioning ===============================================================
 // return ESP_OK on successful, ESP_FAIL on failure
-static int _params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static int __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -115,7 +101,7 @@ static int _params_of_credentials_generated_by_server(tbcmh_provision_params_t *
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static int _params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static int __params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -141,7 +127,7 @@ static int _params_of_devices_supplies_access_token(tbcmh_provision_params_t *pa
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static int _params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static int __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -177,7 +163,7 @@ static int _params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_pa
 
 // hash - Public key X509 hash for device in ThingsBoard.
 // return ESP_OK on successful, ESP_FAIL on failure
-static int _params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static int __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -202,20 +188,14 @@ static int _params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t
     return ESP_OK;
 }
 
-static int _provision_request_with_params(tbcmh_handle_t client,
+static int _deviceprovision_request_with_params(tbcmh_handle_t client,
                                 const tbcmh_provision_params_t *params,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
                                 tbcmh_provision_on_timeout_t on_timeout)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-     if (!params) {
-          TBC_LOGE("params is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -248,7 +228,7 @@ static int _provision_request_with_params(tbcmh_handle_t client,
      }
 
      // Create provision
-     device_provision_t *provision = _device_provision_create(client, request_id, params, context, on_response, on_timeout);
+     deviceprovision_t *provision = _deviceprovision_create(client, request_id, params, context, on_response, on_timeout);
      if (!provision) {
           TBC_LOGE("Init provision failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
@@ -256,7 +236,7 @@ static int _provision_request_with_params(tbcmh_handle_t client,
      }
 
      // Insert provision to list
-     device_provision_t *it, *last = NULL;
+     deviceprovision_t *it, *last = NULL;
      if (LIST_FIRST(&client->deviceprovision_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->deviceprovision_list, provision, entry);
@@ -277,7 +257,7 @@ static int _provision_request_with_params(tbcmh_handle_t client,
 }
 
 // return request_id or ESP_FAIL
-int tbcmh_provision_request(tbcmh_handle_t client,
+int tbcmh_deviceprovision_request(tbcmh_handle_t client,
                                     const tbc_provison_config_t *config,
                                     void *context,
                                     tbcmh_provision_on_response_t on_response,
@@ -293,13 +273,13 @@ int tbcmh_provision_request(tbcmh_handle_t client,
     }
     int ret = ESP_FAIL;
     if (config->provisionType == TBC_PROVISION_TYPE_SERVER_GENERATES_CREDENTIALS) { // Credentials generated by the ThingsBoard server
-         ret = _params_of_credentials_generated_by_server(params, config);
+         ret = __params_of_credentials_generated_by_server(params, config);
     } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_ACCESS_TOKEN) { // Devices supplies Access Token
-         ret = _params_of_devices_supplies_access_token(params, config);
+         ret = __params_of_devices_supplies_access_token(params, config);
     } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS) { // Devices supplies Basic MQTT Credentials
-         ret = _params_of_devices_supplies_basic_mqtt_credentials(params, config);
+         ret = __params_of_devices_supplies_basic_mqtt_credentials(params, config);
     } else if (config->provisionType == TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS) { // Devices supplies X.509 Certificate)
-         ret = _params_of_devices_supplies_x509_certificate(params, config);
+         ret = __params_of_devices_supplies_x509_certificate(params, config);
     } else {
          TBC_LOGE("config->provisionType(%d) is error!", config->provisionType);
          ret = ESP_FAIL;
@@ -312,64 +292,52 @@ int tbcmh_provision_request(tbcmh_handle_t client,
     }
 
      // request_id
-     ret = _provision_request_with_params(client, params, context, on_response, on_timeout);
+     ret = _deviceprovision_request_with_params(client, params, context, on_response, on_timeout);
      cJSON_Delete(params); // delete json object     
      return ret;
-}
-
-tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // TODO: How to add lock??
-     // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBC_LOGE("Unable to take semaphore!");
-     //      return ESP_FAIL;
-     // }
-
-     // remove all item in deviceprovision_list
-     device_provision_t *provision = NULL, *next;
-     LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
-          // exec timeout callback
-          if (provision->on_timeout) {
-              provision->on_timeout(provision->client, provision->context, provision->request_id);
-          }
-
-          // remove from provision list and destory
-          LIST_REMOVE(provision, entry);
-          _device_provision_destroy(provision);
-     }
-     memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
-
-     // Give semaphore
-     // xSemaphoreGive(client->_lock);
-     return ESP_OK;
 }
 
 void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // list create
     memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list)); //client->deviceprovision_list = LIST_HEAD_INITIALIZER(client->deviceprovision_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_provision_empty(client);
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient,
-                                TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
+    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
 }
@@ -377,12 +345,34 @@ void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client)
 void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_provision_empty(client);
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // remove all item in deviceprovision_list
+    deviceprovision_t *provision = NULL, *next;
+    LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
+        // exec timeout callback
+        if (provision->on_timeout) {
+            provision->on_timeout(provision->client, provision->context, provision->request_id);
+        }
+
+        // remove from provision list and destory
+        LIST_REMOVE(provision, entry);
+        _deviceprovision_destroy(provision);
+    }
+    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
-
-static char *_parse_string_item(const cJSON *object, const char* key)
+static char *__parse_string_item(const cJSON *object, const char* key)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, NULL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
@@ -400,7 +390,7 @@ static char *_parse_string_item(const cJSON *object, const char* key)
     return string_value;
 }
 
-static int _parse_provision_response(const tbcmh_provision_results_t *results,
+static int __parse_provision_response(const tbcmh_provision_results_t *results,
                                           tbc_transport_credentials_config_t *credentials)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(results, ESP_FAIL);
@@ -426,7 +416,7 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
         return ESP_FAIL;
     }
 
-    char *credentialsTypeStr = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE);
+    char *credentialsTypeStr = __parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE);
     if (!credentialsTypeStr) {
         TBC_LOGW("credentialsType is error!");
         return ESP_FAIL;
@@ -439,7 +429,7 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
         //  "status":"SUCCESS"
         //}
         credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
-        credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
+        credentials->token = __parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
         if (!credentials->token){
             TBC_LOGW("credentialsValue is error!");
             return ESP_FAIL;
@@ -461,12 +451,12 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
             TBC_LOGW("credentialsValue is NOT existed!");
             return ESP_FAIL;
         }
-        credentials->client_id = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_CLIENT_ID);
-        credentials->username  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME);
+        credentials->client_id = __parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_CLIENT_ID);
+        credentials->username  = __parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME);
         if (!credentials->username) {
-            credentials->username  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME2);
+            credentials->username  = __parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_USERNAME2);
         }
-        credentials->password  = _parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_PASSWORD);
+        credentials->password  = __parse_string_item(credentialsValue, TB_MQTT_KEY_PROVISION_PASSWORD);
 
     } else if (strcmp(credentialsTypeStr, TB_MQTT_VALUE_PROVISION_X509_CERTIFICATE) == 0) {
         //{
@@ -477,7 +467,7 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
         //  "provisionDeviceStatus":"SUCCESS"
         //}
         credentials->type = TBC_TRANSPORT_CREDENTIALS_TYPE_X509;
-        credentials->token = _parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
+        credentials->token = __parse_string_item(results, TB_MQTT_KEY_PROVISION_CREDENTIALS_VALUE);
         if (!credentials->token){
             TBC_LOGW("credentialsValue is error!");
             return ESP_FAIL;
@@ -494,19 +484,17 @@ static int _parse_provision_response(const tbcmh_provision_results_t *results,
 //on response.
 void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     if (!client || !object) {
-          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(object);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
+          return;
      }
 
      // Search provision
-     device_provision_t *provision = NULL;
+     deviceprovision_t *provision = NULL;
      LIST_FOREACH(provision, &client->deviceprovision_list, entry) {
           if (provision && (provision->request_id==request_id)) {
                break;
@@ -516,19 +504,19 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const
           // Give semaphore
           xSemaphoreGive(client->_lock);
           TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
-          return;// ESP_FAIL;
+          return;
      }
 
      // Cache and remove provision
-     device_provision_t *cache = _device_provision_clone_wo_listentry(provision);
+     deviceprovision_t *cache = _deviceprovision_clone_wo_listentry(provision);
      LIST_REMOVE(provision, entry);
-     _device_provision_destroy(provision);
+     _deviceprovision_destroy(provision);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
       // Do response - parse results of provision response
      tbc_transport_credentials_config_t credentials = {0};
-     int result = _parse_provision_response(object, &credentials);
+     int result = __parse_provision_response(object, &credentials);
      if (result == ESP_OK) {
          cache->on_response(cache->client, cache->context, cache->request_id, &credentials);
      } else {
@@ -536,9 +524,9 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const
      }
      
      // Free cache
-     _device_provision_destroy(cache);
+     _deviceprovision_destroy(cache);
 
-     return;// ESP_OK;
+     return;
 }
 
 /*
@@ -556,7 +544,7 @@ void _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id)
      }
 
      // Search provision
-     device_provision_t *provision = NULL;
+     deviceprovision_t *provision = NULL;
      LIST_FOREACH(provision, &client->deviceprovision_list, entry) {
           if (provision && (provision->request_id==request_id)) {
                break;
@@ -570,9 +558,9 @@ void _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id)
      }
 
      // Cache and remove provision
-     device_provision_t *cache = _device_provision_clone_wo_listentry(provision);
+     deviceprovision_t *cache = _deviceprovision_clone_wo_listentry(provision);
      LIST_REMOVE(provision, entry);
-     _device_provision_destroy(provision);
+     _deviceprovision_destroy(provision);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
@@ -582,7 +570,7 @@ void _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id)
      }
      
      // Free provision
-     _device_provision_destroy(cache);
+     _deviceprovision_destroy(cache);
 
      return;// ESP_OK;
 }*/
@@ -599,12 +587,12 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
 
      // Search & move timeout item to timeout_list
      deviceprovision_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-     device_provision_t *request = NULL, *next;
+     deviceprovision_t *request = NULL, *next;
      LIST_FOREACH_SAFE(request, &client->deviceprovision_list, entry, next) {
           if (request && request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                LIST_REMOVE(request, entry);
                // append to timeout list
-               device_provision_t *it, *last = NULL;
+               deviceprovision_t *it, *last = NULL;
                if (LIST_FIRST(&timeout_list) == NULL) {
                     LIST_INSERT_HEAD(&timeout_list, request, entry);
                } else {
@@ -625,10 +613,11 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
      // Deal timeout
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
           if (request->on_timeout) {
-              request->on_timeout(request->client, request->context, request->request_id);
+              request->on_timeout(request->client, request->context,
+                    request->request_id);
           }
           LIST_REMOVE(request, entry);
-          _device_provision_destroy(request);
+          _deviceprovision_destroy(request);
      }
 }
 

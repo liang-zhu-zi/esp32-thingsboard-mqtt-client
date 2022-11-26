@@ -35,10 +35,10 @@
 //#include "attributesrequest.h"
 //#include "serverrpc.h"
 //#include "clientrpc.h"
-//#include "device_provision.h"
+//#include "deviceprovision.h"
 //#include "otaupdate.h"
 
-//#include "device_provision.h"
+//#include "deviceprovision.h"
 
 static const char *TAG = "NORMAL-CONN";
 

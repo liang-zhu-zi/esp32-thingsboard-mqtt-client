@@ -50,7 +50,7 @@ static attributesrequest_t *_attributesrequest_create(tbcmh_handle_t client, int
 static attributesrequest_t *_attributesrequest_clone_wo_listentry(attributesrequest_t *src)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
-    
+
     attributesrequest_t *attributesrequest = TBC_MALLOC(sizeof(attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");

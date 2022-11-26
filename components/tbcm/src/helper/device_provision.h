@@ -17,9 +17,6 @@
 #ifndef _TBCMH_PROVISION_OBSERVER_H_
 #define _TBCMH_PROVISION_OBSERVER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
@@ -27,11 +24,10 @@
 extern "C" {
 #endif
 
-//====6.Client-side RPC================================================================================================
 /**
  * ThingsBoard MQTT Client Helper client-RPC
  */
-typedef struct device_provision
+typedef struct deviceprovision
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -47,20 +43,15 @@ typedef struct device_provision
      tbcmh_provision_on_response_t on_response; /*!< Callback of provision response success */
      tbcmh_provision_on_timeout_t on_timeout;   /*!< Callback of provision response timeout */
 
-     LIST_ENTRY(device_provision) entry;
-} device_provision_t;
+     LIST_ENTRY(deviceprovision) entry;
+} deviceprovision_t;
 
-typedef LIST_HEAD(tbcmh_provision_list, device_provision) deviceprovision_list_t;
-
-
-tbc_err_t _tbcmh_provision_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_provision_list, deviceprovision) deviceprovision_list_t;
 
 void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client);
 void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client);
-
 void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client);
 void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client);
-
 void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
 void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
