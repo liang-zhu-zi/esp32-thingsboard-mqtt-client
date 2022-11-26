@@ -34,7 +34,7 @@
 //#include "sharedattribute.h"
 //#include "attributesrequest.h"
 //#include "serverrpc.h"
-//#include "client_rpc.h"
+//#include "clientrpc.h"
 //#include "device_provision.h"
 //#include "otaupdate.h"
 

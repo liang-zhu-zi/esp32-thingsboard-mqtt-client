@@ -88,7 +88,7 @@ extern "C" {
 #define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX       "v1/devices/me/attributes/request/"    //publish
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PATTERN     "v1/devices/me/attributes/response/%d" //receive, $request_id
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX      "v1/devices/me/attributes/response/"   //receive
-#define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE  "v1/devices/me/attributes/response/+"  //subscribe
+#define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE  "v1/devices/me/attributes/response/+"  //subscribe
 
 #define TB_MQTT_KEY_ATTRIBUTES_REQUEST_CLIENTKEYS     "clientKeys"
 #define TB_MQTT_KEY_ATTRIBUTES_REQUEST_SHAREDKEYS     "sharedKeys"

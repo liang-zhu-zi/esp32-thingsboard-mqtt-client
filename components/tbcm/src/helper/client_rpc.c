@@ -18,36 +18,27 @@
 
 #include "esp_err.h"
 
-#include "tbc_utils.h"
-
-//#include "client_rpc.h"
 #include "tbc_mqtt_helper_internal.h"
 
-const static char *TAG = "client_rpc";
+const static char *TAG = "clientrpc";
 
-/*!< Initialize client_rpc_t */
-static client_rpc_t *_client_rpc_create(tbcmh_handle_t client, int request_id,
+/*!< Initialize clientrpc_t */
+static clientrpc_t *_clientrpc_create(tbcmh_handle_t client, int request_id,
                                          const char *method, ////tbcmh_rpc_params_t *params,
                                          void *context,
                                          tbcmh_clientrpc_on_response_t on_response,
                                          tbcmh_clientrpc_on_timeout_t on_timeout)
 {
-    if (!method) {
-        TBC_LOGE("method is NULL");
-        return NULL;
-    }
-    if (!on_response) {
-        TBC_LOGE("on_response is NULL");
-        return NULL;
-    }
-    
-    client_rpc_t *clientrpc = TBC_MALLOC(sizeof(client_rpc_t));
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(method, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_response, NULL);
+
+    clientrpc_t *clientrpc = TBC_MALLOC(sizeof(clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientrpc, 0x00, sizeof(client_rpc_t));
+    memset(clientrpc, 0x00, sizeof(clientrpc_t));
     clientrpc->client = client;
     clientrpc->method = TBC_MALLOC(strlen(method)+1);
     if (clientrpc->method) {
@@ -61,20 +52,17 @@ static client_rpc_t *_client_rpc_create(tbcmh_handle_t client, int request_id,
     return clientrpc;
 }
 
-static client_rpc_t *_client_rpc_clone_wo_listentry(client_rpc_t *src)
+static clientrpc_t *_clientrpc_clone_wo_listentry(clientrpc_t *src)
 {
-    if (!src) {
-        TBC_LOGE("src is NULL");
-        return NULL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
     
-    client_rpc_t *clientrpc = TBC_MALLOC(sizeof(client_rpc_t));
+    clientrpc_t *clientrpc = TBC_MALLOC(sizeof(clientrpc_t));
     if (!clientrpc) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientrpc, 0x00, sizeof(client_rpc_t));
+    memset(clientrpc, 0x00, sizeof(clientrpc_t));
     clientrpc->client = src->client;
     clientrpc->method = TBC_MALLOC(strlen(src->method)+1);
     if (clientrpc->method) {
@@ -87,13 +75,10 @@ static client_rpc_t *_client_rpc_clone_wo_listentry(client_rpc_t *src)
     return clientrpc;
 }
 
-/*!< Destroys the client_rpc_t */
-static tbc_err_t _client_rpc_destroy(client_rpc_t *clientrpc)
+/*!< Destroys the clientrpc_t */
+static tbc_err_t _clientrpc_destroy(clientrpc_t *clientrpc)
 {
-    if (!clientrpc) {
-        TBC_LOGE("clientrpc is NULL");
-        return ESP_FAIL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(clientrpc, ESP_FAIL);
 
     TBC_FREE(clientrpc->method);
     TBC_FREE(clientrpc);
@@ -105,14 +90,8 @@ static tbc_err_t _client_rpc_destroy(client_rpc_t *clientrpc)
 int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
                                                            /*const*/ tbcmh_rpc_params_t *params)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-     if (!method) {
-          TBC_LOGE("method is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(method, ESP_FAIL);
 
      // Send msg to server
      //cJSON *object = cJSON_CreateObject(); // create json object
@@ -156,14 +135,8 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
                                                            tbcmh_clientrpc_on_response_t on_response,
                                                            tbcmh_clientrpc_on_timeout_t on_timeout)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-     if (!method) {
-          TBC_LOGE("method is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(method, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -208,7 +181,7 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
      }
 
      // Create clientrpc
-     client_rpc_t *clientrpc = _client_rpc_create(client, request_id, method, context, on_response, on_timeout);
+     clientrpc_t *clientrpc = _clientrpc_create(client, request_id, method, context, on_response, on_timeout);
      if (!clientrpc) {
           TBC_LOGE("Init clientrpc failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
@@ -216,7 +189,7 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
      }
 
      // Insert clientrpc to list
-     client_rpc_t *it, *last = NULL;
+     clientrpc_t *it, *last = NULL;
      if (LIST_FIRST(&client->clientrpc_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->clientrpc_list, clientrpc, entry);
@@ -236,60 +209,47 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
      return request_id;
 }
 
-tbc_err_t _tbcmh_clientrpc_empty(tbcmh_handle_t client)
-{
-    if (!client) {
-         TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-
-    // TODO: How to add lock??
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return ESP_FAIL;
-    // }
-
-    // remove all item in clientrpc_list
-    client_rpc_t *clientrpc = NULL, *next;
-    LIST_FOREACH_SAFE(clientrpc, &client->clientrpc_list, entry, next) {
-         // exec timeout callback
-         if (clientrpc->on_timeout) {
-             clientrpc->on_timeout(clientrpc->client, clientrpc->context,
-                                   clientrpc->request_id, clientrpc->method);
-         }
-
-         // remove from clientrpc list and destory
-         LIST_REMOVE(clientrpc, entry);
-         _client_rpc_destroy(clientrpc);
-    }
-    memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list));
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
-    return ESP_OK;
-}
-
 void _tbcmh_clientrpc_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // list create
     memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list)); //client->clientrpc_list = LIST_HEAD_INITIALIZER(client->clientrpc_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_clientrpc_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_clientrpc_empty(client);
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_clientrpc_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient,
-                                TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
+    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
              msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
 }
@@ -297,17 +257,40 @@ void _tbcmh_clientrpc_on_connected(tbcmh_handle_t client)
 void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_clientrpc_empty(client);
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // remove all item in clientrpc_list
+    clientrpc_t *clientrpc = NULL, *next;
+    LIST_FOREACH_SAFE(clientrpc, &client->clientrpc_list, entry, next) {
+        // exec timeout callback
+        if (clientrpc->on_timeout) {
+            clientrpc->on_timeout(clientrpc->client, clientrpc->context,
+                                  clientrpc->request_id, clientrpc->method);
+        }
+
+        // remove from clientrpc list and destory
+        LIST_REMOVE(clientrpc, entry);
+        _clientrpc_destroy(clientrpc);
+    }
+    memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
+
 
 //on response
 void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
-     if (!client || !object) {
-          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
-          return;
-     }
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(object);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -316,7 +299,7 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON
      }
 
      // Search clientrpc
-     client_rpc_t *clientrpc = NULL;
+     clientrpc_t *clientrpc = NULL;
      LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
           if (clientrpc && (clientrpc->request_id==request_id)) {
                break;
@@ -330,21 +313,21 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON
      }
 
      // Cache and remove clientrpc
-     client_rpc_t *cache = _client_rpc_clone_wo_listentry(clientrpc);
+     clientrpc_t *cache = _clientrpc_clone_wo_listentry(clientrpc);
      LIST_REMOVE(clientrpc, entry);
-     _client_rpc_destroy(clientrpc);
+     _clientrpc_destroy(clientrpc);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
      // Do response
      if (cache->on_response) {
-        cache->on_response(cache->client, cache->context, 
+        cache->on_response(cache->client, cache->context,
                             cache->request_id, cache->method,
                             cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_RESULTS));
      }
 
      // Free cache
-     _client_rpc_destroy(cache);
+     _clientrpc_destroy(cache);
 
      return;
 }
@@ -364,7 +347,7 @@ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
      }
 
      // Search clientrpc
-     client_rpc_t *clientrpc = NULL;
+     clientrpc_t *clientrpc = NULL;
      LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
           if (clientrpc && (clientrpc->request_id==request_id)) {
                break;
@@ -378,9 +361,9 @@ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
      }
 
      // Cache and remove clientrpc
-     client_rpc_t *cache = _client_rpc_clone_wo_listentry(clientrpc);
+     clientrpc_t *cache = _clientrpc_clone_wo_listentry(clientrpc);
      LIST_REMOVE(clientrpc, entry);
-     _client_rpc_destroy(clientrpc);
+     _clientrpc_destroy(clientrpc);
      // Give semaphore
      xSemaphoreGive(client->_lock);
 
@@ -390,7 +373,7 @@ void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
                             cache->request_id, cache->method);
       }     
      // Free clientrpc
-     _client_rpc_destroy(cache);
+     _clientrpc_destroy(cache);
 
      return;
 }*/
@@ -407,12 +390,12 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
 
      // Search & move timeout item to timeout_list
      clientrpc_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-     client_rpc_t *request = NULL, *next;
+     clientrpc_t *request = NULL, *next;
      LIST_FOREACH_SAFE(request, &client->clientrpc_list, entry, next) {
           if (request && request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                LIST_REMOVE(request, entry);
                // append to timeout list
-               client_rpc_t *it, *last = NULL;
+               clientrpc_t *it, *last = NULL;
                if (LIST_FIRST(&timeout_list) == NULL) {
                     LIST_INSERT_HEAD(&timeout_list, request, entry);
                } else {
@@ -437,8 +420,7 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
                     request->request_id, request->method);
           }
           LIST_REMOVE(request, entry);
-          _client_rpc_destroy(request);
+          _clientrpc_destroy(request);
      }
 }
-
 

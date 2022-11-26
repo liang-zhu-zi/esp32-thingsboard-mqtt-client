@@ -30,7 +30,7 @@ static attributesrequest_t *_attributesrequest_create(tbcmh_handle_t client, int
                                                          tbcmh_attributesrequest_on_timeout_t on_timeout)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_response, NULL);
-    
+
     attributesrequest_t *attributesrequest = TBC_MALLOC(sizeof(attributesrequest_t));
     if (!attributesrequest) {
         TBC_LOGE("Unable to malloc memeory!");
@@ -185,7 +185,7 @@ next_attribute_key:
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     
+
      TBC_FREE(client_keys);
      TBC_FREE(shared_keys);
      return request_id;
@@ -339,15 +339,15 @@ void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE, 0);
+    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIRBE);
+                msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
 }
 
 void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
+    TBC_CHECK_PTR(client);
 
     // TODO: How to add lock??
     // Take semaphore
@@ -361,7 +361,8 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
     LIST_FOREACH_SAFE(attributesrequest, &client->attributesrequest_list, entry, next) {
         // exec timeout callback
         if (attributesrequest->on_timeout) {
-            attributesrequest->on_timeout(attributesrequest->client, attributesrequest->context, attributesrequest->request_id); //(none/resend/destroy/_destroy_all_attributes)?
+            attributesrequest->on_timeout(attributesrequest->client, attributesrequest->context,
+                                  attributesrequest->request_id);
         }
 
         // remove from attributesrequest list and destory
@@ -375,7 +376,7 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
 }
 
 
-//on response.
+//on response
 void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
@@ -419,7 +420,8 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, con
 
      // Do response
      if (cache->on_response) {
-        cache->on_response(cache->client, cache->context, cache->request_id); //(none/resend/destroy/_destroy_all_attributes)?
+        cache->on_response(cache->client, cache->context,
+                            cache->request_id);
      }
 
      // Free cache
@@ -466,7 +468,8 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
      // Deal timeout
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
           if (request->on_timeout) {
-              request->on_timeout(request->client, request->context, request->request_id);
+              request->on_timeout(request->client, request->context,
+                    request->request_id);
           }
           LIST_REMOVE(request, entry);
           _attributesrequest_destroy(request);
