@@ -266,6 +266,12 @@ int tbcmh_attributesrequest_send(tbcmh_handle_t client,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...); //return request_id on successful, otherwise return -1
+// TODO: merge to tbcmh_attributesrequest_send()
+int  tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
+                                  void *context,
+                                  tbcmh_attributesrequest_on_response_t on_response,
+                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                  int count, /*const char *key,*/...);
 
 //====30.Server-side RPC================================================================================================
 tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client, const char *method,

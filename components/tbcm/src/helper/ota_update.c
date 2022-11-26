@@ -673,7 +673,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
              // send init current f/w info telemetry
              _otaupdate_publish_early_current_version(otaupdate);
              // send f/w info attributes request
-             _tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
+             tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
                     NULL/*context*/,
                     __on_fw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,
@@ -695,7 +695,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
              // send init current s/w telemetry
              _otaupdate_publish_early_current_version(otaupdate);
              // send s/w info attributes request
-             _tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
+             tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
                     NULL/*context*/,
                     __on_sw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,

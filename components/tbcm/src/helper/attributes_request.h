@@ -17,10 +17,7 @@
 #ifndef _ATTRIBUTES_REQUEST_OBSERVER_H_
 #define _ATTRIBUTES_REQUEST_OBSERVER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
-#include "sys/queue.h"
+#include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
 #ifdef __cplusplus
@@ -32,7 +29,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper attributes request
  */
-typedef struct attributes_request
+typedef struct attributesrequest
 {
      tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
@@ -43,25 +40,13 @@ typedef struct attributes_request
      tbcmh_attributesrequest_on_response_t on_response; /*!< Callback of dealing successful */
      tbcmh_attributesrequest_on_timeout_t on_timeout;   /*!< Callback of response timeout */
 
-     ////LIST_HEAD(tbcmh_clientattribute_list, clientattribute) clientattribute_list; /*!< client attributes entries */
-     ////LIST_HEAD(tbcmh_sharedattribute_list, sharedattribute) sharedattribute_list; /*!< shared attributes entries */
+     LIST_ENTRY(attributesrequest) entry;
+} attributesrequest_t;
 
-     LIST_ENTRY(attributes_request) entry;
-} attributes_request_t;
-
-typedef LIST_HEAD(tbcmh_attributesrequest_list, attributes_request) attributesrequest_list_t;
-
-// TODO: merge to tbcmh_attributesrequest_send()
-int       _tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
-                                  void *context,
-                                  tbcmh_attributesrequest_on_response_t on_response,
-                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
-                                  int count, /*const char *key,*/...);
-tbc_err_t _tbcmh_attributesrequest_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_attributesrequest_list, attributesrequest) attributesrequest_list_t;
 
 void _tbcmh_attributesrequest_on_create(tbcmh_handle_t client);
 void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client);
-
 void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client);
 void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client);
 void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
