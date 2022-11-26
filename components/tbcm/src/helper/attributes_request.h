@@ -43,7 +43,7 @@ typedef struct attributes_request
      tbcmh_attributesrequest_on_response_t on_response; /*!< Callback of dealing successful */
      tbcmh_attributesrequest_on_timeout_t on_timeout;   /*!< Callback of response timeout */
 
-     ////LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list; /*!< client attributes entries */
+     ////LIST_HEAD(tbcmh_clientattribute_list, clientattribute) clientattribute_list; /*!< client attributes entries */
      ////LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list; /*!< shared attributes entries */
 
      LIST_ENTRY(attributes_request) entry;

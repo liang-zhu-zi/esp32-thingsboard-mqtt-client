@@ -74,7 +74,7 @@ I (0) cpu_start: App cpu up.
 I (457) cpu_start: Pro cpu start user code
 I (457) cpu_start: cpu freq: 160000000
 I (457) cpu_start: Application information:
-I (462) cpu_start: Project name:     client_attribute
+I (462) cpu_start: Project name:     clientattribute
 I (469) cpu_start: App version:      f00da47-dirty
 I (474) cpu_start: Compile time:     Sep 17 2022 19:13:38
 I (480) cpu_start: ELF file SHA256:  e4d55eca27f2d2d6...

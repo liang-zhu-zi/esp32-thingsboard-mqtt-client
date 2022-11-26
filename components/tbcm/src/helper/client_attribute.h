@@ -27,7 +27,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper client-side attribute
  */
-typedef struct client_attribute
+typedef struct clientattribute
 {
      tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
@@ -37,10 +37,10 @@ typedef struct client_attribute
      tbcmh_clientattribute_on_get_t on_get; /*!< Callback of getting value from context */
      tbcmh_clientattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
-     LIST_ENTRY(client_attribute) entry;
+     LIST_ENTRY(clientattribute) entry;
 } clientattribute_t;
 
-typedef LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list_t;
+typedef LIST_HEAD(tbcmh_clientattribute_list, clientattribute) clientattribute_list_t;
 
 void _tbcmh_clientattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client);

@@ -20,7 +20,7 @@
 
 #include "tbc_mqtt_helper_internal.h"
 
-const static char *TAG = "client_attribute";
+const static char *TAG = "clientattribute";
 
 static clientattribute_t *_clientattribute_create(tbcmh_handle_t client,
                                             const char *key, void *context,
@@ -48,7 +48,7 @@ static clientattribute_t *_clientattribute_create(tbcmh_handle_t client,
     return clientattribute;
 }
 
-/*!< Destroys client_attribute */
+/*!< Destroys clientattribute */
 static tbc_err_t _clientattribute_destroy(clientattribute_t *clientattribute)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(clientattribute, ESP_FAIL);

@@ -7,7 +7,7 @@ import ttfw_idf
 
 @ttfw_idf.idf_example_test(env_tag='Example_GENERIC', target=['esp32', 'esp32s2', 'esp32c3'], ci_target=['esp32'])
 def test_examples_hello_world(env, extra_data):
-    app_name = 'client_attribute'
+    app_name = 'clientattribute'
     dut = env.get_dut(app_name, 'examples/tb_mqtt_client_helper/20_client_attribute') #'examples/get-started/hello_world'
     dut.start_app()
     res = dut.expect(ttfw_idf.MINIMUM_FREE_HEAP_SIZE_RE)
