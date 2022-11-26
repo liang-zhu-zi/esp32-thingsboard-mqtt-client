@@ -27,12 +27,10 @@
 extern "C" {
 #endif
 
-//====3.shared attribute===============================================================================================
-
 /**
  * ThingsBoard MQTT Client Helper shared attribute
  */
-typedef struct shared_attribute
+typedef struct sharedattribute
 {
      tbcmh_handle_t client; /*!< ThingsBoard MQTT Client Helper */
 
@@ -41,18 +39,16 @@ typedef struct shared_attribute
      void *context;                         /*!< Context of getting/setting value*/
      tbcmh_sharedattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
-     LIST_ENTRY(shared_attribute) entry;
-} shared_attribute_t;
+     LIST_ENTRY(sharedattribute) entry;
+} sharedattribute_t;
 
-typedef LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list_t;
-
-tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_sharedattribute_list, sharedattribute) sharedattribute_list_t;
 
 void _tbcmh_sharedattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_sharedattribute_on_destroy(tbcmh_handle_t client);
-void      _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client);
-void      _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client);
-void      _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object);
+void _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client);
+void _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

@@ -101,7 +101,7 @@ typedef void (*tbcmh_clientattribute_on_set_t)(tbcmh_handle_t client, void *cont
 //Free value by caller/(tbcmh library)!
 typedef tbc_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
 
-//====4.attributes request for client-side_attribute & shared_attribute================================================
+//====4.attributes request for client-side_attribute & sharedattribute================================================
 typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
 typedef void (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
 
@@ -256,9 +256,9 @@ tbc_err_t tbcmh_clientattribute_unregister(tbcmh_handle_t client, const char *ke
 tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,
+tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client, const char *key, void *context,
                                        tbcmh_sharedattribute_on_set_t on_set);  // Call it before connect()
-tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client, const char *key); // remove shared_attribute from tbcmh_shared_attribute_list_t
+tbc_err_t tbcmh_sharedattribute_unregister(tbcmh_handle_t client, const char *key); // remove sharedattribute from tbcmh_shared_attribute_list_t
 
 //====22.Request client-side or shared device attributes from the server================================================
 int tbcmh_attributesrequest_send(tbcmh_handle_t client,

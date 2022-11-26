@@ -266,8 +266,8 @@ void _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client)
     // ...
 }
 
-//receivedd init value in attributes response: unpack & deal
-void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object)
+//on received init value in attributes response: unpack & deal
+void _tbcmh_clientattribute_on_data(tbcmh_handle_t client, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
      TBC_CHECK_PTR(object);
@@ -285,9 +285,10 @@ void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *obje
           if (clientattribute) {
                key = clientattribute->key;
                if (cJSON_HasObjectItem(object, key)) {
-                    //_client_attribute_do_set(clientattribute, cJSON_GetObjectItem(object, key));
-                    clientattribute->on_set(clientattribute->client, clientattribute->context,
-                        cJSON_GetObjectItem(object, key));
+                    cJSON *value = cJSON_GetObjectItem(object, key);
+                    if (clientattribute->on_set && value) {
+                         clientattribute->on_set(clientattribute->client, clientattribute->context, value);
+                    }
                }
           }
      }

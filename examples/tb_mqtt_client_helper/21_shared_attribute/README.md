@@ -80,7 +80,7 @@ I (0) cpu_start: App cpu up.
 I (458) cpu_start: Pro cpu start user code
 I (458) cpu_start: cpu freq: 160000000
 I (458) cpu_start: Application information:
-I (463) cpu_start: Project name:     shared_attribute
+I (463) cpu_start: Project name:     sharedattribute
 I (468) cpu_start: App version:      b5865a7-dirty
 I (473) cpu_start: Compile time:     Sep 23 2022 12:42:51
 I (479) cpu_start: ELF file SHA256:  4fc2513e9a07a99c...

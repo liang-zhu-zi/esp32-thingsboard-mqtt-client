@@ -18,9 +18,6 @@
 
 #include "esp_err.h"
 
-#include "tbc_utils.h"
-
-//#include "shared_attribute.h"
 #include "tbc_mqtt_helper_internal.h"
 
 // TODO: remove it!
@@ -29,23 +26,22 @@ extern void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_ot
                                                  const char *ota_checksum, const char *ota_checksum_algorithm);
 
 
-const static char *TAG = "shared_attribute";
+const static char *TAG = "sharedattribute";
 
-static shared_attribute_t *_shared_attribute_create(tbcmh_handle_t client, const char *key, void *context,
-                                                     tbcmh_sharedattribute_on_set_t on_set)
+static sharedattribute_t *_sharedattribute_create(tbcmh_handle_t client,
+                                            const char *key, void *context,
+                                            tbcmh_sharedattribute_on_set_t on_set)
 {
-    if (!key) {
-        TBC_LOGE("key is NULL");
-        return NULL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_set, NULL);
     
-    shared_attribute_t *sharedattribute = TBC_MALLOC(sizeof(shared_attribute_t));
+    sharedattribute_t *sharedattribute = TBC_MALLOC(sizeof(sharedattribute_t));
     if (!sharedattribute) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(sharedattribute, 0x00, sizeof(shared_attribute_t));
+    memset(sharedattribute, 0x00, sizeof(sharedattribute_t));
     sharedattribute->client = client;
     sharedattribute->key = TBC_MALLOC(strlen(key)+1);
     if (sharedattribute->key) {
@@ -56,28 +52,22 @@ static shared_attribute_t *_shared_attribute_create(tbcmh_handle_t client, const
     return sharedattribute;
 }
 
-/*!< Destroys the tbcm key-value handle */
-static tbc_err_t _shared_attribute_destroy(shared_attribute_t *sharedattribute)
+/*!< Destroys sharedattribute */
+static tbc_err_t _sharedattribute_destroy(sharedattribute_t *sharedattribute)
 {
-    if (!sharedattribute) {
-        TBC_LOGE("sharedattribute is NULL");
-        return ESP_FAIL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattribute, ESP_FAIL);
 
     TBC_FREE(sharedattribute->key);
     TBC_FREE(sharedattribute);
     return ESP_OK;
 }
 
-//==== Subscribe to shared device attribute updates from the server ================================
-//Call it before connect() //tbcmh_shared_attribute_list_t
-tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,
-                                         tbcmh_sharedattribute_on_set_t on_set)
+//Call it before connect()
+tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client,
+                                                  const char *key, void *context,
+                                                  tbcmh_sharedattribute_on_set_t on_set)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -86,7 +76,7 @@ tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, v
      }
 
      // Create sharedattribute
-     shared_attribute_t *sharedattribute = _shared_attribute_create(client, key, context, on_set);
+     sharedattribute_t *sharedattribute = _sharedattribute_create(client, key, context, on_set);
      if (!sharedattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -95,7 +85,7 @@ tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, v
      }
 
      // Insert sharedattribute to list
-     shared_attribute_t *it, *last = NULL;
+     sharedattribute_t *it, *last = NULL;
      if (LIST_FIRST(&client->sharedattribute_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->sharedattribute_list, sharedattribute, entry);
@@ -115,13 +105,11 @@ tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, v
      return ESP_OK;
 }
 
-// remove shared_attribute from tbcmh_shared_attribute_list_t
-tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client, const char *key)
+// remove sharedattribute from tbcmh_shared_attribute_list_t
+tbc_err_t tbcmh_sharedattribute_unregister(tbcmh_handle_t client, const char *key)
 {
-     if (!client || !key) {
-          TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -130,53 +118,23 @@ tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client, const char *key)
      }
 
      // Search item
-     shared_attribute_t *sharedattribute = NULL;
-     LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
+     sharedattribute_t *sharedattribute = NULL, *next;
+     LIST_FOREACH_SAFE(sharedattribute, &client->sharedattribute_list, entry, next) {
           if (sharedattribute && strcmp(sharedattribute->key, key)==0) {
-               break;
+              // Remove form list
+              LIST_REMOVE(sharedattribute, entry);
+              _sharedattribute_destroy(sharedattribute);
+              break;
           }
      }
-     if (!sharedattribute) {
-          TBC_LOGW("Unable to remove shared-attribute:%s! %s()", key, __FUNCTION__);
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          return ESP_FAIL;
-     }
-
-     // Remove form list
-     LIST_REMOVE(sharedattribute, entry);
-     _shared_attribute_destroy(sharedattribute);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     return ESP_OK;
-}
 
-tbc_err_t _tbcmh_sharedattribute_empty(tbcmh_handle_t client)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
+     if (!sharedattribute) {
+          TBC_LOGW("Unable to remove shared-attribute:%s! %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
-
-     // TODO: How to add lock??
-     // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBC_LOGE("Unable to take semaphore!");
-     //      return ESP_FAIL;
-     // }
-
-     // remove all item in sharedattribute_list
-     shared_attribute_t *sharedattribute = NULL, *next;
-     LIST_FOREACH_SAFE(sharedattribute, &client->sharedattribute_list, entry, next) {
-          // remove from sharedattribute list and destory
-          LIST_REMOVE(sharedattribute, entry);
-          _shared_attribute_destroy(sharedattribute);
-     }
-     memset(&client->sharedattribute_list, 0x00, sizeof(client->sharedattribute_list));
-
-     // Give semaphore
-     // xSemaphoreGive(client->_lock);
      return ESP_OK;
 }
 
@@ -184,22 +142,49 @@ void _tbcmh_sharedattribute_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+    
+    // list create
     memset(&client->sharedattribute_list, 0x00, sizeof(client->sharedattribute_list)); //client->sharedattribute_list = LIST_HEAD_INITIALIZER(client->sharedattribute_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_sharedattribute_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    _tbcmh_sharedattribute_empty(client);
+    TBC_CHECK_PTR(client);
+
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // items empty - remove all item in sharedattribute_list
+    sharedattribute_t *sharedattribute = NULL, *next;
+    LIST_FOREACH_SAFE(sharedattribute, &client->sharedattribute_list, entry, next) {
+         // remove from sharedattribute list and destory
+         LIST_REMOVE(sharedattribute, entry);
+         _sharedattribute_destroy(sharedattribute);
+    }
+    memset(&client->sharedattribute_list, 0x00, sizeof(client->sharedattribute_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
-
-
 
 void _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
+    TBC_CHECK_PTR(client);
     int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
     TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
             msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
@@ -208,29 +193,24 @@ void _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client)
 void _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    //_tbcmh_sharedattribute_empty(client);
+    TBC_CHECK_PTR(client);
+    //...
 }
 
 //on received: unpack & deal
 void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
 {
-     if (!client || !object) {
-          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
-
-     // Remove it from request list
-     
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(object);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
-     shared_attribute_t *sharedattribute = NULL;
+     sharedattribute_t *sharedattribute = NULL;
      const char* key = NULL;
      LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
           if (sharedattribute) {
@@ -245,7 +225,8 @@ void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     // xSemaphoreGive(client->_lock);
+     // return;
 
      // special process for otaupdate
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_TITLE) &&
@@ -273,7 +254,5 @@ void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
           char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG));
           _tbcmh_otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
      }
-
-     return;// ESP_OK;
 }
 

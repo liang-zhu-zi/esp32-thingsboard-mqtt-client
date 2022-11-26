@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-//==== attributes request for client-side_attribute and shared_attribute =================
+//==== attributes request for client-side_attribute and sharedattribute =================
 
 /**
  * ThingsBoard MQTT Client Helper attributes request
@@ -44,7 +44,7 @@ typedef struct attributes_request
      tbcmh_attributesrequest_on_timeout_t on_timeout;   /*!< Callback of response timeout */
 
      ////LIST_HEAD(tbcmh_clientattribute_list, clientattribute) clientattribute_list; /*!< client attributes entries */
-     ////LIST_HEAD(tbcmh_sharedattribute_list, shared_attribute) sharedattribute_list; /*!< shared attributes entries */
+     ////LIST_HEAD(tbcmh_sharedattribute_list, sharedattribute) sharedattribute_list; /*!< shared attributes entries */
 
      LIST_ENTRY(attributes_request) entry;
 } attributes_request_t;

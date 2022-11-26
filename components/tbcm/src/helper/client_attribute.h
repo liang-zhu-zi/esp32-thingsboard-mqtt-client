@@ -46,7 +46,7 @@ void _tbcmh_clientattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object);
+void _tbcmh_clientattribute_on_data(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

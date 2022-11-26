@@ -142,7 +142,7 @@ next_attribute_key:
           }
 
           // Search item in sharedattribute
-          shared_attribute_t *sharedattribute = NULL;
+          sharedattribute_t *sharedattribute = NULL;
           LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
                if (sharedattribute && strcmp(sharedattribute->key, key)==0) {
                     // copy key to shared_keys
@@ -416,7 +416,7 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, con
 
      // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT)) {
-          _tbcmh_clientattribute_on_received(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
+          _tbcmh_clientattribute_on_data(client, cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT));
      }
      // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED)) {

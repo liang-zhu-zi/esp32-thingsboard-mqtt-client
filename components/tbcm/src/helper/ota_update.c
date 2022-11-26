@@ -1110,7 +1110,7 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
 {
     // TODO:
 
-    // tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client, const char *key, void *context,
+    // tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client, const char *key, void *context,
     //                                     tbcmh_sharedattribute_on_set_t on_set);
     // key: fw_checksum,fw_checksum_algorithm,fw_size,fw_title,fw_version
     //      sw_checksum,sw_checksum_algorithm,sw_size,sw_title,sw_version

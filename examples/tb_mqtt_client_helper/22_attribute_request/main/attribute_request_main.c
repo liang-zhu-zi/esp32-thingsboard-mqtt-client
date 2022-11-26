@@ -205,7 +205,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    err = tbcmh_sharedattribute_append(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
+    err = tbcmh_sharedattribute_register(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
                             tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
@@ -277,7 +277,7 @@ void app_main(void)
     esp_log_level_set("client_rpc", ESP_LOG_VERBOSE);
     esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
     esp_log_level_set("server_rpc", ESP_LOG_VERBOSE);
-    esp_log_level_set("shared_attribute", ESP_LOG_VERBOSE);
+    esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
     esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
