@@ -17,9 +17,6 @@
 #ifndef _SERVER_RPC_OBSERVER_H_
 #define _SERVER_RPC_OBSERVER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
@@ -27,11 +24,10 @@
 extern "C" {
 #endif
 
-//====5.Server-side RPC================================================================================================
 /**
  * ThingsBoard MQTT Client Helper server-RPC
  */
-typedef struct server_rpc
+typedef struct serverrpc
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -43,19 +39,16 @@ typedef struct server_rpc
      void *context;                           /*!< Context of callback */
      tbcmh_serverrpc_on_request_t on_request; /*!< Callback of server-rpc request */
 
-     LIST_ENTRY(server_rpc) entry;
-} server_rpc_t;
+     LIST_ENTRY(serverrpc) entry;
+} serverrpc_t;
 
-typedef LIST_HEAD(tbcmh_serverrpc_list, server_rpc) serverrpc_list_t;
-
-tbc_err_t _tbcmh_serverrpc_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_serverrpc_list, serverrpc) serverrpc_list_t;
 
 void _tbcmh_serverrpc_on_create(tbcmh_handle_t client);
 void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client);
-
-void      _tbcmh_serverrpc_on_connected(tbcmh_handle_t client);
-void      _tbcmh_serverrpc_on_disconnected(tbcmh_handle_t client);
-void      _tbcmh_serverrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
+void _tbcmh_serverrpc_on_connected(tbcmh_handle_t client);
+void _tbcmh_serverrpc_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object);
 
 #ifdef __cplusplus
 }

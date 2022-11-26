@@ -17,9 +17,6 @@
 #ifndef _CLAIMING_DEVICE_HELPER_H_
 #define _CLAIMING_DEVICE_HELPER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
@@ -29,7 +26,6 @@ extern "C" {
 
 void _tbcmh_claimingdevice_on_create(tbcmh_handle_t client);
 void _tbcmh_claimingdevice_on_destroy(tbcmh_handle_t client);
-
 void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client);
 void _tbcmh_claimingdevice_on_disconnected(tbcmh_handle_t client);
 

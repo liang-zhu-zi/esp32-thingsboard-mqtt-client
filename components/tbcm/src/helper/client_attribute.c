@@ -58,6 +58,7 @@ static tbc_err_t _clientattribute_destroy(clientattribute_t *clientattribute)
     return ESP_OK;
 }
 
+//Call it before connect()
 static tbc_err_t _clientattribute_register(tbcmh_handle_t client,
                                                   const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
@@ -212,14 +213,14 @@ tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client,
 void _tbcmh_clientattribute_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
+    TBC_CHECK_PTR(client);
 
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
-    
+
     // list create
     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list)); //client->clientattribute_list = LIST_HEAD_INITIALIZER(client->clientattribute_list);
 

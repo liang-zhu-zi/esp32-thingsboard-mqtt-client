@@ -268,10 +268,10 @@ int tbcmh_attributesrequest_send(tbcmh_handle_t client,
                                  int count, /*const char *key,*/...); //return request_id on successful, otherwise return -1
 
 //====30.Server-side RPC================================================================================================
-tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client, const char *method,
+tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client, const char *method,
                                  void *context,
                                  tbcmh_serverrpc_on_request_t on_request); //Call it before connect()
-tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client, const char *method); //remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method); //remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
 
 //====31.Client-side RPC================================================================================================
 // free params by caller/(user code)!

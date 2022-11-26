@@ -12,34 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard MQTT Client helper (high layer) API
+// This file is called by tbc_mqtt_helper.c/.h.
 
-#include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 
-/* using uri parser */
-#include "http_parser.h"
-
-#include "tbc_utils.h"
-
-#include "tbc_mqtt.h"
-#include "tbc_mqtt_helper.h"
+#include "esp_err.h"
 
 #include "tbc_mqtt_helper_internal.h"
 
-//==== Claiming device using device-side key scenario =================================
-
 const static char *TAG = "claiming_device";
+
+//==== Claiming device using device-side key scenario =================================
 
 
 tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
                     const char *secret_key, uint32_t *duration_ms)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -68,28 +57,28 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
 void _tbcmh_claimingdevice_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    // TODO: ......
+    TBC_CHECK_PTR(client);
+    //...
 }
 
 void _tbcmh_claimingdevice_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    // TODO: ......
+    TBC_CHECK_PTR(client);
+    //...
 }
 
 void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    // TODO: ......
+    TBC_CHECK_PTR(client);
+    //......
 }
 
 void _tbcmh_claimingdevice_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    //_tbcmh_claimingdevice_empty(client);
+    TBC_CHECK_PTR(client);
+    // ...
 }
 

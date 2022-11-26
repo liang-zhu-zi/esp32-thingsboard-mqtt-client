@@ -33,7 +33,7 @@
 //#include "clientattribute.h"
 //#include "sharedattribute.h"
 //#include "attributes_request.h"
-//#include "server_rpc.h"
+//#include "serverrpc.h"
 //#include "client_rpc.h"
 //#include "device_provision.h"
 //#include "ota_update.h"
