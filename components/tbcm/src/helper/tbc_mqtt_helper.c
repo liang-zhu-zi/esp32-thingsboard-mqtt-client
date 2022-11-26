@@ -514,7 +514,7 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
          break;
     
     case TBCM_RX_TOPIC_FW_RESPONSE:          /*!< request_id, chunk_id, payload, payload_len */
-         _tbcmh_otaupdate_chunk_on_data(client, event->data.request_id, 
+         _tbcmh_otaupdate_on_chunk_data(client, event->data.request_id, 
               event->data.chunk_id, 
               event->data.payload,
               event->data.payload_len);
@@ -550,7 +550,7 @@ static void __on_tbcm_check_timeout(tbcmh_handle_t client)
      _tbcmh_attributesrequest_on_check_timeout(client, timestamp);
      _tbcmh_clientrpc_on_check_timeout(client, timestamp);
      _tbcmh_deviceprovision_on_check_timeout(client, timestamp);
-     _tbcmh_otaupdate_on_check_chunk_timeout(client, timestamp);
+     _tbcmh_otaupdate_on_chunk_check_timeout(client, timestamp);
 }
 
 // The callback for when a MQTT event is received.

@@ -329,7 +329,7 @@ void app_main(void)
     esp_log_level_set("attributes_reques", ESP_LOG_VERBOSE);
     esp_log_level_set("clientattribute", ESP_LOG_VERBOSE);
     esp_log_level_set("client_rpc", ESP_LOG_VERBOSE);
-    esp_log_level_set("ota_update", ESP_LOG_VERBOSE);
+    esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
     esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);

@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-//====9.Firmware update================================================================================================
+//==== Firmware/Software update ===================================================
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA config for storage
  */
@@ -46,7 +46,7 @@ typedef struct tbcmh_otaupdate_storage_config
      tbcmh_otaupdate_on_abort_t on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
 
      ////bool is_first_boot;            /*!< whether first boot after ota update  */
-} tbcmh_otaupdate_config_storage_t;
+} otaupdate_config_storage_t;
 
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA attribute
@@ -59,7 +59,7 @@ typedef struct tbcmh_otaupdate_attribute
      int   ota_size;               /*!< fw_size or sw_size  */
      char *ota_checksum;           /*!< fw_checksum or sw_checksum  */
      char *ota_checksum_algorithm; /*!< fw_checksum_algorithm or sw_checksum_algorithm. only support CRC32  */
-} tbcmh_otaupdate_attribute_t;
+} otaupdate_attribute_t;
 
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA state
@@ -73,36 +73,32 @@ typedef struct tbcmh_otaupdate_state
 
      int chunk_id;           /*!< default is zero, from 0 to n */
      uint64_t timestamp;     /*!< time stamp at sending request */
-} tbcmh_otaupdate_state_t;
+} otaupdate_state_t;
 
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA
  */
-typedef struct ota_update
+typedef struct otaupdate
 {
      tbcmh_handle_t client;           /*!< ThingsBoard MQTT Client Helper */
      char *ota_description;           /*!< F/W or S/W descripiton  */
-     tbcmh_otaupdate_config_storage_t config;
+     otaupdate_config_storage_t config;
 
      // reset these below fields.
-     tbcmh_otaupdate_attribute_t attribute;
-     tbcmh_otaupdate_state_t state;
+     otaupdate_attribute_t attribute;
+     otaupdate_state_t state;
 
-     LIST_ENTRY(ota_update) entry;
-} ota_update_t;
+     LIST_ENTRY(otaupdate) entry;
+} otaupdate_t;
 
-typedef LIST_HEAD(tbcmh_otaupdate_list, ota_update) otaupdate_list_t;
-
-void      _tbcmh_otaupdate_chunk_on_data(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
-
-tbc_err_t _tbcmh_otaupdate_empty(tbcmh_handle_t client);
+typedef LIST_HEAD(tbcmh_otaupdate_list, otaupdate) otaupdate_list_t;
 
 void _tbcmh_otaupdate_on_create(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_otaupdate_on_check_chunk_timeout(tbcmh_handle_t client, uint64_t timestamp);
-
+void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
+void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus
 }

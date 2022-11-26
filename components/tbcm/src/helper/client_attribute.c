@@ -290,8 +290,8 @@ void _tbcmh_clientattribute_on_data(tbcmh_handle_t client, const cJSON *object)
                     if (clientattribute->on_set && value) {
                          clientattribute->on_set(clientattribute->client, clientattribute->context, value);
                     }
-               }
-          }
+            }
+        }
      }
 
      // Give semaphore

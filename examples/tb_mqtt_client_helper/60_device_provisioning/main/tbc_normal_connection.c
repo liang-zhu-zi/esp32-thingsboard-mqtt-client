@@ -36,7 +36,7 @@
 //#include "serverrpc.h"
 //#include "client_rpc.h"
 //#include "device_provision.h"
-//#include "ota_update.h"
+//#include "otaupdate.h"
 
 //#include "device_provision.h"
 

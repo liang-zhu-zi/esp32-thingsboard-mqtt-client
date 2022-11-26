@@ -382,7 +382,7 @@ tbc_err_t my_fwupdate_init(tbcmh_handle_t client)
 
         ////.is_first_boot = _my_fwupdate.runnning_app_was_first_boot
     };
-    tbc_err_t err = tbcmh_otaupdate_append(client, FW_DESCRIPTION, &otaupdate_config);
+    tbc_err_t err = tbcmh_otaupdate_register(client, FW_DESCRIPTION, &otaupdate_config);
     return err;
 }
 

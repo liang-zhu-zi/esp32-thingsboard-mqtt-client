@@ -315,8 +315,8 @@ typedef struct tbcmh_otaupdate_config
   ////bool is_first_boot;            /*!< whether first boot after ota update  */
 } tbcmh_otaupdate_config_t;
 
-tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client, const char *ota_description, const tbcmh_otaupdate_config_t *config);
-tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client, const char *ota_description);
+tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, const char *ota_description, const tbcmh_otaupdate_config_t *config);
+tbc_err_t tbcmh_otaupdate_unregister(tbcmh_handle_t client, const char *ota_description);
 
 #ifdef __cplusplus
 }
