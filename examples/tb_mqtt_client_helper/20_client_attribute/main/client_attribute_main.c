@@ -138,13 +138,13 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append client attribute: model...");
-    err = tbcmh_clientattribute_append(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
+    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbcmh_clientattribute_append(client, CLIENTATTRIBUTE_SETPOINT, NULL,
+    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_SETPOINT, NULL,
                             tb_clientattribute_on_get_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);

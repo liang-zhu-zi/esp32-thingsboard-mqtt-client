@@ -92,6 +92,7 @@ typedef tbcmh_value_t* (*tbcmh_tsdata_on_get_t)(tbcmh_handle_t client, void *con
 //Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
 typedef tbcmh_value_t* (*tbcmh_clientattribute_on_get_t)(tbcmh_handle_t client, void *context); /*!< Get tbcmh_value from context */
+//Don't call TBCMH API in these callback!
 //Free value by caller/(tbcmh library)!
 typedef void (*tbcmh_clientattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
 
@@ -246,12 +247,12 @@ tbc_err_t tbcmh_timeseriesdata_unregister(tbcmh_handle_t client, const char *key
 tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
 
 //====20.Publish client-side device attributes to the server============================================================
-tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_register(tbcmh_handle_t client, const char *key, void *context,
                                        tbcmh_clientattribute_on_get_t on_get);
-tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_register_with_set(tbcmh_handle_t client, const char *key, void *context,
                                                 tbcmh_clientattribute_on_get_t on_get,
                                                 tbcmh_clientattribute_on_set_t on_set);
-tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key);
+tbc_err_t tbcmh_clientattribute_unregister(tbcmh_handle_t client, const char *key);
 tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================

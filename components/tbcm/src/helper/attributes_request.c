@@ -127,7 +127,7 @@ next_attribute_key:
           const char *key = va_arg(ap, const char*);
 
           // Search item in clientattribute
-          client_attribute_t *clientattribute = NULL;
+          clientattribute_t *clientattribute = NULL;
           LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
                if (clientattribute && strcmp(clientattribute->key, key)==0) {
                     // copy key to client_keys

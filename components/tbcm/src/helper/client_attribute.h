@@ -17,9 +17,6 @@
 #ifndef _CLIENT_ATTRIBUTE_HELPER_H_
 #define _CLIENT_ATTRIBUTE_HELPER_H_
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
 
@@ -27,7 +24,6 @@
 extern "C" {
 #endif
 
-//==== client-side attribute =============================================================
 /**
  * ThingsBoard MQTT Client Helper client-side attribute
  */
@@ -42,16 +38,15 @@ typedef struct client_attribute
      tbcmh_clientattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
      LIST_ENTRY(client_attribute) entry;
-} client_attribute_t;
+} clientattribute_t;
 
 typedef LIST_HEAD(tbcmh_clientattribute_list, client_attribute) clientattribute_list_t;
 
 void _tbcmh_clientattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client);
-
-void      _tbcmh_clientattribute_on_connected(tbcmh_handle_t client);
-void      _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client);
-void      _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object);
+void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client);
+void _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }

@@ -18,33 +18,25 @@
 
 #include "esp_err.h"
 
-#include "tbc_utils.h"
-
-//#include "client_attribute.h"
 #include "tbc_mqtt_helper_internal.h"
 
 const static char *TAG = "client_attribute";
 
-static client_attribute_t *_client_attribute_create(tbcmh_handle_t client, const char *key, void *context,
-                                                    tbcmh_clientattribute_on_get_t on_get,
-                                                    tbcmh_clientattribute_on_set_t on_set)
+static clientattribute_t *_clientattribute_create(tbcmh_handle_t client,
+                                            const char *key, void *context,
+                                            tbcmh_clientattribute_on_get_t on_get,
+                                            tbcmh_clientattribute_on_set_t on_set)
 {
-    if (!key) {
-        TBC_LOGE("key is NULL");
-        return NULL;
-    }
-    if (!on_get) {
-        TBC_LOGE("on_get is NULL");
-        return NULL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get, NULL);
     
-    client_attribute_t *clientattribute = TBC_MALLOC(sizeof(client_attribute_t));
+    clientattribute_t *clientattribute = TBC_MALLOC(sizeof(clientattribute_t));
     if (!clientattribute) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(clientattribute, 0x00, sizeof(client_attribute_t));
+    memset(clientattribute, 0x00, sizeof(clientattribute_t));
     clientattribute->client = client;
     clientattribute->key = TBC_MALLOC(strlen(key)+1);
     if (clientattribute->key) {
@@ -57,27 +49,21 @@ static client_attribute_t *_client_attribute_create(tbcmh_handle_t client, const
 }
 
 /*!< Destroys client_attribute */
-static tbc_err_t _client_attribute_destroy(client_attribute_t *clientattribute)
+static tbc_err_t _clientattribute_destroy(clientattribute_t *clientattribute)
 {
-    if (!clientattribute) {
-        TBC_LOGE("clientattribute is NULL");
-        return ESP_FAIL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(clientattribute, ESP_FAIL);
 
     TBC_FREE(clientattribute->key);
     TBC_FREE(clientattribute);
     return ESP_OK;
 }
 
-// tbcmh_attribute_of_clientside_init()
-static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client, const char *key, void *context,
+static tbc_err_t _clientattribute_register(tbcmh_handle_t client,
+                                                  const char *key, void *context,
                                                   tbcmh_clientattribute_on_get_t on_get,
                                                   tbcmh_clientattribute_on_set_t on_set)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -86,7 +72,7 @@ static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client, const c
      }
 
      // Create clientattribute
-     client_attribute_t *clientattribute = _client_attribute_create(client, key, context, on_get, on_set);
+     clientattribute_t *clientattribute = _clientattribute_create(client, key, context, on_get, on_set);
      if (!clientattribute) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -95,7 +81,7 @@ static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client, const c
      }
 
      // Insert clientattribute to list
-     client_attribute_t *it, *last = NULL;
+     clientattribute_t *it, *last = NULL;
      if (LIST_FIRST(&client->clientattribute_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->clientattribute_list, clientattribute, entry);
@@ -115,29 +101,26 @@ static tbc_err_t _tbcmh_clientattribute_xx_append(tbcmh_handle_t client, const c
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_clientattribute_append_with_set(tbcmh_handle_t client, const char *key, void *context,
-                                                  tbcmh_clientattribute_on_get_t on_get,
-                                                  tbcmh_clientattribute_on_set_t on_set)
+tbc_err_t tbcmh_clientattribute_register_with_set(tbcmh_handle_t client,
+                                        const char *key, void *context,
+                                        tbcmh_clientattribute_on_get_t on_get,
+                                        tbcmh_clientattribute_on_set_t on_set)
 {
-     if (!on_set)  {
-          TBC_LOGE("on_set is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-     return _tbcmh_clientattribute_xx_append(client, key, context, on_get, on_set);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_set, ESP_FAIL);
+     return _clientattribute_register(client, key, context, on_get, on_set);
 }
 
-tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client, const char *key, void *context,
+tbc_err_t tbcmh_clientattribute_register(tbcmh_handle_t client,
+                                         const char *key, void *context,
                                          tbcmh_clientattribute_on_get_t on_get)
 {
-     return _tbcmh_clientattribute_xx_append(client, key, context, on_get, NULL);
+     return _clientattribute_register(client, key, context, on_get, NULL);
 }
 
-tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key)
+tbc_err_t tbcmh_clientattribute_unregister(tbcmh_handle_t client, const char *key)
 {
-     if (!client || !key) {
-          TBC_LOGE("client or key is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -146,34 +129,30 @@ tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client, const char *key)
      }
 
      // Search item
-     client_attribute_t *clientattribute = NULL;
-     LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
+     clientattribute_t *clientattribute = NULL, *next;;
+     LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
           if (clientattribute && strcmp(clientattribute->key, key)==0) {
-               break;
+             // Remove from list and destroy
+             LIST_REMOVE(clientattribute, entry);
+             _clientattribute_destroy(clientattribute);
+             break;
           }
      }
-     if (!clientattribute) {
-          TBC_LOGW("Unable to remove client attribute: %s! %s()", key, __FUNCTION__);
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          return ESP_FAIL;
-     }
-
-     // Remove form list
-     LIST_REMOVE(clientattribute, entry);
-     _client_attribute_destroy(clientattribute);
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
+
+     if (!clientattribute) {
+          TBC_LOGW("Unable to remove client attribute: %s! %s()", key, __FUNCTION__);
+          return ESP_FAIL;
+     }
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/ ...)
+tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client,
+                                    int count, /*const char *key,*/ ...)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
      if (count <= 0) {
           TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
           return ESP_FAIL;
@@ -190,11 +169,11 @@ tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const
      va_start(ap, count);
      cJSON_bool result = false;
      cJSON *object = cJSON_CreateObject(); // create json object
-     for (i=0; i<count; i++) {
+     for (i=0; object && i<count; i++) {
           const char *key = va_arg(ap, const char*);
 
           // Search item
-          client_attribute_t *clientattribute = NULL;
+          clientattribute_t *clientattribute = NULL;
           LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
                if (clientattribute && strcmp(clientattribute->key, key)==0) {
                     break;
@@ -202,16 +181,16 @@ tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const
           }
 
           /// Add clientattribute to package
-          if (clientattribute) {
-                //_client_attribute_do_get(clientattribute, object); // add item to json object
+          if (clientattribute && clientattribute->on_get) {
+                // add item to json object
                 cJSON *value = clientattribute->on_get(clientattribute->client, clientattribute->context);
                 if (value) {
-                    result = cJSON_AddItemToObject(object, clientattribute->key, value);
+                    result |= cJSON_AddItemToObject(object, clientattribute->key, value);
                 } else {
                     TBC_LOGW("value is NULL! key=%s", clientattribute->key);                    
                 }
           } else {
-               TBC_LOGW("Unable to find client-side attribute:%s! %s()", key, __FUNCTION__);
+               TBC_LOGW("Unable to find&send client-side attribute:%s! %s()", key, __FUNCTION__);
           }
      }
      va_end(ap);
@@ -234,7 +213,18 @@ void _tbcmh_clientattribute_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+    
+    // list create
     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list)); //client->clientattribute_list = LIST_HEAD_INITIALIZER(client->clientattribute_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
 
 void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client)
@@ -242,58 +232,54 @@ void _tbcmh_clientattribute_on_destroy(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-     // TODO: How to add lock??
-     // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-     //      TBC_LOGE("Unable to take semaphore!");
-     //      return ESP_FAIL;
-     // }
+    // TODO: How to add lock??
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
 
-     // remove all item in clientattribute_list
-     client_attribute_t *clientattribute = NULL, *next;
-     LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
-          // remove from clientattribute list and destory
-          LIST_REMOVE(clientattribute, entry);
-          _client_attribute_destroy(clientattribute);
-     }
-     memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list));
+    // items empty - remove all item in clientattribute_list
+    clientattribute_t *clientattribute = NULL, *next;
+    LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
+         // remove from clientattribute list and destory
+         LIST_REMOVE(clientattribute, entry);
+         _clientattribute_destroy(clientattribute);
+    }
+    memset(&client->clientattribute_list, 0x00, sizeof(client->clientattribute_list));
 
-     // Give semaphore
-     // xSemaphoreGive(client->_lock);
-     return ESP_OK;
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
 }
-
 
 void _tbcmh_clientattribute_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    // TODO: ......
+    TBC_CHECK_PTR(client);
+    //......
 }
 
 void _tbcmh_clientattribute_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    // TODO: ...
+    TBC_CHECK_PTR(client);
+    // ...
 }
 
-//unpack & deal
+//receivedd init value in attributes response: unpack & deal
 void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *object)
 {
-     if (!client || !object) {
-          TBC_LOGE("client or object is NULL! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(object);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
-     client_attribute_t *clientattribute = NULL;
+     clientattribute_t *clientattribute = NULL;
      const char* key = NULL;
      LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
           if (clientattribute) {
@@ -307,7 +293,7 @@ void _tbcmh_clientattribute_on_received(tbcmh_handle_t client, const cJSON *obje
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return;// ESP_OK;
+     // xSemaphoreGive(client->_lock);
+     // return;
 }
 
