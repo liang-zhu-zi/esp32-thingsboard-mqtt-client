@@ -193,8 +193,7 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
     }
 
     ESP_LOGI(TAG, "FRONT CONN: Init tbcmh ...");
-    bool is_running_in_mqtt_task = false;
-    tbcmh_handle_t client = tbcmh_init(is_running_in_mqtt_task);
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "FRONT CONN: Failure to init tbcmh!");
         return NULL;

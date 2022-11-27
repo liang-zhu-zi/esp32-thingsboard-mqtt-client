@@ -268,7 +268,7 @@ typedef struct tbcmh_otaupdate_config
 } tbcmh_otaupdate_config_t;
 
 //====0.tbcm client====================================================================================================
-tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task);
+tbcmh_handle_t tbcmh_init();
 void tbcmh_destroy(tbcmh_handle_t client);
 bool tbcmh_connect_using_url(tbcmh_handle_t client,
                                 const tbc_transport_config_esay_t *config,

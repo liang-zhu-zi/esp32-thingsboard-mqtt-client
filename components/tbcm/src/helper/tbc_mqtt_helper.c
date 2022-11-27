@@ -51,11 +51,10 @@ int _tbcmh_get_request_id(tbcmh_handle_t client)
 /**
  * @brief Creates thingsboard client mqtt handle
  *
- * @param  is_running_in_mqtt_task  Is these code running in MQTT task? 
  *
  * @return tbcmh_handle_t if successfully created, NULL on error
  */
-tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task)
+tbcmh_handle_t tbcmh_init()
 {
      tbcmh_t *client = (tbcmh_t *)TBC_MALLOC(sizeof(tbcmh_t));
      if (!client) {
@@ -67,13 +66,13 @@ tbcmh_handle_t tbcmh_init(bool is_running_in_mqtt_task)
      client->tbmqttclient = tbcm_init();
      // Create a queue capable of containing 20 tbcm_event_t structures.
      // These should be passed by pointer as they contain a lot of data.
-     client->is_running_in_mqtt_task = is_running_in_mqtt_task;
-     if (!client->is_running_in_mqtt_task) {
+     // client->is_running_in_mqtt_task = is_running_in_mqtt_task;
+     // if (!client->is_running_in_mqtt_task) {
         client->_xQueue = xQueueCreate(40, sizeof(tbcm_event_t));
          if (client->_xQueue == NULL) {
               TBC_LOGE("failed to create the queue! %s()", __FUNCTION__);
          }
-     }
+     // }
 
      //tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
@@ -142,7 +141,7 @@ void tbcmh_destroy(tbcmh_handle_t client)
           vQueueDelete(client->_xQueue);
           client->_xQueue = NULL;
      }
-     client->is_running_in_mqtt_task = false;
+     // client->is_running_in_mqtt_task = false;
      tbcm_destroy(client->tbmqttclient);
 
      TBC_FREE(client);
@@ -190,11 +189,11 @@ bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
     TBC_LOGI("connecting to %s://%s:%d ...",
                 config->address.schema, config->address.host, config->address.port);
     bool result = false;
-    if (client->is_running_in_mqtt_task) {
-        result = tbcm_connect(client->tbmqttclient, config, client, _on_tbcm_event_handle);
-    } else {
+    // if (client->is_running_in_mqtt_task) {
+    //     result = tbcm_connect(client->tbmqttclient, config, client, _on_tbcm_event_handle);
+    // } else {
         result = tbcm_connect(client->tbmqttclient, config, client, _on_tbcm_event_bridge_send);
-    }
+    // }
     if (!result) {
          TBC_LOGW("client->tbmqttclient connect failure! %s()", __FUNCTION__);
          return false;
@@ -446,10 +445,10 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      _tbcmh_timeseriesdata_on_disconnected(client);
      _tbcmh_attributesrequest_on_disconnected(client); //empty all request
@@ -466,7 +465,7 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      tbcmh_on_disconnected_t on_disconnected = client->on_disconnected;
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     // xSemaphoreGive(client->_lock);
 
      // do callback
      if (on_disconnected) {

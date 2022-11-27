@@ -3,19 +3,12 @@
 1. Support multiple client-attributes to receive in a message;
 1. Support multiple shared-attributes to receive in a message, eg: SW/FW shared attributes.
 
-1. Don't support mqtt event task mode!!!!!!!!!!!!!!!!!!!!!!
-1. lock dead? protected data? thread mode ?!!!!!!!!!!!!!!
+1. lock dead? protected data? in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
 
-1. OTA update support multi-checksum-ALG: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
 1. S/W OTA update `testing`.
-
 1. Device claiming `testing`.
-
 1. security option `testing`.
 1. Device provisioning `testing`.
-
-1. Support standalone application thread `testing`.
-1. Support dependent MQTT event thread `testing`.
 
 1. A new examples of all in one.
 
@@ -24,6 +17,8 @@
 1. docs...
 1. Append supported ThingsBoard MQTT API in commonents/README.md.
 1. Append some pictures of ThingsBoard in examples/.../README.md.
+
+1. OTA update support multi-checksum-ALG: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
 
 1. MQTT Gateway API.
 

@@ -50,7 +50,7 @@ typedef struct tbcmh_client
      // TODO: add a lock???
      // create & destroy
      tbcm_handle_t tbmqttclient;
-     bool is_running_in_mqtt_task;           /*!< is these code running in MQTT task? */
+     // bool is_running_in_mqtt_task;           /*!< is these code running in MQTT task? */
      QueueHandle_t _xQueue;
 
      // modify at connect & disconnect

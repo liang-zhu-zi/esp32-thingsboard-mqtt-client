@@ -195,8 +195,7 @@ static void mqtt_app_start(void)
     esp_mqtt_client_start(client);
 #else
     ESP_LOGI(TAG, "Init tbcmh ...");
-    bool is_running_in_mqtt_task = false;
-    tbcmh_handle_t client = tbcmh_init(is_running_in_mqtt_task);
+    tbcmh_handle_t client = tbcmh_init();
     if (!client) {
         ESP_LOGE(TAG, "Failure to init tbcmh!");
         return;

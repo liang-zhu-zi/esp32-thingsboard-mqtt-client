@@ -125,14 +125,10 @@ static bool __convert_nondata_event(tbcm_event_t *dst_event, const esp_mqtt_even
      return true;
 }
 
-
 static void __response_timer_timerout(void *client_/*timer_arg*/)
 {
      tbcm_t *client = (tbcm_t *)client_;
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+     TBC_CHECK_PTR(client);
 
      tbcm_event_t dst_event = {0};
      __convert_timer_event(&dst_event);
@@ -143,62 +139,45 @@ static void __response_timer_timerout(void *client_/*timer_arg*/)
 
 static void _response_timer_create(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+    TBC_CHECK_PTR(client);
 
-     esp_timer_create_args_t tmr_args = {
+    esp_timer_create_args_t tmr_args = {
         .callback = &__response_timer_timerout,
         .arg = client,
         .name = "response_timer",
-     };
-     esp_timer_create(&tmr_args, &client->respone_timer);
+    };
+    esp_timer_create(&tmr_args, &client->respone_timer);
 }
 
 static void _response_timer_start(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+    TBC_CHECK_PTR(client);
 
-     esp_timer_start_periodic(client->respone_timer, (uint64_t)TB_MQTT_TIMEOUT * 1000 * 1000);
+    esp_timer_start_periodic(client->respone_timer, (uint64_t)TB_MQTT_TIMEOUT * 1000 * 1000);
 }
 
 static void _response_timer_stop(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+    TBC_CHECK_PTR(client);
 
-     esp_timer_stop(client->respone_timer);
+    esp_timer_stop(client->respone_timer);
 }
 
 static void _response_timer_destroy(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
+    TBC_CHECK_PTR(client);
 
-     esp_timer_stop(client->respone_timer);
-     esp_timer_delete(client->respone_timer);
-     client->respone_timer = NULL;
+    esp_timer_stop(client->respone_timer);
+    esp_timer_delete(client->respone_timer);
+    client->respone_timer = NULL;
 }
 
-static void *_tbc_transport_config_fill_to_mqtt_client_config(const tbc_transport_config_t *transport,
-                                                      esp_mqtt_client_config_t *mqtt_config)
+static void *_tbc_transport_config_fill_to_mqtt_client_config(
+                                        const tbc_transport_config_t *transport,
+                                        esp_mqtt_client_config_t *mqtt_config)
 {
-    if (!mqtt_config) {
-         TBC_LOGE("mqtt_config is NULL! %s()", __FUNCTION__);
-         return NULL;
-    }
-    if (!transport) {
-         TBC_LOGE("transport is NULL! %s()", __FUNCTION__);
-         return NULL;
-    }
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(mqtt_config, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(transport, NULL);
 
     // address
     bool tlsEnabled = false;
@@ -331,10 +310,7 @@ tbcm_handle_t tbcm_init(void)
 // Destroys tbcm_handle_t with network client.
 void tbcm_destroy(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
+     TBC_CHECK_PTR(client);
 
      if (client->mqtt_handle) {
           tbcm_disconnect(client);
@@ -362,15 +338,9 @@ bool tbcm_connect(tbcm_handle_t client,
 {
      /*const char *host, int port = 1883, */
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
-     if (!client || !config) {
-          TBC_LOGW("one argument isn't NULL!");
-          return false;
-     }
-
-     if (client->mqtt_handle) {
-          TBC_LOGW("unable to re-connect mqtt client: client isn't NULL!");
-          return false; //!!
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, false);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, false);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, false);
 
      tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;
@@ -406,14 +376,9 @@ bool tbcm_connect(tbcm_handle_t client,
 // Disconnects from ThingsBoard. Returns true on success.
 void tbcm_disconnect(tbcm_handle_t client) // disconnect()//...stop()
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
-     if (!client->mqtt_handle) {
-          TBC_LOGW("unable to disconnect mqtt client: mqtt client is NULL!");
-          return;
-     }
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(client->mqtt_handle);
+
      //void *context = client->context;
 
      TBC_LOGI("tbcm_disconnect(): call esp_mqtt_client_stop()...");
@@ -440,10 +405,8 @@ void tbcm_disconnect(tbcm_handle_t client) // disconnect()//...stop()
 // Returns true if connected, false otherwise.
 bool tbcm_is_connected(tbcm_handle_t client) // isConnected
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return false;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, false);
+
      return client->state == TBCM_STATE_CONNECTED; 
 }
 
@@ -454,19 +417,15 @@ bool tbcm_is_connecting(tbcm_handle_t client)
 
 bool tbcm_is_disconnected(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return false;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, false);
+
      return client->state == TBCM_STATE_DISCONNECTED; 
 }
 
 tbcm_state_t tbcm_get_state(tbcm_handle_t client)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL");
-          return TBCM_STATE_DISCONNECTED;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, TBCM_STATE_DISCONNECTED);
+
      return client->state;
 }
 
@@ -489,15 +448,9 @@ tbcm_state_t tbcm_get_state(tbcm_handle_t client)
  */
 int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     if (!client->mqtt_handle || !topic)
-     {
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(topic, -1);
 
      return esp_mqtt_client_subscribe(client->mqtt_handle, topic, qos);
 }
@@ -522,15 +475,9 @@ int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/)
 static int _tbcm_publish(tbcm_handle_t client, const char *topic, const char *payload,
                         int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     if (!client->mqtt_handle || !topic)
-     {
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(topic, -1);
 
      int len = (payload == NULL) ? 0 : strlen(payload); //// +1
      return esp_mqtt_client_publish(client->mqtt_handle, topic, payload, len, qos, retain); ////return msg_id or -1(failure)
@@ -556,10 +503,7 @@ static int _tbcm_publish(tbcm_handle_t client, const char *topic, const char *pa
 int tbcm_telemetry_publish(tbcm_handle_t client, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
      if (client->config.log_rxtx_package) {
         TBC_LOGI("[Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
@@ -589,10 +533,7 @@ int tbcm_telemetry_publish(tbcm_handle_t client, const char *telemetry,
 int tbcm_clientattributes_publish(tbcm_handle_t client, const char *attributes,
                                          int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
      if (client->config.log_rxtx_package) {
         TBC_LOGI("[Client-Side Attributes][Tx] %.*s", strlen(attributes), attributes);
@@ -624,19 +565,9 @@ int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
                             int request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     if (!client->mqtt_handle) {
-          TBC_LOGE("mqtt client is NULL");
-          return -1;
-     }
-     if (!payload) {
-          TBC_LOGW("There are no payload to request");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(payload, -1);
 
      int size = strlen(TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX) + 20;
      char *topic = TBC_MALLOC(size);
@@ -680,10 +611,7 @@ int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, co
                                int request_id,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
      int client_len = 0;
      int shared_len = 0;
@@ -747,15 +675,8 @@ int tbcm_serverrpc_response(tbcm_handle_t client,
                             int request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-     
-     if (!client->mqtt_handle) {
-          TBC_LOGE("MQTT client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
 
      int size = strlen(TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX) + 20;
      char *topic = TBC_MALLOC(size);
@@ -799,19 +720,9 @@ int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
                            int request_id,
                            int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     if (!client->mqtt_handle) {
-          TBC_LOGE("mqtt client is NULL!");
-          return -1;
-     }
-     if (!payload) {
-          TBC_LOGW("There are no payload to request!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(payload, -1);
 
      int size = strlen(TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX) + 20;
      char *topic = TBC_MALLOC(size);
@@ -855,10 +766,7 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client, const char *method, const ch
                               int request_id,
                               int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
      int size = strlen(TB_MQTT_KEY_RPC_METHOD) + strlen(method) + strlen(TB_MQTT_KEY_RPC_PARAMS) + strlen(params) + 20;
      char *payload = TBC_MALLOC(size);
@@ -898,11 +806,7 @@ int tbcm_clientrpc_request_ex(tbcm_handle_t client, const char *method, const ch
 int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
                                  int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client)
-     {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
      if (client->config.log_rxtx_package)
      {
@@ -935,22 +839,9 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
                             int request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
  {
-      if (!client)
-      {
-           TBC_LOGE("client is NULL!");
-           return -1;
-      }
-
-      if (!client->mqtt_handle)
-      {
-           TBC_LOGE("mqtt client is NULL");
-           return -1;
-      }
-      if (!payload)
-      {
-           TBC_LOGW("There are no payload to request");
-           return -1;
-      }
+      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+      TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+      TBC_CHECK_PTR_WITH_RETURN_VALUE(payload, -1);
 
       if (client->config.log_rxtx_package)
       {
@@ -985,19 +876,9 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
                           int request_id, int chunk_id, const char *payload,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return -1;
-     }
-
-     if (!client->mqtt_handle) {
-          TBC_LOGE("mqtt client is NULL");
-          return -1;
-     }
-     /*if (!payload) {
-          TBC_LOGW("There are no payload to request");
-          return -1;
-     }*/
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     //TBC_CHECK_PTR_WITH_RETURN_VALUE(payload, -1);
 
      int size = strlen(TB_MQTT_TOPIC_FW_REQUEST_PATTERN) + 20;
      char *topic = TBC_MALLOC(size);
@@ -1250,14 +1131,8 @@ static void _on_mqtt_event_handle(void *handler_args, esp_event_base_t base, int
      tbcm_t *client = (tbcm_t*)handler_args;
      esp_mqtt_event_handle_t src_event = event_data;
 
-     if (!client) {
-          TBC_LOGE("client is NULL!");
-          return;
-     }
-     if (!src_event) {
-          TBC_LOGE("src_event is NULL!");
-          return;
-     }
+     TBC_CHECK_PTR(client);
+     TBC_CHECK_PTR(src_event);
 
      switch (src_event->event_id) {
      case MQTT_EVENT_DATA:
