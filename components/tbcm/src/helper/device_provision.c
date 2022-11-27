@@ -48,26 +48,6 @@ static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client, int req
     return provision;
 }
 
-static deviceprovision_t *_deviceprovision_clone_wo_listentry(deviceprovision_t *src)
-{
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
-
-    deviceprovision_t *provision = TBC_MALLOC(sizeof(deviceprovision_t));
-    if (!provision) {
-        TBC_LOGE("Unable to malloc memeory!");
-        return NULL;
-    }
-
-    memset(provision, 0x00, sizeof(deviceprovision_t));
-    provision->client = src->client;
-    provision->params = cJSON_Duplicate(src->params, true);
-    provision->request_id = src->request_id;
-    provision->context = src->context;
-    provision->on_response = src->on_response;
-    provision->on_timeout = src->on_timeout;
-    return provision;
-}
-
 /*!< Destroys the deviceprovision_t */
 static tbc_err_t _deviceprovision_destroy(deviceprovision_t *provision)
 {
@@ -320,7 +300,6 @@ void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -347,7 +326,6 @@ void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -355,17 +333,7 @@ void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
     // }
 
     // remove all item in deviceprovision_list
-    deviceprovision_t *provision = NULL, *next;
-    LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
-        // exec timeout callback
-        if (provision->on_timeout) {
-            provision->on_timeout(provision->client, provision->context, provision->request_id);
-        }
-
-        // remove from provision list and destory
-        LIST_REMOVE(provision, entry);
-        _deviceprovision_destroy(provision);
-    }
+    _tbcmh_deviceprovision_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
     memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
 
     // Give semaphore
@@ -488,102 +456,52 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const
      TBC_CHECK_PTR(object);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // Search provision
-     deviceprovision_t *provision = NULL;
-     LIST_FOREACH(provision, &client->deviceprovision_list, entry) {
+     deviceprovision_t *provision = NULL, *next;
+     LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
           if (provision && (provision->request_id==request_id)) {
-               break;
+              LIST_REMOVE(provision, entry);
+              break;
           }
      }
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+
      if (!provision) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
           TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
           return;
      }
 
-     // Cache and remove provision
-     deviceprovision_t *cache = _deviceprovision_clone_wo_listentry(provision);
-     LIST_REMOVE(provision, entry);
-     _deviceprovision_destroy(provision);
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-
-      // Do response - parse results of provision response
+     // Do response - parse results of provision response
      tbc_transport_credentials_config_t credentials = {0};
      int result = __parse_provision_response(object, &credentials);
      if (result == ESP_OK) {
-         cache->on_response(cache->client, cache->context, cache->request_id, &credentials);
+         provision->on_response(provision->client, provision->context,
+                                provision->request_id, &credentials);
      } else {
-         cache->on_timeout(cache->client, cache->context, cache->request_id); // TODO: a new faiure callback?
+         provision->on_timeout(provision->client, provision->context,
+                                provision->request_id); // TODO: a new faiure callback?
      }
-     
+
      // Free cache
-     _deviceprovision_destroy(cache);
-
-     return;
-}
-
-/*
-void _tbcmh_deviceprovision_on_timeout(tbcmh_handle_t client, int request_id)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;// ESP_FAIL;
-     }
-
-     // Search provision
-     deviceprovision_t *provision = NULL;
-     LIST_FOREACH(provision, &client->deviceprovision_list, entry) {
-          if (provision && (provision->request_id==request_id)) {
-               break;
-          }
-     }
-     if (!provision) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
-          return;// ESP_FAIL;
-     }
-
-     // Cache and remove provision
-     deviceprovision_t *cache = _deviceprovision_clone_wo_listentry(provision);
-     LIST_REMOVE(provision, entry);
      _deviceprovision_destroy(provision);
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-
-     // Do timeout
-     if (cache->on_timeout) {
-         cache->on_timeout(cache->client, cache->context, cache->request_id);
-     }
-     
-     // Free provision
-     _deviceprovision_destroy(cache);
-
-     return;// ESP_OK;
-}*/
+}
 
 void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
 {
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // Search & move timeout item to timeout_list
      deviceprovision_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
@@ -608,14 +526,20 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     // xSemaphoreGive(client->_lock);
 
      // Deal timeout
+     bool clientIsValid = true;
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
-          if (request->on_timeout) {
-              request->on_timeout(request->client, request->context,
+          int result = 0;
+          if (clientIsValid && request->on_timeout) {
+              result = request->on_timeout(request->client, request->context,
                     request->request_id);
           }
+          if (result == 2) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_timeout()
+              clientIsValid = false;
+          }
+
           LIST_REMOVE(request, entry);
           _deviceprovision_destroy(request);
      }

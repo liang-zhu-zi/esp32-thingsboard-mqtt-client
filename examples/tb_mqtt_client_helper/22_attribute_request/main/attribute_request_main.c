@@ -29,7 +29,7 @@ static bool g_attributes_are_initialized_from_server = false;
 
 //Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
 {
     ESP_LOGI(TAG, "Get setpoint (a client attribute)");
     
@@ -38,7 +38,7 @@ tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *c
 
 //Don't call TBCMH API in these callback!
 //Free value by caller/(tbcmh library)!
-void tb_clientattribute_on_set_setpoint(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
+void tb_clientattribute_on_set_setpoint(void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set setpoint (a client-side attribute)");
     if (!value) {
@@ -62,8 +62,14 @@ void tb_clientattribute_send(tbcmh_handle_t client)
     tbcmh_clientattribute_update(client, 1, CLIENTATTRIBUTE_SETPOINT);
 }
 
-//Don't call TBCMH API in this callback!
-//Free value by caller/(tbcmh library)!
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called.
+//      Caller (TBCMH library) will not update other shared attributes received this time.
+//      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
+//      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
+// return 1 if tbcmh_sharedattribute_unregister() is called.
+//      Caller (TBCMH library) will not update other shared attributes received this time.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
 tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");

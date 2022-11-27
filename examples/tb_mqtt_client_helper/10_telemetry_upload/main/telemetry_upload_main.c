@@ -27,7 +27,7 @@ static const char *TAG = "TELEMETRY_UPLOAD";
 
 //Don't call TBCMH API in this callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_telemetry_on_get_temperature(tbcmh_handle_t client, void *context)
+tbcmh_value_t* tb_telemetry_on_get_temperature(void *context)
 {
     ESP_LOGI(TAG, "Get temperature (a time-series data)");
     static float temp_array[] = {25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 27.5, 27.0, 26.5};
@@ -42,7 +42,7 @@ tbcmh_value_t* tb_telemetry_on_get_temperature(tbcmh_handle_t client, void *cont
 
 //Don't call TBCMH API in this callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_telemetry_on_get_humidity(tbcmh_handle_t client, void *context)
+tbcmh_value_t* tb_telemetry_on_get_humidity(void *context)
 {
     ESP_LOGI(TAG, "Get humidity (a time-series data)");
 

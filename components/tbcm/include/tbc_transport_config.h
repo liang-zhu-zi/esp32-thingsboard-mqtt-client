@@ -171,6 +171,17 @@ typedef struct tbc_transport_config
   bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
 } tbc_transport_config_t;
 
+/**
+ * ThingsBoard Client transport easy config.
+ *
+ */
+typedef struct
+{
+  const char *uri;             /*!< Complete MQTT broker URI */
+  const char *access_token;    /*!< Access Token */
+  const bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
+} tbc_transport_config_esay_t;
+
 void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
                                               const tbc_transport_credentials_config_t *src);
 tbc_transport_credentials_config_t *tbc_transport_credentials_clone(const tbc_transport_credentials_config_t *credentials);

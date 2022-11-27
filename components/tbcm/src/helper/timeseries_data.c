@@ -164,7 +164,7 @@ tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client,
           /// Add tsdata to package
           if (tsdata && tsdata->on_get) {
                 // add item to json object
-                cJSON *value = tsdata->on_get(tsdata->client, tsdata->context);
+                cJSON *value = tsdata->on_get(tsdata->context);
                 if (value) {
                     result |= cJSON_AddItemToObject(object, tsdata->key, value);
                 } else {

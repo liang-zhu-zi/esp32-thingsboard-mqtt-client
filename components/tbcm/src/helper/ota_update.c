@@ -220,8 +220,8 @@ static void _otaupdate_publish_early_current_version(otaupdate_t *otaupdate)
         current_ota_title_key   = TB_MQTT_KEY_CURRENT_SW_TITLE;   //"current_sw_title"
         current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
     }
-    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
-    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->client, otaupdate->config.context);
+    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
+    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->config.context);
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
@@ -318,8 +318,8 @@ static void _otaupdate_publish_going_status(otaupdate_t *otaupdate, const char *
         current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
         ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"  
     }
-    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->client, otaupdate->config.context);
-    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->client, otaupdate->config.context);
+    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
+    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->config.context);
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
@@ -459,7 +459,7 @@ static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
 
     // TODO: if ota_title & ota_version == current_title & current_version, then return 0!
     
-    int result = otaupdate->config.on_ota_negotiate(otaupdate->client, otaupdate->config.context,
+    int result = otaupdate->config.on_ota_negotiate(otaupdate->config.context,
                                              ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm,
                                              ota_error, error_size);
     if (result==1) { // negotiate successful(next to F/W OTA)
@@ -553,7 +553,7 @@ static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, int chunk_id,
     }
 
     tbc_err_t result = true;
-    result = otaupdate->config.on_ota_write(otaupdate->client, otaupdate->config.context,
+    result = otaupdate->config.on_ota_write(otaupdate->config.context,
                             otaupdate->state.request_id, chunk_id, ota_data, data_size,
                             ota_error, error_size);
     if (result != ESP_OK) {
@@ -576,7 +576,7 @@ static tbc_err_t _otaupdate_do_end(otaupdate_t *otaupdate, char *ota_error, int 
 
     // on_ota_end() and reset()
     if (otaupdate->config.on_ota_end && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
-        ret = otaupdate->config.on_ota_end(otaupdate->client, otaupdate->config.context, 
+        ret = otaupdate->config.on_ota_end(otaupdate->config.context, 
                                          otaupdate->state.request_id, otaupdate->state.chunk_id,
                                          ota_error, error_size);
     }
@@ -589,8 +589,8 @@ static void _otaupdate_do_abort(otaupdate_t *otaupdate)
 
     // on_ota_abort() and reset()
     if (otaupdate->config.on_ota_abort && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
-        otaupdate->config.on_ota_abort(otaupdate->client, otaupdate->config.context, 
-                                         otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/);
+        otaupdate->config.on_ota_abort(otaupdate->config.context, 
+                        otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/);
     }
 }
 
@@ -629,7 +629,6 @@ void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -640,8 +639,8 @@ void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
     otaupdate_t *otaupdate = NULL, *next;
     LIST_FOREACH_SAFE(otaupdate, &client->otaupdate_list, entry, next) {
          // exec timeout callback
-         _otaupdate_do_abort(otaupdate);
-         _otaupdate_reset(otaupdate);
+         // _otaupdate_do_abort(otaupdate);
+         // _otaupdate_reset(otaupdate);
 
          // remove from otaupdate list and destory
          LIST_REMOVE(otaupdate, entry);
@@ -729,31 +728,33 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
      tbcm_handle_t tbcm_handle = client->tbmqttclient;
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Device code is error!");
-          return;;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Device code is error!");
+     //      return;;
+     // }
 
      // Search item
-     otaupdate_t *otaupdate = NULL;
-     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
+     otaupdate_t *otaupdate = NULL, *next;
+     LIST_FOREACH_SAFE(otaupdate, &client->otaupdate_list, entry, next) {
         if (otaupdate &&
            (otaupdate->config.ota_type==ota_type) &&
             otaupdate->config.on_get_current_ota_title)
         {
-            const char * current_ota_title = otaupdate->config.on_get_current_ota_title(
-                                otaupdate->client, otaupdate->config.context);
+            const char * current_ota_title = 
+                            otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
             if (current_ota_title && strcmp(current_ota_title, ota_title)==0) {
                 break;
             }
         }
      }
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+
      if (!otaupdate) {
           TBC_LOGW("Unable to find otaupdate:%s! %s()", ota_title, __FUNCTION__);
           _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Device code is error!");
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
           return;// ESP_FAIL;
      }
 
@@ -786,10 +787,6 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
         TBC_LOGE("ota_error (%s) of _otaupdate_do_negotiate()!", ota_error_);
         _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, ota_error_);
      }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     //return;
 }
 
 //on response
@@ -799,10 +796,10 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // Search item
      otaupdate_t *otaupdate = NULL;
@@ -813,7 +810,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
      }
      if (!otaupdate) {
           // Give semaphore
-          xSemaphoreGive(client->_lock);
+          // xSemaphoreGive(client->_lock);
           TBC_LOGW("Unable to find otaupdate:%d! %s()", request_id, __FUNCTION__);
           return;
      }
@@ -878,8 +875,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
       }
  
      // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return;
+     // xSemaphoreGive(client->_lock);
 }
  
 void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
@@ -887,47 +883,23 @@ void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t tim
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
-     // TODO:  How to do  if it upgrade F/W & S/W at a moment?
-
-     // Search timeout item //& move to timeout_list
-     // otaupdate_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     // Search timeout item
      otaupdate_t *request = NULL, *next;
      LIST_FOREACH_SAFE(request, &client->otaupdate_list, entry, next) {
           if (request && request->state.timestamp + TB_MQTT_TIMEOUT <= timestamp) {
-                break;
-                /*LIST_REMOVE(request, entry);
-                // append to timeout list
-                otaupdate_t *it, *last = NULL;
-                if (LIST_FIRST(&timeout_list) == NULL) {
-                     LIST_INSERT_HEAD(&timeout_list, request, entry);
-                } else {
-                     LIST_FOREACH(it, &timeout_list, entry) {
-                          last = it;
-                     }
-                     if (it == NULL) {
-                          assert(last);
-                          LIST_INSERT_AFTER(last, request, entry);
-                     }
-                }*/
+                // Deal timeout & abort ota
+                _otaupdate_publish_late_failed_status(request, "OTA response timeout!");
+                _otaupdate_do_abort(request);
+                _otaupdate_reset(request);
           }
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
-
-     // Deal timeout
-     //LIST_FOREACH_SAFE(request, &timeout_list, entry, next)
-     if (request)
-      {
-           // abort ota
-           _otaupdate_publish_late_failed_status(request, "OTA response timeout!");
-           _otaupdate_do_abort(request);
-           _otaupdate_reset(request);
-     }
+     // xSemaphoreGive(client->_lock);
 }
 

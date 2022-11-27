@@ -52,29 +52,6 @@ static clientrpc_t *_clientrpc_create(tbcmh_handle_t client, int request_id,
     return clientrpc;
 }
 
-static clientrpc_t *_clientrpc_clone_wo_listentry(clientrpc_t *src)
-{
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(src, NULL);
-    
-    clientrpc_t *clientrpc = TBC_MALLOC(sizeof(clientrpc_t));
-    if (!clientrpc) {
-        TBC_LOGE("Unable to malloc memeory!");
-        return NULL;
-    }
-
-    memset(clientrpc, 0x00, sizeof(clientrpc_t));
-    clientrpc->client = src->client;
-    clientrpc->method = TBC_MALLOC(strlen(src->method)+1);
-    if (clientrpc->method) {
-        strcpy(clientrpc->method, src->method);
-    }
-    clientrpc->request_id = src->request_id;
-    clientrpc->context = src->context;
-    clientrpc->on_response = src->on_response;
-    clientrpc->on_timeout = src->on_timeout;
-    return clientrpc;
-}
-
 /*!< Destroys the clientrpc_t */
 static tbc_err_t _clientrpc_destroy(clientrpc_t *clientrpc)
 {
@@ -232,7 +209,6 @@ void _tbcmh_clientrpc_on_destroy(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -259,7 +235,6 @@ void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -267,24 +242,12 @@ void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
     // }
 
     // remove all item in clientrpc_list
-    clientrpc_t *clientrpc = NULL, *next;
-    LIST_FOREACH_SAFE(clientrpc, &client->clientrpc_list, entry, next) {
-        // exec timeout callback
-        if (clientrpc->on_timeout) {
-            clientrpc->on_timeout(clientrpc->client, clientrpc->context,
-                                  clientrpc->request_id, clientrpc->method);
-        }
-
-        // remove from clientrpc list and destory
-        LIST_REMOVE(clientrpc, entry);
-        _clientrpc_destroy(clientrpc);
-    }
+    _tbcmh_clientrpc_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
     memset(&client->clientrpc_list, 0x00, sizeof(client->clientrpc_list));
 
     // Give semaphore
     // xSemaphoreGive(client->_lock);
 }
-
 
 //on response
 void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
@@ -293,100 +256,48 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON
      TBC_CHECK_PTR(object);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // Search clientrpc
      clientrpc_t *clientrpc = NULL;
      LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
           if (clientrpc && (clientrpc->request_id==request_id)) {
-               break;
+              LIST_REMOVE(clientrpc, entry);
+              break;
           }
      }
+
+     // Give semaphore
+     // xSemaphoreGive(client->_lock);
+
      if (!clientrpc) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
           TBC_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
           return;
      }
 
-     // Cache and remove clientrpc
-     clientrpc_t *cache = _clientrpc_clone_wo_listentry(clientrpc);
-     LIST_REMOVE(clientrpc, entry);
-     _clientrpc_destroy(clientrpc);
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-
      // Do response
-     if (cache->on_response) {
-        cache->on_response(cache->client, cache->context,
-                            cache->request_id, cache->method,
+     if (clientrpc->on_response) {
+        clientrpc->on_response(clientrpc->client, clientrpc->context,
+                            clientrpc->request_id, clientrpc->method,
                             cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_RESULTS));
      }
 
      // Free cache
-     _clientrpc_destroy(cache);
-
-     return;
-}
-
-/*
-void _tbcmh_clientrpc_on_timeout(tbcmh_handle_t client, int request_id)
-{
-     if (!client) {
-          TBC_LOGE("client is NULL! %s()", __FUNCTION__);
-          return;
-     }
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
-
-     // Search clientrpc
-     clientrpc_t *clientrpc = NULL;
-     LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
-          if (clientrpc && (clientrpc->request_id==request_id)) {
-               break;
-          }
-     }
-     if (!clientrpc) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
-          return;
-     }
-
-     // Cache and remove clientrpc
-     clientrpc_t *cache = _clientrpc_clone_wo_listentry(clientrpc);
-     LIST_REMOVE(clientrpc, entry);
      _clientrpc_destroy(clientrpc);
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-
-     // Do timeout
-      if (cache->on_timeout) {
-          cache->on_timeout(cache->client, cache->context,
-                            cache->request_id, cache->method);
-      }     
-     // Free clientrpc
-     _clientrpc_destroy(cache);
-
-     return;
-}*/
+}
 
 void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
 {
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return;
-     }
+     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+     //      return;
+     // }
 
      // Search & move timeout item to timeout_list
      clientrpc_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
@@ -411,14 +322,20 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     // xSemaphoreGive(client->_lock);
 
      // Deal timeout
+     bool clientIsValid = true;
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
-          if (request->on_timeout) {
-              request->on_timeout(request->client, request->context,
-                    request->request_id, request->method);
+          int result = 0;
+          if (clientIsValid && request->on_timeout) {
+              result = request->on_timeout(request->client, request->context,
+                                    request->request_id, request->method);
           }
+          if (result == 2) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_timeout()
+              clientIsValid = false;
+          }
+
           LIST_REMOVE(request, entry);
           _clientrpc_destroy(request);
      }

@@ -147,9 +147,14 @@ static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
    TBC_LOGE("Provision failurs and the device will not work!");
 }
 
-static void _tb_provision_on_timeout(tbcmh_handle_t client, void *context, int request_id)
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
+//      Caller (TBCMH library) will process other attributes request timeout.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
+static int _tb_provision_on_timeout(tbcmh_handle_t client, void *context, int request_id)
 {
    TBC_LOGE("Provision timeout and the device will not work!");
+   return ESP_OK;
 }
 
 /*!< Callback of connected ThingsBoard MQTT */

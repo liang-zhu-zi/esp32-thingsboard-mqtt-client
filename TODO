@@ -1,37 +1,31 @@
 # TODO List
 
-1. Simplified telemetry function.
-
 1. Support multiple client-attributes to receive in a message;
 1. Support multiple shared-attributes to receive in a message, eg: SW/FW shared attributes.
 
+1. Don't support mqtt event task mode!!!!!!!!!!!!!!!!!!!!!!
+1. lock dead? protected data? thread mode ?!!!!!!!!!!!!!!
+
 1. OTA update support multi-checksum-ALG: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
-1. OTA update funciton split ?
 1. S/W OTA update `testing`.
 
 1. Device claiming `testing`.
 
-2. Process connected event in every funciton: subscribe, attributes request...prosion subscribe or other func subscirbe in tbcmh_connect(isNotProvision, isRunningInMqttTask) !!!
-3. lock dead? protected data? thread mode?
+1. security option `testing`.
+1. Device provisioning `testing`.
 
-4. security option `testing`.
-5. Device provisioning `testing`.
+1. Support standalone application thread `testing`.
+1. Support dependent MQTT event thread `testing`.
 
-6. Support standalone application thread.
-7. Support dependent MQTT event thread.
+1. A new examples of all in one.
 
-8. rename directory, files, function, macro...
+1. Append some testing case.
 
-9. A new examples of all in one.
+1. docs...
+1. Append supported ThingsBoard MQTT API in commonents/README.md.
+1. Append some pictures of ThingsBoard in examples/.../README.md.
 
-10. Append some testing case.
+1. MQTT Gateway API.
 
-11. docs...
-12. Append supported ThingsBoard MQTT API in commonents/README.md.
-13. Append some pictures of ThingsBoard in examples/.../README.md.
-
-14. MQTT Gateway API.
-
-15. CoAP Transport.
-16. HTTP Transport.
-
+1. CoAP Transport.
+1. HTTP Transport.

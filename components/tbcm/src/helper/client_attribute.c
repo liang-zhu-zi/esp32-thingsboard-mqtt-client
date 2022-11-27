@@ -184,7 +184,7 @@ tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client,
           /// Add clientattribute to package
           if (clientattribute && clientattribute->on_get) {
                 // add item to json object
-                cJSON *value = clientattribute->on_get(clientattribute->client, clientattribute->context);
+                cJSON *value = clientattribute->on_get(clientattribute->context);
                 if (value) {
                     result |= cJSON_AddItemToObject(object, clientattribute->key, value);
                 } else {
@@ -279,16 +279,17 @@ void _tbcmh_clientattribute_on_data(tbcmh_handle_t client, const cJSON *object)
      //      return;
      // }
 
-     // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
-     clientattribute_t *clientattribute = NULL;
+     // foreach item to set value of clientattribute in lock/unlodk. 
+     // Don't call tbcmh's funciton in set value callback!
+     clientattribute_t *clientattribute = NULL, *next;
      const char* key = NULL;
-     LIST_FOREACH(clientattribute, &client->clientattribute_list, entry) {
+     LIST_FOREACH_SAFE(clientattribute, &client->clientattribute_list, entry, next) {
           if (clientattribute) {
                key = clientattribute->key;
                if (cJSON_HasObjectItem(object, key)) {
                     cJSON *value = cJSON_GetObjectItem(object, key);
                     if (clientattribute->on_set && value) {
-                         clientattribute->on_set(clientattribute->client, clientattribute->context, value);
+                         clientattribute->on_set(clientattribute->context, value);
                     }
             }
         }

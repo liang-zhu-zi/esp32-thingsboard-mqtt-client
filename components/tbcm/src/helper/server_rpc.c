@@ -177,7 +177,6 @@ void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
 
-    // TODO: How to add lock??
     // Take semaphore
     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
@@ -231,24 +230,22 @@ void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON
      //      return;
      // }
 
-     serverrpc_t *serverrpc = NULL;
+     serverrpc_t *serverrpc = NULL, *cache = NULL;
      LIST_FOREACH(serverrpc, &client->serverrpc_list, entry) {
           if (serverrpc && strcmp(serverrpc->method, method)==0) {
-               break;
+              // Clone serverrpc
+              cache = _serverrpc_clone_wo_listentry(serverrpc);
+              break;
           }
      }
-     if (!serverrpc) {
-          TBC_LOGW("Unable to deal server-rpc:%s! %s()", method, __FUNCTION__);
-          // Give semaphore
-          // xSemaphoreGive(client->_lock);
-          return;
-     }
-
-     // Clone serverrpc
-     serverrpc_t *cache = _serverrpc_clone_wo_listentry(serverrpc);
 
      // Give semaphore
      // xSemaphoreGive(client->_lock);
+
+     if (!cache) {
+          TBC_LOGW("Unable to deal server-rpc:%s! %s()", method, __FUNCTION__);
+          return;
+     }
 
      // Do request
      tbcmh_rpc_results_t *result = NULL;

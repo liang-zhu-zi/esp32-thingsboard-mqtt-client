@@ -91,7 +91,7 @@ static bool ____fwupdate_diagnostic(void)
 }
 
 //Don't call TBCMH API in the callback!
-static const char* _my_fwupdate_on_get_current_title(tbcmh_handle_t client, void *context)
+static const char* _my_fwupdate_on_get_current_title(void *context)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -110,7 +110,7 @@ static const char* _my_fwupdate_on_get_current_title(tbcmh_handle_t client, void
     return NULL; //CURRENT_FW_TITLE;
 }
 //Don't call TBCMH API in the callback!
-static const char* _my_fwupdate_on_get_current_version(tbcmh_handle_t client, void *context)
+static const char* _my_fwupdate_on_get_current_version(void *context)
 {
     // TODO: division F/W or S/W !!!!
 
@@ -131,7 +131,7 @@ static const char* _my_fwupdate_on_get_current_version(tbcmh_handle_t client, vo
 
 //Don't call TBCMH API in the callback!
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-static tbc_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_negotiate(void *context,
         const char *fw_title, const char *fw_version, int fw_size,
         const char *fw_checksum, const char *fw_checksum_algorithm,
         char *fw_error, int error_size)
@@ -141,7 +141,7 @@ static tbc_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm);
 
     //check fw_title != current_fw_title
-    const char * current_fw_title = _my_fwupdate_on_get_current_title(client, context);
+    const char * current_fw_title = _my_fwupdate_on_get_current_title(context);
     if (strcmp(fw_title, current_fw_title)!=0) {
     
         ESP_LOGI(TAG, "New F/W titile(%s) is not equal to current F/W title(%s)", fw_title, current_fw_title);
@@ -150,7 +150,7 @@ static tbc_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
     }
     
     //check fw_version == current_fw_version
-    const char* current_fw_version = _my_fwupdate_on_get_current_version(client, context);
+    const char* current_fw_version = _my_fwupdate_on_get_current_version(context);
     if (strcmp(fw_version, current_fw_version)==0) {
         ESP_LOGI(TAG, "New F/W version(%s) is equal to current F/W version(%s)", fw_version, current_fw_version);
         snprintf(fw_error, error_size, "New F/W version(%s) is equal to current F/W version(%s)", fw_version, current_fw_version);
@@ -173,7 +173,7 @@ static tbc_err_t _my_fwupdate_on_negotiate(tbcmh_handle_t client, void *context,
 
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbc_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_write(void *context,
                 int request_id, int chunk_id, const void *fw_data, int data_read,
                 char *fw_error, int error_size)
 {
@@ -265,7 +265,7 @@ static tbc_err_t _my_fwupdate_on_write(tbcmh_handle_t client, void *context,
 
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbc_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
+static tbc_err_t _my_fwupdate_on_end(void *context,
                                 int request_id, int chunk_id, char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
@@ -299,7 +299,7 @@ static tbc_err_t _my_fwupdate_on_end(tbcmh_handle_t client, void *context,
 }
 
 //Don't call TBCMH API in the callback!
-static void _my_fwupdate_on_abort(tbcmh_handle_t client, void *context,
+static void _my_fwupdate_on_abort(void *context,
                                 int request_id, int chunk_id/*current chunk_id*/)
 {
     // TODO: division F/W or S/W !!!!

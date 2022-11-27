@@ -27,7 +27,7 @@ static const char *TAG = "CLIENT_ATTRIBUTE";
 
 //Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_clientattribute_on_get_model(tbcmh_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_model(void *context)
 {
     ESP_LOGI(TAG, "Get model (a client attribute)");
     
@@ -36,7 +36,7 @@ tbcmh_value_t* tb_clientattribute_on_get_model(tbcmh_handle_t client, void *cont
 
 //Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_clientattribute_on_get_setpoint(tbcmh_handle_t client, void *context)
+tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
 {
     ESP_LOGI(TAG, "Get setpoint (a client attribute)");
     
@@ -138,7 +138,8 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append client attribute: model...");
-    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_MODEL, NULL, tb_clientattribute_on_get_model);
+    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_MODEL, NULL,
+                            tb_clientattribute_on_get_model);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;

@@ -24,8 +24,14 @@ static const char *TAG = "SHARED_ATTR_EXAMPLE";
 
 #define SHAREDATTRIBUTE_SNTP_SERVER     "sntp_server"
 
-//Don't call TBCMH API in this callback!
-//Free value by caller/(tbcmh library)!
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called.
+//      Caller (TBCMH library) will not update other shared attributes received this time.
+//      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
+//      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
+// return 1 if tbcmh_sharedattribute_unregister() is called.
+//      Caller (TBCMH library) will not update other shared attributes received this time.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
 tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");
@@ -131,7 +137,8 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    tbc_err_t err = tbcmh_sharedattribute_register(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, tb_sharedattribute_on_set_sntp_server);
+    tbc_err_t err = tbcmh_sharedattribute_register(client, SHAREDATTRIBUTE_SNTP_SERVER,
+                      NULL, tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
         goto exit_destroy;

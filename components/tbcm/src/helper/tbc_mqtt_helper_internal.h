@@ -42,24 +42,6 @@
 extern "C" {
 #endif
 
-typedef enum
-{
-     TBCMH_REQUEST_ATTRIBUTES = 1,
-     TBCMH_REQUEST_CLIENTRPC,
-     TBCMH_REQUEST_FWUPDATE,
-     TBCMH_REQUEST_PROVISION
-} tbcmh_request_type_t;
-
-typedef struct tbcmh_request
-{
-     tbcmh_request_type_t type;
-     int request_id;
-     uint64_t timestamp; /*!< time stamp at sending request */
-     LIST_ENTRY(tbcmh_request) entry;
-} tbcmh_request_t;
-
-typedef LIST_HEAD(tbcmh_request_list, tbcmh_request) tbcmh_request_list_t;
-
 /**
  * ThingsBoard MQTT Client Helper 
  */

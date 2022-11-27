@@ -198,27 +198,39 @@ void _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client)
 }
 
 //on received: unpack & deal
-void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
+// return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_set()
+// return 1 if calling tbcmh_sharedattribute_unregister() inside on_set()
+// return 0 otherwise
+int _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
 {
-     TBC_CHECK_PTR(client);
-     TBC_CHECK_PTR(object);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
 
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-     //      return;
+     //      return 0;
      // }
 
      // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
-     sharedattribute_t *sharedattribute = NULL;
+     sharedattribute_t *sharedattribute = NULL, *next;
      const char* key = NULL;
-     LIST_FOREACH(sharedattribute, &client->sharedattribute_list, entry) {
+     tbc_err_t result = 0;
+     LIST_FOREACH_SAFE(sharedattribute, &client->sharedattribute_list, entry, next) {
           if (sharedattribute) {
                key = sharedattribute->key;
                if (cJSON_HasObjectItem(object, key)) {
                     cJSON *value = cJSON_GetObjectItem(object, key);
                     if (sharedattribute->on_set && value) {
-                        sharedattribute->on_set(sharedattribute->client, sharedattribute->context, value);
+                        result = sharedattribute->on_set(sharedattribute->client, sharedattribute->context, value);
+                        if (result==2) { //called tbcmh_disconnect()/tbcmh_destroy() inside on_set()
+                            // Give semaphore
+                            // xSemaphoreGive(client->_lock);
+                            return 2;
+                        }
+                        if (result==1) { //called tbcmh_sharedattribute_unregister() inside on_set()
+                            break;
+                        }
                     }
                }
           }
@@ -226,7 +238,7 @@ void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
 
      // Give semaphore
      // xSemaphoreGive(client->_lock);
-     // return;
+     // return result;
 
      // special process for otaupdate
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_TITLE) &&
@@ -254,5 +266,6 @@ void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object)
           char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG));
           _tbcmh_otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_SW, sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
      }
+     return result;
 }
 

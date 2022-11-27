@@ -48,7 +48,7 @@ void _tbcmh_sharedattribute_on_create(tbcmh_handle_t client);
 void _tbcmh_sharedattribute_on_destroy(tbcmh_handle_t client);
 void _tbcmh_sharedattribute_on_connected(tbcmh_handle_t client);
 void _tbcmh_sharedattribute_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object);
+int  _tbcmh_sharedattribute_on_data(tbcmh_handle_t client, const cJSON *object);
 
 #ifdef __cplusplus
 }
