@@ -72,11 +72,11 @@ typedef struct tbcmh_client
      deviceprovision_list_t deviceprovision_list;     /*!< device provision entries */
 
      //SemaphoreHandle_t lock;
-     int next_request_id;
+     uint32_t next_request_id;
      uint64_t last_check_timestamp;
 } tbcmh_t;
 
-int _tbcmh_get_request_id(tbcmh_handle_t client);
+uint32_t _tbcmh_get_request_id(tbcmh_handle_t client);
 
 #ifdef __cplusplus
 }

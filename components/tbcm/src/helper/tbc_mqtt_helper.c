@@ -33,19 +33,16 @@ static void _on_tbcm_event_bridge_send(tbcm_event_t *event);
 
 const static char *TAG = "tb_mqtt_client_helper";
 
-int _tbcmh_get_request_id(tbcmh_handle_t client)
+uint32_t _tbcmh_get_request_id(tbcmh_handle_t client)
 {
     // call it in a lock!
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
 
-    do {
-         if (client->next_request_id <= 0)
-              client->next_request_id = 1;
-         else
-              client->next_request_id++;
-    } while (client->next_request_id <= 0);
-    
-   return client->next_request_id;
+    client->next_request_id++;
+    if (client->next_request_id <= 0) {
+        client->next_request_id = 1;
+    }
+    return client->next_request_id;
 }
 
 /**
@@ -182,7 +179,7 @@ bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
     }
 
     // SemaphoreHandle_t lock;
-    // int next_request_id;
+    // uint32_t next_request_id;
     // uint64_t last_check_timestamp;
     
     // connect
@@ -368,7 +365,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
      _tbcmh_claimingdevice_on_disconnected(client);
 
      // SemaphoreHandle_t lock;
-     // int next_request_id;
+     // uint32_t next_request_id;
      // uint64_t last_check_timestamp;
 }
 
