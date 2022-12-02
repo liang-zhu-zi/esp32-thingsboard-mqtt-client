@@ -23,7 +23,8 @@
 const static char *TAG = "provision";
 
 /*!< Initialize deviceprovision_t */
-static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client, int request_id,
+static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client,
+                                         uint32_t request_id,
                                          const tbcmh_provision_params_t *params,
                                          void *context,
                                          tbcmh_provision_on_response_t on_response,
@@ -60,7 +61,7 @@ static tbc_err_t _deviceprovision_destroy(deviceprovision_t *provision)
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static int __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -81,7 +82,7 @@ static int __params_of_credentials_generated_by_server(tbcmh_provision_params_t 
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static int __params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -107,7 +108,7 @@ static int __params_of_devices_supplies_access_token(tbcmh_provision_params_t *p
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static int __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -143,7 +144,7 @@ static int __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_p
 
 // hash - Public key X509 hash for device in ThingsBoard.
 // return ESP_OK on successful, ESP_FAIL on failure
-static int __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -168,7 +169,8 @@ static int __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_
     return ESP_OK;
 }
 
-static int _deviceprovision_request_with_params(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
                                 const tbcmh_provision_params_t *params,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
@@ -184,11 +186,11 @@ static int _deviceprovision_request_with_params(tbcmh_handle_t client,
      }
 
      // Send msg to server
-     int request_id = _tbcmh_get_request_id(client);
-     if (request_id <= 0) {
-          TBC_LOGE("failure to getting request id!");
-          return -1;
-     }
+     uint32_t request_id = _tbcmh_get_request_id(client);
+     // if (request_id <= 0) {
+     //      TBC_LOGE("failure to getting request id!");
+     //     return -1;
+     // }
      //cJSON *object = cJSON_CreateObject(); // create json object
      //cJSON_AddStringToObject(object, TB_MQTT_TEXT_PROVISION_METHOD, method);
      //if (params)
@@ -233,11 +235,11 @@ static int _deviceprovision_request_with_params(tbcmh_handle_t client,
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     return request_id;
+     return ESP_OK; //request_id;
 }
 
-// return request_id or ESP_FAIL
-int tbcmh_deviceprovision_request(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
                                     const tbc_provison_config_t *config,
                                     void *context,
                                     tbcmh_provision_on_response_t on_response,
@@ -450,7 +452,7 @@ static int __parse_provision_response(const tbcmh_provision_results_t *results,
 }
 
 //on response.
-void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
      TBC_CHECK_PTR(object);
@@ -474,7 +476,7 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const
      // xSemaphoreGive(client->_lock);
 
      if (!provision) {
-          TBC_LOGW("Unable to find provision:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find provision:%u! %s()", request_id, __FUNCTION__);
           return;
      }
 
@@ -483,10 +485,10 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, int request_id, const
      int result = __parse_provision_response(object, &credentials);
      if (result == ESP_OK) {
          provision->on_response(provision->client, provision->context,
-                                provision->request_id, &credentials);
+                                &credentials); //provision->request_id,
      } else {
-         provision->on_timeout(provision->client, provision->context,
-                                provision->request_id); // TODO: a new faiure callback?
+         provision->on_timeout(provision->client, provision->context //,provision->request_id
+                               ); // TODO: a new faiure callback?
      }
 
      // Free cache
@@ -533,8 +535,7 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
           int result = 0;
           if (clientIsValid && request->on_timeout) {
-              result = request->on_timeout(request->client, request->context,
-                    request->request_id);
+              result = request->on_timeout(request->client, request->context); //,request->request_id
           }
           if (result == 2) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_timeout()
               clientIsValid = false;

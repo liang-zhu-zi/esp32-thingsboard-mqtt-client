@@ -31,7 +31,7 @@ static double setpoint = 25.5;
 // free return-value by caller/(tbcmh library)!
 // free params by caller/(tbcmh library)!
 tbcmh_rpc_results_t *tb_serverrpc_on_request_change_setpoint(tbcmh_handle_t client,
-                            void *context, int request_id, 
+                            void *context, uint32_t request_id, 
                             const char *method, const tbcmh_rpc_params_t *params)
 {
     if (!client || !method || !params) {
@@ -61,7 +61,7 @@ tbcmh_rpc_results_t *tb_serverrpc_on_request_change_setpoint(tbcmh_handle_t clie
 // free return-value by caller/(tbcmh library)!
 // free params by caller/(tbcmh library)!
 tbcmh_rpc_results_t *tb_serverrpc_on_request_query_setpoint(tbcmh_handle_t client,
-                            void *context, int request_id, 
+                            void *context, uint32_t request_id, 
                             const char *method, const tbcmh_rpc_params_t *params)
 {
     if (!client || !method ) {

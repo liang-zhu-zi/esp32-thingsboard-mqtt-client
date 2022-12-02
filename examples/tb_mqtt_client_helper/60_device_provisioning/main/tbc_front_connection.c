@@ -29,7 +29,7 @@
 
 #include "tbc_utils.h"
 
-#include "tbc_mqtt.h"
+#include "tbc_mqtt_protocol.h"
 #include "tbc_mqtt_helper.h"
 
 #include "tbc_transport_credentials_memory.h"
@@ -137,7 +137,7 @@ static void *_provision_storage_copy_to_config(const tbc_provison_storage_t *sto
 }
 
 static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
-                                int request_id, const tbc_transport_credentials_config_t *credentials)
+                                const tbc_transport_credentials_config_t *credentials) //uint32_t request_id, 
 {
    TBC_CHECK_PTR(client);
    TBC_CHECK_PTR(credentials);
@@ -151,7 +151,7 @@ static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
 //      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
-static int _tb_provision_on_timeout(tbcmh_handle_t client, void *context, int request_id)
+static int _tb_provision_on_timeout(tbcmh_handle_t client, void *context) //, uint32_t request_id
 {
    TBC_LOGE("Provision timeout and the device will not work!");
    return ESP_OK;

@@ -34,7 +34,7 @@ extern "C" {
 typedef struct tbcmh_otaupdate_storage_config
 {
      tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-     int chunk_size;                  /*!< chunk_size, eg: 2048. 0 to get all F/W or S/W by request  */
+     uint32_t chunk_size;                  /*!< chunk_size, eg: 2048. 0 to get all F/W or S/W by request  */
 
      void *context;
      tbcmh_otaupdate_on_get_current_ota_title_t   on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */   // TODO: impl the field! //
@@ -56,9 +56,9 @@ typedef struct tbcmh_otaupdate_attribute
 {
      char *ota_title;              /*!< fw_title or sw_title  */  // TODO: replace this field with otaupdate->config.on_get_current_ota_title
      char *ota_version;            /*!< fw_version or sw_version  */
-     int   ota_size;               /*!< fw_size or sw_size  */
      char *ota_checksum;           /*!< fw_checksum or sw_checksum  */
      char *ota_checksum_algorithm; /*!< fw_checksum_algorithm or sw_checksum_algorithm. only support CRC32  */
+     uint32_t ota_size;            /*!< fw_size or sw_size  */
 } otaupdate_attribute_t;
 
 /**
@@ -66,12 +66,12 @@ typedef struct tbcmh_otaupdate_attribute
  */
 typedef struct tbcmh_otaupdate_state
 {
-     int request_id;         /*!< default is -1 */
+     uint32_t request_id;    /*!< default is 0 */ //-1
 
      uint32_t received_len;  /*!< lenth of receiving ota data */
      uint32_t checksum;      /*!< only support CRC32  */          // TODO: support multi-ALG! 
 
-     int chunk_id;           /*!< default is zero, from 0 to n */
+     uint32_t chunk_id;      /*!< default is zero, from 0 to n */
      uint64_t timestamp;     /*!< time stamp at sending request */
 } otaupdate_state_t;
 
@@ -97,7 +97,7 @@ void _tbcmh_otaupdate_on_create(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client);
 void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id, int chunk_id, const char* payload, int length);
+void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, uint32_t request_id, uint32_t chunk_id, const char* payload, int length);
 void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus

@@ -132,12 +132,12 @@ static const char* _my_fwupdate_on_get_current_version(void *context)
 //Don't call TBCMH API in the callback!
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 static tbc_err_t _my_fwupdate_on_negotiate(void *context,
-        const char *fw_title, const char *fw_version, int fw_size,
+        const char *fw_title, const char *fw_version, uint32_t fw_size,
         const char *fw_checksum, const char *fw_checksum_algorithm,
         char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
-    ESP_LOGI(TAG, "Receving F/W shared attributes: fw_title=%s, fw_version=%s, fw_size=%d, fw_checksum=%s, fw_checksum_algorithm=%s",
+    ESP_LOGI(TAG, "Receving F/W shared attributes: fw_title=%s, fw_version=%s, fw_size=%u, fw_checksum=%s, fw_checksum_algorithm=%s",
         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm);
 
     //check fw_title != current_fw_title
@@ -160,9 +160,9 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
     // check fw_size > update.size
     if (_my_fwupdate.update_partition) {
         if (fw_size > _my_fwupdate.update_partition->size) {
-            ESP_LOGI(TAG, "New F/W size(%d) is bigger than update partition size(%d)",
+            ESP_LOGI(TAG, "New F/W size(%u) is bigger than update partition size(%d)",
                         fw_size, _my_fwupdate.update_partition->size);
-            snprintf(fw_error, error_size, "New F/W size(%d) is bigger than update partition size(%d)", 
+            snprintf(fw_error, error_size, "New F/W size(%u) is bigger than update partition size(%d)", 
                         fw_size, _my_fwupdate.update_partition->size);
             return ESP_FAIL;
         }
@@ -174,7 +174,7 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 static tbc_err_t _my_fwupdate_on_write(void *context,
-                int request_id, int chunk_id, const void *fw_data, int data_read,
+                const void *fw_data, uint32_t data_read, //uint32_t request_id, uint32_t chunk_id,
                 char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
@@ -182,14 +182,15 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
 
     esp_err_t err;
 
-    ESP_LOGI(TAG, "Receving F/W response: request_id=%d, chunk_id=%d, fw_data=%p, data_read=%d",
-        request_id, chunk_id, fw_data, data_read);
+    ESP_LOGI(TAG, "Receving F/W response: fw_data=%p, data_read=%u", // request_id=%u, chunk_id=%u,
+        fw_data, data_read); //request_id, chunk_id,
 
-    if (data_read < 0) {
-        ESP_LOGE(TAG, "Error: F/W data read error! data_read(%d)<0. request_id=%d, chunk_id=%d", data_read, request_id, chunk_id);
-        snprintf(fw_error, error_size, "Error: F/W data read error! data_read(%d)<0", data_read);
-        return ESP_FAIL;
-    } else if (data_read == 0) {
+    // if (data_read < 0) {
+    //     ESP_LOGE(TAG, "Error: F/W data read error! data_read(%u)<0.", data_read); // request_id=%d, chunk_id=%d , request_id, chunk_id
+    //     snprintf(fw_error, error_size, "Error: F/W data read error! data_read(%u)<0", data_read);
+    //     return ESP_FAIL;
+    // } else 
+    if (data_read == 0) {
         //no code. continue f/w update.
         return ESP_OK;
     } else if (data_read > 0) {
@@ -266,10 +267,10 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 static tbc_err_t _my_fwupdate_on_end(void *context,
-                                int request_id, int chunk_id, char *fw_error, int error_size)
+                                char *fw_error, int error_size) //uint32_t request_id, uint32_t chunk_id,
 {
     // TODO: division F/W or S/W !!!!
-    ESP_LOGI(TAG, "F/W update success & end: request_id=%d, chunk_id=%d", request_id, chunk_id);
+    ESP_LOGI(TAG, "F/W update success & end"); //: request_id=%d, chunk_id=%d", request_id, chunk_id
 
     esp_err_t err;
     err = esp_ota_end(_my_fwupdate.update_handle);
@@ -299,11 +300,10 @@ static tbc_err_t _my_fwupdate_on_end(void *context,
 }
 
 //Don't call TBCMH API in the callback!
-static void _my_fwupdate_on_abort(void *context,
-                                int request_id, int chunk_id/*current chunk_id*/)
+static void _my_fwupdate_on_abort(void *context)//,        uint32_t request_id, uint32_t chunk_id/*current chunk_id*/
 {
     // TODO: division F/W or S/W !!!!
-    ESP_LOGI(TAG, "F/W update failure & abort: request_id=%d, chunk_id=%d", request_id, chunk_id);
+    ESP_LOGI(TAG, "F/W update failure & abort"); //: request_id=%u, chunk_id=%u", request_id, chunk_id
 
     if (_my_fwupdate.update_handle) {
         esp_ota_abort(_my_fwupdate.update_handle);

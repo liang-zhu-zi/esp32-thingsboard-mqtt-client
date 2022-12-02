@@ -71,17 +71,17 @@ void tb_clientrpc_publish_local_time_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "localTime", _get_timestamp());
     // free params by caller/(user code)!
-    int request_id = tbcmh_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
-    ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
+    tbc_err_t result = tbcmh_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
+    ESP_LOGI(TAG, "Send Client-side RPC: result=%d", result);
     cJSON_Delete(params);
 }
 
 
 // free results by caller/(tbcmh library)!
 void tb_clientrpc_get_current_time_on_response(tbcmh_handle_t client, void *context,
-                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
+                              const char *method, const tbcmh_rpc_results_t *results) //uint32_t request_id,
 {
-    ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC response: method=%s", method); // request_id=%u,, request_id
 
     // set local time
     _print_localtime();
@@ -99,10 +99,10 @@ void tb_clientrpc_get_current_time_on_response(tbcmh_handle_t client, void *cont
         }
     }
 }
-void tb_clientrpc_get_current_time_on_timeout(tbcmh_handle_t client, void *context,
-                             int request_id, const char *method)
+void tb_clientrpc_get_current_time_on_timeout(tbcmh_handle_t client, void *context, 
+                             const char *method) //uint32_t request_id,
 {
-    ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC timeout: method=%s", method); // request_id=%u,, request_id
 }
 void tb_clientrpc_get_current_time_send(tbcmh_handle_t client)
 {
@@ -110,25 +110,25 @@ void tb_clientrpc_get_current_time_send(tbcmh_handle_t client)
 
     //cJSON *params = cJSON_CreateObject();
     // free params by caller/(user code)!
-    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
+    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
                                                  NULL,
                                                  tb_clientrpc_get_current_time_on_response,
                                                  tb_clientrpc_get_current_time_on_timeout);
-    ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
+    ESP_LOGI(TAG, "Send Client-side RPC: result=%d", result);
     //cJSON_Delete(params);
 }
 
 // free results by caller/(tbcmh library)!
 void tb_clientrpc_loopback_on_response(tbcmh_handle_t client, void *context,
-                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
+                              const char *method, const tbcmh_rpc_results_t *results) //uint32_t request_id, 
 {
-    ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC response: method=%s", method); // request_id=%u, request_id
     // print response!
 }
 void tb_clientrpc_loopback_on_timeout(tbcmh_handle_t client, void *context,
-                             int request_id, const char *method)
+                             const char *method) //uint32_t request_id, 
 {
-    ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC timeout: method=%s", method); // request_id=%u,, request_id
 }
 void tb_clientrpc_loopback_send(tbcmh_handle_t client)
 {
@@ -139,25 +139,25 @@ void tb_clientrpc_loopback_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_LOOPBACK, params,
+    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_LOOPBACK, params,
                                                  NULL,
                                                  tb_clientrpc_loopback_on_response,
                                                  tb_clientrpc_loopback_on_timeout);
-    ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
+    ESP_LOGI(TAG, "Send Client-side RPC: result=%d", result);
     cJSON_Delete(params);
 }
 
 
 // free results by caller/(tbcmh library)!
 void tb_clientrpc_not_implemented_twoway_on_response(tbcmh_handle_t client, void *context,
-                              int request_id, const char *method, const tbcmh_rpc_results_t *results)
+                              const char *method, const tbcmh_rpc_results_t *results) //uint32_t request_id,
 {
-    ESP_LOGI(TAG, "Client-side RPC response: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC response: method=%s", method); // request_id=%u,, request_id
 }
 void tb_clientrpc_not_implemented_twoway_on_timeout(tbcmh_handle_t client, void *context,
-                             int request_id, const char *method)
+                             const char *method) //uint32_t request_id,
 {
-    ESP_LOGI(TAG, "Client-side RPC timeout: request_id=%d, method=%s", request_id, method);
+    ESP_LOGI(TAG, "Client-side RPC timeout: method=%s", method); // request_id=%u, , request_id
 }
 void tb_clientrpc_not_implemented_twoway_send(tbcmh_handle_t client)
 {
@@ -168,11 +168,11 @@ void tb_clientrpc_not_implemented_twoway_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    int request_id = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
+    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
                                                  NULL,
                                                  tb_clientrpc_not_implemented_twoway_on_response,
                                                  tb_clientrpc_not_implemented_twoway_on_timeout);
-    ESP_LOGI(TAG, "Send Client-side RPC: request_id=%d", request_id);
+    ESP_LOGI(TAG, "Send Client-side RPC: result=%d", result);
     cJSON_Delete(params);
 }
 

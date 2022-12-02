@@ -23,7 +23,7 @@
 const static char *TAG = "clientrpc";
 
 /*!< Initialize clientrpc_t */
-static clientrpc_t *_clientrpc_create(tbcmh_handle_t client, int request_id,
+static clientrpc_t *_clientrpc_create(tbcmh_handle_t client, uint32_t request_id,
                                          const char *method, ////tbcmh_rpc_params_t *params,
                                          void *context,
                                          tbcmh_clientrpc_on_response_t on_response,
@@ -64,7 +64,8 @@ static tbc_err_t _clientrpc_destroy(clientrpc_t *clientrpc)
 
 //============ Client-side RPC ============================================================
 //add list
-int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
                                                            /*const*/ tbcmh_rpc_params_t *params)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -80,11 +81,11 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
      //}
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      // Send msg to server
-     int request_id = _tbcmh_get_request_id(client);
-     if (request_id <= 0) {
-          TBC_LOGE("failure to getting request id!");
-          return -1;
-     }
+     uint32_t request_id = _tbcmh_get_request_id(client);
+     // if (request_id <= 0) {
+     //      TBC_LOGE("failure to getting request id!");
+     //      return -1;
+     // }
      int msg_id;
      if (params) {
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
@@ -103,10 +104,12 @@ int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client, const char *method,
           return ESP_FAIL;
      }
 
-     return request_id;
+     return ESP_OK;
 }
+
 //create to add to LIST_ENTRY(tbcmh_clientrpc_)
-int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method, 
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method, 
                                                            /*const*/ tbcmh_rpc_params_t *params,
                                                            void *context,
                                                            tbcmh_clientrpc_on_response_t on_response,
@@ -130,11 +133,11 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
      //     cJSON_AddNullToObject(object, TB_MQTT_KEY_RPC_PARAMS);
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      // Send msg to server
-     int request_id = _tbcmh_get_request_id(client);
-     if (request_id <= 0) {
-          TBC_LOGE("failure to getting request id!");
-          return -1;
-     }
+     uint32_t request_id = _tbcmh_get_request_id(client);
+     // if (request_id <= 0) {
+     //     TBC_LOGE("failure to getting request id!");
+     //      return -1;
+     // }
      int msg_id;
      if (params) {
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
@@ -183,7 +186,7 @@ int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *method,
 
      // Give semaphore
      xSemaphoreGive(client->_lock);
-     return request_id;
+     return ESP_OK; //request_id;
 }
 
 void _tbcmh_clientrpc_on_create(tbcmh_handle_t client)
@@ -250,7 +253,7 @@ void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
 }
 
 //on response
-void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
      TBC_CHECK_PTR(object);
@@ -274,14 +277,14 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON
      // xSemaphoreGive(client->_lock);
 
      if (!clientrpc) {
-          TBC_LOGW("Unable to find client-rpc:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find client-rpc:%u! %s()", request_id, __FUNCTION__);
           return;
      }
 
      // Do response
      if (clientrpc->on_response) {
         clientrpc->on_response(clientrpc->client, clientrpc->context,
-                            clientrpc->request_id, clientrpc->method,
+                            clientrpc->method, //clientrpc->request_id,
                             cJSON_GetObjectItem(object, TB_MQTT_KEY_RPC_RESULTS));
      }
 
@@ -330,7 +333,7 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
           int result = 0;
           if (clientIsValid && request->on_timeout) {
               result = request->on_timeout(request->client, request->context,
-                                    request->request_id, request->method);
+                                    request->method); //request->request_id,
           }
           if (result == 2) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_timeout()
               clientIsValid = false;

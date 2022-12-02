@@ -25,7 +25,7 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "tbc_mqtt.h"
+#include "tbc_mqtt_protocol.h"
 #include "tbc_mqtt_helper.h"
 
 //#include "tbc_utils.h"

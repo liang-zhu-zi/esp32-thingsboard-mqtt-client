@@ -562,7 +562,7 @@ int tbcm_clientattributes_publish(tbcm_handle_t client, const char *attributes,
  *        -1 if error
  */
 int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
-                            int request_id,
+                            uint32_t request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -579,7 +579,7 @@ int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Attributes Request][Tx] request_id=%d, %.*s",
+        TBC_LOGI("[Attributes Request][Tx] request_id=%u, %.*s",
             request_id, strlen(payload), payload);
      }
 
@@ -607,8 +607,9 @@ int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
  * @return msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, const char *shared_keys,
-                               int request_id,
+int tbcm_attributes_request_ex(tbcm_handle_t client,
+                               const char *client_keys, const char *shared_keys,
+                               uint32_t request_id,
                                int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -637,7 +638,8 @@ int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, co
      memset(payload, 0x00, size);
 
      if ((client_len>0) && (shared_len>0)) {
-         snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}", client_keys, shared_keys);
+         snprintf(payload, size - 1, "{\"clientKeys\":\"%s\", \"sharedKeys\":\"%s\"}",
+                  client_keys, shared_keys);
      } else if (client_len>0) {
          snprintf(payload, size - 1, "{\"clientKeys\":\"%s\"}", client_keys);
      } else if (shared_len>0) {
@@ -672,7 +674,7 @@ int tbcm_attributes_request_ex(tbcm_handle_t client, const char *client_keys, co
  *        -1 if error
  */
 int tbcm_serverrpc_response(tbcm_handle_t client, 
-                            int request_id, const char *response,
+                            uint32_t request_id, const char *response,
                             int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -688,7 +690,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Server-Side RPC][Tx] request_id=%d Payload=%.*s",
+        TBC_LOGI("[Server-Side RPC][Tx] request_id=%u Payload=%.*s",
               request_id, strlen(response), response);
      }
 
@@ -717,7 +719,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client,
  *        -1 if error
  */
 int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
-                           int request_id,
+                           uint32_t request_id,
                            int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -734,7 +736,7 @@ int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Client-Side RPC][Tx] request_id=%d %.*s",
+        TBC_LOGI("[Client-Side RPC][Tx] request_id=%u %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -762,8 +764,9 @@ int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
  * @return rpc_msg_id of the subscribe message on success
  *        -1 if error
  */
-int tbcm_clientrpc_request_ex(tbcm_handle_t client, const char *method, const char *params,
-                              int request_id,
+int tbcm_clientrpc_request_ex(tbcm_handle_t client,
+                              const char *method, const char *params,
+                              uint32_t request_id,
                               int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -836,7 +839,7 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
  *        -1 if error
  */
  int tbcm_provision_request(tbcm_handle_t client, const char *payload,
-                            int request_id,
+                            uint32_t request_id,
                             int qos /*= 1*/, int retain /*= 0*/)
  {
       TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -845,7 +848,7 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
 
       if (client->config.log_rxtx_package)
       {
-           TBC_LOGI("[FW update][Tx] request_id=%d %.*s",
+           TBC_LOGI("[FW update][Tx] request_id=%u %.*s",
                     request_id, strlen(payload), payload);
       }
 
@@ -873,7 +876,7 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
  *        -1 if error
  */
 int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
-                          int request_id, int chunk_id, const char *payload,
+                          uint32_t request_id, uint32_t chunk_id, const char *payload,
                           int qos /*= 1*/, int retain /*= 0*/)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
@@ -890,7 +893,7 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[FW update][Tx] request_id=%d %.*s",
+        TBC_LOGI("[FW update][Tx] request_id=%u %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -922,9 +925,10 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          char temp[32] = {0};
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX),
                  topic_len-strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
-         int request_id = atoi(temp);
+         uint32_t request_id = 0;
+         sscanf(temp, "%u", &request_id);
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[Attributes Request][Rx] request_id=%d %.*s",
+             TBC_LOGI("[Attributes Request][Rx] request_id=%u %.*s",
                   request_id, payload_len, payload);
          }
 
@@ -984,7 +988,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          char temp[32] = {0};
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX),
                  topic_len-strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
-         int request_id = atoi(temp);
+         uint32_t request_id = 0;
+         sscanf(temp, "%u", &request_id);
          if (client->config.log_rxtx_package) {
              TBC_LOGI("[Server-Side RPC][Rx] request_id=%d Payload=%.*s",
                   request_id, payload_len, payload);
@@ -1013,7 +1018,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          char temp[32] = {0};
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX),
                 topic_len-strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
-         int request_id = atoi(temp);
+         uint32_t request_id = 0;
+         sscanf(temp, "%u", &request_id);
          if (client->config.log_rxtx_package) {
              TBC_LOGI("[Client-Side RPC][Rx] request_id=%d %.*s",
                   request_id, payload_len, payload);
@@ -1045,20 +1051,20 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
     } else if (strncmp(topic, TB_MQTT_TOPIC_FW_RESPONSE_PREFIX,
                 strlen(TB_MQTT_TOPIC_FW_RESPONSE_PREFIX)) == 0) {
          // 5.TB_MQTT_TOPIC_FW_RESPONSE_PREFIX
-         int request_id = 0;
+         uint32_t request_id = 0;
          sscanf(topic, TB_MQTT_TOPIC_FW_RESPONSE_PATTERN, &request_id);
 
-         int chunk_id = -1;
+         uint32_t chunk_id = 0;
          const char *chunk_str = strstr(topic, "/chunk/");
          if (chunk_str) {
              char temp[32] = {0};
              int offset = (uint32_t)chunk_str - (uint32_t)topic;
              strncpy(temp, topic+offset+strlen("/chunk/"), topic_len-offset-strlen("/chunk/"));
-             chunk_id = atoi(temp);
+             sscanf(temp, "%u", &chunk_id);
          }
 
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[FW update][Rx] request_id=%d, payload_len=%d",
+             TBC_LOGI("[FW update][Rx] request_id=%u, payload_len=%d",
                    request_id, payload_len);
          }
 

@@ -25,7 +25,8 @@
 const static char *TAG = "attributesrequest";
 
 /*!< Initialize attributesrequest */
-static attributesrequest_t *_attributesrequest_create(tbcmh_handle_t client, int request_id, void *context,
+static attributesrequest_t *_attributesrequest_create(tbcmh_handle_t client,
+                                                         uint32_t request_id, void *context,
                                                          tbcmh_attributesrequest_on_response_t on_response,
                                                          tbcmh_attributesrequest_on_timeout_t on_timeout)
 {
@@ -56,8 +57,8 @@ static tbc_err_t _attributesrequest_destroy(attributesrequest_t *attributesreque
     return ESP_OK;
 }
 
-////return request_id on successful, otherwise return -1/ESP_FAIL
-int tbcmh_attributesrequest_send(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -127,11 +128,11 @@ next_attribute_key:
      va_end(ap);
 
      // Send msg to server
-     int request_id = _tbcmh_get_request_id(client);
-     if (request_id <= 0) {
-          TBC_LOGE("failure to getting request id!");
-          return -1;
-     }
+     uint32_t request_id = _tbcmh_get_request_id(client);
+     // if (request_id <= 0) {
+     //      TBC_LOGE("failure to getting request id!");
+     //      return -1;
+     // }
      int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, shared_keys,
                                request_id,
                                1/*qos*/, 0/*retain*/);
@@ -169,7 +170,7 @@ next_attribute_key:
 
      TBC_FREE(client_keys);
      TBC_FREE(shared_keys);
-     return request_id;
+     return ESP_OK;
 
 attributesrequest_fail:
      xSemaphoreGive(client->_lock);
@@ -183,8 +184,8 @@ attributesrequest_fail:
 }
 
 // TODO: merge to tbcmh_attributesrequest_send()
-////return request_id on successful, otherwise return -1/ESP_FAIL
-int tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -230,11 +231,11 @@ int tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
  
       // Send msg to server
       // Send msg to server
-      int request_id = _tbcmh_get_request_id(client);
-      if (request_id <= 0) {
-           TBC_LOGE("failure to getting request id!");
-           return -1;
-      }
+      uint32_t request_id = _tbcmh_get_request_id(client);
+      // if (request_id <= 0) {
+      //      TBC_LOGE("failure to getting request id!");
+      //      return -1;
+      // }
       int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
                                 request_id,
                                 1/*qos*/, 0/*retain*/);
@@ -270,7 +271,7 @@ int tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
       // Give semaphore
       //xSemaphoreGive(client->_lock);
       TBC_FREE(shared_keys);
-      return request_id;
+      return ESP_OK;
  
  attributesrequest_fail:
       //xSemaphoreGive(client->_lock);
@@ -345,7 +346,7 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
 }
 
 //on response
-void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
      TBC_CHECK_PTR(object);
@@ -369,7 +370,7 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, con
      // xSemaphoreGive(client->_lock);
 
      if (!attributesrequest) {
-          TBC_LOGW("Unable to find attribute request:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find attribute request:%u! %s()", request_id, __FUNCTION__);
           return;
      }
 
@@ -388,8 +389,8 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, int request_id, con
 
      // Do response
      if (result != 2 && attributesrequest->on_response) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside _tbcmh_sharedattribute_on_data() --> on_set()
-        attributesrequest->on_response(attributesrequest->client, attributesrequest->context,
-                            attributesrequest->request_id);
+        attributesrequest->on_response(attributesrequest->client,
+                            attributesrequest->context); //,attributesrequest->request_id
      }
 
      // Free cache
@@ -436,7 +437,7 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
      LIST_FOREACH_SAFE(request, &timeout_list, entry, next) {
           int result = 0;
           if (clientIsValid && request->on_timeout) {
-              result = request->on_timeout(request->client, request->context, request->request_id);
+              result = request->on_timeout(request->client, request->context); //, request->request_id);
           }
           if (result == 2) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_timeout()
               clientIsValid = false;

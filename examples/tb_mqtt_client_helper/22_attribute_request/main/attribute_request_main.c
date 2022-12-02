@@ -90,15 +90,15 @@ tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *con
     return ESP_OK;
 }
 
-void tb_attributesrequest_on_response(tbcmh_handle_t client, void *context, int request_id)
+void tb_attributesrequest_on_response(tbcmh_handle_t client, void *context) //, uint32_t request_id
 {
-    ESP_LOGI(TAG, "Receiving response of the attribute request! request_id=%d", request_id);
+    ESP_LOGI(TAG, "Receiving response of the attribute request!"); //request_id=%u, request_id
 
     g_attributes_are_initialized_from_server = true;
 }
-void tb_attributesrequest_on_timeout(tbcmh_handle_t client, void *context, int request_id)
+void tb_attributesrequest_on_timeout(tbcmh_handle_t client, void *context) //, uint32_t request_id
 {
-    ESP_LOGI(TAG, "Timeout of the attribute request! request_id=%d", request_id);
+    ESP_LOGI(TAG, "Timeout of the attribute request!"); // request_id=%u, request_id
 }
 
 void tb_attributesrequest_send(tbcmh_handle_t client)

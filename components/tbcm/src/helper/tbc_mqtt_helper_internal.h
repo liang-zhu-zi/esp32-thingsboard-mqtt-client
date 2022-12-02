@@ -62,7 +62,7 @@ typedef struct tbcmh_client
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
-     timeseriesdata_list_t          timeseriesdata_list;              /*!< telemetry time-series data entries */
+     timeseriesdata_list_t    timeseriesdata_list;    /*!< telemetry time-series data entries */
      clientattribute_list_t   clientattribute_list;   /*!< client attributes entries */
      sharedattribute_list_t   sharedattribute_list;   /*!< shared attributes entries */
      attributesrequest_list_t attributesrequest_list; /*!< attributes request entries */

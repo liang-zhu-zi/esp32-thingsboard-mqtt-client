@@ -79,6 +79,7 @@ static tbc_err_t _serverrpc_destroy(serverrpc_t *serverrpc)
 }
 
 //Call it before connect()
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
                                    const char *method, void *context,
                                    tbcmh_serverrpc_on_request_t on_request)
@@ -122,6 +123,7 @@ tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
 }
 
 // remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -213,7 +215,7 @@ void _tbcmh_serverrpc_on_disconnected(tbcmh_handle_t client)
 }
 
 //on request.
-void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, int request_id, const cJSON *object)
+void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object)
 {
      TBC_CHECK_PTR(client);
      TBC_CHECK_PTR(object);

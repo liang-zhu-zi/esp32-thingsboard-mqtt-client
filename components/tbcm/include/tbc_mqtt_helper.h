@@ -107,13 +107,13 @@ typedef tbc_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client,
 
 //====4.attributes request for client-side_attribute & sharedattribute================================================
 typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client,
-                                void *context, int request_id);
+                                void *context); //, uint32_t request_id
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
 typedef int (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client,
-                                void *context, int request_id);
+                                void *context); //, uint32_t request_id
 
 //====5.Server-side RPC================================================================================================
 /**
@@ -130,20 +130,20 @@ typedef cJSON tbcmh_rpc_results_t;
 // free return-value by caller/(tbcmh library)!
 // free params by caller/(tbcmh library)!
 typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client,
-                                void *context, int request_id,
+                                void *context, uint32_t request_id,
                                 const char *method, const tbcmh_rpc_params_t *params);
 
 //====6.Client-side RPC================================================================================================
 // free results by caller/(tbcmh library)!
 typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
-                                void *context, int request_id,
+                                void *context, //uint32_t request_id,
                                 const char *method, const tbcmh_rpc_results_t *results);
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
 typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
-                                void *context, int request_id,
+                                void *context, //uint32_t request_id,
                                 const char *method);
 
 //====7.Claiming device using device-side key scenario============================================
@@ -198,14 +198,14 @@ typedef struct tbc_provison_config
 } tbc_provison_config_t;
 
 typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
-                                void *context, int request_id,
+                                void *context,// uint32_t request_id,
                                 const tbc_transport_credentials_config_t *credentials);
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
 typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client,
-                                void *context, int request_id);
+                                void *context); //, uint32_t request_id
 
 //====9.Firmware/Software update=======================================================================================
 /**
@@ -226,26 +226,23 @@ typedef const char *(*tbcmh_otaupdate_on_get_current_ota_version_t)(void *contex
 // Don't call TBCMH API in this callback!
 // return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 typedef tbc_err_t (*tbcmh_otaupdate_on_negotiate_t)(void *context,
-                                const char *ota_title, const char *ota_version, int ota_size,
+                                const char *ota_title, const char *ota_version, uint32_t ota_size,
                                 const char *ota_checksum, const char *ota_checksum_algorithm,
                                 char *ota_error, int error_size);
 
 // Don't call TBCMH API in this callback!
 // return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_otaupdate_on_write_t)(void *context,
-                                int request_id, int current_chunk_id,
-                                const void *ota_data, int data_size,
+typedef tbc_err_t (*tbcmh_otaupdate_on_write_t)(void *context,  //uint32_t request_id, uint32_t current_chunk_id,
+                                const void *ota_data, uint32_t data_size,
                                 char *ota_error, int error_size);
 
 // Don't call TBCMH API in this callback!
 // return 0/ESP_OK on successful, -1/ESP_FAIL on failure
 typedef tbc_err_t (*tbcmh_otaupdate_on_end_t)(void *context,
-                                int request_id, int chunk_id,
-                                char *ota_error, int error_size);
+                                char *ota_error, int error_size); //uint32_t request_id, uint32_t chunk_id,
 
 // Don't call TBCMH API in this callback!
-typedef void (*tbcmh_otaupdate_on_abort_t)(void *context,
-                                int request_id, int current_chunk_id);
+typedef void (*tbcmh_otaupdate_on_abort_t)(void *context); //,uint32_t request_id, uint32_t current_chunk_id
 
 /**
  * ThingsBoard MQTT Client Helper F/W update OTA config
@@ -253,7 +250,7 @@ typedef void (*tbcmh_otaupdate_on_abort_t)(void *context,
 typedef struct tbcmh_otaupdate_config
 {
   tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-  int chunk_size;                  /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
+  uint32_t chunk_size;             /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
 
   void *context;
   tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
@@ -313,36 +310,41 @@ tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client,
 tbc_err_t tbcmh_sharedattribute_unregister(tbcmh_handle_t client, const char *key);
 
 //====22.Request client-side or shared device attributes from the server================================================
-//return request_id on successful, otherwise return -1
-int tbcmh_attributesrequest_send(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
                                 void *context,
                                 tbcmh_attributesrequest_on_response_t on_response,
                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
                                 int count, /*const char *key,*/...);
 
 // TODO: merge to tbcmh_attributesrequest_send()
-int  tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
                                 void *context,
                                 tbcmh_attributesrequest_on_response_t on_response,
                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
                                 int count, /*const char *key,*/...);
 
 //====30.Server-side RPC================================================================================================
-// Call it before tbcmh_connect()
+//Call it before tbcmh_connect()
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
                                 const char *method, void *context,
                                 tbcmh_serverrpc_on_request_t on_request);
-// remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+//remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method);
 
 //====31.Client-side RPC================================================================================================
 // free `params` by caller/(user code)!
-int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client,
                                 const char *method, /*const*/ tbcmh_rpc_params_t *params);
 
 // free `params` by caller/(user code)!
 // create to add to LIST_ENTRY(tbcmh_clientrpc_)
-int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client,
                                 const char *method, /*const*/ tbcmh_rpc_params_t *params,
                                 void *context,
                                 tbcmh_clientrpc_on_response_t on_response,
@@ -353,8 +355,8 @@ tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
                                 const char *secret_key, uint32_t *duration_ms);
 
 //====50.Device provisioning=======================================================================
-// return request_id or ESP_FAIL
-int tbcmh_deviceprovision_request(tbcmh_handle_t client,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
                                 const tbc_provison_config_t *config,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,

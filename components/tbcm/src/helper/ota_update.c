@@ -61,7 +61,7 @@ static otaupdate_t *_otaupdate_create(tbcmh_handle_t client,
     otaupdate->config.on_ota_write = config->on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
     otaupdate->config.on_ota_end = config->on_ota_end;                     /*!< callback of F/W or S/W OTA success & end */
     otaupdate->config.on_ota_abort = config->on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
-    ////otaupdate->config.is_first_boot = config->is_first_boot;               /*!< whether first boot after ota update  */
+    ////otaupdate->config.is_first_boot = config->is_first_boot;           /*!< whether first boot after ota update  */
 
     otaupdate->attribute.ota_title = NULL;
     otaupdate->attribute.ota_version = NULL;
@@ -69,7 +69,7 @@ static otaupdate_t *_otaupdate_create(tbcmh_handle_t client,
     otaupdate->attribute.ota_checksum = NULL;
     otaupdate->attribute.ota_checksum_algorithm = NULL;
 
-    otaupdate->state.request_id = -1;
+    otaupdate->state.request_id = 0; //-1;
     otaupdate->state.chunk_id = 0;
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
@@ -118,7 +118,7 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
         otaupdate->attribute.ota_checksum_algorithm = NULL;
     }
 
-    otaupdate->state.request_id = -1;
+    otaupdate->state.request_id = 0; //-1;
     otaupdate->state.chunk_id = 0;
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
@@ -427,7 +427,7 @@ static void _otaupdate_reset(otaupdate_t *otaupdate)
         otaupdate->attribute.ota_checksum_algorithm = NULL;
     }
 
-    otaupdate->state.request_id = -1;
+    otaupdate->state.request_id = 0; //-1;
     otaupdate->state.chunk_id = 0;
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
@@ -437,7 +437,7 @@ static void _otaupdate_reset(otaupdate_t *otaupdate)
 
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
-                                        const char *ota_title, const char *ota_version, int ota_size,
+                                        const char *ota_title, const char *ota_version, uint32_t ota_size,
                                         const char *ota_checksum, const char *ota_checksum_algorithm,
                                         char *ota_error, int error_size)
 {
@@ -490,41 +490,48 @@ static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
 }
 
 // return 0 on success, -1 on failure
-static tbc_err_t _otaupdate_chunk_request(otaupdate_t *otaupdate)
+static tbc_err_t _otaupdate_chunk_request(otaupdate_t *otaupdate, bool isFirstChunk)
 {
     char payload[20] = {0};
     TBC_CHECK_PTR_WITH_RETURN_VALUE(otaupdate, -1);
 
     tbcm_handle_t tbcm_handle = otaupdate->client->tbmqttclient;
-    int chunk_size;
+    uint32_t chunk_size;
     if (otaupdate->attribute.ota_size < otaupdate->config.chunk_size) {
         chunk_size = 0; // full f/w or s/w
     } else {
         chunk_size = otaupdate->config.chunk_size;
     }
-    sprintf(payload, "%d", chunk_size);
+    sprintf(payload, "%u", chunk_size);
 
     // Send msg to server
-    int request_id = otaupdate->state.request_id;
-    if (request_id <= 0) {
+    uint32_t request_id;
+    if (isFirstChunk) {
         request_id = _tbcmh_get_request_id(otaupdate->client);
-        if (request_id <= 0) {
-             TBC_LOGE("failure to getting request id!");
-             return -1;
-        }
+        otaupdate->state.request_id = request_id;
+    } else {
+        request_id = otaupdate->state.request_id;
     }
+    // uint32_t request_id = otaupdate->state.request_id;
+    // if (request_id <= 0) {
+    //     request_id = _tbcmh_get_request_id(otaupdate->client);
+    //     if (request_id <= 0) {
+    //          TBC_LOGE("failure to getting request id!");
+    //          return -1;
+    //     }
+    // }
     int msg_id = tbcm_otaupdate_chunk_request(tbcm_handle, request_id,
                           otaupdate->state.chunk_id/*default 0*/,
                           payload, //chunk_size
                           1/*qos*/, 0/*retain*/);
     if (msg_id<0){
-        TBC_LOGW("Request OTA chunk(%d) failure! request_id=%d, msg_id=%d %s()",
+        TBC_LOGW("Request OTA chunk(%u) failure! request_id=%u, msg_id=%d %s()",
             otaupdate->state.chunk_id, request_id, msg_id, __FUNCTION__);
     }
     // First OTA request
-    if ((otaupdate->state.request_id<=0) && (request_id>0)) {
-         otaupdate->state.request_id = request_id;
-    }
+    // if ((otaupdate->state.request_id<=0) && (request_id>0)) {
+    //      otaupdate->state.request_id = request_id;
+    // }
     otaupdate->state.timestamp = (uint64_t)time(NULL);
 
     return (msg_id<0)?-1:0;
@@ -532,8 +539,8 @@ static tbc_err_t _otaupdate_chunk_request(otaupdate_t *otaupdate)
 
 
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, int chunk_id, 
-                                            const void *ota_data, int data_size,
+static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, uint32_t chunk_id, 
+                                            const void *ota_data, uint32_t data_size,
                                             char *ota_error, int error_size)
 {
     if (!otaupdate) {
@@ -542,20 +549,20 @@ static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, int chunk_id,
         return -1; //code error
     }
     if (chunk_id != otaupdate->state.chunk_id) {
-        TBC_LOGE("chunk_id(%d) is not equal to otaupdate->state.chunk_id(%d)!", chunk_id, otaupdate->state.chunk_id);
+        TBC_LOGE("chunk_id(%u) is not equal to otaupdate->state.chunk_id(%u)!", chunk_id, otaupdate->state.chunk_id);
         strncpy(ota_error, "Chunk ID is error!", error_size);
         return -1; //chunk_id error
     }
     if (!ota_data || !data_size) {
-        TBC_LOGE("ota_data(%p) or data_size(%d) is error!", ota_data, data_size);
+        TBC_LOGE("ota_data(%p) or data_size(%u) is error!", ota_data, data_size);
         strncpy(ota_error, "OTA data is empty!", error_size);
         return -1; //ota_data is empty
     }
 
     tbc_err_t result = true;
     result = otaupdate->config.on_ota_write(otaupdate->config.context,
-                            otaupdate->state.request_id, chunk_id, ota_data, data_size,
-                            ota_error, error_size);
+                            ota_data, data_size,
+                            ota_error, error_size); //otaupdate->state.request_id, chunk_id,
     if (result != ESP_OK) {
         TBC_LOGW("fail to call on_ota_write()!");
         return -1; //payload error & end
@@ -577,8 +584,7 @@ static tbc_err_t _otaupdate_do_end(otaupdate_t *otaupdate, char *ota_error, int 
     // on_ota_end() and reset()
     if (otaupdate->config.on_ota_end && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
         ret = otaupdate->config.on_ota_end(otaupdate->config.context, 
-                                         otaupdate->state.request_id, otaupdate->state.chunk_id,
-                                         ota_error, error_size);
+                                         ota_error, error_size); //otaupdate->state.request_id, otaupdate->state.chunk_id,
     }
     return (ret==0)?0:-1;
 }
@@ -589,19 +595,19 @@ static void _otaupdate_do_abort(otaupdate_t *otaupdate)
 
     // on_ota_abort() and reset()
     if (otaupdate->config.on_ota_abort && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
-        otaupdate->config.on_ota_abort(otaupdate->config.context, 
-                        otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/);
+        otaupdate->config.on_ota_abort(otaupdate->config.context);
+                        //, otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/
     }
 }
 
 //========= shared attributes about F/W or S/W OTA update =========================
 static void __on_fw_attributesrequest_response(tbcmh_handle_t client,
-                void *context, int request_id)
+                void *context)//, uint32_t request_id
 {
     //no code
 }
 static void __on_sw_attributesrequest_response(tbcmh_handle_t client,
-                void *context, int request_id)
+                void *context) //, uint32_t request_id
 {
     //no code
 }
@@ -718,8 +724,10 @@ void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client)
 }
 
 //on received shared attributes of fw/sw: unpack & deal
-void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate_type_t ota_type,
-                                         const char *ota_title, const char *ota_version, int ota_size,
+void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client,
+                                         tbcmh_otaupdate_type_t ota_type,
+                                         const char *ota_title,
+                                         const char *ota_version, uint32_t ota_size,
                                          const char *ota_checksum, const char *ota_checksum_algorithm)
 {
      TBC_CHECK_PTR(client);
@@ -765,7 +773,7 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
                         ota_checksum, ota_checksum_algorithm, ota_error, sizeof(ota_error)-1);
      if (result == 1) { //negotiate successful(next to F/W OTA)
         _otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);
-        result = _otaupdate_chunk_request(otaupdate);
+        result = _otaupdate_chunk_request(otaupdate, true);
         if (result != 0) { //failure to request chunk
             TBC_LOGW("Request first OTA chunk failure! %s()", __FUNCTION__);
             _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Request OTA chunk failure!");
@@ -790,8 +798,10 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client, tbcmh_otaupdate
 }
 
 //on response
-void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
-                                         int chunk_id, const char* payload, int length)
+void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
+                                         uint32_t request_id,
+                                         uint32_t chunk_id,
+                                         const char* payload, int length)
 {
      TBC_CHECK_PTR(client);
 
@@ -811,7 +821,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
      if (!otaupdate) {
           // Give semaphore
           // xSemaphoreGive(client->_lock);
-          TBC_LOGW("Unable to find otaupdate:%d! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find otaupdate:%u! %s()", request_id, __FUNCTION__);
           return;
      }
 
@@ -848,7 +858,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client, int request_id,
                  _otaupdate_reset(otaupdate);
              }
           }else {  //un-receied all f/w or s/w: go on, get next package
-             result = _otaupdate_chunk_request(otaupdate);
+             result = _otaupdate_chunk_request(otaupdate, false);
              if (result != 0) { //failure to request chunk
                  _otaupdate_publish_late_failed_status(otaupdate, "Request OTA chunk failure!");
                  _otaupdate_do_abort(otaupdate);
