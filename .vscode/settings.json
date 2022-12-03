@@ -13,7 +13,10 @@
         "provision_observer.h": "c",
         "ota_update_observer.h": "c",
         "tbc_mqtt_adapter.h": "c",
-        "client_rpc.h": "c"
+        "client_rpc.h": "c",
+        "tbc_utils.h": "c",
+        "tbc_mqtt_wapper.h": "c",
+        "tbc_mqtt_helper.h": "c"
     },
     "cmake.configureOnOpen": false,
     "esbonio.sphinx.confDir": ""

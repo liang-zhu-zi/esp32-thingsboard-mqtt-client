@@ -18,12 +18,16 @@
 #include "esp_log.h"
 
 #include "tbc_mqtt_helper.h"
-#include "protocol_examples_common.h"
+#include "tbc_extension_telemetry.h"
 
-static const char *TAG = "TELEMETRY_UPLOAD";
+#include "protocol_examples_common.h"
 
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
+
+static const char *TAG = "EXTENTSION_TELEMETRY_UPLOAD";
+
+static tbce_telemetry_handle_t _telemetry = NULL;
 
 //Don't call TBCMH API in this callback!
 //Free return value by caller/(tbcmh library)!
@@ -60,7 +64,7 @@ void tb_telemetry_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 
-    tbcmh_timeseriesdata_update(client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
+    tbce_telemetry_update(_telemetry, client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -150,14 +154,22 @@ static void mqtt_app_start(void)
         return;
     }
 
+    ESP_LOGI(TAG, "Create telemetry: ...");
+    _telemetry = tbce_telemetry_create();
+    if (!_telemetry) {
+        ESP_LOGE(TAG, "Failure to create telemetry: ...");
+        goto exit_destroy;
+    }
+
     ESP_LOGI(TAG, "Append telemetry: temprature...");
-    err = tbcmh_timeseriesdata_register(client, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
+    err = tbce_telemetry_register(_telemetry, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_TEMPRATUE);
         goto exit_destroy;
     }
+
     ESP_LOGI(TAG, "Append telemetry: humidity...");
-    err = tbcmh_timeseriesdata_register(client, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
+    err = tbce_telemetry_register(_telemetry, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_HUMIDITY);
         goto exit_destroy;
@@ -200,6 +212,11 @@ static void mqtt_app_start(void)
     tbcmh_disconnect(client);
 
 exit_destroy:
+    if (_telemetry) {
+        tbce_telemetry_destroy(_telemetry);
+        _telemetry = NULL;
+    }
+
     ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
 #endif

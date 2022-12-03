@@ -82,7 +82,7 @@ tbcmh_handle_t tbcmh_init()
      }
      
      // create all 7/9 list!
-     _tbcmh_timeseriesdata_on_create(client);
+     //_tbcmh_timeseriesdata_on_create(client);
      _tbcmh_clientattribute_on_create(client);
      _tbcmh_sharedattribute_on_create(client);
      _tbcmh_attributesrequest_on_create(client);//req-resp
@@ -118,7 +118,7 @@ void tbcmh_destroy(tbcmh_handle_t client)
      tbcmh_disconnect(client);
 
      // empty all 7/9 list!
-     _tbcmh_timeseriesdata_on_destroy(client);
+     //_tbcmh_timeseriesdata_on_destroy(client);
      _tbcmh_clientattribute_on_destroy(client);
      _tbcmh_sharedattribute_on_destroy(client);
      _tbcmh_attributesrequest_on_destroy(client);
@@ -354,7 +354,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
      client->on_connected = NULL;
      client->on_disconnected = NULL;
 
-     _tbcmh_timeseriesdata_on_disconnected(client);
+     //_tbcmh_timeseriesdata_on_disconnected(client);
      _tbcmh_attributesrequest_on_disconnected(client); //empty all request
      _tbcmh_clientattribute_on_disconnected(client); 
      _tbcmh_sharedattribute_on_disconnected(client);
@@ -390,9 +390,9 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
           return;
      }
 
-    if (client->function & TBCMH_FUNCTION_TIMESERIES_DATA) {
-        _tbcmh_timeseriesdata_on_connected(client);
-    }
+     // if (client->function & TBCMH_FUNCTION_TIMESERIES_DATA) {
+     //     _tbcmh_timeseriesdata_on_connected(client);
+     // }
     if (client->function & TBCMH_FUNCTION_ATTRIBUTES_REQUEST) {
         _tbcmh_attributesrequest_on_connected(client);
     }
@@ -447,7 +447,7 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      //      return;
      // }
 
-     _tbcmh_timeseriesdata_on_disconnected(client);
+     //_tbcmh_timeseriesdata_on_disconnected(client);
      _tbcmh_attributesrequest_on_disconnected(client); //empty all request
      _tbcmh_clientattribute_on_disconnected(client); 
      _tbcmh_sharedattribute_on_disconnected(client);

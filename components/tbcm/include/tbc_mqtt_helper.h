@@ -75,11 +75,6 @@ typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
  */
 typedef cJSON tbcmh_value_t;
 
-// Get value of telemetry time-series data
-// Don't call TBCMH API in this callback!
-// Caller (TBCMH library) of this callback will release memory of the return value
-typedef tbcmh_value_t* (*tbcmh_tsdata_on_get_t)(void *context);
-
 //====2.client-side attribute==========================================================================================
 // Get value of the device's client-side attribute
 // Don't call TBCMH API in these callback!
@@ -245,11 +240,10 @@ bool tbcmh_has_events(tbcmh_handle_t client);
 void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout, recv/parse/sendqueue/ack...
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbc_err_t tbcmh_timeseriesdata_register(tbcmh_handle_t client,
-                                const char *key, void *context,
-                                tbcmh_tsdata_on_get_t on_get);
-tbc_err_t tbcmh_timeseriesdata_unregister(tbcmh_handle_t client, const char *key);
-tbc_err_t tbcmh_timeseriesdata_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
+int tbcmh_telemetry_publish(tbcmh_handle_t client, const char *telemetry,
+                            int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_telemetry_publish_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+                              int qos/*= 1*/, int retain/*= 0*/);
 
 //====20.Publish client-side device attributes to the server============================================================
 // Call it before tbcmh_connect()
