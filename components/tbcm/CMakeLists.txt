@@ -7,7 +7,7 @@ set(priv_includes "private_include"
 
 #set(priv_requires "mqtt")
 
-set(requires "mqtt" "json")
+set(requires "mqtt" "json" "app_update")
 
 set(srcs "src/transport/tbc_transport_config.c"
          "src/transport/tbc_transport_storage.c"
@@ -21,6 +21,7 @@ if(CONFIG_TB_MQTT_CLIENT_HELPER_ENABLE)
                      "src/helper/client_rpc.c"
                      "src/helper/device_provision.c"
                      "src/helper/ota_update.c"
+                     "src/helper/ota_fwupdate.c"
                      "src/helper/server_rpc.c"
                      "src/helper/shared_attribute.c"
                      "src/helper/timeseries_data.c"

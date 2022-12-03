@@ -1,11 +1,18 @@
-/* MQTT (over TCP) Example
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
-   This example code is in the Public Domain (or CC0 licensed, at your option.)
-
-   Unless required by applicable law or agreed to in writing, this
-   software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
-   CONDITIONS OF ANY KIND, either express or implied.
-*/
+// This file is called by ota_update.c/.h.
 
 #include <stdio.h>
 #include <stdint.h>
@@ -24,17 +31,7 @@
 #include "tbc_mqtt_helper.h"
 //#include "protocol_examples_common.h"
 
-static const char *TAG = "MY_FWUPDATE";
-
-#define FW_DESCRIPTION              "FW_DESCRIPTION"
-//#define CURRENT_FW_TITLE            "MY_ESP32_FW"
-//#define CURRENT_FW_VERSION          "7.8.9"
-
-//#define SW_DESCRIPTION              "SW_DESCRIPTION"
-//#define CURRENT_SW_TITLE            "MY_ESP32_SW"
-//#define CURRENT_SW_VERSION          "2.3.4"
-
-typedef struct my_fwupdate{
+typedef struct ota_fwupdate{
     const esp_partition_t *configured_partition;  // = esp_ota_get_boot_partition()
 
     const esp_partition_t *running_partition;     // = esp_ota_get_running_partition()
@@ -45,9 +42,11 @@ typedef struct my_fwupdate{
 
     int size;                                     // new f/w size
     bool image_header_was_checked;                // new f/w  header was checked
-} my_fwupdate_t;
+} ota_fwupdate_t;
 
-static my_fwupdate_t _my_fwupdate = {
+static const char *TAG = "OTA_FWUPDATE";
+
+static ota_fwupdate_t _fwupdate = {
                 .configured_partition = NULL,  // = esp_ota_get_boot_partition()
                 .running_partition = NULL,     // = esp_ota_get_running_partition()
                 .update_partition = NULL,      // = esp_ota_get_next_update_partition(NULL)
@@ -56,17 +55,6 @@ static my_fwupdate_t _my_fwupdate = {
                 .image_header_was_checked = false
             };
 
-static volatile bool _my_fwupdate_request_reboot = false;
-
-static void ____fwupdate_reset(void)
-{
-    //_my_fwupdate.configured_partition = esp_ota_get_boot_partition();
-    //_my_fwupdate.running_partition = esp_ota_get_running_partition();
-    //_my_fwupdate.update_partition = esp_ota_get_next_update_partition(NULL);
-    _my_fwupdate.update_handle = 0;
-    _my_fwupdate.size = 0;
-    _my_fwupdate.image_header_was_checked = false;
-}
 
 static bool ____fwupdate_diagnostic(void)
 {
@@ -90,48 +78,81 @@ static bool ____fwupdate_diagnostic(void)
     */
 }
 
-//Don't call TBCMH API in the callback!
-static const char* _my_fwupdate_on_get_current_title(void *context)
+
+static void ____fwupdate_reset(void)
+{
+    //_fwupdate.configured_partition = esp_ota_get_boot_partition();
+    //_fwupdate.running_partition = esp_ota_get_running_partition();
+    //_fwupdate.update_partition = esp_ota_get_next_update_partition(NULL);
+    _fwupdate.update_handle = 0;
+    _fwupdate.size = 0;
+    _fwupdate.image_header_was_checked = false;
+}
+
+void *ota_fwupdate_init(void)
 {
     // TODO: division F/W or S/W !!!!
+    _fwupdate.configured_partition = esp_ota_get_boot_partition();
+    _fwupdate.running_partition = esp_ota_get_running_partition();
+    ////_fwupdate.runnning_app_was_first_boot = false;
+    _fwupdate.update_partition = esp_ota_get_next_update_partition(NULL);
+    _fwupdate.update_handle = 0;
+    _fwupdate.size = 0;
+    _fwupdate.image_header_was_checked = false;
 
-    static char title[64] = {0};
+    // check F/W OTA
+    esp_ota_img_states_t ota_state;
+    if (_fwupdate.running_partition && 
+        //_fwupdate.running_partition->type == ESP_PARTITION_TYPE_APP &&
+        //_fwupdate.running_partition->subtype != ESP_PARTITION_SUBTYPE_APP_FACTORY &&
+        (esp_ota_get_state_partition(_fwupdate.running_partition, &ota_state) == ESP_OK))
+    {
+        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
+            ////_fwupdate.runnning_app_was_first_boot = true;
 
-    //get titile from running_partition
-    if (_my_fwupdate.running_partition) {
-        esp_app_desc_t running_app_info;
-        if (esp_ota_get_partition_description(_my_fwupdate.running_partition, &running_app_info) == ESP_OK) { //esp_ota_get_app_description()
-            ESP_LOGI(TAG, "Current running F/W title: %s", running_app_info.project_name);
-            strncpy(title, running_app_info.project_name, sizeof(title)-1); //version
-            return title;
+            // run diagnostic function ...
+            bool diagnostic_is_ok = ____fwupdate_diagnostic();
+            if (diagnostic_is_ok) {
+                ESP_LOGI(TAG, "Diagnostics completed successfully! Continuing execution ...");
+                esp_ota_mark_app_valid_cancel_rollback();
+            } else {
+                ESP_LOGE(TAG, "Diagnostics failed! Start rollback to the previous version ...");
+                esp_ota_mark_app_invalid_rollback_and_reboot();
+            }
         }
     }
 
-    return NULL; //CURRENT_FW_TITLE;
-}
-//Don't call TBCMH API in the callback!
-static const char* _my_fwupdate_on_get_current_version(void *context)
-{
-    // TODO: division F/W or S/W !!!!
+    if (_fwupdate.configured_partition != _fwupdate.running_partition) {
+        ESP_LOGW(TAG, "Configured OTA boot partition at offset 0x%08x, but running from offset 0x%08x",
+                 _fwupdate.configured_partition->address, _fwupdate.running_partition->address);
+        ESP_LOGW(TAG, "(This can happen if either the OTA boot data or preferred boot image become corrupted somehow.)");
+    }
 
-    static char version[64] = {0};
-
-    //get version from running_partition
-    if (_my_fwupdate.running_partition) {
+    // check current version with last invalid partition
+    if (_fwupdate.running_partition) {
         esp_app_desc_t running_app_info;
-        if (esp_ota_get_partition_description(_my_fwupdate.running_partition, &running_app_info) == ESP_OK) {
+        if (esp_ota_get_partition_description(_fwupdate.running_partition, &running_app_info) == ESP_OK) {
             ESP_LOGI(TAG, "Current running F/W version: %s", running_app_info.version);
-            strncpy(version, running_app_info.version, sizeof(version)-1);
-            return version;
         }
+        ESP_LOGI(TAG, "Running partition type %d subtype %d (offset 0x%08x)",
+                _fwupdate.running_partition->type, _fwupdate.running_partition->subtype, _fwupdate.running_partition->address);
     }
 
-    return NULL; //CURRENT_FW_VERSION;
+    if (_fwupdate.update_partition == NULL) {
+        ESP_LOGW(TAG, "_fwupdate.update_partition is NULL! Don't executive F/W update!");
+        return NULL;
+    }
+    ESP_LOGI(TAG, "Update partition type %d subtype %d (offset 0x%08x)",
+            _fwupdate.update_partition->type, _fwupdate.update_partition->subtype, _fwupdate.update_partition->address);
+
+    return &_fwupdate;
 }
+
 
 //Don't call TBCMH API in the callback!
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-static tbc_err_t _my_fwupdate_on_negotiate(void *context,
+tbc_err_t ota_fwupdate_negotiate(void *context_xw,
+        const char * current_fw_title, const char* current_fw_version,
         const char *fw_title, const char *fw_version, uint32_t fw_size,
         const char *fw_checksum, const char *fw_checksum_algorithm,
         char *fw_error, int error_size)
@@ -141,7 +162,6 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm);
 
     //check fw_title != current_fw_title
-    const char * current_fw_title = _my_fwupdate_on_get_current_title(context);
     if (strcmp(fw_title, current_fw_title)!=0) {
     
         ESP_LOGI(TAG, "New F/W titile(%s) is not equal to current F/W title(%s)", fw_title, current_fw_title);
@@ -150,7 +170,6 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
     }
     
     //check fw_version == current_fw_version
-    const char* current_fw_version = _my_fwupdate_on_get_current_version(context);
     if (strcmp(fw_version, current_fw_version)==0) {
         ESP_LOGI(TAG, "New F/W version(%s) is equal to current F/W version(%s)", fw_version, current_fw_version);
         snprintf(fw_error, error_size, "New F/W version(%s) is equal to current F/W version(%s)", fw_version, current_fw_version);
@@ -158,12 +177,12 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
     }
 
     // check fw_size > update.size
-    if (_my_fwupdate.update_partition) {
-        if (fw_size > _my_fwupdate.update_partition->size) {
+    if (_fwupdate.update_partition) {
+        if (fw_size > _fwupdate.update_partition->size) {
             ESP_LOGI(TAG, "New F/W size(%u) is bigger than update partition size(%d)",
-                        fw_size, _my_fwupdate.update_partition->size);
+                        fw_size, _fwupdate.update_partition->size);
             snprintf(fw_error, error_size, "New F/W size(%u) is bigger than update partition size(%d)", 
-                        fw_size, _my_fwupdate.update_partition->size);
+                        fw_size, _fwupdate.update_partition->size);
             return ESP_FAIL;
         }
     }
@@ -173,7 +192,7 @@ static tbc_err_t _my_fwupdate_on_negotiate(void *context,
 
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbc_err_t _my_fwupdate_on_write(void *context,
+tbc_err_t ota_fwupdate_write(void *context_xw,
                 const void *fw_data, uint32_t data_read, //uint32_t request_id, uint32_t chunk_id,
                 char *fw_error, int error_size)
 {
@@ -194,11 +213,11 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
         //no code. continue f/w update.
         return ESP_OK;
     } else if (data_read > 0) {
-        if (_my_fwupdate.image_header_was_checked == false) {
+        if (_fwupdate.image_header_was_checked == false) {
             esp_app_desc_t new_app_info;
             if (data_read < sizeof(esp_image_header_t) + sizeof(esp_image_segment_header_t) + sizeof(esp_app_desc_t)) {
                 ESP_LOGE(TAG, "received package is not fit len");
-                //esp_ota_abort(_my_fwupdate.update_handle);
+                //esp_ota_abort(_fwupdate.update_handle);
                 snprintf(fw_error, error_size, "received package is not fit len");
                 return ESP_FAIL;
             } else {
@@ -208,7 +227,7 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
                 ESP_LOGI(TAG, "New firmware version: %s", new_app_info.version);
 
                 esp_app_desc_t running_app_info;
-                if (esp_ota_get_partition_description(_my_fwupdate.running_partition, &running_app_info) == ESP_OK) {
+                if (esp_ota_get_partition_description(_fwupdate.running_partition, &running_app_info) == ESP_OK) {
                     ESP_LOGI(TAG, "Running firmware version: %s", running_app_info.version);
                 }
 
@@ -236,12 +255,12 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
                 }
 #endif
 
-                _my_fwupdate.image_header_was_checked = true;
+                _fwupdate.image_header_was_checked = true;
 
-                err = esp_ota_begin(_my_fwupdate.update_partition, OTA_WITH_SEQUENTIAL_WRITES, &_my_fwupdate.update_handle);
+                err = esp_ota_begin(_fwupdate.update_partition, OTA_WITH_SEQUENTIAL_WRITES, &_fwupdate.update_handle);
                 if (err != ESP_OK) {
                     ESP_LOGE(TAG, "esp_ota_begin failed (%s)", esp_err_to_name(err));
-                    //esp_ota_abort(_my_fwupdate.update_handle);
+                    //esp_ota_abort(_fwupdate.update_handle);
                     snprintf(fw_error, error_size, "esp_ota_begin failed (%s)", esp_err_to_name(err));
                     return ESP_FAIL;
                 }
@@ -249,15 +268,15 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
             } 
         }
 
-        err = esp_ota_write(_my_fwupdate.update_handle, (const void *)fw_data, data_read);
+        err = esp_ota_write(_fwupdate.update_handle, (const void *)fw_data, data_read);
         if (err != ESP_OK) {
             ESP_LOGE(TAG, "write F/W data failure!");
-            //esp_ota_abort(_my_fwupdate.update_handle);
+            //esp_ota_abort(_fwupdate.update_handle);
             snprintf(fw_error, error_size, "write F/W data failure!");
             return ESP_FAIL;
         }
-        _my_fwupdate.size += data_read;
-        ESP_LOGD(TAG, "Written image length +%d", _my_fwupdate.size);
+        _fwupdate.size += data_read;
+        ESP_LOGD(TAG, "Written image length +%d", _fwupdate.size);
         return ESP_OK;
     }
 
@@ -266,14 +285,14 @@ static tbc_err_t _my_fwupdate_on_write(void *context,
 
 //Don't call TBCMH API in the callback!
 //return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-static tbc_err_t _my_fwupdate_on_end(void *context,
+tbc_err_t ota_fwupdate_end(void *context_xw,
                                 char *fw_error, int error_size) //uint32_t request_id, uint32_t chunk_id,
 {
     // TODO: division F/W or S/W !!!!
     ESP_LOGI(TAG, "F/W update success & end"); //: request_id=%d, chunk_id=%d", request_id, chunk_id
 
     esp_err_t err;
-    err = esp_ota_end(_my_fwupdate.update_handle);
+    err = esp_ota_end(_fwupdate.update_handle);
     if (err != ESP_OK) {
         if (err == ESP_ERR_OTA_VALIDATE_FAILED) {
             ESP_LOGE(TAG, "Image validation failed, image is corrupted");
@@ -285,7 +304,7 @@ static tbc_err_t _my_fwupdate_on_end(void *context,
         return ESP_FAIL;
     }
 
-    err = esp_ota_set_boot_partition(_my_fwupdate.update_partition);
+    err = esp_ota_set_boot_partition(_fwupdate.update_partition);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "esp_ota_set_boot_partition failed (%s)!", esp_err_to_name(err));
         snprintf(fw_error, error_size, "esp_ota_set_boot_partition failed (%s)!", esp_err_to_name(err));
@@ -294,99 +313,20 @@ static tbc_err_t _my_fwupdate_on_end(void *context,
     ____fwupdate_reset();
 
     //Prepare to restart system!
-    _my_fwupdate_request_reboot = true; // restart esp32 in mqtt_app_start()
+    //_my_fwupdate_request_reboot = true; // restart esp32 in mqtt_app_start()
 
     return ESP_OK;
 }
 
 //Don't call TBCMH API in the callback!
-static void _my_fwupdate_on_abort(void *context)//,        uint32_t request_id, uint32_t chunk_id/*current chunk_id*/
+void ota_fwupdate_abort(void *context_xw)//,        uint32_t request_id, uint32_t chunk_id/*current chunk_id*/
 {
     // TODO: division F/W or S/W !!!!
     ESP_LOGI(TAG, "F/W update failure & abort"); //: request_id=%u, chunk_id=%u", request_id, chunk_id
 
-    if (_my_fwupdate.update_handle) {
-        esp_ota_abort(_my_fwupdate.update_handle);
+    if (_fwupdate.update_handle) {
+        esp_ota_abort(_fwupdate.update_handle);
     }
     ____fwupdate_reset();
 }
 
-tbc_err_t my_fwupdate_init(tbcmh_handle_t client)
-{
-    // TODO: division F/W or S/W !!!!
-
-    _my_fwupdate.configured_partition = esp_ota_get_boot_partition();
-    _my_fwupdate.running_partition = esp_ota_get_running_partition();
-    ////_my_fwupdate.runnning_app_was_first_boot = false;
-    _my_fwupdate.update_partition = esp_ota_get_next_update_partition(NULL);
-    _my_fwupdate.update_handle = 0;
-    _my_fwupdate.size = 0;
-    _my_fwupdate.image_header_was_checked = false;
-
-    // check F/W OTA
-    esp_ota_img_states_t ota_state;
-    if (_my_fwupdate.running_partition && 
-        //_my_fwupdate.running_partition->type == ESP_PARTITION_TYPE_APP &&
-        //_my_fwupdate.running_partition->subtype != ESP_PARTITION_SUBTYPE_APP_FACTORY &&
-        (esp_ota_get_state_partition(_my_fwupdate.running_partition, &ota_state) == ESP_OK))
-    {
-        if (ota_state == ESP_OTA_IMG_PENDING_VERIFY) {
-            ////_my_fwupdate.runnning_app_was_first_boot = true;
-
-            // run diagnostic function ...
-            bool diagnostic_is_ok = ____fwupdate_diagnostic();
-            if (diagnostic_is_ok) {
-                ESP_LOGI(TAG, "Diagnostics completed successfully! Continuing execution ...");
-                esp_ota_mark_app_valid_cancel_rollback();
-            } else {
-                ESP_LOGE(TAG, "Diagnostics failed! Start rollback to the previous version ...");
-                esp_ota_mark_app_invalid_rollback_and_reboot();
-            }
-        }
-    }
-
-    if (_my_fwupdate.configured_partition != _my_fwupdate.running_partition) {
-        ESP_LOGW(TAG, "Configured OTA boot partition at offset 0x%08x, but running from offset 0x%08x",
-                 _my_fwupdate.configured_partition->address, _my_fwupdate.running_partition->address);
-        ESP_LOGW(TAG, "(This can happen if either the OTA boot data or preferred boot image become corrupted somehow.)");
-    }
-
-    // check current version with last invalid partition
-    if (_my_fwupdate.running_partition) {
-        esp_app_desc_t running_app_info;
-        if (esp_ota_get_partition_description(_my_fwupdate.running_partition, &running_app_info) == ESP_OK) {
-            ESP_LOGI(TAG, "Current running F/W version: %s", running_app_info.version);
-        }
-        ESP_LOGI(TAG, "Running partition type %d subtype %d (offset 0x%08x)",
-                _my_fwupdate.running_partition->type, _my_fwupdate.running_partition->subtype, _my_fwupdate.running_partition->address);
-    }
-
-    if (_my_fwupdate.update_partition == NULL) {
-        ESP_LOGW(TAG, "_my_fwupdate.update_partition is NULL! Don't executive F/W update!");
-        return ESP_FAIL;
-    }
-    ESP_LOGI(TAG, "Update partition type %d subtype %d (offset 0x%08x)",
-            _my_fwupdate.update_partition->type, _my_fwupdate.update_partition->subtype, _my_fwupdate.update_partition->address);
-
-    tbcmh_otaupdate_config_t otaupdate_config = {
-        .ota_type = TBCMH_OTAUPDATE_TYPE_FW, /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-        .chunk_size = 16*1024,               /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
-    
-        .context = &_my_fwupdate, //NULL,
-        .on_get_current_ota_title = _my_fwupdate_on_get_current_title,     /*!< callback of getting current F/W or S/W OTA title */
-        .on_get_current_ota_version = _my_fwupdate_on_get_current_version, /*!< callback of getting current F/W or S/W OTA version */
-        .on_ota_negotiate = _my_fwupdate_on_negotiate,   /*!< callback of F/W or S/W OTA attributes */
-        .on_ota_write = _my_fwupdate_on_write,           /*!< callback of F/W or S/W OTA doing */
-        .on_ota_end = _my_fwupdate_on_end,               /*!< callback of F/W or S/W OTA success & end */
-        .on_ota_abort = _my_fwupdate_on_abort,           /*!< callback of F/W or S/W OTA failure & abort */
-
-        ////.is_first_boot = _my_fwupdate.runnning_app_was_first_boot
-    };
-    tbc_err_t err = tbcmh_otaupdate_register(client, FW_DESCRIPTION, &otaupdate_config);
-    return err;
-}
-
-bool my_fwupdate_request_reboot(void)
-{
-    return _my_fwupdate_request_reboot;
-}

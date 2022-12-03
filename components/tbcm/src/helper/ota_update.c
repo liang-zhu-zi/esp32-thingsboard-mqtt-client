@@ -22,22 +22,36 @@
 #include "esp_err.h"
 
 #include "tbc_mqtt_helper_internal.h"
+#include "ota_fwupdate.h"
 
 const static char *TAG = "otaupdate";
 
 /*!< Initialize otaupdate_t */
 static otaupdate_t *_otaupdate_create(tbcmh_handle_t client,
                         const char *ota_description,
-                        const tbcmh_otaupdate_config_t *config)
+                        tbcmh_otaupdate_type_t ota_type,
+                        void *context_user,
+                        tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                        tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                        tbcmh_otaupdate_on_updated_t on_updated)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, NULL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_get_current_ota_title, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_get_current_ota_version, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_ota_negotiate, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_ota_write, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_ota_end, NULL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(config->on_ota_abort, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_title, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_version, NULL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_updated, NULL);
+
+    void *context_xw = NULL;
+    if (ota_type == TBCMH_OTAUPDATE_TYPE_FW) {
+        context_xw = ota_fwupdate_init();
+    } else if (ota_type == TBCMH_OTAUPDATE_TYPE_SW) {
+        // TODO: support sw ota!
+        // context_xw = _my_swupdate_init();
+    }
+    if (!context_xw) {
+        TBC_LOGE("failure to call _my_xwupdate_init()!");
+        return NULL;
+    }
 
     otaupdate_t *otaupdate = TBC_MALLOC(sizeof(otaupdate_t));
     if (!otaupdate) {
@@ -52,17 +66,28 @@ static otaupdate_t *_otaupdate_create(tbcmh_handle_t client,
         strcpy(otaupdate->ota_description, ota_description);
     }
 
-    otaupdate->config.ota_type = config->ota_type;
-    otaupdate->config.chunk_size = config->chunk_size;
-    otaupdate->config.context = config->context;
-    otaupdate->config.on_get_current_ota_title = config->on_get_current_ota_title;
-    otaupdate->config.on_get_current_ota_version = config->on_get_current_ota_version;
-    otaupdate->config.on_ota_negotiate = config->on_ota_negotiate;         /*!< callback of F/W or S/W OTA attributes */
-    otaupdate->config.on_ota_write = config->on_ota_write;                 /*!< callback of F/W or S/W OTA doing */
-    otaupdate->config.on_ota_end = config->on_ota_end;                     /*!< callback of F/W or S/W OTA success & end */
-    otaupdate->config.on_ota_abort = config->on_ota_abort;                 /*!< callback of F/W or S/W OTA failure & abort */
-    ////otaupdate->config.is_first_boot = config->is_first_boot;           /*!< whether first boot after ota update  */
+    otaupdate->config.ota_type = ota_type;
+    otaupdate->config.chunk_size = 16*1024;
+    otaupdate->config.context_user = context_user;
+    otaupdate->config.on_get_current_title = on_get_current_title;
+    otaupdate->config.on_get_current_version = on_get_current_version;
+    otaupdate->config.on_ota_updated = on_updated;
 
+    otaupdate->config.context_xw = context_xw;
+    if (ota_type == TBCMH_OTAUPDATE_TYPE_FW) {
+        otaupdate->config.on_ota_negotiate = ota_fwupdate_negotiate,
+        otaupdate->config.on_ota_write = ota_fwupdate_write;
+        otaupdate->config.on_ota_end = ota_fwupdate_end;
+        otaupdate->config.on_ota_abort = ota_fwupdate_abort;
+        ////otaupdate->config.is_first_boot = config->is_first_boot;           /*!< whether first boot after ota update  */
+    } else if (ota_type == TBCMH_OTAUPDATE_TYPE_SW) {
+        // TODO: support sw ota!
+        // otaupdate->config.on_ota_negotiate = config->on_ota_negotiate;      /*!< callback of F/W or S/W OTA attributes */
+        // otaupdate->config.on_ota_write = config->on_ota_write;              /*!< callback of F/W or S/W OTA doing */
+        // otaupdate->config.on_ota_end = config->on_ota_end;                  /*!< callback of F/W or S/W OTA success & end */
+        // otaupdate->config.on_ota_abort = config->on_ota_abort;              /*!< callback of F/W or S/W OTA failure & abort */
+        ////otaupdate->config.is_first_boot = config->is_first_boot;           /*!< whether first boot after ota update  */
+    }
     otaupdate->attribute.ota_title = NULL;
     otaupdate->attribute.ota_version = NULL;
     otaupdate->attribute.ota_size = 0;
@@ -91,9 +116,12 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
 
     otaupdate->config.ota_type = 0;
     otaupdate->config.chunk_size = 0;
-    otaupdate->config.context = NULL;
-    otaupdate->config.on_get_current_ota_title = NULL;
-    otaupdate->config.on_get_current_ota_version = NULL;
+    otaupdate->config.context_user = NULL;
+    otaupdate->config.on_get_current_title = NULL;
+    otaupdate->config.on_get_current_version = NULL;
+    otaupdate->config.on_ota_updated = NULL;
+
+    otaupdate->config.context_xw = NULL;
     otaupdate->config.on_ota_negotiate = NULL;      /*!< callback of F/W or S/W OTA attributes */
     otaupdate->config.on_ota_write = NULL;          /*!< callback of F/W or S/W OTA doing */
     otaupdate->config.on_ota_end = NULL;            /*!< callback of F/W or S/W OTA success & end*/
@@ -127,13 +155,24 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
     return ESP_OK;
 }
 
-//Call it before connect()
+// TODO: !!!!!!Call it before connect()????
+// tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
+// uint32_t chunk_size;             /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
+// void *context;
+// tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
+// tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
 tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, 
-                const char *ota_description, const tbcmh_otaupdate_config_t *config)
+                const char *ota_description,  // TODO: remove it!
+                tbcmh_otaupdate_type_t ota_type,
+                void *context_user,
+                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                tbcmh_otaupdate_on_updated_t on_updated)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_title, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_version, ESP_FAIL);
 
      // Take semaphore
      if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -142,7 +181,12 @@ tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client,
      }
 
      // Create otaupdate
-     otaupdate_t *otaupdate = _otaupdate_create(client, ota_description, config);
+     otaupdate_t *otaupdate = _otaupdate_create(client,
+                                ota_description, ota_type,
+                                context_user,
+                                on_get_current_title,
+                                on_get_current_version,
+                                on_updated);
      if (!otaupdate) {
           // Give semaphore
           xSemaphoreGive(client->_lock);
@@ -220,8 +264,8 @@ static void _otaupdate_publish_early_current_version(otaupdate_t *otaupdate)
         current_ota_title_key   = TB_MQTT_KEY_CURRENT_SW_TITLE;   //"current_sw_title"
         current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
     }
-    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
-    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->config.context);
+    current_ota_title_value = otaupdate->config.on_get_current_title(otaupdate->config.context_user);
+    current_ota_version_value = otaupdate->config.on_get_current_version(otaupdate->config.context_user);
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
@@ -318,8 +362,8 @@ static void _otaupdate_publish_going_status(otaupdate_t *otaupdate, const char *
         current_ota_version_key = TB_MQTT_KEY_CURRENT_SW_VERSION; //"current_sw_version"
         ota_state_key           = TB_MQTT_KEY_SW_STATE;           //"sw_state"  
     }
-    current_ota_title_value = otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
-    current_ota_version_value = otaupdate->config.on_get_current_ota_version(otaupdate->config.context);
+    current_ota_title_value = otaupdate->config.on_get_current_title(otaupdate->config.context_user);
+    current_ota_version_value = otaupdate->config.on_get_current_version(otaupdate->config.context_user);
 
     // send package...    
     cJSON *object = cJSON_CreateObject(); // create json object
@@ -434,6 +478,16 @@ static void _otaupdate_reset(otaupdate_t *otaupdate)
     //otaupdate->state.timestamp = (uint64_t)time(NULL);;
 }
 
+static void _otaupdate_do_updated(otaupdate_t *otaupdate, bool success)
+{
+    if (!otaupdate) {
+        TBC_LOGE("otaupdate is NULL");
+        return;
+    }
+    TBC_CHECK_PTR(otaupdate);
+    TBC_CHECK_PTR(otaupdate->config.on_ota_updated);
+    otaupdate->config.on_ota_updated(otaupdate->config.context_user, success);
+}
 
 //return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
 static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
@@ -458,10 +512,14 @@ static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
     _otaupdate_reset(otaupdate);
 
     // TODO: if ota_title & ota_version == current_title & current_version, then return 0!
-    
-    int result = otaupdate->config.on_ota_negotiate(otaupdate->config.context,
-                                             ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm,
-                                             ota_error, error_size);
+
+    const char* current_fw_title = otaupdate->config.on_get_current_title(otaupdate->config.context_user);
+    const char* current_fw_version = otaupdate->config.on_get_current_version(otaupdate->config.context_user);
+    int result = otaupdate->config.on_ota_negotiate(otaupdate->config.context_xw,
+                                        current_fw_title, current_fw_version,
+                                        ota_title, ota_version, ota_size,
+                                        ota_checksum, ota_checksum_algorithm,
+                                        ota_error, error_size);
     if (result==1) { // negotiate successful(next to F/W OTA)
         // cache ota_title
         otaupdate->attribute.ota_title = TBC_MALLOC(strlen(ota_title)+1);
@@ -485,7 +543,6 @@ static tbc_err_t _otaupdate_do_negotiate(otaupdate_t *otaupdate,
             strcpy(otaupdate->attribute.ota_checksum_algorithm, ota_checksum_algorithm);
         }
     }
-
     return result;
 }
 
@@ -560,7 +617,7 @@ static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, uint32_t chunk_id,
     }
 
     tbc_err_t result = true;
-    result = otaupdate->config.on_ota_write(otaupdate->config.context,
+    result = otaupdate->config.on_ota_write(otaupdate->config.context_xw,
                             ota_data, data_size,
                             ota_error, error_size); //otaupdate->state.request_id, chunk_id,
     if (result != ESP_OK) {
@@ -583,7 +640,7 @@ static tbc_err_t _otaupdate_do_end(otaupdate_t *otaupdate, char *ota_error, int 
 
     // on_ota_end() and reset()
     if (otaupdate->config.on_ota_end && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
-        ret = otaupdate->config.on_ota_end(otaupdate->config.context, 
+        ret = otaupdate->config.on_ota_end(otaupdate->config.context_xw, 
                                          ota_error, error_size); //otaupdate->state.request_id, otaupdate->state.chunk_id,
     }
     return (ret==0)?0:-1;
@@ -595,7 +652,7 @@ static void _otaupdate_do_abort(otaupdate_t *otaupdate)
 
     // on_ota_abort() and reset()
     if (otaupdate->config.on_ota_abort && otaupdate->state.request_id>0 && otaupdate->state.received_len>0) {
-        otaupdate->config.on_ota_abort(otaupdate->config.context);
+        otaupdate->config.on_ota_abort(otaupdate->config.context_xw);
                         //, otaupdate->state.request_id, otaupdate->state.chunk_id/*current chunk_id*/
     }
 }
@@ -747,10 +804,10 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client,
      LIST_FOREACH_SAFE(otaupdate, &client->otaupdate_list, entry, next) {
         if (otaupdate &&
            (otaupdate->config.ota_type==ota_type) &&
-            otaupdate->config.on_get_current_ota_title)
+            otaupdate->config.on_get_current_title)
         {
             const char * current_ota_title = 
-                            otaupdate->config.on_get_current_ota_title(otaupdate->config.context);
+                            otaupdate->config.on_get_current_title(otaupdate->config.context_user);
             if (current_ota_title && strcmp(current_ota_title, ota_title)==0) {
                 break;
             }
@@ -779,6 +836,7 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client,
             _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Request OTA chunk failure!");
             _otaupdate_do_abort(otaupdate);
             _otaupdate_reset(otaupdate);
+            _otaupdate_do_updated(otaupdate, false);
         }
      } else if (result==0) { //0/ESP_OK: already updated!
         //no code!
@@ -843,6 +901,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
                  if (result==0) { // sussessful
                      _otaupdate_publish_updated_status(otaupdate); //UPDATED
                      _otaupdate_reset(otaupdate);
+                     _otaupdate_do_updated(otaupdate, true);
                  } else {
                      if (strlen(ota_error)>0) {
                          ota_error_ = ota_error;
@@ -851,11 +910,13 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
                      _otaupdate_publish_late_failed_status(otaupdate, ota_error_);
                      _otaupdate_do_abort(otaupdate);
                      _otaupdate_reset(otaupdate);
+                     _otaupdate_do_updated(otaupdate, false);
                  }
              } else {
                  _otaupdate_publish_late_failed_status(otaupdate, "Checksum verification failed!");
                  _otaupdate_do_abort(otaupdate);
                  _otaupdate_reset(otaupdate);
+                 _otaupdate_do_updated(otaupdate, false);
              }
           }else {  //un-receied all f/w or s/w: go on, get next package
              result = _otaupdate_chunk_request(otaupdate, false);
@@ -863,6 +924,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
                  _otaupdate_publish_late_failed_status(otaupdate, "Request OTA chunk failure!");
                  _otaupdate_do_abort(otaupdate);
                  _otaupdate_reset(otaupdate);
+                 _otaupdate_do_updated(otaupdate, false);
              }
           }
           break;
@@ -875,6 +937,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
          _otaupdate_publish_late_failed_status(otaupdate, ota_error_);
          _otaupdate_do_abort(otaupdate);
          _otaupdate_reset(otaupdate);
+         _otaupdate_do_updated(otaupdate, false);
          break;
          
       default: //Unknow error
@@ -882,6 +945,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
          _otaupdate_publish_late_failed_status(otaupdate, ota_error_);
          _otaupdate_do_abort(otaupdate);
          _otaupdate_reset(otaupdate);
+         _otaupdate_do_updated(otaupdate, false);
       }
  
      // Give semaphore
@@ -906,6 +970,7 @@ void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t tim
                 _otaupdate_publish_late_failed_status(request, "OTA response timeout!");
                 _otaupdate_do_abort(request);
                 _otaupdate_reset(request);
+                _otaupdate_do_updated(request, false);
           }
      }
 

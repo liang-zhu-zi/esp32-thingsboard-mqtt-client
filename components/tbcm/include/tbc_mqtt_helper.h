@@ -218,51 +218,13 @@ typedef enum
 } tbcmh_otaupdate_type_t;
 
 // Don't call TBCMH API in this callback!
-typedef const char *(*tbcmh_otaupdate_on_get_current_ota_title_t)(void *context);
+typedef const char *(*tbcmh_otaupdate_on_get_current_title_t)(void *context);
 
 // Don't call TBCMH API in this callback!
-typedef const char *(*tbcmh_otaupdate_on_get_current_ota_version_t)(void *context);
+typedef const char *(*tbcmh_otaupdate_on_get_current_version_t)(void *context);
 
 // Don't call TBCMH API in this callback!
-// return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-typedef tbc_err_t (*tbcmh_otaupdate_on_negotiate_t)(void *context,
-                                const char *ota_title, const char *ota_version, uint32_t ota_size,
-                                const char *ota_checksum, const char *ota_checksum_algorithm,
-                                char *ota_error, int error_size);
-
-// Don't call TBCMH API in this callback!
-// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_otaupdate_on_write_t)(void *context,  //uint32_t request_id, uint32_t current_chunk_id,
-                                const void *ota_data, uint32_t data_size,
-                                char *ota_error, int error_size);
-
-// Don't call TBCMH API in this callback!
-// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_otaupdate_on_end_t)(void *context,
-                                char *ota_error, int error_size); //uint32_t request_id, uint32_t chunk_id,
-
-// Don't call TBCMH API in this callback!
-typedef void (*tbcmh_otaupdate_on_abort_t)(void *context); //,uint32_t request_id, uint32_t current_chunk_id
-
-/**
- * ThingsBoard MQTT Client Helper F/W update OTA config
- */
-typedef struct tbcmh_otaupdate_config
-{
-  tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-  uint32_t chunk_size;             /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
-
-  void *context;
-  tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
-  tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
-
-  tbcmh_otaupdate_on_negotiate_t on_ota_negotiate; /*!< callback of F/W or S/W OTA attributes */
-  tbcmh_otaupdate_on_write_t on_ota_write;         /*!< callback of F/W or S/W OTA doing */
-  tbcmh_otaupdate_on_end_t on_ota_end;             /*!< callback of F/W or S/W OTA success & end*/
-  tbcmh_otaupdate_on_abort_t on_ota_abort;         /*!< callback of F/W or S/W OTA failure & abort */
-
-  ////bool is_first_boot;            /*!< whether first boot after ota update  */
-} tbcmh_otaupdate_config_t;
+typedef void        (*tbcmh_otaupdate_on_updated_t)(void *context, bool result);
 
 //====0.tbcm client====================================================================================================
 tbcmh_handle_t tbcmh_init();
@@ -364,8 +326,13 @@ tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
 
 //====60.Firmware update================================================================================================
 // Call it before tbcmh_connect()
-tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, const char *ota_description,
-                                const tbcmh_otaupdate_config_t *config);
+tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, 
+                const char *ota_description,  // TODO: remove it!
+                tbcmh_otaupdate_type_t ota_type,
+                void *context_user,
+                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                tbcmh_otaupdate_on_updated_t on_updated);
 tbc_err_t tbcmh_otaupdate_unregister(tbcmh_handle_t client, const char *ota_description);
 
 #ifdef __cplusplus

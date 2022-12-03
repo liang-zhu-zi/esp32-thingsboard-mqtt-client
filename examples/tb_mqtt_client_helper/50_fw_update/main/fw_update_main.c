@@ -17,21 +17,72 @@
 #include "esp_event.h"
 #include "esp_log.h"
 
-//#include "esp_ota_ops.h"
-//#include "esp_flash_partitions.h"
-//#include "esp_partition.h"
+#include "esp_ota_ops.h"
+#include "esp_flash_partitions.h"
+#include "esp_partition.h"
 
 #include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
-extern tbc_err_t my_fwupdate_init(tbcmh_handle_t client);
-extern bool        my_fwupdate_request_reboot(void);
+#define FW_DESCRIPTION              "FW_DESCRIPTION"
+//#define CURRENT_FW_TITLE            "MY_ESP32_FW"
+//#define CURRENT_FW_VERSION          "7.8.9"
 
-//extern tbc_err_t my_swupdate_init(tbcmh_handle_t client);
-//extern bool        my_swupdate_request_reboot(void);
-
+//#define SW_DESCRIPTION              "SW_DESCRIPTION"
+//#define CURRENT_SW_TITLE            "MY_ESP32_SW"
+//#define CURRENT_SW_VERSION          "2.3.4"
 
 static const char *TAG = "OTA_UPDATE_EXAMPLE";
+
+static volatile bool _my_fwupdate_request_reboot = false;
+
+//Don't call TBCMH API in the callback!
+static const char* _my_fwupdate_on_get_current_title(void *context)
+{
+    // TODO: division F/W or S/W !!!!
+
+    static char title[64] = {0};
+
+    //get titile from running_partition
+    const esp_partition_t *running_partition = esp_ota_get_running_partition();
+    if (running_partition) {
+        esp_app_desc_t running_app_info;
+        if (esp_ota_get_partition_description(running_partition, &running_app_info) == ESP_OK) { //esp_ota_get_app_description()
+            ESP_LOGI(TAG, "Current running F/W title: %s", running_app_info.project_name);
+            strncpy(title, running_app_info.project_name, sizeof(title)-1); //version
+            return title;
+        }
+    }
+
+    return NULL; //CURRENT_FW_TITLE;
+}
+//Don't call TBCMH API in the callback!
+static const char* _my_fwupdate_on_get_current_version(void *context)
+{
+    // TODO: division F/W or S/W !!!!
+
+    static char version[64] = {0};
+
+    //get version from running_partition
+    const esp_partition_t *running_partition = esp_ota_get_running_partition();
+    if (running_partition) {
+        esp_app_desc_t running_app_info;
+        if (esp_ota_get_partition_description(running_partition, &running_app_info) == ESP_OK) {
+            ESP_LOGI(TAG, "Current running F/W version: %s", running_app_info.version);
+            strncpy(version, running_app_info.version, sizeof(version)-1);
+            return version;
+        }
+    }
+
+    return NULL; //CURRENT_FW_VERSION;
+}
+
+void _my_fwupdate_on_updated(void *context, bool result)
+{
+    if (result) {
+        _my_fwupdate_request_reboot = true;
+    }
+}
 
 /*!< Callback of connected ThingsBoard MQTT */
 void tb_on_connected(tbcmh_handle_t client, void *context)
@@ -121,7 +172,13 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append F/W OTA Update...");
-    tbc_err_t err = my_fwupdate_init(client);
+    tbc_err_t err = tbcmh_otaupdate_register(client,
+                                            FW_DESCRIPTION,
+                                            TBCMH_OTAUPDATE_TYPE_FW,
+                                            NULL,
+                                            _my_fwupdate_on_get_current_title,
+                                            _my_fwupdate_on_get_current_version,
+                                            _my_fwupdate_on_updated);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append F/W OTA Update!");
         goto exit_destroy;
@@ -149,7 +206,7 @@ static void mqtt_app_start(void)
 
     // Do...
     int i = 0;
-    while (i<300 && !my_fwupdate_request_reboot()) { //&& !my_swupdate_request_reboot()
+    while (i<300 && !_my_fwupdate_request_reboot) { //!_my_swupdate_request_reboot
         if (tbcmh_has_events(client)) {
             tbcmh_run(client);
         }
@@ -170,7 +227,7 @@ exit_destroy:
     tbcmh_destroy(client);
 
     //restart esp32
-    if (my_fwupdate_request_reboot()) { //|| my_swupdate_request_reboot()
+    if (_my_fwupdate_request_reboot) { // || _my_swupdate_request_reboot
         ESP_LOGI(TAG, "Prepare to restart system!");
         sleep(2);
         esp_restart();
