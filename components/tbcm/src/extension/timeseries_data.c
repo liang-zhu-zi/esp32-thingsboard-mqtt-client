@@ -247,4 +247,3 @@ void _tbcmh_timeseriesdata_on_disconnected(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
     // ...
 }
-

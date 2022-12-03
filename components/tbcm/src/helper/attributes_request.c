@@ -447,4 +447,3 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
           _attributesrequest_destroy(request);
      }
 }
-

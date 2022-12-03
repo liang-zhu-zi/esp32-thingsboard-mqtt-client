@@ -1,7 +1,7 @@
 # Examples
 
 * Hello world: [00_hello_world](./tb_mqtt_client_helper/00_hello_world)
-* Using low-level API -- tbc_mqtt.h
+* Using low-level API -- tbc_mqtt_wapper.h
   * *TODO: ...*
 * Using high-level API -- tbc_mqtt_helper.h
   * Telemetry upload API: [10_telemetry_upload](./tb_mqtt_client_helper/10_telemetry_upload)

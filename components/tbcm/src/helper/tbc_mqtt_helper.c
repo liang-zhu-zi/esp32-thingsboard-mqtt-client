@@ -23,7 +23,7 @@
 
 #include "tbc_utils.h"
 
-#include "tbc_mqtt.h"
+#include "tbc_mqtt_wapper.h"
 #include "tbc_mqtt_helper.h"
 
 #include "tbc_mqtt_helper_internal.h"

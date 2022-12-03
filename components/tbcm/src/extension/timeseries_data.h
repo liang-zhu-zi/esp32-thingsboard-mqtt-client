@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbc_mqtt_helper.c/.h.
+// This file is called by user.
 
-#ifndef _TIMESERIES_DATA_HELPER_H_
-#define _TIMESERIES_DATA_HELPER_H_
+#ifndef _TBC_EXTENSION_TELEMETRY_H_
+#define _TBC_EXTENSION_TELEMETRY_H_
 
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
