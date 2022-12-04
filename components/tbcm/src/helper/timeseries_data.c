@@ -46,7 +46,17 @@ int tbcmh_telemetry_publish(tbcmh_handle_t client, const char *telemetry,
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(telemetry, ESP_FAIL);
 
-    return tbcm_telemetry_publish(client->tbmqttclient, telemetry, qos, retain);
+    // Take semaphore
+    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    int msg_id = tbcm_telemetry_publish(client->tbmqttclient, telemetry, qos, retain);
+
+    // Give semaphore
+    xSemaphoreGive(client->_lock);
+    return msg_id;
 }
 
 /**

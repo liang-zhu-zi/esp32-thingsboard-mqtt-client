@@ -29,8 +29,10 @@
 // #include "tbc_mqtt_helper.h"
 
 #include "timeseries_data.h"
-#include "client_attribute.h"
-#include "shared_attribute.h"
+//#include "client_attribute.h"
+//#include "shared_attribute.h"
+#include "attributes_update.h"
+#include "attributes_subscribe.h"
 #include "attributes_request.h"
 #include "server_rpc.h"
 #include "client_rpc.h"
@@ -62,10 +64,10 @@ typedef struct tbcmh_client
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
-     // timeseriesdata_list_t timeseriesdata_list;    /*!< telemetry time-series data entries */
-     clientattribute_list_t   clientattribute_list;   /*!< client attributes entries */
-     sharedattribute_list_t   sharedattribute_list;   /*!< shared attributes entries */
-     attributesrequest_list_t attributesrequest_list; /*!< attributes request entries */
+     // timeseriesdata_list_t   timeseriesdata_list;      /*!< telemetry time-series data entries */
+     // clientattribute_list_t  clientattribute_list;     /*!< client attributes entries */
+     attributessubscribe_list_t attributessubscribe_list; /*!< attributes subscreibe entries */
+     attributesrequest_list_t   attributesrequest_list;   /*!< attributes request entries */
      serverrpc_list_t serverrpc_list; /*!< server side RPC entries */
      clientrpc_list_t clientrpc_list; /*!< client side RPC entries */
      otaupdate_list_t otaupdate_list; /*!< A device may have multiple firmware */

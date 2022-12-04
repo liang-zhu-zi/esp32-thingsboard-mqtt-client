@@ -46,7 +46,7 @@ tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
 void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s, %s",CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
-    tbcmh_clientattribute_update(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
+    tbce_clientattributes_update(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -137,14 +137,14 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append client attribute: model...");
-    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_MODEL, NULL,
+    err = tbce_clientattributes_register(client, CLIENTATTRIBUTE_MODEL, NULL,
                             tb_clientattribute_on_get_model);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbcmh_clientattribute_register(client, CLIENTATTRIBUTE_SETPOINT, NULL,
+    err = tbce_clientattributes_register(client, CLIENTATTRIBUTE_SETPOINT, NULL,
                             tb_clientattribute_on_get_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);

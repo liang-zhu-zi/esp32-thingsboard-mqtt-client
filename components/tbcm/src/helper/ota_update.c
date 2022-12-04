@@ -24,6 +24,20 @@
 #include "tbc_mqtt_helper_internal.h"
 #include "ota_fwupdate.h"
 
+static int _otaupdate_on_fw_attributesupdate(tbcmh_handle_t client,
+                                      void *context, const cJSON *object);
+static int _otaupdate_on_sw_attributesupdate(tbcmh_handle_t client,
+                                    void *context, const cJSON *object);
+static void _otaupdate_on_fw_attributesrequest_response(tbcmh_handle_t client,
+                      void *context,
+                      const cJSON *client_attributes,
+                      const cJSON *shared_attributes);										 
+static void _otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t client,
+                      void *context,
+                      const cJSON *client_attributes,
+                      const cJSON *shared_attributes);										 
+
+
 const static char *TAG = "otaupdate";
 
 /*!< Initialize otaupdate_t */
@@ -658,17 +672,6 @@ static void _otaupdate_do_abort(otaupdate_t *otaupdate)
 }
 
 //========= shared attributes about F/W or S/W OTA update =========================
-static void __on_fw_attributesrequest_response(tbcmh_handle_t client,
-                void *context)//, uint32_t request_id
-{
-    //no code
-}
-static void __on_sw_attributesrequest_response(tbcmh_handle_t client,
-                void *context) //, uint32_t request_id
-{
-    //no code
-}
-
 void _tbcmh_otaupdate_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
@@ -733,10 +736,19 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 
              // send init current f/w info telemetry
              _otaupdate_publish_early_current_version(otaupdate);
+             tbcmh_attributes_subscribe(client,
+                    otaupdate/*context*/,
+                    _otaupdate_on_fw_attributesupdate,
+                    5/*count*/,
+                    TB_MQTT_KEY_FW_TITLE,
+                    TB_MQTT_KEY_FW_VERSION,
+                    TB_MQTT_KEY_FW_SIZE,
+                    TB_MQTT_KEY_FW_CHECKSUM,
+                    TB_MQTT_KEY_FW_CHECKSUM_ALG);
              // send f/w info attributes request
-             tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
-                    NULL/*context*/,
-                    __on_fw_attributesrequest_response/*on_response*/,
+             tbcmh_attributesrequest_of_shared_send(client,
+                    otaupdate/*context*/,
+                    _otaupdate_on_fw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,
                     5/*count*/,
                     TB_MQTT_KEY_FW_TITLE,
@@ -755,10 +767,19 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 
              // send init current s/w telemetry
              _otaupdate_publish_early_current_version(otaupdate);
+             tbcmh_attributes_subscribe(client,
+                    otaupdate/*context*/,
+                    _otaupdate_on_sw_attributesupdate,
+                    5/*count*/,
+                    TB_MQTT_KEY_SW_TITLE,
+                    TB_MQTT_KEY_SW_VERSION,
+                    TB_MQTT_KEY_SW_SIZE,
+                    TB_MQTT_KEY_SW_CHECKSUM,
+                    TB_MQTT_KEY_SW_CHECKSUM_ALG);
              // send s/w info attributes request
-             tbcmh_attributesrequest_send_4_ota_sharedattributes(client,
-                    NULL/*context*/,
-                    __on_sw_attributesrequest_response/*on_response*/,
+             tbcmh_attributesrequest_of_shared_send(client,
+                    otaupdate/*context*/,
+                    _otaupdate_on_sw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,
                     5/*count*/,
                     TB_MQTT_KEY_SW_TITLE,
@@ -781,7 +802,7 @@ void _tbcmh_otaupdate_on_disconnected(tbcmh_handle_t client)
 }
 
 //on received shared attributes of fw/sw: unpack & deal
-void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client,
+static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
                                          tbcmh_otaupdate_type_t ota_type,
                                          const char *ota_title,
                                          const char *ota_version, uint32_t ota_size,
@@ -853,6 +874,81 @@ void _tbcmh_otaupdate_on_sharedattributes(tbcmh_handle_t client,
         TBC_LOGE("ota_error (%s) of _otaupdate_do_negotiate()!", ota_error_);
         _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, ota_error_);
      }
+}
+
+// return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_update()
+// return 1 if calling tbcmh_sharedattribute_unregister()/tbcmh_attributes_unsubscribe inside on_update()
+// return 0 otherwise
+static int _otaupdate_on_fw_attributesupdate(tbcmh_handle_t client,
+                                      void *context, const cJSON *object)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
+
+     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_TITLE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_VERSION) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_SIZE) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM) &&
+         cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM_ALG))
+     {
+          char *ota_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_TITLE));
+          char *ota_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_VERSION));
+          int ota_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_SIZE));
+          char *ota_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM));
+          char *ota_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_FW_CHECKSUM_ALG));
+          __otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_FW,
+                    ota_title, ota_version, ota_size, ota_checksum, ota_checksum_algorithm);
+     }
+
+     return 0;
+}
+
+// return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_update()
+// return 1 if calling tbcmh_sharedattribute_unregister()/tbcmh_attributes_unsubscribe inside on_update()
+// return 0 otherwise
+static int _otaupdate_on_sw_attributesupdate(tbcmh_handle_t client,
+                                    void *context, const cJSON *object)
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
+
+    if (cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_TITLE) &&
+        cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_VERSION) &&
+        cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_SIZE) &&
+        cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM) &&
+        cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG))
+    {
+         char *sw_title = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_TITLE));
+         char *sw_version = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_VERSION));
+         int sw_size = cJSON_GetNumberValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_SIZE));
+         char *sw_checksum = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM));
+         char *sw_checksum_algorithm = cJSON_GetStringValue(cJSON_GetObjectItem(object, TB_MQTT_KEY_SW_CHECKSUM_ALG));
+         __otaupdate_on_sharedattributes(client, TBCMH_OTAUPDATE_TYPE_SW,
+                sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm);
+    }
+    return 0;
+}
+
+static void _otaupdate_on_fw_attributesrequest_response(tbcmh_handle_t client,
+                      void *context,
+                      const cJSON *client_attributes,
+                      const cJSON *shared_attributes)//, uint32_t request_id
+{
+    TBC_CHECK_PTR(client);
+    TBC_CHECK_PTR(shared_attributes);
+
+    _otaupdate_on_fw_attributesupdate(client, context, shared_attributes);
+}
+
+static void _otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t client,
+                      void *context,
+                      const cJSON *client_attributes,
+                      const cJSON *shared_attributes)//, uint32_t request_id
+{
+    TBC_CHECK_PTR(client);
+    TBC_CHECK_PTR(shared_attributes);
+
+    _otaupdate_on_sw_attributesupdate(client, context, shared_attributes);
 }
 
 //on response

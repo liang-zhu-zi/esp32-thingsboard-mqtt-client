@@ -132,6 +132,7 @@ bool tbcm_is_disconnected(tbcm_handle_t client);
 tbcm_state_t tbcm_get_state(tbcm_handle_t client);
 
 int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/);
+int tbcm_unsubscribe(tbcm_handle_t client, const char *topic);
 
 int tbcm_telemetry_publish(tbcm_handle_t client, const char *telemetry,
                            int qos /*= 1*/, int retain /*= 0*/);

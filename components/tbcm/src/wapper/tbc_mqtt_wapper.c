@@ -456,6 +456,29 @@ int tbcm_subscribe(tbcm_handle_t client, const char *topic, int qos /*=0*/)
 }
 
 /**
+ * @brief Unsubscribe the client from defined topic
+ *
+ * Notes:
+ * - Client must be connected to send unsubscribe message
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ *
+ * @param client    mqtt client handle
+ * @param topic
+ *
+ * @return message_id of the subscribe message on success
+ *         -1 on failure
+ */
+int tbcm_unsubscribe(tbcm_handle_t client, const char *topic)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, -1);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(topic, -1);
+
+     return esp_mqtt_client_unsubscribe(client->mqtt_handle, topic);
+}
+
+
+/**
  * @brief Client to send a publish message to the broker
  *
  * Notes:

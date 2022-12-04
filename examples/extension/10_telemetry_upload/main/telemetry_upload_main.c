@@ -18,7 +18,7 @@
 #include "esp_log.h"
 
 #include "tbc_mqtt_helper.h"
-#include "tbc_extension_telemetry.h"
+#include "tbc_extension.h"
 
 #include "protocol_examples_common.h"
 

@@ -16,7 +16,9 @@ set(srcs "src/transport/tbc_transport_config.c"
          "src/wapper/tbc_mqtt_payload_buffer.c"
          "src/helper/tbc_mqtt_helper.c"
          "src/helper/timeseries_data.c"
+         "src/helper/attributes_update.c"
          "src/helper/attributes_request.c"
+         "src/helper/attributes_subscribe.c"
          "src/helper/client_rpc.c"
          "src/helper/device_provision.c"
          "src/helper/ota_update.c"
@@ -24,8 +26,8 @@ set(srcs "src/transport/tbc_transport_config.c"
          "src/helper/server_rpc.c"
          "src/helper/claiming_device.c"
          "src/extension/tbc_extension_telemetry.c"
-         "src/extension/client_attribute.c"
-         "src/extension/shared_attribute.c")
+         "src/extension/tbc_extension_clientattributes.c"
+         "src/extension/tbc_extension_sharedattributes.c")
 
 #list(APPEND priv_requires "json")
 #list(APPEND requires "json")

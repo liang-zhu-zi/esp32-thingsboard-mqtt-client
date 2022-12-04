@@ -59,14 +59,14 @@ void tb_clientattribute_on_set_setpoint(void *context, const tbcmh_value_t *valu
 void tb_clientattribute_send(tbcmh_handle_t client)
 {
     ESP_LOGI(TAG, "Send client attributes: %s", CLIENTATTRIBUTE_SETPOINT);
-    tbcmh_clientattribute_update(client, 1, CLIENTATTRIBUTE_SETPOINT);
+    tbce_clientattributes_update(client, 1, CLIENTATTRIBUTE_SETPOINT);
 }
 
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called.
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 //      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
 //      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
-// return 1 if tbcmh_sharedattribute_unregister() is called.
+// return 1 if tbce_sharedattributes_unregister() is called.
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
@@ -202,7 +202,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbcmh_clientattribute_register_with_set(client, CLIENTATTRIBUTE_SETPOINT, NULL, 
+    err = tbce_clientattributes_register_with_set(client, CLIENTATTRIBUTE_SETPOINT, NULL, 
                             tb_clientattribute_on_get_setpoint, tb_clientattribute_on_set_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
@@ -210,7 +210,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    err = tbcmh_sharedattribute_register(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
+    err = tbce_sharedattributes_register(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
                             tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);

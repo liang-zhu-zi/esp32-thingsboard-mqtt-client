@@ -1,5 +1,9 @@
 # TODO List
 
+1. tbce_clientattributes_initialized().
+1. tbce_sharedattributes_initialized().
+1. only subscribe topic.
+
 1. Support multiple client-attributes to receive in a message;
 1. Support multiple shared-attributes to receive in a message, eg: SW/FW shared attributes.
 
@@ -24,3 +28,34 @@
 
 1. CoAP Transport.
 1. HTTP Transport.
+
+以下需要确认实现正确？
+------------------------------------------------------------------------
+// Default login data. 
+ constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision"); 
+ constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev"); 
+
+Provision 只有一个请求，不需要列表
+------------------------------------------------------------------------
+
+Telemetry 可以支持时间戳，数组等， 甚至datapoint的回调函数。但组织成列表，是否有必要？
+----------------------------------------------------------------------------
+
+Firmware 的begin/write/end/abort，移到最内部MQTT event task中，降低复杂度。
+但如果有Software升级时，这些操作不是确定的，该如何处理呢？
+写一些单独的类，专门实现Firmware OTA 或 Software OTA?
+----------------------------------------------------------------------------
+
+OTA update 最多也只有 Firmware OTA 和 Software OTA，也无需组成列表
+----------------------------------------------------------------------------
+
+是否 ThingsBoard MQTT API 的 QoS 只配置一次即可，不需要在每个 publish API 中出现？
+------------------------------------------------------------------------------------
+bool m_qos; // Wheter QoS level 1 should be enabled or disabled (Resends the packet until the message was received and a PUBACK packet was returned).
+
+// Enables mqtt quality of service for the given underlying MQTT connection. 
+ // See https://assetwolf.com/learn/mqtt-qos-understanding-quality-of-service for more information, on quality of service. 
+ inline void enableMQTTQoS(const bool& enableQoS) { 
+ m_qos = enableQoS; 
+ } 
+ 

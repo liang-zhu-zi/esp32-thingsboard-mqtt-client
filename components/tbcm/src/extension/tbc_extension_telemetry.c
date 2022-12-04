@@ -35,7 +35,7 @@ typedef struct timeseriesdata
      LIST_ENTRY(timeseriesdata) entry;
 } timeseriesdata_t;
 
-typedef LIST_HEAD(tbcmh_tsdata_list, timeseriesdata) timeseriesdata_list_t;
+typedef LIST_HEAD(tbce_tsdata_list, timeseriesdata) timeseriesdata_list_t;
 
 /**
  * Telemetry entity
@@ -79,7 +79,6 @@ static void _timeseriesdata_destroy(timeseriesdata_t *tsdata)
 }
 
 tbce_telemetry_handle_t tbce_telemetry_create(void)
-//void _tbcmh_timeseriesdata_on_create(tbcmh_handle_t client)
 {
     tbce_telemetry_t *telemetry = TBC_MALLOC(sizeof(tbce_telemetry_t));
     if (!telemetry) {
@@ -108,7 +107,6 @@ void tbce_telemetry_destroy(tbce_telemetry_handle_t telemetry)
     // list destroy
     memset(&telemetry->timeseriesdata_list, 0x00, sizeof(telemetry->timeseriesdata_list));
 }
-
 
 tbc_err_t tbce_telemetry_register(tbce_telemetry_handle_t telemetry,
                                           const char *key,
@@ -219,3 +217,4 @@ tbc_err_t tbce_telemetry_update(tbce_telemetry_handle_t telemetry,
 
      return (msg_id > -1) ? ESP_OK : ESP_FAIL;
 }
+

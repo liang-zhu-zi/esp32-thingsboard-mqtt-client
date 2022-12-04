@@ -76,39 +76,27 @@ typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
 typedef cJSON tbcmh_value_t;
 
 //====2.client-side attribute==========================================================================================
-// Get value of the device's client-side attribute
-// Don't call TBCMH API in these callback!
-// Caller (TBCMH library) of this callback will release memory of the return value
-typedef tbcmh_value_t* (*tbcmh_clientattribute_on_get_t)(void *context);
 
-// Set value of the device's client-side attribute. Only for initilizing client-side attribute
-// Don't call TBCMH API in these callback!
-// Caller (TBCMH library) of this callback will release memory of the `value` param
-typedef void (*tbcmh_clientattribute_on_set_t)(void *context, const tbcmh_value_t *value);
-
-//====3.shared attribute===============================================================================================
-// Set value of the device's shared-attribute
-// Caller (TBCMH library) of this callback will release memory of the `value` param
-// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
-//      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
-//      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
-// return 1 if tbcmh_sharedattribute_unregister() is called.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
-// return 0/ESP_OK on success
-// return -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client,
-                                void *context, const tbcmh_value_t *value);
+//====3.subscriebe shared attributes update ===============================================================================
+//on received: unpack & deal
+// return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_update()
+// return 1 if calling tbcmh_sharedattribute_unregister()/tbcmh_attributes_unsubscribe inside on_update()
+// return 0 otherwise
+typedef int (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
+                                         void *context, const cJSON *object);
 
 //====4.attributes request for client-side_attribute & sharedattribute================================================
 typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client,
-                                void *context); //, uint32_t request_id
+                                         void *context,
+                                         const cJSON *client_attributes,
+                                         const cJSON *shared_attributes); //, uint32_t request_id
+
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
 typedef int (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client,
-                                void *context); //, uint32_t request_id
+                                        void *context); //, uint32_t request_id
 
 //====5.Server-side RPC================================================================================================
 /**
@@ -246,40 +234,40 @@ int tbcmh_telemetry_publish_ex(tbcmh_handle_t client, tbcmh_value_t *object,
                               int qos/*= 1*/, int retain/*= 0*/);
 
 //====20.Publish client-side device attributes to the server============================================================
-// Call it before tbcmh_connect()
-tbc_err_t tbcmh_clientattribute_register(tbcmh_handle_t client,
-                                const char *key, void *context,
-                                tbcmh_clientattribute_on_get_t on_get);
-tbc_err_t tbcmh_clientattribute_register_with_set(tbcmh_handle_t client,
-                                const char *key, void *context,
-                                tbcmh_clientattribute_on_get_t on_get,
-                                tbcmh_clientattribute_on_set_t on_set);
-tbc_err_t tbcmh_clientattribute_unregister(tbcmh_handle_t client, const char *key);
-tbc_err_t tbcmh_clientattribute_update(tbcmh_handle_t client, int count, /*const char *key,*/...);
+int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
+                                 int qos /*= 1*/, int retain /*= 0*/);
+int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+                                    int qos/*= 1*/, int retain/*= 0*/);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-// Call it before tbcmh_connect()
-tbc_err_t tbcmh_sharedattribute_register(tbcmh_handle_t client,
-                                const char *key, void *context,
-                                tbcmh_sharedattribute_on_set_t on_set);
-// remove sharedattribute from tbcmh_shared_attribute_list_t
-tbc_err_t tbcmh_sharedattribute_unregister(tbcmh_handle_t client, const char *key);
+int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, /*const char *key,*/...);
+int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, const char *key[]);
+tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
+                                        int attributes_subscribe_id);
 
 //====22.Request client-side or shared device attributes from the server================================================
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
-                                void *context,
-                                tbcmh_attributesrequest_on_response_t on_response,
-                                tbcmh_attributesrequest_on_timeout_t on_timeout,
-                                int count, /*const char *key,*/...);
-
-// TODO: merge to tbcmh_attributesrequest_send()
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_attributesrequest_send_4_ota_sharedattributes(tbcmh_handle_t client,
-                                void *context,
-                                tbcmh_attributesrequest_on_response_t on_response,
-                                tbcmh_attributesrequest_on_timeout_t on_timeout,
-                                int count, /*const char *key,*/...);
+                                 void *context,
+                                 tbcmh_attributesrequest_on_response_t on_response,
+                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 const char *client_keys, const char *shared_keys);
+tbc_err_t tbcmh_attributesrequest_of_client_send(tbcmh_handle_t client,
+                                 void *context,
+                                 tbcmh_attributesrequest_on_response_t on_response,
+                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...);
+tbc_err_t tbcmh_attributesrequest_of_shared_send(tbcmh_handle_t client,
+                                 void *context,
+                                 tbcmh_attributesrequest_on_response_t on_response,
+                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...);
 
 //====30.Server-side RPC================================================================================================
 //Call it before tbcmh_connect()

@@ -83,8 +83,8 @@ tbcmh_handle_t tbcmh_init()
      
      // create all 7/9 list!
      //_tbcmh_timeseriesdata_on_create(client);
-     _tbcmh_clientattribute_on_create(client);
-     _tbcmh_sharedattribute_on_create(client);
+     //tbce_clientattributes_create(client);
+     _tbcmh_attributessubscribe_on_create(client);
      _tbcmh_attributesrequest_on_create(client);//req-resp
      _tbcmh_serverrpc_on_create(client);
      _tbcmh_clientrpc_on_create(client);        //req-resp
@@ -119,8 +119,8 @@ void tbcmh_destroy(tbcmh_handle_t client)
 
      // empty all 7/9 list!
      //_tbcmh_timeseriesdata_on_destroy(client);
-     _tbcmh_clientattribute_on_destroy(client);
-     _tbcmh_sharedattribute_on_destroy(client);
+     //tbce_clientattributes_destroy(client);
+     _tbcmh_attributessubscribe_on_destroy(client);
      _tbcmh_attributesrequest_on_destroy(client);
      _tbcmh_serverrpc_on_destroy(client);
      _tbcmh_clientrpc_on_destroy(client);
@@ -356,8 +356,8 @@ void tbcmh_disconnect(tbcmh_handle_t client)
 
      //_tbcmh_timeseriesdata_on_disconnected(client);
      _tbcmh_attributesrequest_on_disconnected(client); //empty all request
-     _tbcmh_clientattribute_on_disconnected(client); 
-     _tbcmh_sharedattribute_on_disconnected(client);
+     //_tbcmh_clientattribute_on_disconnected(client); 
+     _tbcmh_attributessubscribe_on_disconnected(client);
      _tbcmh_serverrpc_on_disconnected(client);
      _tbcmh_clientrpc_on_disconnected(client);         //empty all request
      _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
@@ -396,11 +396,11 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
     if (client->function & TBCMH_FUNCTION_ATTRIBUTES_REQUEST) {
         _tbcmh_attributesrequest_on_connected(client);
     }
-    if (client->function & TBCMH_FUNCTION_CLIENT_ATTRIBUTES) {
-        _tbcmh_clientattribute_on_connected(client);
-    }
+    //if (client->function & TBCMH_FUNCTION_CLIENT_ATTRIBUTES) {
+    //    _tbcmh_clientattribute_on_connected(client);
+    //}
     if (client->function & TBCMH_FUNCTION_SHARED_ATTRIBUTES) {
-        _tbcmh_sharedattribute_on_connected(client);
+        _tbcmh_attributessubscribe_on_connected(client);
     }
     if (client->function & TBCMH_FUNCTION_SERVER_RPC) {
         _tbcmh_serverrpc_on_connected(client);
@@ -449,8 +449,8 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
 
      //_tbcmh_timeseriesdata_on_disconnected(client);
      _tbcmh_attributesrequest_on_disconnected(client); //empty all request
-     _tbcmh_clientattribute_on_disconnected(client); 
-     _tbcmh_sharedattribute_on_disconnected(client);
+     //_tbcmh_clientattribute_on_disconnected(client); 
+     _tbcmh_attributessubscribe_on_disconnected(client);
      _tbcmh_serverrpc_on_disconnected(client);
      _tbcmh_clientrpc_on_disconnected(client);         //empty all request
      _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
@@ -493,7 +493,7 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
     
     case TBCM_RX_TOPIC_SHARED_ATTRIBUTES:    /*!<                       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_sharedattribute_on_data(client, object);
+         _tbcmh_attributessubscribe_on_data(client, object);
          cJSON_Delete(object);
          break;
     
