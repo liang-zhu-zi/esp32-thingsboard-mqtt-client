@@ -101,6 +101,8 @@ tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
           return ESP_FAIL;
      }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->serverrpc_list);
+
      // Insert serverrpc to list
      serverrpc_t *it, *last = NULL;
      if (LIST_FIRST(&client->serverrpc_list) == NULL) {
@@ -115,6 +117,14 @@ tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
                assert(last);
                LIST_INSERT_AFTER(last, serverrpc, entry);
           }
+     }
+
+     // Subscript topic <===  empty->non-empty
+     if (isEmptyBefore && !LIST_EMPTY(&client->serverrpc_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient,
+                        TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                        msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
      }
 
      // Give semaphore
@@ -135,6 +145,8 @@ tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method)
           return ESP_FAIL;
      }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->serverrpc_list);
+
      // Search item
      serverrpc_t *serverrpc = NULL, *next;
      LIST_FOREACH_SAFE(serverrpc, &client->serverrpc_list, entry, next) {
@@ -144,6 +156,14 @@ tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method)
              _serverrpc_destroy(serverrpc);
              break;
           }
+     }
+
+     // Unsubscript topic <===  non-empty->empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->serverrpc_list)) {
+         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
      }
 
      // Give semaphore
@@ -202,9 +222,11 @@ void _tbcmh_serverrpc_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
-    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-            msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+    if (!LIST_EMPTY(&client->attributesrequest_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);
+    }
 }
 
 void _tbcmh_serverrpc_on_disconnected(tbcmh_handle_t client)

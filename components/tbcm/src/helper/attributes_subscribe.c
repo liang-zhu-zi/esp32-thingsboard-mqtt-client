@@ -272,12 +272,7 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     }
     va_end(ap);
 
-    // Subscript topic <===  empty->non-empty
-    if (LIST_EMPTY(&client->attributessubscribe_list)) {
-        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-    }
+    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
 
     // Insert attributessubscribe to list
     attributessubscribe_t *it, *last = NULL;
@@ -293,6 +288,13 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
               assert(last);
               LIST_INSERT_AFTER(last, attributessubscribe, entry);
          }
+    }
+
+    // Subscript topic <===  empty->non-empty
+    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
     }
 
     // Give semaphore
@@ -329,12 +331,7 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
         _subscribekey_list_append(&attributessubscribe->key_list, key[i]);
     }
 
-    // Subscript topic <===  empty->non-empty
-    if (LIST_EMPTY(&client->attributessubscribe_list)) {
-        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-    }
+    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
 
     // Insert attributessubscribe to list
     attributessubscribe_t *it, *last = NULL;
@@ -350,6 +347,13 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
               assert(last);
               LIST_INSERT_AFTER(last, attributessubscribe, entry);
          }
+    }
+
+    // Subscript topic <===  empty->non-empty
+    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
     }
 
     // Give semaphore

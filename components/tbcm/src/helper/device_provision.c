@@ -185,12 +185,17 @@ static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
           return ESP_FAIL;
      }
 
+     // NOTE: It must subscribe response topic, then send request!
+     // Subscript topic <===  empty->non-empty
+     if (LIST_EMPTY(&client->deviceprovision_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
+     }
+
      // Send msg to server
      uint32_t request_id = _tbcmh_get_request_id(client);
-     // if (request_id <= 0) {
-     //      TBC_LOGE("failure to getting request id!");
-     //     return -1;
-     // }
      //cJSON *object = cJSON_CreateObject(); // create json object
      //cJSON_AddStringToObject(object, TB_MQTT_TEXT_PROVISION_METHOD, method);
      //if (params)
@@ -317,10 +322,6 @@ void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client)
 void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
-    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
 }
 
 void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
@@ -463,6 +464,8 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, 
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->deviceprovision_list);
+
      // Search provision
      deviceprovision_t *provision = NULL, *next;
      LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
@@ -470,6 +473,14 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, 
               LIST_REMOVE(provision, entry);
               break;
           }
+     }
+
+     // Unsubscript topic <===  non-empty->empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
+         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_PROVISION_RESPONSE);
+         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
      }
 
      // Give semaphore
@@ -505,6 +516,8 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->deviceprovision_list);
+
      // Search & move timeout item to timeout_list
      deviceprovision_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
      deviceprovision_t *request = NULL, *next;
@@ -525,6 +538,14 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
                     }
                }
           }
+     }
+
+     // Unsubscript topic <===  non-empty->empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
+         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_PROVISION_RESPONSE);
+         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_PROVISION_RESPONSE);
      }
 
      // Give semaphore

@@ -124,6 +124,15 @@ tbc_err_t tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *m
           return ESP_FAIL;
      }
 
+     // NOTE: It must subscribe response topic, then send request!
+     // Subscript topic <===  empty->non-empty
+     if (LIST_EMPTY(&client->clientrpc_list)) {
+         int msg_id = tbcm_subscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
+         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+     }
+
      // Send msg to server
      //cJSON *object = cJSON_CreateObject(); // create json object
      //cJSON_AddStringToObject(object, TB_MQTT_KEY_RPC_METHOD, method);
@@ -134,10 +143,6 @@ tbc_err_t tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client, const char *m
      //char *params_str = cJSON_PrintUnformatted(object); //cJSON_Print(object);
      // Send msg to server
      uint32_t request_id = _tbcmh_get_request_id(client);
-     // if (request_id <= 0) {
-     //     TBC_LOGE("failure to getting request id!");
-     //      return -1;
-     // }
      int msg_id;
      if (params) {
          char *params_str = cJSON_PrintUnformatted(params); //cJSON_Print(object);
@@ -227,10 +232,7 @@ void _tbcmh_clientrpc_on_destroy(tbcmh_handle_t client)
 void _tbcmh_clientrpc_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client)
-    int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
-    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-             msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+    //TBC_CHECK_PTR(client)
 }
 
 void _tbcmh_clientrpc_on_disconnected(tbcmh_handle_t client)
@@ -264,6 +266,8 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->clientrpc_list);
+    
      // Search clientrpc
      clientrpc_t *clientrpc = NULL;
      LIST_FOREACH(clientrpc, &client->clientrpc_list, entry) {
@@ -271,6 +275,14 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
               LIST_REMOVE(clientrpc, entry);
               break;
           }
+     }
+
+     // Subscript topic <===  empty->non-empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
+        int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+        TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
      }
 
      // Give semaphore
@@ -302,6 +314,8 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->clientrpc_list);
+
      // Search & move timeout item to timeout_list
      clientrpc_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
      clientrpc_t *request = NULL, *next;
@@ -322,6 +336,14 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
                     }
                }
           }
+     }
+
+     // Subscript topic <===  empty->non-empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
+        int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                            TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
+        TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
      }
 
      // Give semaphore

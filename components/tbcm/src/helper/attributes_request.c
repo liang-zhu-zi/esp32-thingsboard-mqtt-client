@@ -76,15 +76,19 @@ tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
           return ESP_FAIL;
      }
 
+     // NOTE: It must subscribe response topic, then send request!
+     // Subscript topic <===  empty->non-empty
+     if (LIST_EMPTY(&client->attributesrequest_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                 TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+     }
+
      // Send msg to server
      uint32_t request_id = _tbcmh_get_request_id(client);
-     // if (request_id <= 0) {
-     //      TBC_LOGE("failure to getting request id!");
-     //      return -1;
-     // }
      int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, shared_keys,
-                               request_id,
-                               1/*qos*/, 0/*retain*/);
+                               request_id, 1/*qos*/, 0/*retain*/);
      if (msg_id<0) {
           TBC_LOGE("Init tbcm_attributes_request failure! %s()", __FUNCTION__);
           goto attributesrequest_fail;
@@ -166,16 +170,20 @@ attributesrequest_fail:
          }
       }
       va_end(ap);
- 
+
+     // NOTE: It must subscribe response topic, then send request!
+     // Subscript topic <===  empty->non-empty
+     if (LIST_EMPTY(&client->attributesrequest_list)) {
+        int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                 TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+     }
+
       // Send msg to server
       uint32_t request_id = _tbcmh_get_request_id(client);
-      // if (request_id <= 0) {
-      //      TBC_LOGE("failure to getting request id!");
-      //      return -1;
-      // }
       int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, client_keys, NULL,
-                                request_id,
-                                1/*qos*/, 0/*retain*/);
+                                request_id, 1/*qos*/, 0/*retain*/);
       if (msg_id<0) {
            TBC_LOGE("Init tbcm_attributes_request failure! %s()", __FUNCTION__);
            goto attributesrequest_of_client_fail;
@@ -188,7 +196,7 @@ attributesrequest_fail:
            TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
            goto attributesrequest_of_client_fail;
       }
- 
+
       // Insert attributesrequest to list
       attributesrequest_t *it, *last = NULL;
       if (LIST_FIRST(&client->attributesrequest_list) == NULL) {
@@ -204,7 +212,7 @@ attributesrequest_fail:
                 LIST_INSERT_AFTER(last, attributesrequest, entry);
            }
       }
- 
+
       // Give semaphore
       xSemaphoreGive(client->_lock);
  
@@ -263,16 +271,20 @@ attributesrequest_fail:
          }
       }
       va_end(ap);
+      
+      // NOTE: It must subscribe response topic, then send request!
+      // Subscript topic <===  empty->non-empty
+      if (LIST_EMPTY(&client->attributesrequest_list)) {
+         int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                  TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
+         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                  msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+      }
  
       // Send msg to server
       uint32_t request_id = _tbcmh_get_request_id(client);
-      // if (request_id <= 0) {
-      //      TBC_LOGE("failure to getting request id!");
-      //      return -1;
-      // }
       int msg_id = tbcm_attributes_request_ex(client->tbmqttclient, NULL, shared_keys,
-                                request_id,
-                                1/*qos*/, 0/*retain*/);
+                                request_id, 1/*qos*/, 0/*retain*/);
       if (msg_id<0) {
            TBC_LOGE("Init tbcm_attributes_request failure! %s()", __FUNCTION__);
            goto attributesrequest_of_shared_fail;
@@ -285,7 +297,7 @@ attributesrequest_fail:
            TBC_LOGE("Init attributesrequest failure! %s()", __FUNCTION__);
            goto attributesrequest_of_shared_fail;
       }
- 
+
       // Insert attributesrequest to list
       attributesrequest_t *it, *last = NULL;
       if (LIST_FIRST(&client->attributesrequest_list) == NULL) {
@@ -301,7 +313,7 @@ attributesrequest_fail:
                 LIST_INSERT_AFTER(last, attributesrequest, entry);
            }
       }
- 
+
       // Give semaphore
       xSemaphoreGive(client->_lock);
  
@@ -355,10 +367,6 @@ void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
-    int msg_id = tbcm_subscribe(client->tbmqttclient,
-                                TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE, 0);
-    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
 }
 
 void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
@@ -392,6 +400,8 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->attributesrequest_list);
+
      // Search attributesrequest
      attributesrequest_t *attributesrequest = NULL, *next; 
      LIST_FOREACH_SAFE(attributesrequest, &client->attributesrequest_list, entry, next) {
@@ -399,6 +409,14 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
               LIST_REMOVE(attributesrequest, entry);
               break;
           }
+     }
+
+     // Unsubscript topic <===  non-empty->empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->attributesrequest_list)) {
+         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
      }
 
      // Give semaphore
@@ -436,6 +454,8 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
      //      return;
      // }
 
+     bool isEmptyBefore = LIST_EMPTY(&client->attributesrequest_list);
+
      // Search & move timeout item to timeout_list
      attributesrequest_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
      attributesrequest_t *request = NULL, *next;
@@ -458,6 +478,14 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
           }
      }
 
+     // Unsubscript topic <===  non-empty->empty
+     if (!isEmptyBefore && LIST_EMPTY(&client->attributesrequest_list)) {
+         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                 msg_id, TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE);
+     }
+
      // Give semaphore
      // xSemaphoreGive(client->_lock);
 
@@ -476,3 +504,4 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
           _attributesrequest_destroy(request);
      }
 }
+

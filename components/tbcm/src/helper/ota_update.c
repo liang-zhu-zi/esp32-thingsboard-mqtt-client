@@ -494,11 +494,15 @@ static void _otaupdate_reset(otaupdate_t *otaupdate)
 
 static void _otaupdate_do_updated(otaupdate_t *otaupdate, bool success)
 {
-    if (!otaupdate) {
-        TBC_LOGE("otaupdate is NULL");
-        return;
-    }
     TBC_CHECK_PTR(otaupdate);
+
+    // TODO: sw & fw are upgrading at same time!
+    // Unsubscript topic <===  non-empty->empty
+    int msg_id = tbcm_unsubscribe(otaupdate->client->tbmqttclient,
+                            TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+    TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                            msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+
     TBC_CHECK_PTR(otaupdate->config.on_ota_updated);
     otaupdate->config.on_ota_updated(otaupdate->config.context_user, success);
 }
@@ -722,10 +726,6 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
-    int msg_id = tbcm_subscribe(client->tbmqttclient,
-                                TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
-    TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-             msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
 
     // Search item
     otaupdate_t *otaupdate = NULL;
@@ -850,6 +850,15 @@ static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
      int result = _otaupdate_do_negotiate(otaupdate, ota_title, ota_version, ota_size,
                         ota_checksum, ota_checksum_algorithm, ota_error, sizeof(ota_error)-1);
      if (result == 1) { //negotiate successful(next to F/W OTA)
+        // TODO: sw & fw are upgrading at same time!
+        // NOTE: It must subscribe response topic, then send request!
+        // Subscript topic <===  empty->non-empty
+        int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                                msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+
+        // chunk_request
         _otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);
         result = _otaupdate_chunk_request(otaupdate, true);
         if (result != 0) { //failure to request chunk
