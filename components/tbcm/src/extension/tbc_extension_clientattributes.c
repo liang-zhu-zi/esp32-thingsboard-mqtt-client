@@ -48,6 +48,8 @@ typedef struct tbce_clientattributes
      clientattribute_list_t clientattribute_list; /*!< client-attribute list */
 } tbce_clientattributes_t;
 
+#define MAX_KEYS_LEN (256)
+
 const static char *TAG = "clientattribute";
 
 static clientattribute_t *_clientattribute_create(
@@ -207,9 +209,14 @@ bool tbce_clientattributes_is_contained(tbce_clientattributes_handle_t clientatt
 
 //Initialize client-side attributes from the server
 //on received init value in attributes response: unpack & deal
-/*static*/ void _tbce_clientattributes_on_initialized(tbce_clientattributes_handle_t clientattributes, const cJSON *object)
+static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
+                                         void *context,
+                                         const cJSON *client_attributes,
+                                         const cJSON *shared_attributes)
 {
      // TODO:............................
+     tbce_clientattributes_handle_t clientattributes = (tbce_clientattributes_handle_t)context;
+     const cJSON *object = client_attributes;
      TBC_CHECK_PTR(clientattributes);
      TBC_CHECK_PTR(object);
 
@@ -232,35 +239,48 @@ bool tbce_clientattributes_is_contained(tbce_clientattributes_handle_t clientatt
 
 //Initialize client-side attributes from the server
 //on received init value in attributes response: unpack & deal
-void tbce_clientattributes_initialized(tbce_clientattributes_handle_t clientattributes,
+tbc_err_t tbce_clientattributes_initialized(
+                        tbce_clientattributes_handle_t clientattributes,
+                        tbcmh_handle_t client,
                         uint32_t max_attributes_per_request)
 {
-     // TODO:............................
-     TBC_CHECK_PTR(clientattributes);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(clientattributes, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
-     /*
-     // foreach item to set value of clientattribute in lock/unlodk. 
-     // Don't call tbcmh's funciton in set value callback!
-     clientattribute_t *clientattribute = NULL, *next;
-     const char* key = NULL;
-     LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
-          if (clientattribute) {
-               key = clientattribute->key;
-               if (cJSON_HasObjectItem(object, key)) {
-                    cJSON *value = cJSON_GetObjectItem(object, key);
-                    if (clientattribute->on_set && value) {
-                         clientattribute->on_set(clientattribute->context, value);
-                    }
-            }
+    char *client_keys = TBC_MALLOC(MAX_KEYS_LEN);
+    if (!client_keys) {
+        return ESP_FAIL;
+    }
+    memset(client_keys, 0x00, MAX_KEYS_LEN);
+
+    // Get client_keys from clientattributes
+    int i = 0;
+    clientattribute_t *clientattribute = NULL, *next;
+    LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
+        if (clientattribute && clientattribute->key) {
+             // copy key to client_keys
+             if (strlen(client_keys)==0) {
+                  strncpy(client_keys, clientattribute->key, MAX_KEYS_LEN-1);
+             } else {
+                  strncat(client_keys, ",", MAX_KEYS_LEN-1);                         
+                  strncat(client_keys, clientattribute->key, MAX_KEYS_LEN-1);
+             }
+
+             i++;
+             if (i>=max_attributes_per_request) {
+                 tbcmh_attributesrequest_send(client,
+                      clientattributes/*context*/,
+                      _tbce_clientattributes_on_initialized/*on_response*/,
+                      NULL/*on_timeout*/,
+                      client_keys, NULL);
+                 i = 0;
+                 memset(client_keys, 0x00, MAX_KEYS_LEN);
+             }
         }
     }
-    */
 
-    /*
-    if (client_attributes) {
-         tbce_clientattributes_initialized(client, client_attributes); // TODO: replace it!!!
-    }
-    */
+    TBC_FREE(client_keys);
+    return ESP_OK;
 }
 
 tbc_err_t tbce_clientattributes_update(tbce_clientattributes_handle_t clientattributes,

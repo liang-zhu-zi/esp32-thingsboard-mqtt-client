@@ -46,12 +46,14 @@ tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedat
                                 tbce_sharedattribute_on_set_t on_set);
 tbc_err_t tbce_sharedattributes_unregister(tbce_sharedattributes_handle_t sharedattriburtes,
                                 const char *key);
-void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattriburtes,
-                                tbcmh_handle_t client, uint32_t max_attributes_per_subscribe);
-void tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattriburtes);
 
-void tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
-                                                  uint32_t max_attributes_per_request);
+void      tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattriburtes,
+                                tbcmh_handle_t client, uint32_t max_attributes_per_subscribe);
+void      tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattriburtes);
+
+tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
+                                tbcmh_handle_t client,
+                                uint32_t max_attributes_per_request);
 
 #ifdef __cplusplus
 }

@@ -51,6 +51,8 @@ typedef struct tbce_sharedattributes
      sharedattribute_list_t sharedattribute_list; /*!< shared-attribute list */
 } tbce_sharedattributes_t;
 
+#define MAX_KEYS_LEN (256)
+
 static int _tbce_sharedattributes_on_update(tbcmh_handle_t client, void *context, const cJSON *object);
 
 const static char *TAG = "sharedattributes";
@@ -309,40 +311,57 @@ static int _tbce_sharedattributes_on_update(tbcmh_handle_t client, void *context
      return result;
 }
 
+static void _tbce_sharedattributes_on_initialized(tbcmh_handle_t client,
+                                         void *context,
+                                         const cJSON *client_attributes,
+                                         const cJSON *shared_attributes)
+{
+    _tbce_sharedattributes_on_update(client, context, shared_attributes);
+}
+
 //Initialize shared-side attributes from the server
 //on received init value in attributes response: unpack & deal
-void tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
+tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
+                                                  tbcmh_handle_t client,
                                                   uint32_t max_attributes_per_request)
 {
-     // TODO:............................
-     TBC_CHECK_PTR(sharedattriburtes);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattriburtes, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
-     /*
-     // foreach item to set value of clientattribute in lock/unlodk. 
-     // Don't call tbcmh's funciton in set value callback!
-     clientattribute_t *clientattribute = NULL, *next;
-     const char* key = NULL;
-     LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
-          if (clientattribute) {
-               key = clientattribute->key;
-               if (cJSON_HasObjectItem(object, key)) {
-                    cJSON *value = cJSON_GetObjectItem(object, key);
-                    if (clientattribute->on_set && value) {
-                         clientattribute->on_set(clientattribute->context, value);
-                    }
-            }
+    char *shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
+    if (!shared_keys) {
+        return ESP_FAIL;
+    }
+    memset(shared_keys, 0x00, MAX_KEYS_LEN);
+
+    // Get shared_keys from sharedattribute
+    int i = 0;
+    sharedattribute_t *sharedattribute = NULL, *next;
+    LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next) {
+        if (sharedattribute && sharedattribute->key) {
+             // copy key to shared_keys
+             if (strlen(shared_keys)==0) {
+                  strncpy(shared_keys, sharedattribute->key, MAX_KEYS_LEN-1);
+             } else {
+                  strncat(shared_keys, ",", MAX_KEYS_LEN-1);                         
+                  strncat(shared_keys, sharedattribute->key, MAX_KEYS_LEN-1);
+             }
+
+             i++;
+             if (i>=max_attributes_per_request) {
+                 tbcmh_attributesrequest_send(client,
+                              sharedattriburtes/*context*/,
+                              _tbce_sharedattributes_on_initialized/*on_response*/,
+                              NULL/*on_timeout*/,
+                              NULL/*client_keys*/, shared_keys);
+                 memset(shared_keys, 0x00, MAX_KEYS_LEN);
+                 i=0;
+             }
         }
     }
-    */
-
-    /*
-    if (shared_attributes) {
-        // return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside _tbcmh_attributessubscribe_on_data() --> on_set()
-        // return 1 if calling tbce_sharedattributes_unregister() inside _tbcmh_attributessubscribe_on_data() --> on_set()
-        // return 0 otherwise
-        result = _tbcmh_attributessubscribe_on_data(client, shared_attributes); // TODO: replace it!!!
-    }
-    */
+ 
+    TBC_FREE(shared_keys);
+    return ESP_OK;
 }
 
 #if 0

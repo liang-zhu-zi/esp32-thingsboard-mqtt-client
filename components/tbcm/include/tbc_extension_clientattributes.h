@@ -49,9 +49,12 @@ tbc_err_t tbce_clientattributes_register_with_set(tbce_clientattributes_handle_t
                                 tbce_clientattributes_on_get_t on_get,
                                 tbce_clientattributes_on_set_t on_set);
 tbc_err_t tbce_clientattributes_unregister(tbce_clientattributes_handle_t clientattributes, const char *key);
+
 bool      tbce_clientattributes_is_contained(tbce_clientattributes_handle_t clientattributes,
                                         const char *key);
-void      tbce_clientattributes_initialized(tbce_clientattributes_handle_t clientattributes,
+tbc_err_t tbce_clientattributes_initialized(
+                                        tbce_clientattributes_handle_t clientattributes,
+                                        tbcmh_handle_t client,
                                         uint32_t max_attributes_per_request);
 tbc_err_t tbce_clientattributes_update(tbce_clientattributes_handle_t clientattributes,
                                         tbcmh_handle_t client, int count, /*const char *key,*/...);
