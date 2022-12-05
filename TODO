@@ -2,7 +2,7 @@
 
 ----1. tbce_clientattributes_initialized().
 ----1. tbce_sharedattributes_initialized().
-----1. only subscribe topic if used.   
+----1. Subscribe to mqtt topic only when needed.   
 1. subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
 1. add some examples for new features.
 
