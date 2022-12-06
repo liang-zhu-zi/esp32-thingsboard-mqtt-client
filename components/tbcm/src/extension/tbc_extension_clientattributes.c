@@ -119,7 +119,7 @@ static tbc_err_t _clientattribute_register(tbce_clientattributes_handle_t client
      return ESP_OK;
 }
 
-tbce_clientattributes_handle_t tbce_telemetry_create(void)
+tbce_clientattributes_handle_t tbce_clientattributes_create(void)
 {
     tbce_clientattributes_t *clientattributes = TBC_MALLOC(sizeof(tbce_clientattributes_t));
     if (!clientattributes) {

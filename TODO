@@ -60,10 +60,10 @@ bool m_qos; // Wheter QoS level 1 should be enabled or disabled (Resends the pac
  m_qos = enableQoS;
  }
 
-An ESP-IDF library for connecting to the ThingsBoard IoT platform.  Based on ESP-MQTT library.
+An ESP32 library for connecting to the ThingsBoard IoT platform. Based on ESP-IDF.
 ------------------------------------
 sentence=ThingsBoard library for Arduino.
-paragraph=A library for connecting to the ThingsBoard IoT platform. Thin wrapper on PubSubClient.
+paragraph=A library for connecting to the ThingsBoard IoT platform. Thin wrapper on ESP-MQTT.
 
 ThingsBoard.h - Library API for sending data to the ThingsBoard
  Based on PubSub MQTT library.
