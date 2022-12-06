@@ -396,10 +396,10 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
     if (client->function & TBCMH_FUNCTION_ATTRIBUTES_REQUEST) {
         _tbcmh_attributesrequest_on_connected(client);
     }
-    //if (client->function & TBCMH_FUNCTION_CLIENT_ATTRIBUTES) {
+    //if (client->function & TBCMH_FUNCTION_ATTRIBUTES_UPDATE) {
     //    _tbcmh_clientattribute_on_connected(client);
     //}
-    if (client->function & TBCMH_FUNCTION_SHARED_ATTRIBUTES) {
+    if (client->function & TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE) {
         _tbcmh_attributessubscribe_on_connected(client);
     }
     if (client->function & TBCMH_FUNCTION_SERVER_RPC) {

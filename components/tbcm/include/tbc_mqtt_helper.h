@@ -32,8 +32,8 @@ extern "C" {
 //====0.tbcm client====================================================================================================
 #define TBCMH_FUNCTION_TIMESERIES_DATA      0x00000001
 #define TBCMH_FUNCTION_ATTRIBUTES_REQUEST   0x00000002
-#define TBCMH_FUNCTION_CLIENT_ATTRIBUTES    0x00000004
-#define TBCMH_FUNCTION_SHARED_ATTRIBUTES    0x00000008
+#define TBCMH_FUNCTION_ATTRIBUTES_UPDATE    0x00000004
+#define TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE 0x00000008
 #define TBCMH_FUNCTION_SERVER_RPC           0x00000010
 #define TBCMH_FUNCTION_CLIENT_RPC           0x00000020
 #define TBCMH_FUNCTION_CLAIMING_DEVICE      0x00000040
@@ -42,18 +42,18 @@ extern "C" {
 #define TBCMH_FUNCTION_DEVICE_PROVISION     0x00001000
 
 #define TBCMH_FUNCTION_FULL_ATTRIBUTES      (TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_CLIENT_ATTRIBUTES  | \
-                                             TBCMH_FUNCTION_SHARED_ATTRIBUTES) //0x0000000E
+                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE) //0x0000000E
 
 #define TBCMH_FUNCTION_FULL_OTA_UPDATE      (TBCMH_FUNCTION_TIMESERIES_DATA    | \
                                              TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_SHARED_ATTRIBUTES  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
                                              TBCMH_FUNCTION_OTA_UPDATE)        //0x0000008B
 
 #define TBCMH_FUNCTION_FULL_GENERAL         (TBCMH_FUNCTION_TIMESERIES_DATA    | \
                                              TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_CLIENT_ATTRIBUTES  | \
-                                             TBCMH_FUNCTION_SHARED_ATTRIBUTES  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
                                              TBCMH_FUNCTION_SERVER_RPC         | \
                                              TBCMH_FUNCTION_CLIENT_RPC         | \
                                              TBCMH_FUNCTION_CLAIMING_DEVICE    | \
