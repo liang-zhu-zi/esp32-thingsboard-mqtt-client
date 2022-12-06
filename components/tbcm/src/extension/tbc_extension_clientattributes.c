@@ -209,12 +209,12 @@ bool tbce_clientattributes_is_contained(tbce_clientattributes_handle_t clientatt
 
 //Initialize client-side attributes from the server
 //on received init value in attributes response: unpack & deal
+//Note: Only client attributes that have an on_set() callback function will be initialized.
 static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
                                          void *context,
                                          const cJSON *client_attributes,
                                          const cJSON *shared_attributes)
 {
-     // TODO:............................
      tbce_clientattributes_handle_t clientattributes = (tbce_clientattributes_handle_t)context;
      const cJSON *object = client_attributes;
      TBC_CHECK_PTR(clientattributes);
@@ -223,17 +223,13 @@ static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
      // foreach item to set value of clientattribute in lock/unlodk. 
      // Don't call tbcmh's funciton in set value callback!
      clientattribute_t *clientattribute = NULL, *next;
-     const char* key = NULL;
      LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
-          if (clientattribute) {
-               key = clientattribute->key;
-               if (cJSON_HasObjectItem(object, key)) {
-                    cJSON *value = cJSON_GetObjectItem(object, key);
-                    if (clientattribute->on_set && value) {
-                         clientattribute->on_set(clientattribute->context, value);
-                    }
-            }
-        }
+          if (clientattribute && clientattribute->key && clientattribute->on_set) {
+               cJSON *value = cJSON_GetObjectItem(object, clientattribute->key)
+               if (value) {
+                    clientattribute->on_set(clientattribute->context, value);
+               }
+          }
     }
 }
 
@@ -257,7 +253,7 @@ tbc_err_t tbce_clientattributes_initialized(
     int i = 0;
     clientattribute_t *clientattribute = NULL, *next;
     LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
-        if (clientattribute && clientattribute->key) {
+        if (clientattribute && clientattribute->key && clientattribute->on_set) {
              // copy key to client_keys
              if (strlen(client_keys)==0) {
                   strncpy(client_keys, clientattribute->key, MAX_KEYS_LEN-1);
