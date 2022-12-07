@@ -172,7 +172,7 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append F/W OTA Update...");
-    tbc_err_t err = tbcmh_otaupdate_register(client,
+    tbc_err_t err = tbcmh_otaupdate_subscribe(client,
                                             FW_DESCRIPTION,
                                             TBCMH_OTAUPDATE_TYPE_FW,
                                             NULL,
@@ -258,7 +258,7 @@ void app_main(void)
     esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
+    esp_log_level_set("telemetry_upload", ESP_LOG_VERBOSE);
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();

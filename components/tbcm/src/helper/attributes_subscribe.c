@@ -236,10 +236,10 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
  * @param topic
  * @param qos
  *
- * @return attributes_subscribe_id on success
- *         -1 on failure
+ * @return 0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
  */
-int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
                                         int count, /*const char *key,*/...)
@@ -302,7 +302,11 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     return ESP_OK;
 }
 
-int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+/*
+ * @return 0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
                                         int count, const char *key[])

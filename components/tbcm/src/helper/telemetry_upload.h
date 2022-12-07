@@ -14,8 +14,8 @@
 
 // This file is called by tbc_mqtt_helper.c/.h.
 
-#ifndef _TIMESERIES_DATA_HELPER_H_
-#define _TIMESERIES_DATA_HELPER_H_
+#ifndef _TELEMETRY_UPLOAD_H_
+#define _TELEMETRY_UPLOAD_H_
 
 //#include "tbc_utils.h"
 //#include "tbc_mqtt_helper.h"

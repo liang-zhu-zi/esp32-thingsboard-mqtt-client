@@ -14,8 +14,8 @@
 
 // This file is called by user.
 
-#ifndef _TBC_EXTENSION_TELEMETRY_H_
-#define _TBC_EXTENSION_TELEMETRY_H_
+#ifndef _TBC_EXTENSION_TIMESERIESDATA_H_
+#define _TBC_EXTENSION_TIMESERIESDATA_H_
 
 #include "tbc_utils.h"
 #include "tbc_mqtt_helper.h"
@@ -27,22 +27,22 @@ extern "C" {
 // Get value of telemetry time-series data
 // Don't call TBCMH API in this callback!
 // Caller (TBCE library) of this callback will release memory of the return value
-typedef tbcmh_value_t* (*tbce_telemetry_on_get_t)(void *context);
+typedef tbcmh_value_t* (*tbce_timeseriesdata_on_get_t)(void *context);
 
-typedef struct tbce_telemetry* tbce_telemetry_handle_t;
+typedef struct tbce_timeseriesdata* tbce_timeseriesdata_handle_t;
 
-tbce_telemetry_handle_t tbce_telemetry_create(void);
-void                    tbce_telemetry_destroy(tbce_telemetry_handle_t telemetry);
+tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
+void                         tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t telemetry);
 
-tbc_err_t tbce_telemetry_register(tbce_telemetry_handle_t telemetry,
+tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t telemetry,
                                         const char *key,
                                         void *context,
-                                        tbce_telemetry_on_get_t on_get);
-tbc_err_t tbce_telemetry_unregister(tbce_telemetry_handle_t telemetry,
-                                         const char *key);
-tbc_err_t tbce_telemetry_update(tbce_telemetry_handle_t telemetry,
-                                      tbcmh_handle_t client,
-                                      int count, /*const char *key,*/...);
+                                        tbce_timeseriesdata_on_get_t on_get);
+tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t telemetry,
+                                        const char *key);
+tbc_err_t tbce_timeseriesdata_upload(tbce_timeseriesdata_handle_t telemetry,
+                                        tbcmh_handle_t client,
+                                        int count, /*const char *key,*/...);
 
 #ifdef __cplusplus
 }

@@ -71,7 +71,7 @@ void tb_clientrpc_publish_local_time_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "localTime", _get_timestamp());
     // free params by caller/(user code)!
-    tbc_err_t result = tbcmh_clientrpc_of_oneway_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
+    tbc_err_t result = tbcmh_oneway_clientrpc_request(client, CLIENT_RPC_PUBLISH_LOCAL_TIME, params);
     ESP_LOGI(TAG, "Send Client-side RPC: result=%d", result);
     cJSON_Delete(params);
 }
@@ -110,7 +110,7 @@ void tb_clientrpc_get_current_time_send(tbcmh_handle_t client)
 
     //cJSON *params = cJSON_CreateObject();
     // free params by caller/(user code)!
-    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
+    tbc_err_t result = tbcmh_twoway_clientrpc_request(client, CLIENT_RPC_GET_CURRENT_TIME, NULL, //params,
                                                  NULL,
                                                  tb_clientrpc_get_current_time_on_response,
                                                  tb_clientrpc_get_current_time_on_timeout);
@@ -139,7 +139,7 @@ void tb_clientrpc_loopback_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_LOOPBACK, params,
+    tbc_err_t result = tbcmh_twoway_clientrpc_request(client, CLIENT_RPC_LOOPBACK, params,
                                                  NULL,
                                                  tb_clientrpc_loopback_on_response,
                                                  tb_clientrpc_loopback_on_timeout);
@@ -168,7 +168,7 @@ void tb_clientrpc_not_implemented_twoway_send(tbcmh_handle_t client)
     cJSON *params = cJSON_CreateObject();
     cJSON_AddNumberToObject(params, "id", i++);
     // free params by caller/(user code)!
-    tbc_err_t result = tbcmh_clientrpc_of_twoway_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
+    tbc_err_t result = tbcmh_twoway_clientrpc_request(client, CLIENT_RPC_NOT_IMPLEMENTED_TWOWAY, params,
                                                  NULL,
                                                  tb_clientrpc_not_implemented_twoway_on_response,
                                                  tb_clientrpc_not_implemented_twoway_on_timeout);
@@ -331,7 +331,7 @@ void app_main(void)
     esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
+    esp_log_level_set("telemetry_upload", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());

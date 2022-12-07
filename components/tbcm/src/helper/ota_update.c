@@ -175,7 +175,7 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
 // void *context;
 // tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
 // tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
-tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, 
+tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
                 const char *ota_description,  // TODO: remove it!
                 tbcmh_otaupdate_type_t ota_type,
                 void *context_user,
@@ -229,7 +229,7 @@ tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client,
      return ESP_OK;
 }
 
-tbc_err_t tbcmh_otaupdate_unregister(tbcmh_handle_t client, const char *ota_description)
+tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
@@ -746,7 +746,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
                     TB_MQTT_KEY_FW_CHECKSUM,
                     TB_MQTT_KEY_FW_CHECKSUM_ALG);
              // send f/w info attributes request
-             tbcmh_attributesrequest_of_shared_send(client,
+             tbcmh_sharedattributes_request(client,
                     otaupdate/*context*/,
                     _otaupdate_on_fw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,
@@ -777,7 +777,7 @@ void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
                     TB_MQTT_KEY_SW_CHECKSUM,
                     TB_MQTT_KEY_SW_CHECKSUM_ALG);
              // send s/w info attributes request
-             tbcmh_attributesrequest_of_shared_send(client,
+             tbcmh_sharedattributes_request(client,
                     otaupdate/*context*/,
                     _otaupdate_on_sw_attributesrequest_response/*on_response*/,
                     NULL/*on_timeout*/,
@@ -890,7 +890,8 @@ static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
 // return 0 otherwise
 static int _otaupdate_on_fw_attributesupdate(tbcmh_handle_t client,
                                       void *context, const cJSON *object)
-{
+{
+
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
 
@@ -917,7 +918,8 @@ static int _otaupdate_on_fw_attributesupdate(tbcmh_handle_t client,
 // return 0 otherwise
 static int _otaupdate_on_sw_attributesupdate(tbcmh_handle_t client,
                                     void *context, const cJSON *object)
-{
+{
+
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
 

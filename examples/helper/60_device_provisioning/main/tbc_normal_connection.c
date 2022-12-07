@@ -28,18 +28,6 @@
 #include "tbc_mqtt_protocol.h"
 #include "tbc_mqtt_helper.h"
 
-//#include "tbc_utils.h"
-//#include "timeseriesdata.h"
-//#include "clientattribute.h"
-//#include "sharedattribute.h"
-//#include "attributesrequest.h"
-//#include "serverrpc.h"
-//#include "clientrpc.h"
-//#include "deviceprovision.h"
-//#include "otaupdate.h"
-
-//#include "deviceprovision.h"
-
 static const char *TAG = "NORMAL-CONN";
 
 /*!< Callback of connected ThingsBoard MQTT */

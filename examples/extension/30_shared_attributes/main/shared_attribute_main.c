@@ -202,7 +202,7 @@ void app_main(void)
     esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
+    esp_log_level_set("telemetry_upload", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());

@@ -34,18 +34,6 @@
 
 #include "tbc_transport_credentials_memory.h"
 
-//#include "tbc_utils.h"
-//#include "timeseriesdata.h"
-//#include "clientattribute.h"
-//#include "sharedattribute.h"
-//#include "attributesrequest.h"
-//#include "serverrpc.h"
-//#include "clientrpc.h"
-//#include "deviceprovision.h"
-//#include "otaupdate.h"
-
-//#include "deviceprovision.h"
-
 /**
  * Reference tbc_provison_config_t
  *

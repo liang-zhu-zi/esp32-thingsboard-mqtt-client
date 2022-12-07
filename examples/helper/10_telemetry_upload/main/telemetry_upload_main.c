@@ -63,7 +63,7 @@ void tb_telemetry_send(tbcmh_handle_t client)
     cJSON *object = cJSON_CreateObject(); // create json object
     cJSON_AddItemToObject(object, TELEMETYR_TEMPRATUE, tb_telemetry_on_get_temperature(NULL));
     cJSON_AddItemToObject(object, TELEMETYR_HUMIDITY, tb_telemetry_on_get_humidity(NULL));
-    tbcmh_telemetry_publish_ex(client, object, 1/*qos*/, 0/*retain*/);
+    tbcmh_telemetry_upload_ex(client, object, 1/*qos*/, 0/*retain*/);
     cJSON_Delete(object); // delete json object
 }
 
@@ -219,7 +219,7 @@ void app_main(void)
     esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
+    esp_log_level_set("telemetry_upload", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());

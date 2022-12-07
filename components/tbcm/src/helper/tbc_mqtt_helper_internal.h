@@ -28,7 +28,7 @@
 #include "tbc_mqtt_wapper.h"
 // #include "tbc_mqtt_helper.h"
 
-#include "timeseries_data.h"
+#include "telemetry_upload.h"
 //#include "client_attribute.h"
 //#include "shared_attribute.h"
 #include "attributes_update.h"
@@ -64,7 +64,7 @@ typedef struct tbcmh_client
 
      // tx & rx msg
      SemaphoreHandle_t _lock;
-     // timeseriesdata_list_t   timeseriesdata_list;      /*!< telemetry time-series data entries */
+     // timeseriesaxis_list_t   timeseriesdata_list;      /*!< telemetry time-series data entries */
      // clientattribute_list_t  clientattribute_list;     /*!< client attributes entries */
      attributessubscribe_list_t attributessubscribe_list; /*!< attributes subscreibe entries */
      attributesrequest_list_t   attributesrequest_list;   /*!< attributes request entries */
@@ -74,7 +74,7 @@ typedef struct tbcmh_client
      deviceprovision_list_t deviceprovision_list;     /*!< device provision entries */
 
      //SemaphoreHandle_t lock;
-     uint32_t next_request_id;
+     uint16_t next_request_id;
      uint64_t last_check_timestamp;
 } tbcmh_t;
 

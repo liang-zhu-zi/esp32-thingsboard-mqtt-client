@@ -40,7 +40,7 @@ static const char *TAG = "TELEMETRY_UPLOAD";
  *         0 if cannot publish
  *        -1/ESP_FAIL if error
  */
-int tbcmh_telemetry_publish(tbcmh_handle_t client, const char *telemetry,
+int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
                             int qos/*= 1*/, int retain/*= 0*/)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -76,14 +76,14 @@ int tbcmh_telemetry_publish(tbcmh_handle_t client, const char *telemetry,
  *         0 if cannot publish
  *        -1/ESP_FAIL if error
  */
-int tbcmh_telemetry_publish_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, tbcmh_value_t *object,
                               int qos/*= 1*/, int retain/*= 0*/)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, ESP_FAIL);
 
     char *pack = cJSON_PrintUnformatted(object); //cJSON_Print()
-    int msg_id = tbcmh_telemetry_publish(client, pack, qos, retain);
+    int msg_id = tbcmh_telemetry_upload(client, pack, qos, retain);
     cJSON_free(pack); // free memory
     return msg_id;
 }

@@ -164,14 +164,14 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append server RPC: rpcChangeSetpoint...");
-    err = tbcmh_serverrpc_register(client, SERVER_RPC_CHANGE_SETPOINT, NULL,
+    err = tbcmh_serverrpc_subscribe(client, SERVER_RPC_CHANGE_SETPOINT, NULL,
                                  tb_serverrpc_on_request_change_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append server RPC: %s!", SERVER_RPC_CHANGE_SETPOINT);
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append server RPC: rpcQuerySetpoint...");
-    err = tbcmh_serverrpc_register(client, SERVER_RPC_QUERY_SETPOINT, NULL,
+    err = tbcmh_serverrpc_subscribe(client, SERVER_RPC_QUERY_SETPOINT, NULL,
                                  tb_serverrpc_on_request_query_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append server RPC: %s!", SERVER_RPC_QUERY_SETPOINT);
@@ -238,7 +238,7 @@ void app_main(void)
     esp_log_level_set("otaupdate", ESP_LOG_VERBOSE);
     esp_log_level_set("serverrpc", ESP_LOG_VERBOSE);
     esp_log_level_set("sharedattribute", ESP_LOG_VERBOSE);
-    esp_log_level_set("timeseriesdata", ESP_LOG_VERBOSE);
+    esp_log_level_set("telemetry_upload", ESP_LOG_VERBOSE);
 
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());

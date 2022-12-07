@@ -1,41 +1,31 @@
 # TODO List
 
-----1. tbce_clientattributes_initialized().
-----1. tbce_sharedattributes_initialized().
-----1. Subscribe to mqtt topic only when needed.   
-1. subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
-1. add some examples for new features.
+1. Add some examples for new features.
+1. A new examples of all in one.
+1. Append some testing case.
 
-1. Support multiple client-attributes to receive in a message;
-1. Support multiple shared-attributes to receive in a message, eg: SW/FW shared attributes.
-
-1. lock dead? protected data? in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
+1. append some description for new api.
 
 1. S/W OTA update `testing`.
 1. Device claiming `testing`.
 1. security option `testing`.
 1. Device provisioning `testing`.
 
-1. A new examples of all in one.
-
-1. Append some testing case.
-
 1. docs...
 1. Append supported ThingsBoard MQTT API in commonents/README.md.
 1. Append some pictures of ThingsBoard in examples/.../README.md.
 
-1. OTA update support multi-checksum-ALG: sha256,sha384,sha512,md5,murmur3_32,murmur3_128.
+1. lock dead? protected data? in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
+1. subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
+1. OTA update support MD5-checksum-ALG.
 
 1. MQTT Gateway API.
-
-1. CoAP Transport.
-1. HTTP Transport.
 
 以下需要确认实现正确？
 ------------------------------------------------------------------------
 // Default login data.
- constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
- constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
+constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
+constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
 
 Telemetry 可以支持时间戳，数组等， 甚至datapoint的回调函数。但组织成列表，是否有必要？
 ----------------------------------------------------------------------------
@@ -59,13 +49,3 @@ bool m_qos; // Wheter QoS level 1 should be enabled or disabled (Resends the pac
  inline void enableMQTTQoS(const bool& enableQoS) {
  m_qos = enableQoS;
  }
-
-An ESP32 library for connecting to the ThingsBoard IoT platform. Based on ESP-IDF.
-------------------------------------
-sentence=ThingsBoard library for Arduino.
-paragraph=A library for connecting to the ThingsBoard IoT platform. Thin wrapper on ESP-MQTT.
-
-ThingsBoard.h - Library API for sending data to the ThingsBoard
- Based on PubSub MQTT library.
- Created by Olender M. Oct 2018.
- Released into the public domain.

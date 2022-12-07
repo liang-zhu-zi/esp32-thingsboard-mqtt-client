@@ -17,7 +17,7 @@
 #ifndef _TBC_EXTENSION_H_
 #define _TBC_EXTENSION_H_
 
-#include "tbc_extension_telemetry.h"
+#include "tbc_extension_timeseriesdata.h"
 #include "tbc_extension_clientattributes.h"
 #include "tbc_extension_sharedattributes.h"
 

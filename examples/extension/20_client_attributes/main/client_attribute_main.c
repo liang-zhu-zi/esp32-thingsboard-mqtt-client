@@ -18,53 +18,35 @@
 #include "esp_log.h"
 
 #include "tbc_mqtt_helper.h"
-#include "tbc_extension.h"
-
 #include "protocol_examples_common.h"
 
-#define TELEMETYR_TEMPRATUE         	"temprature"
-#define TELEMETYR_HUMIDITY          	"humidity"
+static const char *TAG = "CLIENT_ATTRIBUTE";
 
-static const char *TAG = "EXTENTSION_TELEMETRY_UPLOAD";
+#define CLIENTATTRIBUTE_MODEL       	"model"
+#define CLIENTATTRIBUTE_SETPOINT    	"setpoint"
 
-static tbce_timeseriesdata_handle_t _telemetry = NULL;
-
-//Don't call TBCMH API in this callback!
+//Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_telemetry_on_get_temperature(void *context)
+tbcmh_value_t* tb_clientattribute_on_get_model(void *context)
 {
-    ESP_LOGI(TAG, "Get temperature (a time-series data)");
-    static float temp_array[] = {25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 27.5, 27.0, 26.5};
-    static int i = 0;
-
-    cJSON* temp = cJSON_CreateNumber(temp_array[i]);
-    i++;
-    i = i % (sizeof(temp_array)/sizeof(temp_array[0]));
-
-    return temp;
+    ESP_LOGI(TAG, "Get model (a client attribute)");
+    
+    return cJSON_CreateString("TH_001");
 }
 
-//Don't call TBCMH API in this callback!
+//Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_telemetry_on_get_humidity(void *context)
+tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
 {
-    ESP_LOGI(TAG, "Get humidity (a time-series data)");
-
-    static int humi_array[] = {26, 27, 28, 29, 30, 31, 32, 31, 30, 29};
-    static int i = 0;
-
-    cJSON* humi = cJSON_CreateNumber(humi_array[i]);
-    i++;
-    i = i % (sizeof(humi_array)/sizeof(humi_array[0]));
-
-    return humi;
+    ESP_LOGI(TAG, "Get setpoint (a client attribute)");
+    
+    return cJSON_CreateNumber(25.5);
 }
 
-void tb_telemetry_send(tbcmh_handle_t client)
+void tb_clientattribute_send(tbcmh_handle_t client)
 {
-    ESP_LOGI(TAG, "Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
-
-    tbce_timeseriesdata_upload(_telemetry, client, 2, TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
+    ESP_LOGI(TAG, "Send client attributes: %s, %s",CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
+    tbce_clientattributes_update(client, 2, CLIENTATTRIBUTE_MODEL, CLIENTATTRIBUTE_SETPOINT);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -154,24 +136,18 @@ static void mqtt_app_start(void)
         return;
     }
 
-    ESP_LOGI(TAG, "Create telemetry: ...");
-    _telemetry = tbce_timeseriesdata_create();
-    if (!_telemetry) {
-        ESP_LOGE(TAG, "Failure to create telemetry: ...");
+    ESP_LOGI(TAG, "Append client attribute: model...");
+    err = tbce_clientattributes_register(client, CLIENTATTRIBUTE_MODEL, NULL,
+                            tb_clientattribute_on_get_model);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_MODEL);
         goto exit_destroy;
     }
-
-    ESP_LOGI(TAG, "Append telemetry: temprature...");
-    err = tbce_timeseriesdata_register(_telemetry, TELEMETYR_TEMPRATUE, NULL, tb_telemetry_on_get_temperature);
+    ESP_LOGI(TAG, "Append client attribute: setpoint...");
+    err = tbce_clientattributes_register(client, CLIENTATTRIBUTE_SETPOINT, NULL,
+                            tb_clientattribute_on_get_setpoint);
     if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_TEMPRATUE);
-        goto exit_destroy;
-    }
-
-    ESP_LOGI(TAG, "Append telemetry: humidity...");
-    err = tbce_timeseriesdata_register(_telemetry, TELEMETYR_HUMIDITY, NULL, tb_telemetry_on_get_humidity);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failure to append telemetry: %s!", TELEMETYR_HUMIDITY);
+        ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
         goto exit_destroy;
     }
 
@@ -181,7 +157,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true                /*!< print Rx/Tx MQTT package */
      };
-    bool result = tbcmh_connect_using_url(client, &config, TBCMH_FUNCTION_TIMESERIES_DATA,
+    bool result = tbcmh_connect_using_url(client, &config, TBCMH_FUNCTION_ATTRIBUTES_UPDATE, 
                         NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbcmh!");
@@ -199,7 +175,7 @@ static void mqtt_app_start(void)
         i++;
         if (tbcmh_is_connected(client)) {
             if (i%5 == 0){
-                tb_telemetry_send(client);
+                tb_clientattribute_send(client);
             }
         } else {
             ESP_LOGI(TAG, "Still NOT connected to server!");
@@ -212,11 +188,6 @@ static void mqtt_app_start(void)
     tbcmh_disconnect(client);
 
 exit_destroy:
-    if (_telemetry) {
-        tbce_timeseriesdata_destroy(_telemetry);
-        _telemetry = NULL;
-    }
-
     ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
 #endif

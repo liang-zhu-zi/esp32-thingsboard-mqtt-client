@@ -22,44 +22,44 @@
 #include "esp_system.h"
 
 #include "tbc_mqtt_helper.h"
-#include "tbc_extension_telemetry.h"
+#include "tbc_extension_timeseriesdata.h"
+
+/**
+ * Time-series axis
+ */
+typedef struct timeseriesaxis
+{
+     char *key;                           /*!< Key */
+     void *context;                       /*!< Context of getting/setting value*/
+     tbce_timeseriesdata_on_get_t on_get; /*!< Callback of getting value from context */
+     LIST_ENTRY(timeseriesaxis) entry;
+} timeseriesaxis_t;
+
+typedef LIST_HEAD(tbce_timeseriesaxis_list, timeseriesaxis) timeseriesaxis_list_t;
 
 /**
  * Time-series data
  */
-typedef struct timeseriesdata
+typedef struct tbce_timeseriesdata
 {
-     char *key;                      /*!< Key */
-     void *context;                  /*!< Context of getting/setting value*/
-     tbce_telemetry_on_get_t on_get; /*!< Callback of getting value from context */
-     LIST_ENTRY(timeseriesdata) entry;
-} timeseriesdata_t;
+     timeseriesaxis_list_t timeseriesdata_list; /*!< time-series data list */
+} tbce_timeseriesdata_t;
 
-typedef LIST_HEAD(tbce_tsdata_list, timeseriesdata) timeseriesdata_list_t;
+const static char *TAG = "extension_timeseriesdata";
 
-/**
- * Telemetry entity
- */
-typedef struct tbce_telemetry
-{
-     timeseriesdata_list_t timeseriesdata_list; /*!< time-series data list */
-} tbce_telemetry_t;
-
-const static char *TAG = "extension_telemetory";
-
-static timeseriesdata_t *_timeseriesdata_create(const char *key, void *context,
-                                                 tbce_telemetry_on_get_t on_get)
+static timeseriesaxis_t *_timeseriesdata_create(const char *key, void *context,
+                                                 tbce_timeseriesdata_on_get_t on_get)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get, NULL);
     
-    timeseriesdata_t *tsdata = TBC_MALLOC(sizeof(timeseriesdata_t));
+    timeseriesaxis_t *tsdata = TBC_MALLOC(sizeof(timeseriesaxis_t));
     if (!tsdata) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(tsdata, 0x00, sizeof(timeseriesdata_t));
+    memset(tsdata, 0x00, sizeof(timeseriesaxis_t));
     tsdata->key = TBC_MALLOC(strlen(key)+1);
     if (tsdata->key) {
         strcpy(tsdata->key, key);
@@ -70,7 +70,7 @@ static timeseriesdata_t *_timeseriesdata_create(const char *key, void *context,
 }
 
 /*!< Destroys timeseries_data */
-static void _timeseriesdata_destroy(timeseriesdata_t *tsdata)
+static void _timeseriesdata_destroy(timeseriesaxis_t *tsdata)
 {
     TBC_CHECK_PTR(tsdata);
 
@@ -78,27 +78,27 @@ static void _timeseriesdata_destroy(timeseriesdata_t *tsdata)
     TBC_FREE(tsdata);
 }
 
-tbce_telemetry_handle_t tbce_telemetry_create(void)
+tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void)
 {
-    tbce_telemetry_t *telemetry = TBC_MALLOC(sizeof(tbce_telemetry_t));
+    tbce_timeseriesdata_t *telemetry = TBC_MALLOC(sizeof(tbce_timeseriesdata_t));
     if (!telemetry) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(telemetry, 0x00, sizeof(tbce_telemetry_t));
+    memset(telemetry, 0x00, sizeof(tbce_timeseriesdata_t));
     // list create
     // memset(&telemetry->timeseriesdata_list, 0x00, sizeof(telemetry->timeseriesdata_list)); //telemetry->timeseriesdata_list = LIST_HEAD_INITIALIZER(telemetry->timeseriesdata_list);
 
     return telemetry;
 }
 
-void tbce_telemetry_destroy(tbce_telemetry_handle_t telemetry)
+void tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t telemetry)
 {
     TBC_CHECK_PTR(telemetry);
 
     // items empty - remove all item in timeseriesdata_list
-    timeseriesdata_t *tsdata = NULL, *next;
+    timeseriesaxis_t *tsdata = NULL, *next;
     LIST_FOREACH_SAFE(tsdata, &telemetry->timeseriesdata_list, entry, next) {
          // remove from tsdata list and destory
          LIST_REMOVE(tsdata, entry);
@@ -108,22 +108,22 @@ void tbce_telemetry_destroy(tbce_telemetry_handle_t telemetry)
     memset(&telemetry->timeseriesdata_list, 0x00, sizeof(telemetry->timeseriesdata_list));
 }
 
-tbc_err_t tbce_telemetry_register(tbce_telemetry_handle_t telemetry,
+tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t telemetry,
                                           const char *key,
                                           void *context,
-                                          tbce_telemetry_on_get_t on_get)
+                                          tbce_timeseriesdata_on_get_t on_get)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(telemetry, ESP_FAIL);
 
      // Create tsdata
-     timeseriesdata_t *tsdata = _timeseriesdata_create(key, context, on_get);
+     timeseriesaxis_t *tsdata = _timeseriesdata_create(key, context, on_get);
      if (!tsdata) {
           TBC_LOGE("Init tsdata failure! key=%s. %s()", key, __FUNCTION__);
           return ESP_FAIL;
      }
 
      // Insert tsdata to list
-     timeseriesdata_t *it, *last = NULL;
+     timeseriesaxis_t *it, *last = NULL;
      if (LIST_FIRST(&telemetry->timeseriesdata_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&telemetry->timeseriesdata_list, tsdata, entry);
@@ -141,14 +141,14 @@ tbc_err_t tbce_telemetry_register(tbce_telemetry_handle_t telemetry,
      return ESP_OK;
 }
 
-tbc_err_t tbce_telemetry_unregister(tbce_telemetry_handle_t telemetry,
+tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t telemetry,
                                     const char *key)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(telemetry, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(key, ESP_FAIL);
 
      // Search item
-     timeseriesdata_t *tsdata = NULL, *next;
+     timeseriesaxis_t *tsdata = NULL, *next;
      LIST_FOREACH_SAFE(tsdata, &telemetry->timeseriesdata_list, entry, next) {
           if (tsdata && strcmp(tsdata->key, key)==0) {
              // Remove from list and destroy
@@ -166,7 +166,7 @@ tbc_err_t tbce_telemetry_unregister(tbce_telemetry_handle_t telemetry,
      return ESP_OK;
 }
 
-tbc_err_t tbce_telemetry_update(tbce_telemetry_handle_t telemetry,
+tbc_err_t tbce_timeseriesdata_upload(tbce_timeseriesdata_handle_t telemetry,
                                       tbcmh_handle_t client,
                                       int count, /*const char *key,*/...)
 {
@@ -186,7 +186,7 @@ tbc_err_t tbce_telemetry_update(tbce_telemetry_handle_t telemetry,
           const char *key = va_arg(ap, const char*);
 
           // Search item
-          timeseriesdata_t *tsdata = NULL;
+          timeseriesaxis_t *tsdata = NULL;
           LIST_FOREACH(tsdata, &telemetry->timeseriesdata_list, entry) {
                if (tsdata && strcmp(tsdata->key, key)==0) {
                     break;
@@ -211,7 +211,7 @@ tbc_err_t tbce_telemetry_update(tbce_telemetry_handle_t telemetry,
      // send package...
      int msg_id = -1;
      if (result) {
-         msg_id = tbcmh_telemetry_publish_ex(client, object, 1/*qos*/, 0/*retain*/);
+         msg_id = tbcmh_telemetry_upload_ex(client, object, 1/*qos*/, 0/*retain*/);
      }
      cJSON_Delete(object); // delete json object
 

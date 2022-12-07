@@ -225,7 +225,7 @@ static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
      clientattribute_t *clientattribute = NULL, *next;
      LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
           if (clientattribute && clientattribute->key && clientattribute->on_set) {
-               cJSON *value = cJSON_GetObjectItem(object, clientattribute->key)
+               cJSON *value = cJSON_GetObjectItem(object, clientattribute->key);
                if (value) {
                     clientattribute->on_set(clientattribute->context, value);
                }
@@ -264,7 +264,7 @@ tbc_err_t tbce_clientattributes_initialized(
 
              i++;
              if (i>=max_attributes_per_request) {
-                 tbcmh_attributesrequest_send(client,
+                 tbcmh_attributes_request(client,
                       clientattributes/*context*/,
                       _tbce_clientattributes_on_initialized/*on_response*/,
                       NULL/*on_timeout*/,
@@ -333,7 +333,7 @@ tbc_err_t tbce_clientattributes_update(tbce_clientattributes_handle_t clientattr
 
 #if 0
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,

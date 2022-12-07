@@ -228,9 +228,9 @@ bool tbcmh_has_events(tbcmh_handle_t client);
 void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout, recv/parse/sendqueue/ack...
 
 //====10.Publish Telemetry time-series data==============================================================================
-int tbcmh_telemetry_publish(tbcmh_handle_t client, const char *telemetry,
+int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
                             int qos/*= 1*/, int retain/*= 0*/);
-int tbcmh_telemetry_publish_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, tbcmh_value_t *object,
                               int qos/*= 1*/, int retain/*= 0*/);
 
 //====20.Publish client-side device attributes to the server============================================================
@@ -240,11 +240,11 @@ int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
                                     int qos/*= 1*/, int retain/*= 0*/);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
                                         int count, /*const char *key,*/...);
-int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
                                         int count, const char *key[]);
@@ -253,17 +253,17 @@ tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
 
 //====22.Request client-side or shared device attributes from the server================================================
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
                                  const char *client_keys, const char *shared_keys);
-tbc_err_t tbcmh_attributesrequest_of_client_send(tbcmh_handle_t client,
+tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...);
-tbc_err_t tbcmh_attributesrequest_of_shared_send(tbcmh_handle_t client,
+tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -272,23 +272,23 @@ tbc_err_t tbcmh_attributesrequest_of_shared_send(tbcmh_handle_t client,
 //====30.Server-side RPC================================================================================================
 //Call it before tbcmh_connect()
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_serverrpc_register(tbcmh_handle_t client,
+tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
                                 const char *method, void *context,
                                 tbcmh_serverrpc_on_request_t on_request);
 //remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_serverrpc_unregister(tbcmh_handle_t client, const char *method);
+tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method);
 
 //====31.Client-side RPC================================================================================================
 // free `params` by caller/(user code)!
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client,
                                 const char *method, /*const*/ tbcmh_rpc_params_t *params);
 
 // free `params` by caller/(user code)!
 // create to add to LIST_ENTRY(tbcmh_clientrpc_)
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client,
                                 const char *method, /*const*/ tbcmh_rpc_params_t *params,
                                 void *context,
                                 tbcmh_clientrpc_on_response_t on_response,
@@ -308,14 +308,14 @@ tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
 
 //====60.Firmware update================================================================================================
 // Call it before tbcmh_connect()
-tbc_err_t tbcmh_otaupdate_register(tbcmh_handle_t client, 
+tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
                 const char *ota_description,  // TODO: remove it!
                 tbcmh_otaupdate_type_t ota_type,
                 void *context_user,
                 tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
                 tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
                 tbcmh_otaupdate_on_updated_t on_updated);
-tbc_err_t tbcmh_otaupdate_unregister(tbcmh_handle_t client, const char *ota_description);
+tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description);
 
 #ifdef __cplusplus
 }

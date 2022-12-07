@@ -179,7 +179,7 @@ bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
     }
 
     // SemaphoreHandle_t lock;
-    // uint32_t next_request_id;
+    // uint16_t next_request_id;
     // uint64_t last_check_timestamp;
     
     // connect
@@ -365,7 +365,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
      _tbcmh_claimingdevice_on_disconnected(client);
 
      // SemaphoreHandle_t lock;
-     // uint32_t next_request_id;
+     // uint16_t next_request_id;
      // uint64_t last_check_timestamp;
 }
 

@@ -1,0 +1,28 @@
+menu "Example Configuration"
+
+    config BROKER_URL
+        string "Broker URL"
+        default "mqtt://mqtt.eclipseprojects.io"
+        help
+            URL of the broker to connect to ThingsBoard (MQTT) Server, eg,
+                "mqtt://iot.eclipse.org" : MQTT over TCP, default port 1883
+                "mqtt://iot.eclipse.org:1884" : MQTT over TCP, port 1884
+                "mqtt://username:password@iot.eclipse.org:1884" : MQTT over TCP, port 1884, with username and password
+
+
+    config ACCESS_TOKEN
+        string "Access Token"
+        default ""
+        help
+            Access token to connect to broker
+
+    config BROKER_URL_FROM_STDIN
+        bool
+        default y if BROKER_URL = "FROM_STDIN"
+
+
+    config ACCESS_TOKEN_FROM_STDIN
+        bool
+        default y if ACCESS_TOKEN = "FROM_STDIN"
+
+endmenu

@@ -58,7 +58,7 @@ static tbc_err_t _attributesrequest_destroy(attributesrequest_t *attributesreque
 }
 
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_attributesrequest_send(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -128,7 +128,7 @@ attributesrequest_fail:
 }
 
  //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
- tbc_err_t tbcmh_attributesrequest_of_client_send(tbcmh_handle_t client,
+ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
@@ -229,7 +229,7 @@ attributesrequest_fail:
  }
 
  //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
- tbc_err_t tbcmh_attributesrequest_of_shared_send(tbcmh_handle_t client,
+ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
                                   void *context,
                                   tbcmh_attributesrequest_on_response_t on_response,
                                   tbcmh_attributesrequest_on_timeout_t on_timeout,
