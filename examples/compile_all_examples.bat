@@ -5,6 +5,8 @@ cd helper\00_hello_world
 idf.py build > log.txt
 cd ..\..
 
+echo "================================================"
+
 echo helper\10_telemetry_upload
 cd helper\10_telemetry_upload
 idf.py build > log.txt
