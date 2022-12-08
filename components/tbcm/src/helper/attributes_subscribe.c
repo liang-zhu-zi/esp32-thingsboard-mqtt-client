@@ -261,16 +261,19 @@ tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
          TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
+
     // Append key
-    va_list ap;
-    va_start(ap, count);
-    int i = 0;
-    for (i=0; i<count; i++) {
-        // insert key to attributessubscribe
-        const char *key = va_arg(ap, const char*);
-        _subscribekey_list_append(&attributessubscribe->key_list, key);
+    if (count>0) {
+        va_list ap;
+        va_start(ap, count);
+        int i = 0;
+        for (i=0; i<count; i++) {
+            // insert key to attributessubscribe
+            const char *key = va_arg(ap, const char*);
+            _subscribekey_list_append(&attributessubscribe->key_list, key);
+        }
+        va_end(ap);
     }
-    va_end(ap);
 
     bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
 

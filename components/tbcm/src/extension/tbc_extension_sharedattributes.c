@@ -108,29 +108,29 @@ tbce_sharedattributes_handle_t tbce_sharedattributes_create(void)
     return sharedattributes;
 }
 
-void tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattriburtes)
+void tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattributes)
 {
      // This function is in semaphore/client->_lock!!!
-     TBC_CHECK_PTR(sharedattriburtes);
+     TBC_CHECK_PTR(sharedattributes);
 
      // items empty - remove all item in sharedattribute_list
      sharedattribute_t *sharedattribute = NULL, *next;
-     LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next)
+     LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next)
      {
           // remove from sharedattribute list and destory
           LIST_REMOVE(sharedattribute, entry);
           _sharedattribute_destroy(sharedattribute);
      }
      // list destroy
-     memset(&sharedattriburtes->sharedattribute_list, 0x00, sizeof(sharedattriburtes->sharedattribute_list));
+     memset(&sharedattributes->sharedattribute_list, 0x00, sizeof(sharedattributes->sharedattribute_list));
 }
 
 // Call it before connect()
-tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedattriburtes,
+tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedattributes,
                                          const char *key, void *context,
                                          tbce_sharedattribute_on_set_t on_set)
 {
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattriburtes, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattributes, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(key, ESP_FAIL);
 
      // Create sharedattribute
@@ -143,15 +143,15 @@ tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedat
 
      // Insert sharedattribute to list
      sharedattribute_t *it, *last = NULL;
-     if (LIST_FIRST(&sharedattriburtes->sharedattribute_list) == NULL)
+     if (LIST_FIRST(&sharedattributes->sharedattribute_list) == NULL)
      {
           // Insert head
-          LIST_INSERT_HEAD(&sharedattriburtes->sharedattribute_list, sharedattribute, entry);
+          LIST_INSERT_HEAD(&sharedattributes->sharedattribute_list, sharedattribute, entry);
      }
      else
      {
           // Insert last
-          LIST_FOREACH(it, &sharedattriburtes->sharedattribute_list, entry)
+          LIST_FOREACH(it, &sharedattributes->sharedattribute_list, entry)
           {
                last = it;
           }
@@ -166,15 +166,15 @@ tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedat
 }
 
 // remove sharedattribute from tbcmh_shared_attribute_list_t
-tbc_err_t tbce_sharedattributes_unregister(tbce_sharedattributes_handle_t sharedattriburtes,
+tbc_err_t tbce_sharedattributes_unregister(tbce_sharedattributes_handle_t sharedattributes,
                                            const char *key)
 {
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattriburtes, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattributes, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(key, ESP_FAIL);
 
      // Search item
      sharedattribute_t *sharedattribute = NULL, *next;
-     LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next)
+     LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next)
      {
           if (sharedattribute && strcmp(sharedattribute->key, key) == 0)
           {
@@ -193,10 +193,10 @@ tbc_err_t tbce_sharedattributes_unregister(tbce_sharedattributes_handle_t shared
      return ESP_OK;
 }
 
-void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattriburtes,
+void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattributes,
                                      tbcmh_handle_t client, uint32_t max_attributes_per_subscribe)
 {
-     TBC_CHECK_PTR(sharedattriburtes);
+     TBC_CHECK_PTR(sharedattributes);
      TBC_CHECK_PTR(client);
      if (max_attributes_per_subscribe==0) {
         TBC_LOGE("max_attributes_per_subscribe is equql to 0!");
@@ -204,8 +204,8 @@ void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattrib
      }
 
      // unsubscribe if it's already subscribed.
-     if (sharedattriburtes->client != client) {
-        tbce_sharedattributes_unsubscribe(sharedattriburtes);
+     if (sharedattributes->client != client) {
+        tbce_sharedattributes_unsubscribe(sharedattributes);
      }
 
      // Search item
@@ -214,14 +214,14 @@ void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattrib
      const char *key_array[10] = {0};
      sharedattribute_t *sharedattribute = NULL, *next;
      int count = 0;
-     LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next) {
+     LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next) {
           if (sharedattribute && (sharedattribute->subscribe_id<0)) {
                attribute_array[count] = sharedattribute;
                key_array[count++] = sharedattribute->key;
                if (count>=max_attributes) {
                     // subscribe
                     int subscribe_id = tbcmh_attributes_subscribe_of_array(client,
-                                              sharedattriburtes /*context*/,
+                                              sharedattributes /*context*/,
                                               _tbce_sharedattributes_on_update,
                                               count, &key_array[0]);
                     // update subscribe_id
@@ -238,7 +238,7 @@ void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattrib
      if (count>0) {
          // subscribe
          int subscribe_id = tbcmh_attributes_subscribe_of_array(client,
-                                   sharedattriburtes /*context*/,
+                                   sharedattributes /*context*/,
                                    _tbce_sharedattributes_on_update,
                                    count, &key_array[0]);
          // update subscribe_id
@@ -250,26 +250,26 @@ void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattrib
          count = 0;
      }
 
-     sharedattriburtes->client = client;
+     sharedattributes->client = client;
 }
 
-void tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattriburtes)
+void tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattributes)
 {
-     TBC_CHECK_PTR(sharedattriburtes);
-     TBC_CHECK_PTR(sharedattriburtes->client);
+     TBC_CHECK_PTR(sharedattributes);
+     TBC_CHECK_PTR(sharedattributes->client);
 
      // Search item
      sharedattribute_t *sharedattribute = NULL, *next;
-     LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next)
+     LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next)
      {
           if (sharedattribute && (sharedattribute->subscribe_id>=0))
           {
-               tbcmh_attributes_unsubscribe(sharedattriburtes->client, sharedattribute->subscribe_id);
+               tbcmh_attributes_unsubscribe(sharedattributes->client, sharedattribute->subscribe_id);
                sharedattribute->subscribe_id = -1;
           }
      }
 
-     sharedattriburtes->client = NULL;
+     sharedattributes->client = NULL;
 }
 
 // on received: unpack & deal
@@ -278,7 +278,7 @@ void tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattr
 //  return 0 otherwise
 static int _tbce_sharedattributes_on_update(tbcmh_handle_t client, void *context, const cJSON *object)
 {
-     tbce_sharedattributes_handle_t sharedattriburtes = (tbce_sharedattributes_handle_t)context;
+     tbce_sharedattributes_handle_t sharedattributes = (tbce_sharedattributes_handle_t)context;
 
      //TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(context, 0);
@@ -287,7 +287,7 @@ static int _tbce_sharedattributes_on_update(tbcmh_handle_t client, void *context
      // foreach itme to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      sharedattribute_t *sharedattribute = NULL, *next;
      tbc_err_t result = 0;
-     LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next) {
+     LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next) {
           if (sharedattribute) {
                if ((sharedattribute->subscribe_id>=0) &&
                     sharedattribute->key &&
@@ -321,11 +321,11 @@ static void _tbce_sharedattributes_on_initialized(tbcmh_handle_t client,
 
 //Initialize shared-side attributes from the server
 //on received init value in attributes response: unpack & deal
-tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
+tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattributes,
                                                   tbcmh_handle_t client,
                                                   uint32_t max_attributes_per_request)
 {
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattriburtes, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(sharedattributes, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
     char *shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
@@ -337,7 +337,7 @@ tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t share
     // Get shared_keys from sharedattribute
     int i = 0;
     sharedattribute_t *sharedattribute = NULL, *next;
-    LIST_FOREACH_SAFE(sharedattribute, &sharedattriburtes->sharedattribute_list, entry, next) {
+    LIST_FOREACH_SAFE(sharedattribute, &sharedattributes->sharedattribute_list, entry, next) {
         if (sharedattribute && sharedattribute->key) {
              // copy key to shared_keys
              if (strlen(shared_keys)==0) {
@@ -350,7 +350,7 @@ tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t share
              i++;
              if (i>=max_attributes_per_request) {
                  tbcmh_attributes_request(client,
-                              sharedattriburtes/*context*/,
+                              sharedattributes/*context*/,
                               _tbce_sharedattributes_on_initialized/*on_response*/,
                               NULL/*on_timeout*/,
                               NULL/*client_keys*/, shared_keys);

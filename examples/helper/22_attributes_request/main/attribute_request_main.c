@@ -25,80 +25,33 @@ static const char *TAG = "ATTR_REQUEST_EXAMPLE";
 #define CLIENTATTRIBUTE_SETPOINT    	"setpoint"
 #define SHAREDATTRIBUTE_SNTP_SERVER     "sntp_server"
 
-static bool g_attributes_are_initialized_from_server = false;
-
-//Don't call TBCMH API in these callback!
-//Free return value by caller/(tbcmh library)!
-tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
+void tb_attributesrequest_on_response(tbcmh_handle_t client,
+                             void *context,
+                             const cJSON *client_attributes,
+                             const cJSON *shared_attributes) //, uint32_t request_id
 {
-    ESP_LOGI(TAG, "Get setpoint (a client attribute)");
-    
-    return cJSON_CreateNumber(25.5);
-}
+    ESP_LOGI(TAG, "Receiving response of the attributes request!"); //request_id=%u, request_id
 
-//Don't call TBCMH API in these callback!
-//Free value by caller/(tbcmh library)!
-void tb_clientattribute_on_set_setpoint(void *context, const tbcmh_value_t *value)
-{
-    ESP_LOGI(TAG, "Set setpoint (a client-side attribute)");
-    if (!value) {
-        ESP_LOGW(TAG, "value is NULL!");
-        return;
+    if (client_attributes) {
+        char *pack = cJSON_PrintUnformatted(client_attributes); //cJSON_Print()
+        ESP_LOGI(TAG, "client_attributes: %s", pack);        
+        cJSON_free(pack); // free memory
     }
 
-    if (cJSON_IsNumber(value)) {
-        double setpoint = cJSON_GetNumberValue(value);
-        //if (setpoint) {
-            ESP_LOGI(TAG, "Receive setpoint = %lf", setpoint);
-        //}
-    } else {
-        ESP_LOGW(TAG, "Receive setpoint is NOT a number!");
+    if (shared_attributes) {
+        char *pack = cJSON_PrintUnformatted(shared_attributes); //cJSON_Print()
+        ESP_LOGI(TAG, "shared_attributes: %s", pack);        
+        cJSON_free(pack); // free memory
     }
 }
 
-void tb_clientattribute_send(tbcmh_handle_t client)
-{
-    ESP_LOGI(TAG, "Send client attributes: %s", CLIENTATTRIBUTE_SETPOINT);
-    tbce_clientattributes_update(client, 1, CLIENTATTRIBUTE_SETPOINT);
-}
-
-// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
-//      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
-//      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
-// return 1 if tbce_sharedattributes_unregister() is called.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
+//      Caller (TBCMH library) will process other attributes request timeout.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
-tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
-{
-    ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");
-    if (!value) {
-        ESP_LOGW(TAG, "value is NULL!");
-        return ESP_FAIL;
-    }
-
-    if (cJSON_IsString(value)) {
-        char *sntp_server = cJSON_GetStringValue(value);
-        if (sntp_server) {
-            ESP_LOGI(TAG, "Receive sntp_server = %s", sntp_server);
-        }
-    } else {
-        ESP_LOGW(TAG, "Receive sntp_server is NOT a string!");
-    }
-
-    return ESP_OK;
-}
-
-void tb_attributesrequest_on_response(tbcmh_handle_t client, void *context) //, uint32_t request_id
-{
-    ESP_LOGI(TAG, "Receiving response of the attribute request!"); //request_id=%u, request_id
-
-    g_attributes_are_initialized_from_server = true;
-}
 void tb_attributesrequest_on_timeout(tbcmh_handle_t client, void *context) //, uint32_t request_id
 {
-    ESP_LOGI(TAG, "Timeout of the attribute request!"); // request_id=%u, request_id
+    ESP_LOGI(TAG, "Timeout of the attributes request!"); // request_id=%u, request_id
 }
 
 void tb_attributesrequest_send(tbcmh_handle_t client)
@@ -107,9 +60,9 @@ void tb_attributesrequest_send(tbcmh_handle_t client)
         CLIENTATTRIBUTE_SETPOINT, SHAREDATTRIBUTE_SNTP_SERVER);
 
     tbcmh_attributes_request(client, NULL,
-                                     tb_attributesrequest_on_response,
-                                     tb_attributesrequest_on_timeout,
-                                     2, CLIENTATTRIBUTE_SETPOINT, SHAREDATTRIBUTE_SNTP_SERVER);
+                             tb_attributesrequest_on_response,
+                             tb_attributesrequest_on_timeout,
+                             CLIENTATTRIBUTE_SETPOINT, SHAREDATTRIBUTE_SNTP_SERVER);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */
@@ -201,22 +154,6 @@ static void mqtt_app_start(void)
         return;
     }
 
-    ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbce_clientattributes_register_with_set(client, CLIENTATTRIBUTE_SETPOINT, NULL, 
-                            tb_clientattribute_on_get_setpoint, tb_clientattribute_on_set_setpoint);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
-        goto exit_destroy;
-    }
-
-    ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    err = tbce_sharedattributes_register(client, SHAREDATTRIBUTE_SNTP_SERVER, NULL, 
-                            tb_sharedattribute_on_set_sntp_server);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
-        goto exit_destroy;
-    }
-
     ESP_LOGI(TAG, "Connect tbcmh ...");
     tbc_transport_config_esay_t config = {
         .uri = uri,                     /*!< Complete ThingsBoard MQTT broker URI */
@@ -238,18 +175,8 @@ static void mqtt_app_start(void)
         }
 
         i++;
-        if (tbcmh_is_connected(client)) {
-			if (g_attributes_are_initialized_from_server) {
-	            if (i%5 == 0){
-	                tb_clientattribute_send(client);
-	            }
-			}
-        } else {
-            ESP_LOGI(TAG, "Still NOT connected to server!");
-        }
         sleep(1);
     }
-
 
     ESP_LOGI(TAG, "Disconnect tbcmh ...");
     tbcmh_disconnect(client);

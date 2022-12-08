@@ -20,7 +20,7 @@
 #include "tbc_mqtt_helper.h"
 #include "protocol_examples_common.h"
 
-static const char *TAG = "TELEMETRY_UPLOAD";
+static const char *TAG = "TELEMETRY_UPLOAD_MAIN";
 
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
@@ -61,8 +61,8 @@ void tb_telemetry_send(tbcmh_handle_t client)
     ESP_LOGI(TAG, "Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
 
     cJSON *object = cJSON_CreateObject(); // create json object
-    cJSON_AddItemToObject(object, TELEMETYR_TEMPRATUE, tb_telemetry_on_get_temperature(NULL));
-    cJSON_AddItemToObject(object, TELEMETYR_HUMIDITY, tb_telemetry_on_get_humidity(NULL));
+    cJSON_AddItemToObject(object, TELEMETYR_TEMPRATUE, tb_telemetry_on_get_temperature());
+    cJSON_AddItemToObject(object, TELEMETYR_HUMIDITY, tb_telemetry_on_get_humidity());
     tbcmh_telemetry_upload_ex(client, object, 1/*qos*/, 0/*retain*/);
     cJSON_Delete(object); // delete json object
 }
@@ -81,7 +81,7 @@ void tb_on_disconnected(tbcmh_handle_t client, void *context)
 
 static void mqtt_app_start(void)
 {
-	tbc_err_t err;
+	//tbc_err_t err;
 #if 0
     const esp_mqtt_client_config_t config = {
         .uri = CONFIG_BROKER_URL

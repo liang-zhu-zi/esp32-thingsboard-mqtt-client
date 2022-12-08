@@ -18,13 +18,19 @@
 #include "esp_log.h"
 
 #include "tbc_mqtt_helper.h"
-#include "protocol_examples_common.h"
+#include "tbc_extension_sharedattributes.h"
 
-static const char *TAG = "SHARED_ATTR_EXAMPLE";
+#include "protocol_examples_common.h"
 
 #define SHAREDATTRIBUTE_SNTP_SERVER     "sntp_server"
 
-// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called.
+static const char *TAG = "SHARED_ATTR_MAIN";
+
+tbce_sharedattributes_handle_t _sharedattributes = NULL;
+
+// Set value of the device's shared-attribute
+// Caller (TBCMH library) of this callback will release memory of the `value` param
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 //      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
 //      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
@@ -32,7 +38,7 @@ static const char *TAG = "SHARED_ATTR_EXAMPLE";
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 // return 0/ESP_OK on success
 // return -1/ESP_FAIL on failure
-tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *context, const tbcmh_value_t *value)
+tbc_err_t tb_sharedattribute_on_set_sntp_server(void *context, const tbcmh_value_t *value)
 {
     ESP_LOGI(TAG, "Set sntp_server (a shared attribute)");
 
@@ -52,6 +58,14 @@ tbc_err_t tb_sharedattribute_on_set_sntp_server(tbcmh_handle_t client, void *con
 void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
+
+    ESP_LOGI(TAG, "Subscribe shared attributes!");
+    tbce_sharedattributes_subscribe(_sharedattributes,
+                                    client, 10/*max_attributes_per_subscribe*/);
+
+    ESP_LOGI(TAG, "Initilize shared attributes!");
+    tbce_sharedattributes_initialized(_sharedattributes,
+                                      client, 10/*max_attributes_per_request*/);
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
@@ -135,9 +149,16 @@ static void mqtt_app_start(void)
         return;
     }
 
+    ESP_LOGI(TAG, "Create shared attribue set...");
+    _sharedattributes = tbce_sharedattributes_create();
+    if (!_sharedattributes) {
+        ESP_LOGE(TAG, "Failure to create shared attribue set!");
+        goto exit_destroy;
+    }
+
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    tbc_err_t err = tbce_sharedattributes_register(client, SHAREDATTRIBUTE_SNTP_SERVER,
-                      NULL, tb_sharedattribute_on_set_sntp_server);
+    tbc_err_t err = tbce_sharedattributes_register(_sharedattributes, SHAREDATTRIBUTE_SNTP_SERVER,
+                      client, tb_sharedattribute_on_set_sntp_server);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
         goto exit_destroy;
@@ -174,6 +195,15 @@ static void mqtt_app_start(void)
     tbcmh_disconnect(client);
 
 exit_destroy:
+    if (!_sharedattributes) {
+        ESP_LOGI(TAG, "Unregister shared attribue...");
+        tbce_sharedattributes_unregister(_sharedattributes, SHAREDATTRIBUTE_SNTP_SERVER);
+                                           
+        ESP_LOGI(TAG, "Destory shared attribue set...");
+        tbce_sharedattributes_destroy(_sharedattributes);
+        _sharedattributes = NULL;
+    }
+
     ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
 #endif
