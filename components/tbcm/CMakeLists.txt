@@ -2,32 +2,35 @@ set(includes "include")
 
 set(priv_includes "private_include"
                   "src/transport"
-                  "src/mqtt"
-                  "src/helper")
+                  "src/wapper"
+                  "src/helper"
+                  "src/extension")
 
 #set(priv_requires "mqtt")
 
-set(requires "mqtt" "json")
+set(requires "mqtt" "json" "app_update")
 
 set(srcs "src/transport/tbc_transport_config.c"
          "src/transport/tbc_transport_storage.c"
-         "src/mqtt/tbc_mqtt.c"
-         "src/mqtt/tbc_mqtt_payload_buffer.c")
+         "src/wapper/tbc_mqtt_wapper.c"
+         "src/wapper/tbc_mqtt_payload_buffer.c"
+         "src/helper/tbc_mqtt_helper.c"
+         "src/helper/telemetry_upload.c"
+         "src/helper/attributes_update.c"
+         "src/helper/attributes_request.c"
+         "src/helper/attributes_subscribe.c"
+         "src/helper/client_rpc.c"
+         "src/helper/device_provision.c"
+         "src/helper/ota_update.c"
+         "src/helper/ota_fwupdate.c"
+         "src/helper/server_rpc.c"
+         "src/helper/claiming_device.c"
+         "src/extension/tbc_extension_timeseriesdata.c"
+         "src/extension/tbc_extension_clientattributes.c"
+         "src/extension/tbc_extension_sharedattributes.c")
 
-if(CONFIG_TB_MQTT_CLIENT_HELPER_ENABLE)
-    list(APPEND srcs "src/helper/tbc_mqtt_helper.c"
-                     "src/helper/attributes_request_observer.c"
-                     "src/helper/client_attribute_helper.c"
-                     "src/helper/client_rpc_observer.c"
-                     "src/helper/provision_observer.c"
-                     "src/helper/ota_update_observer.c"
-                     "src/helper/server_rpc_observer.c"
-                     "src/helper/shared_attribute_observer.c"
-                     "src/helper/timeseries_data_helper.c")
-
-    #list(APPEND priv_requires "json")
-    #list(APPEND requires "json")
-endif()
+#list(APPEND priv_requires "json")
+#list(APPEND requires "json")
 
 idf_component_register(SRCS ${srcs}
                 INCLUDE_DIRS ${includes}
@@ -35,5 +38,3 @@ idf_component_register(SRCS ${srcs}
                 REQUIRES ${requires} )
 
                 #PRIV_REQUIRES ${priv_requires} 
-#
-# coap

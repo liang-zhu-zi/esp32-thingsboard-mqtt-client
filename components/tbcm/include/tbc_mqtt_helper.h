@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// ThingsBoard Client MQTT high layer API
+// ThingsBoard MQTT Client helper (high layer) API
 
 #ifndef _TBC_MQTT_HELPER_H_
 #define _TBC_MQTT_HELPER_H_
@@ -29,31 +29,76 @@
 extern "C" {
 #endif
 
-//=====================================================================================================================
-/**
- * ThingsBoard MQTT Client Helper value type, for example: cJSON_Number, cJSON_String, ...
- */
-//typedef int tbcmh_value_type_t;
-/*
-//cJSON Types:
-#define cJSON_Invalid (0)
-#define cJSON_False  (1 << 0)
-#define cJSON_True   (1 << 1)
-#define cJSON_NULL   (1 << 2)
-#define cJSON_Number (1 << 3)
-#define cJSON_String (1 << 4)
-#define cJSON_Array  (1 << 5)
-#define cJSON_Object (1 << 6)
-#define cJSON_Raw    (1 << 7) // raw json
-#define cJSON_IsReference 256
-#define cJSON_StringIsConst 512
-*/
+//====0.tbcm client====================================================================================================
+#define TBCMH_FUNCTION_TIMESERIES_DATA      0x00000001
+#define TBCMH_FUNCTION_ATTRIBUTES_REQUEST   0x00000002
+#define TBCMH_FUNCTION_ATTRIBUTES_UPDATE    0x00000004
+#define TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE 0x00000008
+#define TBCMH_FUNCTION_SERVER_RPC           0x00000010
+#define TBCMH_FUNCTION_CLIENT_RPC           0x00000020
+#define TBCMH_FUNCTION_CLAIMING_DEVICE      0x00000040
+#define TBCMH_FUNCTION_OTA_UPDATE           0x00000080
 
+#define TBCMH_FUNCTION_DEVICE_PROVISION     0x00001000
+
+#define TBCMH_FUNCTION_FULL_ATTRIBUTES      (TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE) //0x0000000E
+
+#define TBCMH_FUNCTION_FULL_OTA_UPDATE      (TBCMH_FUNCTION_TIMESERIES_DATA    | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
+                                             TBCMH_FUNCTION_OTA_UPDATE)        //0x0000008B
+
+#define TBCMH_FUNCTION_FULL_GENERAL         (TBCMH_FUNCTION_TIMESERIES_DATA    | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
+                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
+                                             TBCMH_FUNCTION_SERVER_RPC         | \
+                                             TBCMH_FUNCTION_CLIENT_RPC         | \
+                                             TBCMH_FUNCTION_CLAIMING_DEVICE    | \
+                                             TBCMH_FUNCTION_OTA_UPDATE)        // 0x000000FF
+
+/**
+ * ThingsBoard MQTT Client Helper handle
+ */
+typedef struct tbcmh_client *tbcmh_handle_t;
+
+// Callback of connected ThingsBoard MQTT
+typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);
+// Callback of disconnected ThingsBoard MQTT
+typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
+
+//====1.telemetry time-series data=====================================================================================
 /**
  * ThingsBoard MQTT Client Helper value, for example: data point, attribute
  */
 typedef cJSON tbcmh_value_t;
 
+//====2.client-side attribute==========================================================================================
+
+//====3.subscriebe shared attributes update ===============================================================================
+//on received: unpack & deal
+// return 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside on_update()
+// return 1 if calling tbcmh_sharedattribute_unregister()/tbcmh_attributes_unsubscribe inside on_update()
+// return 0 otherwise
+typedef int (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
+                                         void *context, const cJSON *object);
+
+//====4.attributes request for client-side_attribute & sharedattribute================================================
+typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client,
+                                         void *context,
+                                         const cJSON *client_attributes,
+                                         const cJSON *shared_attributes); //, uint32_t request_id
+
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
+//      Caller (TBCMH library) will process other attributes request timeout.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
+typedef int (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client,
+                                        void *context); //, uint32_t request_id
+
+//====5.Server-side RPC================================================================================================
 /**
  * ThingsBoard MQTT Client Helper rpc params
  */
@@ -64,59 +109,25 @@ typedef cJSON tbcmh_rpc_params_t;
  */
 typedef cJSON tbcmh_rpc_results_t;
 
-/**
- * ThingsBoard MQTT Client Helper provision params
- */
-typedef cJSON tbcmh_provision_params_t;
-
-/**
- * ThingsBoard MQTT Client Helper provision results
- */
-typedef cJSON tbcmh_provision_results_t;
-
-//====0.tbcm client====================================================================================================
-/**
- * ThingsBoard MQTT Client Helper handle
- */
-typedef struct tbcmh_client *tbcmh_handle_t;
-
-typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);    /*!< Callback of connected ThingsBoard MQTT */
-typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context); /*!< Callback of disconnected ThingsBoard MQTT */
-
-//====1.telemetry time-series data=====================================================================================
-//Don't call TBCMH API in this callback!
-//Free return value by caller/(tbcmh library)!
-typedef tbcmh_value_t* (*tbcmh_tsdata_on_get_t)(tbcmh_handle_t client, void *context); /*!< Get tbcmh_value from context */
-
-//====2.client-side attribute==========================================================================================
-//Don't call TBCMH API in these callback!
-//Free return value by caller/(tbcmh library)!
-typedef tbcmh_value_t* (*tbcmh_clientattribute_on_get_t)(tbcmh_handle_t client, void *context); /*!< Get tbcmh_value from context */
-//Free value by caller/(tbcmh library)!
-typedef void (*tbcmh_clientattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
-
-//====3.shared attribute===============================================================================================
-//Don't call TBCMH API in this callback!
-//Free value by caller/(tbcmh library)!
-typedef tbc_err_t (*tbcmh_sharedattribute_on_set_t)(tbcmh_handle_t client, void *context, const tbcmh_value_t *value); /*!< Set tbcmh_value to context */
-
-//====4.attributes request for client-side_attribute & shared_attribute================================================
-typedef void (*tbcmh_attributesrequest_on_response_t)(tbcmh_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
-typedef void (*tbcmh_attributesrequest_on_timeout_t)(tbcmh_handle_t client, void *context, int request_id); //(none/resend/destroy/_destroy_all_attributes)?
-
-//====5.Server-side RPC================================================================================================
-// return NULL or cJSON* of object
+// return NULL or a cJSON* object. return NULL if calling tbcmh_disconnect() inside it!
 // free return-value by caller/(tbcmh library)!
 // free params by caller/(tbcmh library)!
-typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client, void *context,
-                                                             int request_id, const char *method, const tbcmh_rpc_params_t *params);
+typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client,
+                                void *context, uint32_t request_id,
+                                const char *method, const tbcmh_rpc_params_t *params);
 
 //====6.Client-side RPC================================================================================================
 // free results by caller/(tbcmh library)!
-typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client, void *context,
-                                              int request_id, const char *method, const tbcmh_rpc_results_t *results); /*, tbcmh_rpc_params_t *params*/
-typedef void (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client, void *context,
-                                             int request_id, const char *method); /*, tbcmh_rpc_params_t *params*/
+typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
+                                void *context, //uint32_t request_id,
+                                const char *method, const tbcmh_rpc_results_t *results);
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
+//      Caller (TBCMH library) will process other attributes request timeout.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
+typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
+                                void *context, //uint32_t request_id,
+                                const char *method);
 
 //====7.Claiming device using device-side key scenario============================================
 
@@ -129,21 +140,31 @@ typedef enum tbc_provison_type
   TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS,   // Devices supplies Basic MQTT Credentials
   TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS          // Devices supplies X.509 Certificate
 } tbc_provison_type_t;
+  
+/**
+ * ThingsBoard MQTT Client Helper provision params
+ */
+typedef cJSON tbcmh_provision_params_t;
+
+/**
+ * ThingsBoard MQTT Client Helper provision results
+ */
+typedef cJSON tbcmh_provision_results_t;
 
 /*
-| Provisioning request  | Parameter              | Description                                                                    | Credentials generated by <br/>the ThingsBoard server | Devices supplies<br/>Access Token | Devices supplies<br/>Basic MQTT Credentials | Devices supplies<br/>X.509 Certificate |
-|-----------------------|------------------------|--------------------------------------------------------------------------------|------------------------------------------------------|-----------------------------------|---------------------------------------------|----------------------------------------|
-|                       | deviceName             | Device name in ThingsBoard.                                                    | (O) DEVICE_NAME                                      | (O) DEVICE_NAME                   | (O) DEVICE_NAME                             | (O) DEVICE_NAME                        |
-|                       | provisionDeviceKey     | Provisioning device key, you should take it from configured device profile.    | (M) PUT_PROVISION_KEY_HERE                           | (M) PUT_PROVISION_KEY_HERE        | (M) PUT_PROVISION_KEY_HERE                  | (M) PUT_PROVISION_KEY_HERE             |
-|                       | provisionDeviceSecret  | Provisioning device secret, you should take it from configured device profile. | (M) PUT_PROVISION_SECRET_HERE                        | (M) PUT_PROVISION_SECRET_HERE     | (M) PUT_PROVISION_SECRET_HERE               | (M) PUT_PROVISION_SECRET_HERE          |
-|                       | credentialsType        | Credentials type parameter.                                                    |                                                      | (M) ACCESS_TOKEN                  | (M) MQTT_BASIC                              | (M) X509_CERTIFICATE                   |
-|                       | token                  | Access token for device in ThingsBoard.                                        |                                                      | (M) DEVICE_ACCESS_TOKEN           |                                             |                                        |
-|                       | clientId               | Client id for device in ThingsBoard.                                           |                                                      |                                   | (M) DEVICE_CLIENT_ID_HERE                   |                                        |
-|                       | username               | Username for device in ThingsBoard.                                            |                                                      |                                   | (M) DEVICE_USERNAME_HERE                    |                                        |
-|                       | password               | Password for device in ThingsBoard.                                            |                                                      |                                   | (M) DEVICE_PASSWORD_HERE                    |                                        |
-|                       | hash                   | Public key X509 hash for device in ThingsBoard.                                |                                                      |                                   |                                             | (M) MIIB……..AQAB                       |
-|                       | (O) Optional, (M) Must |
-*/
+ | Provisioning request  | Parameter              | Description                                                                    | Credentials generated by <br/>the ThingsBoard server | Devices supplies<br/>Access Token | Devices supplies<br/>Basic MQTT Credentials | Devices supplies<br/>X.509 Certificate |
+ |-----------------------|------------------------|--------------------------------------------------------------------------------|------------------------------------------------------|-----------------------------------|---------------------------------------------|----------------------------------------|
+ |                       | deviceName             | Device name in ThingsBoard.                                                    | (O) DEVICE_NAME                                      | (O) DEVICE_NAME                   | (O) DEVICE_NAME                             | (O) DEVICE_NAME                        |
+ |                       | provisionDeviceKey     | Provisioning device key, you should take it from configured device profile.    | (M) PUT_PROVISION_KEY_HERE                           | (M) PUT_PROVISION_KEY_HERE        | (M) PUT_PROVISION_KEY_HERE                  | (M) PUT_PROVISION_KEY_HERE             |
+ |                       | provisionDeviceSecret  | Provisioning device secret, you should take it from configured device profile. | (M) PUT_PROVISION_SECRET_HERE                        | (M) PUT_PROVISION_SECRET_HERE     | (M) PUT_PROVISION_SECRET_HERE               | (M) PUT_PROVISION_SECRET_HERE          |
+ |                       | credentialsType        | Credentials type parameter.                                                    |                                                      | (M) ACCESS_TOKEN                  | (M) MQTT_BASIC                              | (M) X509_CERTIFICATE                   |
+ |                       | token                  | Access token for device in ThingsBoard.                                        |                                                      | (M) DEVICE_ACCESS_TOKEN           |                                             |                                        |
+ |                       | clientId               | Client id for device in ThingsBoard.                                           |                                                      |                                   | (M) DEVICE_CLIENT_ID_HERE                   |                                        |
+ |                       | username               | Username for device in ThingsBoard.                                            |                                                      |                                   | (M) DEVICE_USERNAME_HERE                    |                                        |
+ |                       | password               | Password for device in ThingsBoard.                                            |                                                      |                                   | (M) DEVICE_PASSWORD_HERE                    |                                        |
+ |                       | hash                   | Public key X509 hash for device in ThingsBoard.                                |                                                      |                                   |                                             | (M) MIIB……..AQAB                       |
+ |                       | (O) Optional, (M) Must |
+ */
 typedef struct tbc_provison_config
 {
   tbc_provison_type_t provisionType; // Generates/Supplies credentials type. // Hardcode or device profile.
@@ -159,10 +180,15 @@ typedef struct tbc_provison_config
   const char *hash;      // Public key X509 hash for device     // Public key X509.    Each device is different.
 } tbc_provison_config_t;
 
-typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client, void *context,
-                                              int request_id, const tbc_transport_credentials_config_t *credentials); /*, tbcmh_provision_params_t *params*/
-typedef void (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *context,
-                                             int request_id); /*, tbcmh_provision_params_t *params*/
+typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
+                                void *context,// uint32_t request_id,
+                                const tbc_transport_credentials_config_t *credentials);
+// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
+//      Caller (TBCMH library) will process other attributes request timeout.
+// return 0/ESP_OK on success
+// return -1/ESP_FAIL on failure
+typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client,
+                                void *context); //, uint32_t request_id
 
 //====9.Firmware/Software update=======================================================================================
 /**
@@ -174,131 +200,122 @@ typedef enum
   TBCMH_OTAUPDATE_TYPE_SW      /*!< S/W OTA update */
 } tbcmh_otaupdate_type_t;
 
-// Don't call TBCMH API in these callback!
-typedef const char *(*tbcmh_otaupdate_on_get_current_ota_title_t)(tbcmh_handle_t client, void *context);
-typedef const char *(*tbcmh_otaupdate_on_get_current_ota_version_t)(tbcmh_handle_t client, void *context);
-// return 1 on negotiate successful(next to F/W OTA), -1/ESP_FAIL on negotiate failure, 0/ESP_OK on already updated!
-typedef tbc_err_t (*tbcmh_otaupdate_on_negotiate_t)(tbcmh_handle_t client, void *context,
-                                                    const char *ota_title, const char *ota_version, int ota_size,
-                                                    const char *ota_checksum, const char *ota_checksum_algorithm,
-                                                    char *ota_error, int error_size);
-// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_otaupdate_on_write_t)(tbcmh_handle_t client, void *context,
-                                                int request_id, int chunk_id /*current chunk_id*/, const void *ota_data, int data_size,
-                                                char *ota_error, int error_size);
-// return 0/ESP_OK on successful, -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbcmh_otaupdate_on_end_t)(tbcmh_handle_t client, void *context,
-                                              int request_id, int chunk_id,
-                                              char *ota_error, int error_size);
-typedef void (*tbcmh_otaupdate_on_abort_t)(tbcmh_handle_t client, void *context,
-                                           int request_id, int chunk_id /*current chunk_id*/);
+// Don't call TBCMH API in this callback!
+typedef const char *(*tbcmh_otaupdate_on_get_current_title_t)(void *context);
+
+// Don't call TBCMH API in this callback!
+typedef const char *(*tbcmh_otaupdate_on_get_current_version_t)(void *context);
+
+// Don't call TBCMH API in this callback!
+typedef void        (*tbcmh_otaupdate_on_updated_t)(void *context, bool result);
 
 //====0.tbcm client====================================================================================================
-/**
- * ThingsBoard Client transport easy config.
- *
- */
-// TODO: move to tbc_transport_config.c/h
-typedef struct
-{
-  const char *uri;             /*!< Complete MQTT broker URI */
-  const char *access_token;    /*!< Access Token */
-  const bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
-} tbc_transport_config_esay_t;
-
-tbcmh_handle_t tbcmh_init(void);
-void tbcmh_destroy(tbcmh_handle_t client_);
-bool tbcmh_connect(tbcmh_handle_t client_, const tbc_transport_config_esay_t *config,
-                   void *context,
-                   tbcmh_on_connected_t on_connected,
-                   tbcmh_on_disconnected_t on_disconnected);
-bool tbcmh_connect_ex(tbcmh_handle_t client_, const tbc_transport_config_t *config,
-                      void *context,
-                      tbcmh_on_connected_t on_connected,
-                      tbcmh_on_disconnected_t on_disconnected);
-
-void tbcmh_disconnect(tbcmh_handle_t client_);
-bool tbcmh_is_connected(tbcmh_handle_t client_);
-bool tbcmh_has_events(tbcmh_handle_t client_);
-void tbcmh_run(tbcmh_handle_t client_); // loop()/checkTimeout(), recv/parse/sendqueue/ack...
-tbc_err_t tbcmh_subscribe(tbcmh_handle_t client_, const char *topic);
+tbcmh_handle_t tbcmh_init();
+void tbcmh_destroy(tbcmh_handle_t client);
+bool tbcmh_connect_using_url(tbcmh_handle_t client,
+                                const tbc_transport_config_esay_t *config,
+                                uint32_t function, void *context,
+                                tbcmh_on_connected_t on_connected,
+                                tbcmh_on_disconnected_t on_disconnected);
+bool tbcmh_connect(tbcmh_handle_t client,
+                                const tbc_transport_config_t *config,
+                                uint32_t function, void *context,
+                                tbcmh_on_connected_t on_connected,
+                                tbcmh_on_disconnected_t on_disconnected);
+void tbcmh_disconnect(tbcmh_handle_t client);
+bool tbcmh_is_connected(tbcmh_handle_t client);
+bool tbcmh_has_events(tbcmh_handle_t client);
+void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout, recv/parse/sendqueue/ack...
 
 //====10.Publish Telemetry time-series data==============================================================================
-tbc_err_t tbcmh_telemetry_append(tbcmh_handle_t client_, const char *key, void *context, tbcmh_tsdata_on_get_t on_get);
-tbc_err_t tbcmh_telemetry_clear(tbcmh_handle_t client_, const char *key);
-tbc_err_t tbcmh_telemetry_send(tbcmh_handle_t client_, int count, /*const char *key,*/...);
+int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
+                            int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+                              int qos/*= 1*/, int retain/*= 0*/);
 
 //====20.Publish client-side device attributes to the server============================================================
-tbc_err_t tbcmh_clientattribute_append(tbcmh_handle_t client_, const char *key, void *context,
-                                       tbcmh_clientattribute_on_get_t on_get);
-tbc_err_t tbcmh_clientattribute_with_set_append(tbcmh_handle_t client_, const char *key, void *context,
-                                                tbcmh_clientattribute_on_get_t on_get,
-                                                tbcmh_clientattribute_on_set_t on_set);
-tbc_err_t tbcmh_clientattribute_clear(tbcmh_handle_t client_, const char *key);
-tbc_err_t tbcmh_clientattribute_send(tbcmh_handle_t client_, int count, /*const char *key,*/...);
+int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
+                                 int qos /*= 1*/, int retain /*= 0*/);
+int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+                                    int qos/*= 1*/, int retain/*= 0*/);
 
 //====21.Subscribe to shared device attribute updates from the server===================================================
-tbc_err_t tbcmh_sharedattribute_append(tbcmh_handle_t client_, const char *key, void *context,
-                                       tbcmh_sharedattribute_on_set_t on_set);  // Call it before connect()
-tbc_err_t tbcmh_sharedattribute_clear(tbcmh_handle_t client_, const char *key); // remove shared_attribute from tbcmh_shared_attribute_list_t
+tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, /*const char *key,*/...);
+tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, const char *key[]);
+tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
+                                        int attributes_subscribe_id);
 
 //====22.Request client-side or shared device attributes from the server================================================
-int tbcmh_attributesrequest_send(tbcmh_handle_t client_,
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributesrequest_on_response_t on_response,
                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
-                                 int count, /*const char *key,*/...); //return request_id on successful, otherwise return -1
+                                 const char *client_keys, const char *shared_keys);
+tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
+                                 void *context,
+                                 tbcmh_attributesrequest_on_response_t on_response,
+                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...);
+tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
+                                 void *context,
+                                 tbcmh_attributesrequest_on_response_t on_response,
+                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 int count, /*const char *key,*/...);
 
 //====30.Server-side RPC================================================================================================
-tbc_err_t tbcmh_serverrpc_append(tbcmh_handle_t client_, const char *method,
-                                 void *context,
-                                 tbcmh_serverrpc_on_request_t on_request); //Call it before connect()
-tbc_err_t tbcmh_serverrpc_clear(tbcmh_handle_t client_, const char *method); //remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+//Call it before tbcmh_connect()
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
+                                const char *method, void *context,
+                                tbcmh_serverrpc_on_request_t on_request);
+//remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method);
 
 //====31.Client-side RPC================================================================================================
-// free params by caller/(user code)!
-int tbcmh_clientrpc_of_oneway_request(tbcmh_handle_t client_, const char *method, /*const*/ tbcmh_rpc_params_t *params);//add list
-// free params by caller/(user code)!
-int tbcmh_clientrpc_of_twoway_request(tbcmh_handle_t client_, const char *method, /*const*/ tbcmh_rpc_params_t *params,
-                                      void *context,
-                                      tbcmh_clientrpc_on_response_t on_response,
-                                      tbcmh_clientrpc_on_timeout_t on_timeout); //create to add to LIST_ENTRY(tbcmh_clientrpc_)
+// free `params` by caller/(user code)!
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client,
+                                const char *method, /*const*/ tbcmh_rpc_params_t *params);
+
+// free `params` by caller/(user code)!
+// create to add to LIST_ENTRY(tbcmh_clientrpc_)
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client,
+                                const char *method, /*const*/ tbcmh_rpc_params_t *params,
+                                void *context,
+                                tbcmh_clientrpc_on_response_t on_response,
+                                tbcmh_clientrpc_on_timeout_t on_timeout);
 
 //====40.Claiming device using device-side key scenario============================================
-tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client_,
-                                                      const char *secret_key, uint32_t *duration_ms);
+tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
+                                const char *secret_key, uint32_t *duration_ms);
 
 //====50.Device provisioning=======================================================================
-// return request_id or ESP_FAIL
-int tbcmh_provision_request(tbcmh_handle_t client_,
-                            const tbc_provison_config_t *config,
-                            void *context,
-                            tbcmh_provision_on_response_t on_response,
-                            tbcmh_provision_on_timeout_t on_timeout);
+//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
+                                const tbc_provison_config_t *config,
+                                void *context,
+                                tbcmh_provision_on_response_t on_response,
+                                tbcmh_provision_on_timeout_t on_timeout);
 
 //====60.Firmware update================================================================================================
-/**
- * ThingsBoard MQTT Client Helper F/W update OTA config
- */
-typedef struct tbcmh_otaupdate_config
-{
-  tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-  int chunk_size;                  /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
-
-  void *context;
-  tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
-  tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
-
-  tbcmh_otaupdate_on_negotiate_t on_ota_negotiate; /*!< callback of F/W or S/W OTA attributes */
-  tbcmh_otaupdate_on_write_t on_ota_write;         /*!< callback of F/W or S/W OTA doing */
-  tbcmh_otaupdate_on_end_t on_ota_end;             /*!< callback of F/W or S/W OTA success & end*/
-  tbcmh_otaupdate_on_abort_t on_ota_abort;         /*!< callback of F/W or S/W OTA failure & abort */
-
-  ////bool is_first_boot;            /*!< whether first boot after ota update  */
-} tbcmh_otaupdate_config_t;
-
-tbc_err_t tbcmh_otaupdate_append(tbcmh_handle_t client_, const char *ota_description, const tbcmh_otaupdate_config_t *config);
-tbc_err_t tbcmh_otaupdate_clear(tbcmh_handle_t client_, const char *ota_description);
+// Call it before tbcmh_connect()
+tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
+                const char *ota_description,  // TODO: remove it!
+                tbcmh_otaupdate_type_t ota_type,
+                void *context_user,
+                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                tbcmh_otaupdate_on_updated_t on_updated);
+tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description);
 
 #ifdef __cplusplus
 }

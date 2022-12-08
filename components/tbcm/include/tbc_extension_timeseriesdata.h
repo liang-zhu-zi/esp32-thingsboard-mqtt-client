@@ -1,0 +1,51 @@
+// Copyright 2022 liangzhuzhi2020@gmail.com, https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// This file is called by user.
+
+#ifndef _TBC_EXTENSION_TIMESERIESDATA_H_
+#define _TBC_EXTENSION_TIMESERIESDATA_H_
+
+#include "tbc_utils.h"
+#include "tbc_mqtt_helper.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Get value of telemetry time-series data
+// Don't call TBCMH API in this callback!
+// Caller (TBCE library) of this callback will release memory of the return value
+typedef tbcmh_value_t* (*tbce_timeseriesdata_on_get_t)(void *context);
+
+typedef struct tbce_timeseriesdata* tbce_timeseriesdata_handle_t;
+
+tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
+void                         tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t telemetry);
+
+tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t telemetry,
+                                        const char *key,
+                                        void *context,
+                                        tbce_timeseriesdata_on_get_t on_get);
+tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t telemetry,
+                                        const char *key);
+tbc_err_t tbce_timeseriesdata_upload(tbce_timeseriesdata_handle_t telemetry,
+                                        tbcmh_handle_t client,
+                                        int count, /*const char *key,*/...);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
+
+#endif
