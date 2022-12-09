@@ -453,10 +453,11 @@ static int __parse_provision_response(const tbcmh_provision_results_t *results,
 }
 
 //on response.
-void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object)
+void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id,
+                                        const tbcmh_provision_results_t *provision_results)
 {
      TBC_CHECK_PTR(client);
-     TBC_CHECK_PTR(object);
+     TBC_CHECK_PTR(provision_results);
 
      // Take semaphore
      // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
@@ -493,7 +494,7 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, 
 
      // Do response - parse results of provision response
      tbc_transport_credentials_config_t credentials = {0};
-     int result = __parse_provision_response(object, &credentials);
+     int result = __parse_provision_response(provision_results, &credentials);
      if (result == ESP_OK) {
          provision->on_response(provision->client, provision->context,
                                 &credentials); //provision->request_id,

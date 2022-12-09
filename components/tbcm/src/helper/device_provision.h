@@ -52,7 +52,7 @@ void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client);
 void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client);
 void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client);
 void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, const cJSON *object);
+void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, const tbcmh_provision_results_t *provision_results);
 void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus

@@ -57,7 +57,6 @@ static tbc_err_t _attributesrequest_destroy(attributesrequest_t *attributesreque
     return ESP_OK;
 }
 
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributes_on_response_t on_response,

@@ -169,12 +169,6 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
     return ESP_OK;
 }
 
-// TODO: !!!!!!Call it before connect()????
-// tbcmh_otaupdate_type_t ota_type; /*!< FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW  */
-// uint32_t chunk_size;             /*!< chunk_size, eg: 8192. 0 to get all F/W or S/W by request  */
-// void *context;
-// tbcmh_otaupdate_on_get_current_ota_title_t on_get_current_ota_title;     /*!< callback of getting current F/W or S/W OTA title */
-// tbcmh_otaupdate_on_get_current_ota_version_t on_get_current_ota_version; /*!< callback of getting current F/W or S/W OTA version */
 tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
                 const char *ota_description,  // TODO: remove it!
                 tbcmh_otaupdate_type_t ota_type,

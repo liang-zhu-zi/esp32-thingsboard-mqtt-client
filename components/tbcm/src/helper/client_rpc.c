@@ -66,7 +66,7 @@ static tbc_err_t _clientrpc_destroy(clientrpc_t *clientrpc)
 //add list
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client, const char *method,
-                                                           /*const*/ tbcmh_rpc_params_t *params)
+                                        const tbcmh_rpc_params_t *params)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(method, ESP_FAIL);
@@ -110,10 +110,10 @@ tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client, const char *meth
 //create to add to LIST_ENTRY(tbcmh_clientrpc_)
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client, const char *method, 
-                                                           /*const*/ tbcmh_rpc_params_t *params,
-                                                           void *context,
-                                                           tbcmh_clientrpc_on_response_t on_response,
-                                                           tbcmh_clientrpc_on_timeout_t on_timeout)
+                                       const tbcmh_rpc_params_t *params,
+                                       void *context,
+                                       tbcmh_clientrpc_on_response_t on_response,
+                                       tbcmh_clientrpc_on_timeout_t on_timeout)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(method, ESP_FAIL);

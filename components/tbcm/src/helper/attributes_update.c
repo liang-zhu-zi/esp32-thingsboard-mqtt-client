@@ -25,23 +25,6 @@
 
 static const char *TAG = "ATTRIBUTES_UPDATE";
 
-/**
- * @brief Client to send a 'Attributes' publish message to the broker
- *
- * Notes:
- * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
- * - A ThingsBoard MQTT Protocol message example:
- *      Topic: 'v1/devices/me/attributes'
- *      Data:  '{"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73}'
- *
- * @param attributes    attributes. example: {"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73} (字符串要符合 json 数据格式)
- * @param qos           qos of publish message
- * @param retain        ratain flag
- *
- * @return message_id of the subscribe message on success
- *         0 if cannot publish
- *        -1 if error
- */
 int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
                                          int qos /*= 1*/, int retain /*= 0*/)
 {
@@ -62,23 +45,6 @@ int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
     return msg_id;
 }
 
- /**
-  * @brief Client to send a 'Attributes' publish message to the broker
-  *
-  * Notes:
-  * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
-  * - A ThingsBoard MQTT Protocol message example:
-  *      Topic: 'v1/devices/me/attributes'
-  *      Data:  '{"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73}'
-  *
-  * @param attributes    attributes. example: {"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73} (字符串要符合 json 数据格式)
-  * @param qos           qos of publish message
-  * @param retain        ratain flag
-  *
-  * @return message_id of the subscribe message on success
-  *         0 if cannot publish
-  *        -1 if error
-  */
 int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
                               int qos/*= 1*/, int retain/*= 0*/)
 {

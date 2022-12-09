@@ -36,7 +36,7 @@ void tb_claiming_device_using_device_side_key(tbcmh_handle_t client,
     const char *secret_key = MY_SECRET_KEY;
     uint32_t duration_ms = MY_DURATION_MS;
     ESP_LOGI(TAG, "Claiming device using device-side key... secretKey=%s, durationMs=%d", secret_key, duration_ms);
-    tbcmh_claiming_device_using_device_side_key(client, secret_key, &duration_ms);
+    tbcmh_claiming_device_initiate_using_device_side_key(client, secret_key, &duration_ms);
 }
 
 /*!< Callback of connected ThingsBoard MQTT */

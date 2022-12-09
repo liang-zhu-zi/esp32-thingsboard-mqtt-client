@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-//====0.tbcm client====================================================================================================
+//====0.tbcm client======================================================================
 /**
  * ThingsBoard MQTT Client Helper handle
  */
@@ -135,9 +135,9 @@ typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);
  */
 typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
 
-//====1.telemetry time-series data=====================================================================================
-//====2.client-side attribute==========================================================================================
-//====3.subscriebe shared attributes update ===============================================================================
+//====1.telemetry time-series data=======================================================
+//====2.client-side attribute============================================================
+//====3.subscriebe shared attributes update =============================================
 
 /**
  * @brief  Callback function when shared attributes update is received 
@@ -161,7 +161,7 @@ typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
 typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
                                          void *context, const cJSON *object);
 
-//====4.attributes request for client-side_attributes & shared attributes ================================================
+//====4.attributes request for client-side_attributes & shared attributes ===============
 /**
  * @brief  Callback function when client-side_attributes & shared attributes response is received 
  * from ThingsBoard IoT platform
@@ -184,9 +184,9 @@ typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
  *         0 on otherwise
  */ // TODO: remove retrn-value-1
 typedef void (*tbcmh_attributes_on_response_t)(tbcmh_handle_t client,
-                                         void *context,
-                                         const cJSON *client_attributes,
-                                         const cJSON *shared_attributes);
+                                        void *context,
+                                        const cJSON *client_attributes,
+                                        const cJSON *shared_attributes);
 
 /**
  * @brief  Callback function when client-side_attributes & shared attributes response is timeout 
@@ -209,7 +209,7 @@ typedef void (*tbcmh_attributes_on_response_t)(tbcmh_handle_t client,
 typedef int (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
                                         void *context);
 
-//====5.Server-side RPC================================================================================================
+//====5.Server-side RPC==================================================================
 
 /**
  * @brief  Callback function when server-side RPC is received from ThingsBoard IoT platform
@@ -231,10 +231,10 @@ typedef int (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
  *              Free rpc_results by caller/(this library)
  */
 typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client,
-                                void *context, uint32_t request_id,
-                                const char *method, const tbcmh_rpc_params_t *rpc_params);
+                                        void *context, uint32_t request_id,
+                                        const char *method, const tbcmh_rpc_params_t *rpc_params);
 
-//====6.Client-side RPC================================================================================================
+//====6.Client-side RPC==================================================================
 /**
  * @brief  Callback function when two-way client-side RPC response is received 
  * from ThingsBoard IoT platform
@@ -256,8 +256,8 @@ typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t clie
  *         0 on otherwise
  */
 typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
-                                void *context,
-                                const char *method, const tbcmh_rpc_results_t *results);
+                                        void *context,
+                                        const char *method, const tbcmh_rpc_results_t *results);
 
 /**
  * @brief  Callback function when two-way client-side RPC response is timeout 
@@ -278,12 +278,12 @@ typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
  *         -1/ESP_FAIL on failure
  */
 typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
-                                void *context,
-                                const char *method);
+                                        void *context,
+                                        const char *method);
 
-//====7.Claiming device using device-side key scenario============================================
+//====7.Claiming device using device-side key scenario===================================
 
-//====8.Device provisioning=======================================================================
+//====8.Device provisioning==============================================================
 
 /**
  * @brief  Callback function when provision response is received 
@@ -301,8 +301,8 @@ typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
  *
  */
 typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
-                                void *context,
-                                const tbc_transport_credentials_config_t *credentials);
+                                        void *context,
+                                        const tbc_transport_credentials_config_t *credentials);
 
 /**
  * @brief  Callback function when provision response is timeout 
@@ -325,7 +325,7 @@ typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
  */
 typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *context);
 
-//====9.Firmware/Software update=======================================================================================
+//====9.Firmware/Software update=========================================================
 
 /**
  * @brief  Callback function of get current F/W or S/W title
@@ -369,112 +369,412 @@ typedef const char* (*tbcmh_otaupdate_on_get_current_version_t)(void *context);
  */
 typedef void (*tbcmh_otaupdate_on_updated_t)(void *context, bool result);
 
-//====0.tbcm client====================================================================================================
-tbcmh_handle_t tbcmh_init();
+//====0.tbcm client======================================================================
+/**
+ * @brief creates ThingsBoard client mqtt handle
+ *
+ *
+ * @return tbcmh_handle_t if successfully created, NULL on error
+ */
+tbcmh_handle_t tbcmh_init(void);
+
+/**
+ * @brief destroys ThingsBoard client mqtt handle
+ *
+ *
+ * @param client   ThingsBoard MQTT Client Helper handle
+ *
+ */
 void tbcmh_destroy(tbcmh_handle_t client);
+
+/**
+ * @brief connects to ThingsBoard Platform
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ * @param config    esay transport configuration
+ * @param context    
+ * @param on_connected    callback of connected
+ * @param on_disconnected callback of disconnected   
+ *
+ * @return true on successful, faiure on failure
+ */
 bool tbcmh_connect_using_url(tbcmh_handle_t client,
                                 const tbc_transport_config_esay_t *config,
                                 void *context,
                                 tbcmh_on_connected_t on_connected,
                                 tbcmh_on_disconnected_t on_disconnected);
+
+/**
+ * @brief connects to ThingsBoard Platform
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ * @param config    transport configuration
+ * @param context    
+ * @param on_connected    callback of connected
+ * @param on_disconnected callback of disconnected   
+ *
+ * @return true on successful, false on failure
+ */
 bool tbcmh_connect(tbcmh_handle_t client,
                                 const tbc_transport_config_t *config,
                                 void *context,
                                 tbcmh_on_connected_t on_connected,
                                 tbcmh_on_disconnected_t on_disconnected);
+
+/**
+ * @brief disconnects from ThingsBoard Platform
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ *
+ */
 void tbcmh_disconnect(tbcmh_handle_t client);
+
+/**
+ * @brief Is it connected to ThingsBoard Platform
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ *
+ * @return true on connected, false on otherwise
+ */
 bool tbcmh_is_connected(tbcmh_handle_t client);
+
+/**
+ * @brief Has it events in event queue?
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ *
+ * @return true or false
+ */
 bool tbcmh_has_events(tbcmh_handle_t client);
-void tbcmh_run(tbcmh_handle_t client); // loop()/checkTimeout, recv/parse/sendqueue/ack...
 
-//====10.Publish Telemetry time-series data==============================================================================
+/**
+ * @brief Has it events in event queue?
+ *
+ * @param client    ThingsBoard MQTT Client Helper handle
+ *
+ * Notes:
+ * - receive events from queue, then parse and deal.
+ *
+ */
+void tbcmh_run(tbcmh_handle_t client);
+
+//====10.Publish Telemetry time-series data==============================================
+/**
+ * @brief Publish telemetry data to ThingsBoard platform
+ *
+ * Notes:
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/devices/me/telemetry'
+ *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
+ *
+ * @param client     ThingsBoard MQTT Client Helper handle
+ * @param telemetry  telemetry. example: {"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}, (字符串要符合 json 数据格式)
+ * @param qos        qos of publish message, 0 or 1
+ * @param retain     ratain flag
+ *
+ * @return message_id of the publish message (for QoS 0 message_id will always be zero) on success.
+ *         0 if cannot publish
+ *        -1/ESP_FAIL on error
+ */
 int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
-                            int qos/*= 1*/, int retain/*= 0*/);
-int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, tbcmh_value_t *object,
-                              int qos/*= 1*/, int retain/*= 0*/);
+                                int qos/*= 1*/, int retain/*= 0*/);
 
-//====20.Publish client-side device attributes to the server============================================================
+/**
+ * @brief Publish telemetry data to ThingsBoard platform
+ *
+ * Notes:
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/devices/me/telemetry'
+ *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
+ *
+ * @param client     ThingsBoard MQTT Client Helper handle
+ * @param object     cJSON object or array of cJSON object
+ * @param qos        qos of publish message, 0 or 1
+ * @param retain     ratain flag
+ *
+ * @return message_id of the publish message (for QoS 0 message_id will always be zero) on success.
+ *         0 if cannot publish
+ *        -1/ESP_FAIL on error
+ */
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, const tbcmh_value_t *object,
+                                int qos/*= 1*/, int retain/*= 0*/);
+
+//====20.Publish client-side device attributes to the server=============================
+/**
+ * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/devices/me/attributes'
+ *      Data:  '{"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73}'
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param attributes    attributes. example: {"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73} (字符串要符合 json 数据格式)
+ * @param qos           qos of publish message
+ * @param retain        ratain flag
+ *
+ * @return message_id of the subscribe message on success
+ *         0 if cannot publish
+ *        -1 if error
+ */
 int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
-                                 int qos /*= 1*/, int retain /*= 0*/);
+                                int qos /*= 1*/, int retain /*= 0*/);
+
+/**
+ * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/devices/me/attributes'
+ *      Data:  '{"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73}'
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param attributes    attributes. example: {"attribute1":"value1", "attribute2":true, "attribute3":42.0, "attribute4":73} (字符串要符合 json 数据格式)
+ * @param qos           qos of publish message
+ * @param retain        ratain flag
+ *
+ * @return message_id of the subscribe message on success
+ *         0 if cannot publish
+ *        -1 if error
+ */
 int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
-                                    int qos/*= 1*/, int retain/*= 0*/);
+                                int qos/*= 1*/, int retain/*= 0*/);
 
-//====21.Subscribe to shared device attribute updates from the server===================================================
-tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
-                                        void *context,
-                                        tbcmh_attributes_on_update_t on_update,
-                                        int count, /*const char *key,*/...);
-tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
-                                        void *context,
-                                        tbcmh_attributes_on_update_t on_update,
-                                        int count, const char *key[]);
+//====21.Subscribe to shared device attribute updates from the server====================
+/**
+ * @brief Subscribe to shared device attribute updates from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param context
+ * @param on_update     calllback of shared device attributes update
+ * @param count         count of keys
+ * @param keys          keys of shared device attributes
+ * 
+ * @return subscribe_id on success
+ *         -1/ESP_FAIL on failure
+ */
+int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+                                void *context,
+                                tbcmh_attributes_on_update_t on_update,
+                                int count, /*const char *key,*/...);
+
+/**
+ * @brief Subscribe to shared device attribute updates from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param context
+ * @param on_update     calllback of shared device attributes update
+ * @param count         count of keys
+ * @param keys          array of shared device attributes
+ * 
+ * @return subscribe_id on success
+ *         -1/ESP_FAIL on failure
+ */
+int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client,
+                                void *context,
+                                tbcmh_attributes_on_update_t on_update,
+                                int count, const char *keys[]);
+
+/**
+ * @brief Unsubscribe to shared device attribute updates from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param subscribe_id  suscribe id
+ * 
+ * @return 0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
 tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
-                                        int attributes_subscribe_id);
+                                int subscribe_id);
 
-//====22.Request client-side or shared device attributes from the server================================================
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+//====22.Request client-side or shared device attributes from the server=================
+/**
+ * @brief Request client-side or shared device attributes from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param context
+ * @param on_response   calllback of device attributes response
+ * @param on_timeout    calllback of device attributes timeout event
+ * @param client_keys   client_keys, like "abc, efg, xyz"
+ * @param shared_keys   shared_keys, like "abc, efg, xyz"
+ * 
+ * @return 0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributes_on_response_t on_response,
                                  tbcmh_attributes_on_timeout_t on_timeout,
                                  const char *client_keys, const char *shared_keys);
+
+/**
+ * @brief Request client-side device attributes from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param context
+ * @param on_response   calllback of device attributes response
+ * @param on_timeout    calllback of device attributes timeout event
+ * @param client_keys   client_keys, like "abc, efg, xyz"
+ * 
+ * @return 0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributes_on_response_t on_response,
                                  tbcmh_attributes_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...);
+
+/**
+ * @brief Request shared device attributes from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param context
+ * @param on_response   calllback of device attributes response
+ * @param on_timeout    calllback of device attributes timeout event
+ * @param shared_keys   shared_keys, like "abc, efg, xyz"
+ * 
+ * @return 0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributes_on_response_t on_response,
                                  tbcmh_attributes_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...);
 
-//====30.Server-side RPC================================================================================================
-//Call it before tbcmh_connect()
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+//====30.Server-side RPC=================================================================
+/**
+ * @brief Subscribe to server-side RPC from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param method        RPC method name
+ * @param context
+ * @param on_request    calllback of server-side RPC request
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
 tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
                                 const char *method, void *context,
                                 tbcmh_serverrpc_on_request_t on_request);
-//remove from LIST_ENTRY(tbcmh_serverrpc_) & delete
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+
+/**
+ * @brief Subscribe to server-side RPC from the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param method        RPC method name
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
 tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method);
 
-//====31.Client-side RPC================================================================================================
-// free `params` by caller/(user code)!
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+//====31.Client-side RPC=================================================================
+/**
+ * @brief Send one-way client-side RPC request to the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param method        RPC method name
+ * @param params        RPC params
+ * 
+ * @return  0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client,
-                                const char *method, /*const*/ tbcmh_rpc_params_t *params);
+                                const char *method, const tbcmh_rpc_params_t *params);
 
-// free `params` by caller/(user code)!
-// create to add to LIST_ENTRY(tbcmh_clientrpc_)
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+/**
+ * @brief Send two-way client-side RPC request to the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param method        RPC method name
+ * @param params        RPC params
+ * @param context
+ * @param on_response   calllback of RPC response
+ * @param on_timeout    calllback of RPC timeout event
+ * 
+ * @return  0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client,
-                                const char *method, /*const*/ tbcmh_rpc_params_t *params,
+                                const char *method, const tbcmh_rpc_params_t *params,
                                 void *context,
                                 tbcmh_clientrpc_on_response_t on_response,
                                 tbcmh_clientrpc_on_timeout_t on_timeout);
 
-//====40.Claiming device using device-side key scenario============================================
-tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
+//====40.initiate claiming device using device-side key scenario=========================
+
+/**
+ * @brief Send message of initiate claiming device to the server
+ *
+ * Notes:
+ *      https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-scenarios
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param secret_key    adds security to the claiming process
+ * @param duration_ms   determines the expiration of claiming time
+ * 
+ * @return  0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
+tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(
+                                tbcmh_handle_t client,
                                 const char *secret_key, uint32_t *duration_ms);
 
-//====50.Device provisioning=======================================================================
-//return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
+//====50.Device provisioning=============================================================
+/**
+ * @brief Send device provisoning request to the server
+ *
+ * @param client        ThingsBoard MQTT Client Helper handle
+ * @param config
+ * @param context
+ * @param on_response   calllback of device provisoning response
+ * @param on_timeout    calllback of device provisoning timeout event
+ * 
+ * @return  0/ESP_OK on successful
+ *         -1/ESP_FAIL on otherwise
+ */
 tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
                                 const tbc_provison_config_t *config,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
                                 tbcmh_provision_on_timeout_t on_timeout);
 
-//====60.Firmware update================================================================================================
-// Call it before tbcmh_connect()
-tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
-                const char *ota_description,  // TODO: remove it!
-                tbcmh_otaupdate_type_t ota_type,
-                void *context_user,
-                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
-                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
-                tbcmh_otaupdate_on_updated_t on_updated);
+//====60.Firmware update=================================================================
+/**
+ * @brief Subscribe F/W or S/W OTA updates to the server
+ *
+ * @param client                    ThingsBoard MQTT Client Helper handle
+ * @param ota_description           descripion
+ * @param ota_type                  FW/TBCMH_OTAUPDATE_TYPE_FW or SW/TBCMH_OTAUPDATE_TYPE_SW
+ * @param context_user              context           
+ * @param on_get_current_title      callback of getting current F/W or S/W OTA title 
+ * @param on_get_current_version    callback of getting current F/W or S/W OTA version
+ * @param on_updated                callback of F/W or S/W upgrade completed or aborted
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
+                                const char *ota_description,  // TODO: remove it!
+                                tbcmh_otaupdate_type_t ota_type,
+                                void *context_user,
+                                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                                tbcmh_otaupdate_on_updated_t on_updated);
+
+/**
+ * @brief Unsubscribe F/W or S/W OTA updates from the server
+ *
+ * @param client                    ThingsBoard MQTT Client Helper handle
+ * @param ota_description           descripion, see ota_description param of tbcmh_otaupdate_subscribe()
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
 tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description);
 
 #ifdef __cplusplus
@@ -482,3 +782,4 @@ tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_des
 #endif //__cplusplus
 
 #endif
+

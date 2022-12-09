@@ -222,24 +222,7 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
      return result;
 }
 
-/**
- * @brief Subscribe the client to defined topic with defined qos
- *
- * Notes:
- * - Client must be connected to send subscribe message
- * - This API is could be executed from a user task or
- * from a mqtt event callback i.e. internal mqtt task
- * (API is protected by internal mutex, so it might block
- * if a longer data receive operation is in progress.
- *
- * @param client    mqtt client handle
- * @param topic
- * @param qos
- *
- * @return 0/ESP_OK on success
- *         -1/ESP_FAIL on failure
- */
-tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
+int tbcmh_attributes_subscribe(tbcmh_handle_t client,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
                                         int count, /*const char *key,*/...)
@@ -302,17 +285,13 @@ tbc_err_t tbcmh_attributes_subscribe(tbcmh_handle_t client,
 
     // Give semaphore
     xSemaphoreGive(client->_lock);
-    return ESP_OK;
+    return attributessubscribe->subscribe_id;
 }
 
-/*
- * @return 0/ESP_OK on success
- *         -1/ESP_FAIL on failure
- */
-tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
                                         void *context,
                                         tbcmh_attributes_on_update_t on_update,
-                                        int count, const char *key[])
+                                        int count, const char *keys[])
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
@@ -333,9 +312,9 @@ tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /
     }
     // Append key
     int i = 0;
-    for (i=0; key && i<count; i++) {
+    for (i=0; keys && i<count; i++) {
         // insert key to attributessubscribe
-        _subscribekey_list_append(&attributessubscribe->key_list, key[i]);
+        _subscribekey_list_append(&attributessubscribe->key_list, keys[i]);
     }
 
     bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
@@ -365,7 +344,7 @@ tbc_err_t tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /
 
     // Give semaphore
     xSemaphoreGive(client->_lock);
-    return ESP_OK;
+    return attributessubscribe->subscribe_id;
 }
 
 /**
@@ -401,7 +380,7 @@ tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client, int attributes_sub
     // Search item
     attributessubscribe_t *attributessubscribe = NULL, *next;
     LIST_FOREACH_SAFE(attributessubscribe, &client->attributessubscribe_list, entry, next) {
-         if (attributessubscribe && attributessubscribe->subscribe_id==attributes_subscribe_id) {
+         if (attributessubscribe && attributessubscribe->subscribe_id == attributes_subscribe_id) {
              // Remove form list
              LIST_REMOVE(attributessubscribe, entry);
              _attributessubscribe_destroy(attributessubscribe);

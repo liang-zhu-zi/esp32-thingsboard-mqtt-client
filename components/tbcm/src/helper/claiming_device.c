@@ -25,7 +25,7 @@ const static char *TAG = "claiming_device";
 //==== Claiming device using device-side key scenario =================================
 
 
-tbc_err_t tbcmh_claiming_device_using_device_side_key(tbcmh_handle_t client,
+tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(tbcmh_handle_t client,
                     const char *secret_key, uint32_t *duration_ms)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);

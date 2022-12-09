@@ -23,23 +23,6 @@
 
 static const char *TAG = "TELEMETRY_UPLOAD";
 
-/**
- * @brief Client to send a 'Telemetry' publish message to the broker
- *
- * Notes:
- * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
- * - A ThingsBoard MQTT Protocol message example:
- *      Topic: 'v1/devices/me/telemetry'
- *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
- *
- * @param telemetry  telemetry. example: {"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}, (字符串要符合 json 数据格式)
- * @param qos        qos of publish message
- * @param retain     ratain flag
- *
- * @return msg_id of the subscribe message on success
- *         0 if cannot publish
- *        -1/ESP_FAIL if error
- */
 int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
                             int qos/*= 1*/, int retain/*= 0*/)
 {
@@ -59,24 +42,7 @@ int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
     return msg_id;
 }
 
-/**
- * @brief Client to send a 'Telemetry' publish message to the broker
- *
- * Notes:
- * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
- * - A ThingsBoard MQTT Protocol message example:
- *      Topic: 'v1/devices/me/telemetry'
- *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
- *
- * @param object     cJSON object or array of object?
- * @param qos        qos of publish message
- * @param retain     ratain flag
- *
- * @return msg_id of the subscribe message on success
- *         0 if cannot publish
- *        -1/ESP_FAIL if error
- */
-int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, tbcmh_value_t *object,
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, const tbcmh_value_t *object,
                               int qos/*= 1*/, int retain/*= 0*/)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);

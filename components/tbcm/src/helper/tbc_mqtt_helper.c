@@ -45,13 +45,7 @@ uint32_t _tbcmh_get_request_id(tbcmh_handle_t client)
     return client->next_request_id;
 }
 
-/**
- * @brief Creates thingsboard client mqtt handle
- *
- *
- * @return tbcmh_handle_t if successfully created, NULL on error
- */
-tbcmh_handle_t tbcmh_init()
+tbcmh_handle_t tbcmh_init(void)
 {
      tbcmh_t *client = (tbcmh_t *)TBC_MALLOC(sizeof(tbcmh_t));
      if (!client) {
@@ -98,15 +92,6 @@ tbcmh_handle_t tbcmh_init()
      return client;
 }
 
-/**
- * @brief Destroys the client handle
- *
- * Notes:
- *  - Cannot be called from the mqtt event handler
- *
- * @param  client   ThingsBoard client MQTT handle
- *
- */
 void tbcmh_destroy(tbcmh_handle_t client)
 {
      if (!client) {
