@@ -30,35 +30,6 @@ extern "C" {
 #endif
 
 //====0.tbcm client====================================================================================================
-#define TBCMH_FUNCTION_TIMESERIES_DATA      0x00000001
-#define TBCMH_FUNCTION_ATTRIBUTES_REQUEST   0x00000002
-#define TBCMH_FUNCTION_ATTRIBUTES_UPDATE    0x00000004
-#define TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE 0x00000008
-#define TBCMH_FUNCTION_SERVER_RPC           0x00000010
-#define TBCMH_FUNCTION_CLIENT_RPC           0x00000020
-#define TBCMH_FUNCTION_CLAIMING_DEVICE      0x00000040
-#define TBCMH_FUNCTION_OTA_UPDATE           0x00000080
-
-#define TBCMH_FUNCTION_DEVICE_PROVISION     0x00001000
-
-#define TBCMH_FUNCTION_FULL_ATTRIBUTES      (TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE) //0x0000000E
-
-#define TBCMH_FUNCTION_FULL_OTA_UPDATE      (TBCMH_FUNCTION_TIMESERIES_DATA    | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
-                                             TBCMH_FUNCTION_OTA_UPDATE)        //0x0000008B
-
-#define TBCMH_FUNCTION_FULL_GENERAL         (TBCMH_FUNCTION_TIMESERIES_DATA    | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_REQUEST | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_UPDATE  | \
-                                             TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE  | \
-                                             TBCMH_FUNCTION_SERVER_RPC         | \
-                                             TBCMH_FUNCTION_CLIENT_RPC         | \
-                                             TBCMH_FUNCTION_CLAIMING_DEVICE    | \
-                                             TBCMH_FUNCTION_OTA_UPDATE)        // 0x000000FF
-
 /**
  * ThingsBoard MQTT Client Helper handle
  */
@@ -403,12 +374,12 @@ tbcmh_handle_t tbcmh_init();
 void tbcmh_destroy(tbcmh_handle_t client);
 bool tbcmh_connect_using_url(tbcmh_handle_t client,
                                 const tbc_transport_config_esay_t *config,
-                                uint32_t function, void *context,
+                                void *context,
                                 tbcmh_on_connected_t on_connected,
                                 tbcmh_on_disconnected_t on_disconnected);
 bool tbcmh_connect(tbcmh_handle_t client,
                                 const tbc_transport_config_t *config,
-                                uint32_t function, void *context,
+                                void *context,
                                 tbcmh_on_connected_t on_connected,
                                 tbcmh_on_disconnected_t on_disconnected);
 void tbcmh_disconnect(tbcmh_handle_t client);

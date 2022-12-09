@@ -56,7 +56,6 @@ typedef struct tbcmh_client
      QueueHandle_t _xQueue;
 
      // modify at connect & disconnect
-     uint32_t function;                      /*!< function modules used. TBCMH_FUNCTION_FULL_GENERAL, ... */
      tbc_transport_storage_t config;         // TODO: remove it???
      void *context;                          /*!< Context parameter of the below two callbacks */
      tbcmh_on_connected_t on_connected;      /*!< Callback of connected ThingsBoard MQTT */

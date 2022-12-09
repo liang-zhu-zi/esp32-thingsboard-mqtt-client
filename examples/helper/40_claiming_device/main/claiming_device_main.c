@@ -132,7 +132,7 @@ static void mqtt_app_start(void)
         .access_token = access_token,   /*!< ThingsBoard Access Token */
         .log_rxtx_package = true        /*!< print Rx/Tx MQTT package */
     };
-    bool result = tbcmh_connect_using_url(client, &config, TBCMH_FUNCTION_CLAIMING_DEVICE,
+    bool result = tbcmh_connect_using_url(client, &config,
                         NULL, tb_on_connected, tb_on_disconnected);
     if (!result) {
         ESP_LOGE(TAG, "failure to connect to tbcmh!");

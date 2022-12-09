@@ -150,13 +150,11 @@ void tbcmh_destroy(tbcmh_handle_t client)
  * Notes:
  *  - Cannot be called from the mqtt event handler
  *
- * @param  function                 function modules used. eg, TBCMH_FUNCTION_FULL_GENERAL,...
  *
  * @return trure
  *         false  on wrong connection
  */
 bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
-                        uint32_t function,
                         void *context,
                         tbcmh_on_connected_t on_connected,
                         tbcmh_on_disconnected_t on_disconnected)
@@ -197,7 +195,6 @@ bool tbcmh_connect(tbcmh_handle_t client, const tbc_transport_config_t* config,
     }
 
     // cache config & callback
-    client->function = function;
     tbc_transport_storage_fill_from_config(&client->config, config);
     client->context = context;
     client->on_connected = on_connected;       /*!< Callback of connected ThingsBoard MQTT */
@@ -275,7 +272,6 @@ static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
 }
 
 bool tbcmh_connect_using_url(tbcmh_handle_t client, const tbc_transport_config_esay_t *config,
-                   uint32_t function,
                    void *context,
                    tbcmh_on_connected_t on_connected,
                    tbcmh_on_disconnected_t on_disconnected)
@@ -310,7 +306,7 @@ bool tbcmh_connect_using_url(tbcmh_handle_t client, const tbc_transport_config_e
     transport.credentials.token = config->access_token;
     transport.credentials.type = TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN;
     transport.log_rxtx_package = config->log_rxtx_package;
-    result = tbcmh_connect(client, &transport, function, context, on_connected, on_disconnected);
+    result = tbcmh_connect(client, &transport, context, on_connected, on_disconnected);
 
 fail_exit:
     TBC_FIELD_FREE(address.schema);
@@ -390,33 +386,15 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
           return;
      }
 
-     // if (client->function & TBCMH_FUNCTION_TIMESERIES_DATA) {
-     //     _tbcmh_timeseriesdata_on_connected(client);
-     // }
-    if (client->function & TBCMH_FUNCTION_ATTRIBUTES_REQUEST) {
-        _tbcmh_attributesrequest_on_connected(client);
-    }
-    //if (client->function & TBCMH_FUNCTION_ATTRIBUTES_UPDATE) {
-    //    _tbcmh_clientattribute_on_connected(client);
-    //}
-    if (client->function & TBCMH_FUNCTION_ATTRIBUTES_SUBSCRIBE) {
-        _tbcmh_attributessubscribe_on_connected(client);
-    }
-    if (client->function & TBCMH_FUNCTION_SERVER_RPC) {
-        _tbcmh_serverrpc_on_connected(client);
-    }
-    if (client->function & TBCMH_FUNCTION_CLIENT_RPC) {
-        _tbcmh_clientrpc_on_connected(client);
-    }
-    if (client->function & TBCMH_FUNCTION_CLAIMING_DEVICE) {
-        _tbcmh_claimingdevice_on_connected(client);
-    }
-    if (client->function & TBCMH_FUNCTION_OTA_UPDATE) {
-        _tbcmh_otaupdate_on_connected(client);
-    }
-    if (client->function & TBCMH_FUNCTION_DEVICE_PROVISION) {
-        _tbcmh_deviceprovision_on_connected(client);
-    }
+     //_tbcmh_telemetry_on_connected(client);
+     _tbcmh_attributesrequest_on_connected(client);
+     //_tbcmh_clientattribute_on_connected(client);
+     _tbcmh_attributessubscribe_on_connected(client);
+     _tbcmh_serverrpc_on_connected(client);
+     _tbcmh_clientrpc_on_connected(client);
+     _tbcmh_claimingdevice_on_connected(client);
+     _tbcmh_otaupdate_on_connected(client);
+     _tbcmh_deviceprovision_on_connected(client);
 
      // clone parameter in lock/unlock
      void *context = client->context;
