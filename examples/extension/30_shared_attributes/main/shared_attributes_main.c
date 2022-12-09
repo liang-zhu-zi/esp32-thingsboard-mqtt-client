@@ -33,7 +33,7 @@ tbce_sharedattributes_handle_t _sharedattributes = NULL;
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 //      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
-//      the response callback of the attribute request - tbcmh_attributesrequest_on_response_t/on_response, will not be called.
+//      the response callback of the attribute request - tbcmh_attributes_on_response_t/on_response, will not be called.
 // return 1 if tbce_sharedattributes_unregister() is called.
 //      Caller (TBCMH library) will not update other shared attributes received this time.
 // return 0/ESP_OK on success

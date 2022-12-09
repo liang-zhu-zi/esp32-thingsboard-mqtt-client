@@ -37,8 +37,8 @@ typedef struct attributesrequest
      uint64_t timestamp;    /*!< time stamp at sending request */
 
      void *context;                                     /*!< Context of callback*/
-     tbcmh_attributesrequest_on_response_t on_response; /*!< Callback of dealing successful */
-     tbcmh_attributesrequest_on_timeout_t on_timeout;   /*!< Callback of response timeout */
+     tbcmh_attributes_on_response_t on_response; /*!< Callback of dealing successful */
+     tbcmh_attributes_on_timeout_t on_timeout;   /*!< Callback of response timeout */
 
      LIST_ENTRY(attributesrequest) entry;
 } attributesrequest_t;

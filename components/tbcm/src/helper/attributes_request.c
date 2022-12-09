@@ -27,8 +27,8 @@ const static char *TAG = "attributesrequest";
 /*!< Initialize attributesrequest */
 static attributesrequest_t *_attributesrequest_create(tbcmh_handle_t client,
                                                          uint32_t request_id, void *context,
-                                                         tbcmh_attributesrequest_on_response_t on_response,
-                                                         tbcmh_attributesrequest_on_timeout_t on_timeout)
+                                                         tbcmh_attributes_on_response_t on_response,
+                                                         tbcmh_attributes_on_timeout_t on_timeout)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_response, NULL);
 
@@ -60,8 +60,8 @@ static tbc_err_t _attributesrequest_destroy(attributesrequest_t *attributesreque
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
-                                 tbcmh_attributesrequest_on_response_t on_response,
-                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 tbcmh_attributes_on_response_t on_response,
+                                 tbcmh_attributes_on_timeout_t on_timeout,
                                  const char *client_keys, const char *shared_keys)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -130,8 +130,8 @@ attributesrequest_fail:
  //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
  tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
                                   void *context,
-                                  tbcmh_attributesrequest_on_response_t on_response,
-                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                  tbcmh_attributes_on_response_t on_response,
+                                  tbcmh_attributes_on_timeout_t on_timeout,
                                   int count, /*const char *key,*/...)
  {
       TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -231,8 +231,8 @@ attributesrequest_fail:
  //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
  tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
                                   void *context,
-                                  tbcmh_attributesrequest_on_response_t on_response,
-                                  tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                  tbcmh_attributes_on_response_t on_response,
+                                  tbcmh_attributes_on_timeout_t on_timeout,
                                   int count, /*const char *key,*/...)
  {
       TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
@@ -428,13 +428,13 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
      }
 
      // foreach item to set value of clientattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
-     int result = 0;
+     //int result = 0;
      cJSON *client_attributes = cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_CLIENT);
      // foreach item to set value of sharedattribute in lock/unlodk.  Don't call tbcmh's funciton in set value callback!
      cJSON *shared_attributes = cJSON_GetObjectItem(object, TB_MQTT_KEY_ATTRIBUTES_RESPONSE_SHARED);
 
      // Do response
-     if (result != 2 && attributesrequest->on_response) { // result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside _tbcmh_attributessubscribe_on_data() --> on_set()
+     if (attributesrequest->on_response) { //result != 2 &&  //result is equal to 2 if calling tbcmh_disconnect()/tbcmh_destroy() inside _tbcmh_attributessubscribe_on_data() --> on_set()
         attributesrequest->on_response(attributesrequest->client,
                             attributesrequest->context,
                             client_attributes, shared_attributes); //,attributesrequest->request_id

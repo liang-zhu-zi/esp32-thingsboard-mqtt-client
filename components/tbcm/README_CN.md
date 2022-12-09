@@ -1,18 +1,14 @@
 # Core Components - ESP32 ThingsBoard MQTT Client library
 
-[English](./README.md)
+* [English](./README.md)
 
 <https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client>
 
-一个使用 MQTT 协议连接到 ThingsBoard 物联网平台的 ESP32 库。
-
-对 ESP-MQTT 组件的简单包裹，可以在ESP-IDF和ESP-ADF下使用。
+一个使用 MQTT 协议连接到 ThingsBoard 物联网平台的 ESP32 库。它是对 ESP-MQTT 组件的简单包裹，可以在 ESP-IDF 和 ESP-ADF 下使用。
 
 当前客户端版本基于 ESP-IDF-v4.4.1，兼容 ThingsBoard 3.4.0 及更新版本。
 
-本组件模板基于 `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`。
-
-## Supported ThingsBoard Features
+## 支持的 ThingsBoard MQTT API 特性
 
 * [Telemetry data upload](https://thingsboard.io/docs/reference/mqtt-api/#telemetry-upload-api)
 * [Device attribute](https://thingsboard.io/docs/reference/mqtt-api/#attributes-api)

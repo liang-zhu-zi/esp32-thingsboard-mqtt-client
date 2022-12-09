@@ -37,7 +37,7 @@
     * [MQTTS (MQTT over TLS)](https://thingsboard.io/docs/user-guide/basic-mqtt/#mqtts-mqtt-over-tls)
   * [X.509 Certificate Based Authentication](https://thingsboard.io/docs/user-guide/certificates/)
 
-示例目路下提供所有特性的例子。
+示例路径下提供所有特性的例子。
 
 ## 如何使用
 

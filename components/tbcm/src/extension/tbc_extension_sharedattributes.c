@@ -368,8 +368,8 @@ tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t share
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
                                  void *context,
-                                 tbcmh_attributesrequest_on_response_t on_response,
-                                 tbcmh_attributesrequest_on_timeout_t on_timeout,
+                                 tbcmh_attributes_on_response_t on_response,
+                                 tbcmh_attributes_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
