@@ -4,11 +4,11 @@
 
 <https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client>
 
-A library for ESP32 to connect to ThingsBoard IoT platform using MQTT protocol.
+This library for ESP32 to connect to ThingsBoard IoT platform over MQTT protocol.
 
 Thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
 
-Current client version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard starting from version 3.4.0.
+Current version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard starting from version 3.4.0.
 
 This component template is based on `esp-idf-v4.4.1\components\esp_ipc` and `esp-idf-v4.4.1\components\esp_lcd`.
 

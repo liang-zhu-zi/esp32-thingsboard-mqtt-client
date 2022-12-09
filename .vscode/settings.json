@@ -16,7 +16,8 @@
         "client_rpc.h": "c",
         "tbc_utils.h": "c",
         "tbc_mqtt_wapper.h": "c",
-        "tbc_mqtt_helper.h": "c"
+        "tbc_mqtt_helper.h": "c",
+        "tbc_extension_timeseriesdata.h": "c"
     },
     "cmake.configureOnOpen": false,
     "esbonio.sphinx.confDir": ""

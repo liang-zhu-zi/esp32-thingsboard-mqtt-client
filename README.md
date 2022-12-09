@@ -1,15 +1,16 @@
+
+[![License](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](https://opensource.org/licenses/Apache-2.0)
+[![ESP32](https://img.shields.io/badge/ESP-32-green.svg?style=flat-square)](https://www.espressif.com/en/products/socs/esp32)
+[![GitHub stars](https://img.shields.io/github/stars/liang-zhu-zi/esp32-thingsboard-mqtt-client?style=flat&logo=github)](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/stargazers)
+[![GitHub release](https://img.shields.io/github/release/liang-zhu-zi/esp32-thingsboard-mqtt-client/all.svg?style=flat-square)](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/releases/)
+
 # ESP32 ThingsBoard MQTT Client library
 
 [中文](README_CN.md)
 
-A library for ESP32 to connect to ThingsBoard IoT platform using MQTT protocol.
+This library for ESP32 to connect to ThingsBoard IoT platform over MQTT protocol，thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
 
-Thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
-
-Current client version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard starting from version 3.4.0.
-
-* [Components](./components/tbcm)
-* [Examples](./examples)
+Current version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard IoT platform starting from version 3.4.0.
 
 ## Supported ThingsBoard Features
 
@@ -35,3 +36,47 @@ Current client version is based on ESP-IDF-v4.4.1, and is compatible with Things
     * [Authentication based on Client ID, Username and Password.](https://thingsboard.io/docs/user-guide/basic-mqtt/#authentication-based-on-client-id-username-and-password)
     * [MQTTS (MQTT over TLS)](https://thingsboard.io/docs/user-guide/basic-mqtt/#mqtts-mqtt-over-tls)
   * [X.509 Certificate Based Authentication](https://thingsboard.io/docs/user-guide/certificates/)
+
+Example implementations for all features can be found in the examples folder.
+
+## Installation
+
+* Git or download code of this library;
+* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`. `....` is path of this library, eg:
+  
+    ```CMake
+    cmake_minimum_required(VERSION 3.5)
+    
+    set(EXTRA_COMPONENT_DIRS ../../../components/tbcm)
+    
+    include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+    project(hello_world)
+    ```
+
+* Or modify your project's `Makefile`, insert this line `EXTRA_COMPONENT_DIRS := .../components/tbcm`. `....` is path of this library, eg:
+  
+    ```Makefile
+    PROJECT_NAME := hello_world
+    
+    EXTRA_COMPONENT_DIRS := ../../../components/tbcm
+    
+    include $(IDF_PATH)/make/project.mk
+    ```
+
+* Now, you can call API in [tbc_mqtt_helper.h](./components/tbcm/include/tbc_mqtt_helper.h), [tbc_extension_timeseriesdata.h](./components/tbcm/include/tbc_extension_timeseriesdata.h), [tbc_extension_clientattributes.h](./components/tbcm/include/tbc_extension_clientattributes.h) & [tbc_extension_sharedattributes.h](./components/tbcm/include/tbc_extension_sharedattributes.h).
+
+## Comeponent
+
+* [Components](./components/tbcm)
+
+## Examples
+
+The SDK comes with a number of example. See [here](./examples).
+
+## Have a question or proposal?
+
+You are welcomed in our [issues](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues).
+
+## Liense
+
+This code is released under the Apache-2.0 License.
