@@ -6,13 +6,13 @@
 
 # ESP32 ThingsBoard MQTT Client library
 
-[中文](README_CN.md)
+* [中文](README_CN.md)
 
-This library for ESP32 to connect to ThingsBoard IoT platform over MQTT protocol，thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
+This library for ESP32 to connect to ThingsBoard IoT platform over MQTT protocol, thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
 
 Current version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard IoT platform starting from version 3.4.0.
 
-## Supported ThingsBoard Features
+## Supported ThingsBoard MQTT API Features
 
 * [Telemetry data upload](https://thingsboard.io/docs/reference/mqtt-api/#telemetry-upload-api)
 * [Device attribute](https://thingsboard.io/docs/reference/mqtt-api/#attributes-api)
@@ -41,15 +41,15 @@ Example implementations for all features can be found in the examples folder.
 
 ## How to use
 
-[ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) is a [ESP-IDF](https://github.com/espressif/esp-idf) component.
+[ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) is a [ESP-IDF](https://github.com/espressif/esp-idf) component. Please refer to [ESP-IDF](https://github.com/espressif/esp-idf) for more usage instructions.
 
 * Git or download code of this library;
-* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， replace `....` with your library path,, eg:
+* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， replace `....` with your library path, eg:
 
     ```CMake
     cmake_minimum_required(VERSION 3.5)
     
-    set(EXTRA_COMPONENT_DIRS ../../../components/tbcm)
+    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcm)
     
     include($ENV{IDF_PATH}/tools/cmake/project.cmake)
     project(hello_world)
@@ -60,7 +60,7 @@ Example implementations for all features can be found in the examples folder.
     ```Makefile
     PROJECT_NAME := hello_world
     
-    EXTRA_COMPONENT_DIRS := ../../../components/tbcm
+    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcm
     
     include $(IDF_PATH)/make/project.mk
     ```
@@ -74,7 +74,7 @@ Example implementations for all features can be found in the examples folder.
 
 ## Comeponent
 
-For software design documents related to this library, see [here](./components/tbcm).
+For software design documents related to this library. See [here](./components/tbcm).
 
 ## Examples
 

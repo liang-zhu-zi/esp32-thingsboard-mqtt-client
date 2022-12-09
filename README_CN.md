@@ -6,7 +6,7 @@
 
 # ESP32 ThingsBoard MQTT Client library
 
-[English](README.md)
+* [English](README.md)
 
 一个使用 MQTT 协议连接到 ThingsBoard 物联网平台的 ESP32 库。它是对 ESP-MQTT 组件的简单包裹，可以在 ESP-IDF 和 ESP-ADF 下使用。
 
@@ -41,26 +41,26 @@
 
 ## 如何使用
 
-[ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) 是一个 [ESP-IDF](https://github.com/espressif/esp-idf) 组件.
+[ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) 是一个 [ESP-IDF](https://github.com/espressif/esp-idf) 组件。请参考[ESP-IDF](https://github.com/espressif/esp-idf)获取更多使用说明。
 
-* 用 Git 克隆本库的代码，或其接下载 Zip 压缩包划解压;
-* 修改你的项目的 `CMakeLists.txt` 文件, 插入一行 `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， 请用你本机上的本库路径替换 `....`。最后的结果类似:
+* 用 Git 克隆本库的代码，或其接下载 Zip 压缩包划解压。
+* 修改你的项目的 `CMakeLists.txt` 文件, 插入一行 `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， 请用你本机上的本库路径替换 `....`。最后的结果类似：
 
     ```CMake
     cmake_minimum_required(VERSION 3.5)
     
-    set(EXTRA_COMPONENT_DIRS ../../../components/tbcm)
+    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcm)
     
     include($ENV{IDF_PATH}/tools/cmake/project.cmake)
     project(hello_world)
     ```
 
-* 和/或修改你的项目的 `Makefile` 文件, 插入一行 `EXTRA_COMPONENT_DIRS := ..../components/tbcm`， 请用你本机上的本库路径替换 `....`。最后的结果类似:
+* 和/或修改你的项目的 `Makefile` 文件，插入一行 `EXTRA_COMPONENT_DIRS := ..../components/tbcm`，请用你本机上的本库路径替换 `....`。最后的结果类似：
 
     ```Makefile
     PROJECT_NAME := hello_world
     
-    EXTRA_COMPONENT_DIRS := ../../../components/tbcm
+    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcm
     
     include $(IDF_PATH)/make/project.mk
     ```
@@ -82,7 +82,7 @@
 
 ## 文档
 
-*即将提供...*
+*即将提供......*
 
 ## 问题或建议
 

@@ -1,6 +1,6 @@
 # Core Components - ESP32 ThingsBoard MQTT Client library
 
-[中文](./README_CN.md)
+* [中文](./README_CN.md)
 
 <https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client>
 
