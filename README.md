@@ -39,11 +39,13 @@ Current version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard I
 
 Example implementations for all features can be found in the examples folder.
 
-## Installation
+## How to use
+
+[ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) is a [ESP-IDF](https://github.com/espressif/esp-idf) component.
 
 * Git or download code of this library;
-* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`. `....` is path of this library, eg:
-  
+* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， replace `....` with your library path,, eg:
+
     ```CMake
     cmake_minimum_required(VERSION 3.5)
     
@@ -53,8 +55,8 @@ Example implementations for all features can be found in the examples folder.
     project(hello_world)
     ```
 
-* Or modify your project's `Makefile`, insert this line `EXTRA_COMPONENT_DIRS := .../components/tbcm`. `....` is path of this library, eg:
-  
+* And/or modify your project's `Makefile`, insert this line `EXTRA_COMPONENT_DIRS := ..../components/tbcm`, replace `....` with your library path, eg:
+
     ```Makefile
     PROJECT_NAME := hello_world
     
@@ -63,15 +65,24 @@ Example implementations for all features can be found in the examples folder.
     include $(IDF_PATH)/make/project.mk
     ```
 
-* Now, you can call API in [tbc_mqtt_helper.h](./components/tbcm/include/tbc_mqtt_helper.h), [tbc_extension_timeseriesdata.h](./components/tbcm/include/tbc_extension_timeseriesdata.h), [tbc_extension_clientattributes.h](./components/tbcm/include/tbc_extension_clientattributes.h) & [tbc_extension_sharedattributes.h](./components/tbcm/include/tbc_extension_sharedattributes.h).
+* Now, you can call API in
+  * [tbc_mqtt_helper.h](./components/tbcm/include/tbc_mqtt_helper.h)
+  * [tbc_extension.h](./components/tbcm/include/tbc_extension.h)
+    * [tbc_extension_timeseriesdata.h](./components/tbcm/include/tbc_extension_timeseriesdata.h)
+    * [tbc_extension_clientattributes.h](./components/tbcm/include/tbc_extension_clientattributes.h)
+    * [tbc_extension_sharedattributes.h](./components/tbcm/include/tbc_extension_sharedattributes.h)
 
 ## Comeponent
 
-* [Components](./components/tbcm)
+For software design documents related to this library, see [here](./components/tbcm).
 
 ## Examples
 
-The SDK comes with a number of example. See [here](./examples).
+This library comes with a number of example. See [here](./examples).
+
+## Documentation
+
+*Coming soon...*
 
 ## Have a question or proposal?
 
