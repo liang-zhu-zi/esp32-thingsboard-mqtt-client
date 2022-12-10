@@ -4,6 +4,6 @@
 #
 PROJECT_NAME := attributes_subscribe
 
-EXTRA_COMPONENT_DIRS = $(IDF_PATH)/examples/common_components/protocol_examples_common  ../../../components/tbcm
+EXTRA_COMPONENT_DIRS = $(IDF_PATH)/examples/common_components/protocol_examples_common  ../../../components/tbcmh
 
 include $(IDF_PATH)/make/project.mk

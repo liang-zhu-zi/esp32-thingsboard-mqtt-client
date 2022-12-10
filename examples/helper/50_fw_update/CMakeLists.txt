@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 
 # (Not part of the boilerplate)
 # This example uses an extra component for common functions such as Wi-Fi and Ethernet connection.
-set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common ../../../components/tbcm)
+set(EXTRA_COMPONENT_DIRS $ENV{IDF_PATH}/examples/common_components/protocol_examples_common ../../../components/tbcmh)
 
 set(PROJECT_VER "0.1.0.1")
 

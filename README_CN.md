@@ -44,37 +44,37 @@
 [ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) 是一个 [ESP-IDF](https://github.com/espressif/esp-idf) 组件。请参考[ESP-IDF](https://github.com/espressif/esp-idf)获取更多使用说明。
 
 * 用 Git 克隆本库的代码，或其接下载 Zip 压缩包划解压。
-* 修改你的项目的 `CMakeLists.txt` 文件, 插入一行 `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， 请用你本机上的本库路径替换 `....`。最后的结果类似：
+* 修改你的项目的 `CMakeLists.txt` 文件, 插入一行 `set(EXTRA_COMPONENT_DIRS ..../components/tbcmh)`， 请用你本机上的本库路径替换 `....`。最后的结果类似：
 
     ```CMake
     cmake_minimum_required(VERSION 3.5)
     
-    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcm)
+    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcmh)
     
     include($ENV{IDF_PATH}/tools/cmake/project.cmake)
     project(hello_world)
     ```
 
-* 和/或修改你的项目的 `Makefile` 文件，插入一行 `EXTRA_COMPONENT_DIRS := ..../components/tbcm`，请用你本机上的本库路径替换 `....`。最后的结果类似：
+* 和/或修改你的项目的 `Makefile` 文件，插入一行 `EXTRA_COMPONENT_DIRS := ..../components/tbcmh`，请用你本机上的本库路径替换 `....`。最后的结果类似：
 
     ```Makefile
     PROJECT_NAME := hello_world
     
-    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcm
+    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcmh
     
     include $(IDF_PATH)/make/project.mk
     ```
 
 * 现在，你可以使用以下文件内的API了：
-  * [tbc_mqtt_helper.h](./components/tbcm/include/tbc_mqtt_helper.h)
-  * [tbc_extension.h](./components/tbcm/include/tbc_extension.h)
-    * [tbc_extension_timeseriesdata.h](./components/tbcm/include/tbc_extension_timeseriesdata.h)
-    * [tbc_extension_clientattributes.h](./components/tbcm/include/tbc_extension_clientattributes.h)
-    * [tbc_extension_sharedattributes.h](./components/tbcm/include/tbc_extension_sharedattributes.h)
+  * [tbc_mqtt_helper.h](./components/tbcmh/include/tbc_mqtt_helper.h)
+  * [tbc_extension.h](./components/tbcmh/include/tbc_extension.h)
+    * [tbc_extension_timeseriesdata.h](./components/tbcmh/include/tbc_extension_timeseriesdata.h)
+    * [tbc_extension_clientattributes.h](./components/tbcmh/include/tbc_extension_clientattributes.h)
+    * [tbc_extension_sharedattributes.h](./components/tbcmh/include/tbc_extension_sharedattributes.h)
 
 ## 组件
 
-本库的软件设计文档，详见 [这里](./components/tbcm)。
+本库的软件设计文档，详见 [这里](./components/tbcmh)。
 
 ## 示例
 

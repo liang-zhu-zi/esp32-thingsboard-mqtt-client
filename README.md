@@ -44,37 +44,37 @@ Example implementations for all features can be found in the examples folder.
 [ESP32 ThingsBoard MQTT Client library](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client) is a [ESP-IDF](https://github.com/espressif/esp-idf) component. Please refer to [ESP-IDF](https://github.com/espressif/esp-idf) for more usage instructions.
 
 * Git or download code of this library;
-* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcm)`， replace `....` with your library path, eg:
+* Modify your project's `CMakeLists.txt`, insert this line `set(EXTRA_COMPONENT_DIRS ..../components/tbcmh)`， replace `....` with your library path, eg:
 
     ```CMake
     cmake_minimum_required(VERSION 3.5)
     
-    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcm)
+    set(EXTRA_COMPONENT_DIRS C:/esp32-thingsboard-mqtt-client/components/tbcmh)
     
     include($ENV{IDF_PATH}/tools/cmake/project.cmake)
     project(hello_world)
     ```
 
-* And/or modify your project's `Makefile`, insert this line `EXTRA_COMPONENT_DIRS := ..../components/tbcm`, replace `....` with your library path, eg:
+* And/or modify your project's `Makefile`, insert this line `EXTRA_COMPONENT_DIRS := ..../components/tbcmh`, replace `....` with your library path, eg:
 
     ```Makefile
     PROJECT_NAME := hello_world
     
-    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcm
+    EXTRA_COMPONENT_DIRS := C:/esp32-thingsboard-mqtt-client/components/tbcmh
     
     include $(IDF_PATH)/make/project.mk
     ```
 
 * Now, you can call API in
-  * [tbc_mqtt_helper.h](./components/tbcm/include/tbc_mqtt_helper.h)
-  * [tbc_extension.h](./components/tbcm/include/tbc_extension.h)
-    * [tbc_extension_timeseriesdata.h](./components/tbcm/include/tbc_extension_timeseriesdata.h)
-    * [tbc_extension_clientattributes.h](./components/tbcm/include/tbc_extension_clientattributes.h)
-    * [tbc_extension_sharedattributes.h](./components/tbcm/include/tbc_extension_sharedattributes.h)
+  * [tbc_mqtt_helper.h](./components/tbcmh/include/tbc_mqtt_helper.h)
+  * [tbc_extension.h](./components/tbcmh/include/tbc_extension.h)
+    * [tbc_extension_timeseriesdata.h](./components/tbcmh/include/tbc_extension_timeseriesdata.h)
+    * [tbc_extension_clientattributes.h](./components/tbcmh/include/tbc_extension_clientattributes.h)
+    * [tbc_extension_sharedattributes.h](./components/tbcmh/include/tbc_extension_sharedattributes.h)
 
 ## Comeponent
 
-For software design documents related to this library. See [here](./components/tbcm).
+For software design documents related to this library. See [here](./components/tbcmh).
 
 ## Examples
 
