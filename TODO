@@ -1,6 +1,7 @@
 # TODO List
 
 1. A new examples of all in one.
+1. rename device_provision.c/h to provision_request.c/h
 
 1. append some description for new API.
 
@@ -43,7 +44,7 @@ Provision 最多只有一个请求，不需要列表
 bool m_qos; // Wheter QoS level 1 should be enabled or disabled (Resends the packet until the message was received and a PUBACK packet was returned).
 
 // Enables mqtt quality of service for the given underlying MQTT connection.
- // See https://assetwolf.com/learn/mqtt-qos-understanding-quality-of-service for more information, on quality of service.
- inline void enableMQTTQoS(const bool& enableQoS) {
- m_qos = enableQoS;
- }
+// See https://assetwolf.com/learn/mqtt-qos-understanding-quality-of-service for more information, on quality of service.
+inline void enableMQTTQoS(const bool& enableQoS) {
+    m_qos = enableQoS;
+}

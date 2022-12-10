@@ -111,9 +111,9 @@ typedef enum
  * @brief  Callback of connected ThingsBoard IoT Platform
  *
  * Notes:
- * - If you call tbcmh_connect(), this callback function will be called
+ * - If you call tbcmh_connect(), this callback will be called
  *   when ThingsBoard IoT Platform is connected
- * - In this callback function: Subsribe shared attributes update or server-side RPC, send attribues request and ... 
+ * - In this callback: Subsribe shared attributes update or server-side RPC, send attribues request and ... 
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of tbcmh_connect()
  * @param context   context param
@@ -125,9 +125,9 @@ typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);
  * @brief  Callback of disconnected ThingsBoard IoT Platform
  *
  * Notes:
- * - If you call tbcmh_connect(), this callback function will be called
+ * - If you call tbcmh_connect(), this callback will be called
  *   when ThingsBoard IoT Platform is disconnected
- * - In this callback function: ... 
+ * - In this callback: ... 
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of tbcmh_connect()
  * @param context   context param
@@ -140,22 +140,22 @@ typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
 //====3.subscriebe shared attributes update =============================================
 
 /**
- * @brief  Callback function when shared attributes update is received 
+ * @brief  Callback when shared attributes update is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
  * - If you call tbcmh_attributes_subscribe() or tbcmh_attributes_subscribe_of_array(), 
- *   this callback function will be called when you receive shared attributes updates 
- * - Parse and deal received json object in this callback function
+ *   this callback will be called when you receive shared attributes updates 
+ * - Parse and deal received json object in this callback
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of tbcmh_attributes_subscribe()
  *                    or tbcmh_attributes_subscribe_of_array()
  * @param context   context param
  * @param object    shared attributes updated, possibly contains multiple shared attributes
  *
- * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
  *         1 if tbcmh_sharedattributes_unregister() or tbcmh_attributes_unsubscribe() 
- *              is called inside in this callback function
+ *              is called inside in this callback
  *         0 on otherwise
  */ // TODO: remove retrn-value-1
 typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
@@ -163,14 +163,14 @@ typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
 
 //====4.attributes request for client-side_attributes & shared attributes ===============
 /**
- * @brief  Callback function when client-side_attributes & shared attributes response is received 
+ * @brief  Callback when client-side_attributes & shared attributes response is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
  * - If you call tbcmh_attributes_request(), tbcmh_clientattributes_request() 
- *   or tbcmh_sharedattributes_request(), this callback function will be called
+ *   or tbcmh_sharedattributes_request(), this callback will be called
  *   when you receive client-side_attributes & shared attributes response
- * - Parse and deal received json object in this callback function
+ * - Parse and deal received json object in this callback
  *
  * @param client            ThingsBoard MQTT Client Helper handle. client param of tbcmh_attributes_request()
  *                              or tbcmh_clientattributes_request() or tbcmh_sharedattributes_request()
@@ -178,46 +178,43 @@ typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
  * @param client_attributes client-side attributes response, possibly contains multiple client-side attributes
  * @param shared_attributes shared attributes response, possibly contains multiple shared attributes
  *
- * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
- *         1 if tbcmh_sharedattributes_unregister() or tbcmh_attributes_unsubscribe() 
- *              is called inside in this callback function
- *         0 on otherwise
- */ // TODO: remove retrn-value-1
+ */
 typedef void (*tbcmh_attributes_on_response_t)(tbcmh_handle_t client,
                                         void *context,
                                         const cJSON *client_attributes,
                                         const cJSON *shared_attributes);
 
 /**
- * @brief  Callback function when client-side_attributes & shared attributes response is timeout 
+ * @brief  Callback when client-side_attributes & shared attributes response is timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
  * - When you call tbcmh_attributes_request(), tbcmh_clientattributes_request() 
- *   or tbcmh_sharedattributes_request(), this callback function will be called
+ *   or tbcmh_sharedattributes_request(), this callback will be called
  *   when client-side_attributes & shared attributes response is timeout
- * - Parse and deal timeout evennt in this callback function
+ * - Parse and deal timeout evennt in this callback
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of tbcmh_attributes_request()
  *                      or tbcmh_clientattributes_request() or tbcmh_sharedattributes_request()
  * @param context   context param 
  *
- * @return 2            if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
+ * @return 2            if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
  *         0/ESP_OK     on success
  *         -1/ESP_FAIL  on failure
  */
-typedef int (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
+typedef tbc_err_t (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
                                         void *context);
 
 //====5.Server-side RPC==================================================================
 
 /**
- * @brief  Callback function when server-side RPC is received from ThingsBoard IoT platform
+ * @brief  Callback when server-side RPC is received from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_serverrpc_subscribe(), this callback function will be called
+ * - If you call tbcmh_serverrpc_subscribe(), this callback will be called
  *   when you receive server-side RPC 
- * - Parse and deal received rpc_params in this callback function
+ * - Parse and deal received rpc_params in this callback
+ * - Free return value(rpc_results) by caller/(this library)!
  *
  * @param client     ThingsBoard MQTT Client Helper handle. client param of tbcmh_serverrpc_subscribe()
  * @param context    context param
@@ -228,7 +225,7 @@ typedef int (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
  * @return NULL if it is one-way server-side RPC without response.
  *              It MUST returns NULL if calling tbcmh_disconnect() or tbcmh_destroy() inside it!
  *         A rpc_results (cJSON object) if it is two-way server-side RPC with response,
- *              Free rpc_results by caller/(this library)
+ *              Free rpc_results by caller/(this library)!
  */
 typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client,
                                         void *context, uint32_t request_id,
@@ -236,13 +233,13 @@ typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t clie
 
 //====6.Client-side RPC==================================================================
 /**
- * @brief  Callback function when two-way client-side RPC response is received 
+ * @brief  Callback when two-way client-side RPC response is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_twoway_clientrpc_request(), this callback function will be called
+ * - If you call tbcmh_twoway_clientrpc_request(), this callback will be called
  *   when you receive client-side RPC response
- * - Parse and deal received rpc_results in this callback function
+ * - Parse and deal received rpc_results in this callback
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of 
  *                      tbcmh_twoway_clientrpc_request()
@@ -250,9 +247,9 @@ typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t clie
  * @param method     rpc method name
  * @param results    rpc results in client-side RPC response
  *
- * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
  *         1 if tbcmh_sharedattributes_unregister() or tbcmh_attributes_unsubscribe() 
- *              is called inside in this callback function
+ *              is called inside in this callback
  *         0 on otherwise
  */
 typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
@@ -260,20 +257,20 @@ typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
                                         const char *method, const tbcmh_rpc_results_t *results);
 
 /**
- * @brief  Callback function when two-way client-side RPC response is timeout 
+ * @brief  Callback when two-way client-side RPC response is timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_twoway_clientrpc_request(), this callback function will be called
+ * - If you call tbcmh_twoway_clientrpc_request(), this callback will be called
  *   when  client-side RPC response is timeout
- * - Parse and deal timeout event in this callback function
+ * - Parse and deal timeout event in this callback
  *
  * @param client    ThingsBoard MQTT Client Helper handle. client param of 
  *                      tbcmh_twoway_clientrpc_request()
  * @param context   context param 
  * @param method    rpc method name
  *
- * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
  *         0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
@@ -286,13 +283,13 @@ typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
 //====8.Device provisioning==============================================================
 
 /**
- * @brief  Callback function when provision response is received 
+ * @brief  Callback when provision response is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_deviceprovision_request(), this callback function will be called
+ * - If you call tbcmh_deviceprovision_request(), this callback will be called
  *   when you receive provision response
- * - Parse and deal received credentials in this callback function
+ * - Parse and deal received credentials in this callback
  *
  * @param client        ThingsBoard MQTT Client Helper handle. client param of 
  *                          tbcmh_deviceprovision_request()
@@ -305,20 +302,20 @@ typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
                                         const tbc_transport_credentials_config_t *credentials);
 
 /**
- * @brief  Callback function when provision response is timeout 
+ * @brief  Callback when provision response is timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_deviceprovision_request(), this callback function will be called
+ * - If you call tbcmh_deviceprovision_request(), this callback will be called
  *   when provision response is timeout
- * - Parse and deal timeout event in this callback function
+ * - Parse and deal timeout event in this callback
  *
  * @param client        ThingsBoard MQTT Client Helper handle. client param of 
  *                          tbcmh_deviceprovision_request()
  * @param context       context param 
  * @param credentials   it in received provision response
  *
- * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback function
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
  *         0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  *
@@ -328,10 +325,10 @@ typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *context
 //====9.Firmware/Software update=========================================================
 
 /**
- * @brief  Callback function of get current F/W or S/W title
+ * @brief  Callback of get current F/W or S/W title
  *
  * Notes:
- * - If you call tbcmh_otaupdate_subscribe(), this callback function will be called
+ * - If you call tbcmh_otaupdate_subscribe(), this callback will be called
  *   before sending F/W or S/W shared attributes request
  * - Don't call TBCMH API in this callback!
  *
@@ -342,10 +339,10 @@ typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *context
 typedef const char* (*tbcmh_otaupdate_on_get_current_title_t)(void *context);
 
 /**
- * @brief  Callback function of get current F/W or S/W version
+ * @brief  Callback of get current F/W or S/W version
  *
  * Notes:
- * - If you call tbcmh_otaupdate_subscribe(), this callback function will be called
+ * - If you call tbcmh_otaupdate_subscribe(), this callback will be called
  *   before sending F/W or S/W shared attributes request
  * - Don't call TBCMH API in this callback!
  *
@@ -356,10 +353,10 @@ typedef const char* (*tbcmh_otaupdate_on_get_current_title_t)(void *context);
 typedef const char* (*tbcmh_otaupdate_on_get_current_version_t)(void *context);
 
 /**
- * @brief  Callback function if F/W or S/W upgrade completed or aborted
+ * @brief  Callback if F/W or S/W upgrade completed or aborted
  *
  * Notes:
- * - If you call tbcmh_otaupdate_subscribe(), this callback function will be called
+ * - If you call tbcmh_otaupdate_subscribe(), this callback will be called
  *   after F/W or S/W upgrade completed or aborted
  * - Don't call TBCMH API in this callback!
  *
@@ -373,7 +370,6 @@ typedef void (*tbcmh_otaupdate_on_updated_t)(void *context, bool result);
 /**
  * @brief creates ThingsBoard client mqtt handle
  *
- *
  * @return tbcmh_handle_t if successfully created, NULL on error
  */
 tbcmh_handle_t tbcmh_init(void);
@@ -381,9 +377,7 @@ tbcmh_handle_t tbcmh_init(void);
 /**
  * @brief destroys ThingsBoard client mqtt handle
  *
- *
  * @param client   ThingsBoard MQTT Client Helper handle
- *
  */
 void tbcmh_destroy(tbcmh_handle_t client);
 

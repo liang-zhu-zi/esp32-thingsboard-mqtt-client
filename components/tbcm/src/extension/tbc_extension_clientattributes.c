@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbc_mqtt_helper.c/.h.
+// This file is part of the ThingsBoard Client Extension (TBCE) API.
 
 #include <string.h>
 #include <stdint.h>
@@ -32,8 +32,8 @@ typedef struct clientattribute
 {
      char *key; /*!< Key */
      void *context;                         /*!< Context of getting/setting value*/
-     tbce_clientattributes_on_get_t on_get; /*!< Callback of getting value from context */
-     tbce_clientattributes_on_set_t on_set; /*!< Callback of setting value to context */
+     tbce_clientattribute_on_get_t on_get; /*!< Callback of getting value from context */
+     tbce_clientattribute_on_set_t on_set; /*!< Callback of setting value to context */
 
      LIST_ENTRY(clientattribute) entry;
 } clientattribute_t;
@@ -54,8 +54,8 @@ const static char *TAG = "clientattribute";
 
 static clientattribute_t *_clientattribute_create(
                                             const char *key, void *context,
-                                            tbce_clientattributes_on_get_t on_get,
-                                            tbce_clientattributes_on_set_t on_set)
+                                            tbce_clientattribute_on_get_t on_get,
+                                            tbce_clientattribute_on_set_t on_set)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(key, NULL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get, NULL);
@@ -87,11 +87,10 @@ static tbc_err_t _clientattribute_destroy(clientattribute_t *clientattribute)
     return ESP_OK;
 }
 
-//Call it before connect()
 static tbc_err_t _clientattribute_register(tbce_clientattributes_handle_t clientattributes,
                                                   const char *key, void *context,
-                                                  tbce_clientattributes_on_get_t on_get,
-                                                  tbce_clientattributes_on_set_t on_set)
+                                                  tbce_clientattribute_on_get_t on_get,
+                                                  tbce_clientattribute_on_set_t on_set)
 {
      // Create clientattribute
      clientattribute_t *clientattribute = _clientattribute_create(key, context, on_get, on_set);
@@ -151,8 +150,8 @@ void tbce_clientattributes_destroy(tbce_clientattributes_handle_t clientattribut
 
 tbc_err_t tbce_clientattributes_register_with_set(tbce_clientattributes_handle_t clientattributes,
                                         const char *key, void *context,
-                                        tbce_clientattributes_on_get_t on_get,
-                                        tbce_clientattributes_on_set_t on_set)
+                                        tbce_clientattribute_on_get_t on_get,
+                                        tbce_clientattribute_on_set_t on_set)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(on_set, ESP_FAIL);
      return _clientattribute_register(clientattributes, key, context, on_get, on_set);
@@ -160,7 +159,7 @@ tbc_err_t tbce_clientattributes_register_with_set(tbce_clientattributes_handle_t
 
 tbc_err_t tbce_clientattributes_register(tbce_clientattributes_handle_t clientattributes,
                                          const char *key, void *context,
-                                         tbce_clientattributes_on_get_t on_get)
+                                         tbce_clientattribute_on_get_t on_get)
 {
      TBC_CHECK_PTR_WITH_RETURN_VALUE(clientattributes, ESP_FAIL);
      return _clientattribute_register(clientattributes, key, context, on_get, NULL);
@@ -209,7 +208,7 @@ bool tbce_clientattributes_is_contained(tbce_clientattributes_handle_t clientatt
 
 //Initialize client-side attributes from the server
 //on received init value in attributes response: unpack & deal
-//Note: Only client attributes that have an on_set() callback function will be initialized.
+//Note: Only client attributes that have an on_set() callback will be initialized.
 static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
                                          void *context,
                                          const cJSON *client_attributes,
@@ -223,11 +222,18 @@ static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
      // foreach item to set value of clientattribute in lock/unlodk. 
      // Don't call tbcmh's funciton in set value callback!
      clientattribute_t *clientattribute = NULL, *next;
+     tbc_err_t result = 0;
      LIST_FOREACH_SAFE(clientattribute, &clientattributes->clientattribute_list, entry, next) {
           if (clientattribute && clientattribute->key && clientattribute->on_set) {
                cJSON *value = cJSON_GetObjectItem(object, clientattribute->key);
                if (value) {
-                    clientattribute->on_set(clientattribute->context, value);
+                   result = clientattribute->on_set(clientattribute->context, value);
+                   if (result == 2) { // called tbcmh_disconnect()/tbcmh_destroy() inside on_set()
+                        break;
+                   }
+                   if (result == 1) { // called tbce_clientattributes_unregister() inside on_set()
+                        break;
+                   }
                }
           }
     }
@@ -235,7 +241,7 @@ static void _tbce_clientattributes_on_initialized(tbcmh_handle_t client,
 
 //Initialize client-side attributes from the server
 //on received init value in attributes response: unpack & deal
-tbc_err_t tbce_clientattributes_initialized(
+tbc_err_t tbce_clientattributes_initialize(
                         tbce_clientattributes_handle_t clientattributes,
                         tbcmh_handle_t client,
                         uint32_t max_attributes_per_request)

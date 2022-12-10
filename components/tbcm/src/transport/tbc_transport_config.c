@@ -45,7 +45,8 @@ static void *_transport_address_config_copy(tbc_transport_address_config_t *dest
     dest->path = src->path;
     return dest;
 }
-void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
+
+tbc_transport_credentials_config_t *tbc_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
                                               const tbc_transport_credentials_config_t *src)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(dest, NULL);
@@ -60,6 +61,7 @@ void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *des
     dest->token = src->token;
     return dest;
 }
+
 static void *_transport_verification_config_copy(tbc_transport_verification_config_t *dest,
                                               const tbc_transport_verification_config_t *src)
 {
@@ -77,6 +79,7 @@ static void *_transport_verification_config_copy(tbc_transport_verification_conf
     //dest->alpn_protos = src->alpn_protos;
     return dest;
 }
+
 static void *_transport_authentication_config_copy(tbc_transport_authentication_config_t *dest,
                                               const tbc_transport_authentication_config_t *src)
 {
@@ -94,7 +97,7 @@ static void *_transport_authentication_config_copy(tbc_transport_authentication_
     return dest;
 }
 
-void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src)
+tbc_transport_config_t *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src)
 {
     void *result;
 
@@ -103,7 +106,7 @@ void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transpor
 
     result = _transport_address_config_copy(&dest->address, &src->address);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
-    result = _transport_credentials_config_copy(&dest->credentials, &src->credentials);
+    result = tbc_transport_credentials_config_copy(&dest->credentials, &src->credentials);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);
     result = _transport_verification_config_copy(&dest->verification, &src->verification);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(result, NULL);

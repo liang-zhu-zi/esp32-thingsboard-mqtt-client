@@ -59,7 +59,7 @@ void tb_on_connected(tbcmh_handle_t client, void *context)
     ESP_LOGI(TAG, "Connected to thingsboard server!");
 
     ESP_LOGI(TAG, "Initilize client attributes those store at the server!");
-    tbce_clientattributes_initialized(_clientattributes,
+    tbce_clientattributes_initialize(_clientattributes,
                             client, 10 /*max_attributes_per_request*/);
 }
 

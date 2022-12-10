@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbc_mqtt_helper.c/.h.
+// This file is part of the ThingsBoard Client Extension (TBCE) API.
 
 #ifndef _TBCE_SHARED_ATTRIBUTES_H_
 #define _TBCE_SHARED_ATTRIBUTES_H_
@@ -24,34 +24,113 @@
 extern "C" {
 #endif
 
-// Set value of the device's shared-attribute
-// Caller (TBCMH library) of this callback will release memory of the `value` param
-// return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
-//      If this callback is called while processing the response of an attribute request - _tbcmh_attributesrequest_on_data(),
-//      the response callback of the attribute request - tbcmh_attributes_on_response_t/on_response, will not be called.
-// return 1 if tbce_sharedattributes_unregister() is called.
-//      Caller (TBCMH library) will not update other shared attributes received this time.
-// return 0/ESP_OK on success
-// return -1/ESP_FAIL on failure
-typedef tbc_err_t (*tbce_sharedattribute_on_set_t)(void *context, const tbcmh_value_t *value);
-
+/**
+ * TBCE Shared attribute set handle
+ */
 typedef struct tbce_sharedattributes* tbce_sharedattributes_handle_t;
 
-tbce_sharedattributes_handle_t tbce_sharedattributes_create(void);
-void                           tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattriburtes);
+/**
+ * @brief  callback of setting value of the device's shared attribute.
+ *
+ * Notes:
+ * - If you call tbce_sharedattributes_register(),
+ *    this callback will be called when you receied update of shared attribute
+ * - Don't call TBCMH API in this callback!
+ *
+ * @param context   context param 
+ * @param value     initialization value of the device's shared attribute
+ *
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
+ *         1 if tbce_sharedattributes_unregister() is called inside in this callback
+ *         0/ESP_OK     on success
+ *         -1/ESP_FAIL  on failure
+ */
+typedef tbc_err_t (*tbce_sharedattribute_on_set_t)(void *context, const tbcmh_value_t *value);
 
-tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedattriburtes,
+/**
+ * @brief   Creates TBCE shared attributes handle
+ *
+ * @return  tbce_sharedattributes_handle_t if successfully created, NULL on error
+ */
+tbce_sharedattributes_handle_t tbce_sharedattributes_create(void);
+
+/**
+ * @brief   Destroys TBCE shared attributes handle
+ *
+ * @param   sharedattriburtes    TTBCE shared attributes handle
+ */
+void tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattriburtes);
+
+/**
+ * @brief Register a shared attribute to TBCE shared attribute set
+ *
+ * @param sharedattriburtes TBCE shared attributes handle
+ * @param key               name of a shared attribute
+ * @param context       
+ * @param on_set            callback of setting value of the device's shared attribute.
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbce_sharedattributes_register(
+                                tbce_sharedattributes_handle_t sharedattriburtes,
                                 const char *key, void *context,
                                 tbce_sharedattribute_on_set_t on_set);
-tbc_err_t tbce_sharedattributes_unregister(tbce_sharedattributes_handle_t sharedattriburtes,
+
+/**
+ * @brief Unregister a shared attribute from TBCE shared attributes
+ *
+ * @param sharedattriburtes   TBCE shared attributes handle
+ * @param key                 name of a shared attribute
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbce_sharedattributes_unregister(
+                                tbce_sharedattributes_handle_t sharedattriburtes,
                                 const char *key);
 
-void      tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattriburtes,
-                                tbcmh_handle_t client, uint32_t max_attributes_per_subscribe);
-void      tbce_sharedattributes_unsubscribe(tbce_sharedattributes_handle_t sharedattriburtes);
+/**
+ * @brief Subscirbe all of shared attributes in TBCE shared attribute set to the server
+ *
+ * @param sharedattriburtes             TBCE shared attributes handle
+ * @param client                        ThingsBoard Client MQTT Helper handle
+ * @param max_attributes_per_subscribe  max shared attributes in per attributes subscribe
+ *
+ */
+void tbce_sharedattributes_subscribe(
+                                tbce_sharedattributes_handle_t sharedattriburtes,
+                                tbcmh_handle_t client,
+                                uint32_t max_attributes_per_subscribe);
 
-tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattriburtes,
+/**
+ * @brief Unsubscirbe all of shared attributes in TBCE shared attribute set from the server
+ *
+ * @param sharedattriburtes             TBCE shared attributes handle
+ *
+ */
+void tbce_sharedattributes_unsubscribe(
+                                tbce_sharedattributes_handle_t sharedattriburtes);
+
+                                
+/**
+ * @brief Initilize all of shared attributes in TBCE shared attribute set from the server
+ *
+ * Notes:
+ * - In order to initialize shared attributes need to 
+ *   send mutiple attributes request to the servere
+ * - All of shared attributes in TBCE shared attribute set
+ *   can get initial values from the server
+ *
+ * @param sharedattriburtes     TBCE shared attributes handle
+ * @param client                ThingsBoard Client MQTT Helper handle
+ * @param max_attributes_per_request    max shared attributes in per attributes request
+ *
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on error
+ */
+tbc_err_t tbce_sharedattributes_initialized(
+                                tbce_sharedattributes_handle_t sharedattriburtes,
                                 tbcmh_handle_t client,
                                 uint32_t max_attributes_per_request);
 
@@ -60,3 +139,4 @@ tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t share
 #endif //__cplusplus
 
 #endif
+

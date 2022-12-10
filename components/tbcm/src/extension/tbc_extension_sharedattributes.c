@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by tbc_mqtt_helper.c/.h.
+// This file is part of the ThingsBoard Client Extension (TBCE) API.
 
 #include <string.h>
 #include <stdint.h>
@@ -125,7 +125,6 @@ void tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattribut
      memset(&sharedattributes->sharedattribute_list, 0x00, sizeof(sharedattributes->sharedattribute_list));
 }
 
-// Call it before connect()
 tbc_err_t tbce_sharedattributes_register(tbce_sharedattributes_handle_t sharedattributes,
                                          const char *key, void *context,
                                          tbce_sharedattribute_on_set_t on_set)
@@ -319,8 +318,6 @@ static void _tbce_sharedattributes_on_initialized(tbcmh_handle_t client,
     _tbce_sharedattributes_on_update(client, context, shared_attributes);
 }
 
-//Initialize shared-side attributes from the server
-//on received init value in attributes response: unpack & deal
 tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t sharedattributes,
                                                   tbcmh_handle_t client,
                                                   uint32_t max_attributes_per_request)

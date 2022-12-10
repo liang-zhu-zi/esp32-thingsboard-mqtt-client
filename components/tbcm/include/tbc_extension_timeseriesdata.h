@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This file is called by user.
+// This file is part of the ThingsBoard Client Extension (TBCE) API.
 
 #ifndef _TBC_EXTENSION_TIMESERIESDATA_H_
 #define _TBC_EXTENSION_TIMESERIESDATA_H_
@@ -24,25 +24,84 @@
 extern "C" {
 #endif
 
-// Get value of telemetry time-series data
-// Don't call TBCMH API in this callback!
-// Caller (TBCE library) of this callback will release memory of the return value
-typedef tbcmh_value_t* (*tbce_timeseriesdata_on_get_t)(void *context);
-
+/**
+ * TBCE Time-series data handle
+ */
 typedef struct tbce_timeseriesdata* tbce_timeseriesdata_handle_t;
 
-tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
-void                         tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t telemetry);
+/**
+ * @brief  Callback of getting value of a time-series axis
+ *
+ * Notes:
+ * - If you call tbce_timeseriesdata_register(), this callback will be called
+ *      when you upload time-series data
+ * - Don't call TBCMH API in this callback!
+ * - Free return value(tbcmh_value_t) by caller/(this library)!
+ *
+ * @param context           context param 
+ *
+ * @return current value of a time-series axis on successful
+ *         NULL on failure
+ */
+typedef tbcmh_value_t* (*tbce_timeseriesaxis_on_get_t)(void *context);
 
-tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t telemetry,
+/**
+ * @brief   Creates TBCE Time-series data handle
+ *
+ * @return  tbce_timeseriesdata_handle_t if successfully created, NULL on error
+ */
+tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
+
+/**
+ * @brief   Destroys TBCE Time-series data handle
+ *
+ * @param   tsdata  TBCE Time-series data handle
+ */
+void tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t tsdata);
+
+/**
+ * @brief Register a time axis to TBCE Time-series data set
+ *
+ * @param tsdata        TBCE Time-series data handle
+ * @param key           name of a Time-series axis
+ * @param context       
+ * @param on_get        Callback of getting value of a time-series axis
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t tsdata,
                                         const char *key,
                                         void *context,
-                                        tbce_timeseriesdata_on_get_t on_get);
-tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t telemetry,
+                                        tbce_timeseriesaxis_on_get_t on_get);
+
+/**
+ * @brief Unregister a time-series axis from TBCE Time-series data set
+ *
+ * @param tsdata        TBCE Time-series data set
+ * @param key           name of a Time-series axis
+ * 
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on failure
+ */
+tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t tsdata,
                                         const char *key);
-tbc_err_t tbce_timeseriesdata_upload(tbce_timeseriesdata_handle_t telemetry,
+
+/**
+ * @brief Publish some Time-series axes in TBCE Time-series data to the server
+ *
+ * @param tsdata     TBCE Time-series data
+ * @param client     ThingsBoard Client MQTT Helper handle
+ * @param count      count of keys
+ * @param keys       names of some Time-series axes
+ 
+ *
+ * @return  0/ESP_OK on success
+ *         -1/ESP_FAIL on error
+ */
+tbc_err_t tbce_timeseriesdata_upload(tbce_timeseriesdata_handle_t tsdata,
                                         tbcmh_handle_t client,
-                                        int count, /*const char *key,*/...);
+                                        int count, /*const char *key,*/ ...);
 
 #ifdef __cplusplus
 }

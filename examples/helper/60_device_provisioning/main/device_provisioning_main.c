@@ -314,7 +314,7 @@ static void mqtt_app_start()
 
             // create_normal_connect(client) // If the credentials type is X.509, the front connection (provisioing) is one-way SSL, but the normal connection is two-way (mutual) SSL.
             memcpy(&transport.address, &_address, sizeof(_address));
-            _transport_credentials_config_copy(&transport.credentials, tbc_transport_credentials_memory_get()); //memcpy(&transport.credentials, &_credentials, sizeof(_credentials));
+            tbc_transport_credentials_config_copy(&transport.credentials, tbc_transport_credentials_memory_get()); //memcpy(&transport.credentials, &_credentials, sizeof(_credentials));
             memcpy(&transport.verification, &_verification, sizeof(_verification));
             memcpy(&transport.authentication, &_authentication, sizeof(_authentication));
             client = tbcmh_normalconn_create(&transport);

@@ -182,10 +182,39 @@ typedef struct
   const bool log_rxtx_package; /*!< print Rx/Tx MQTT package */
 } tbc_transport_config_esay_t;
 
-void *_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
-                                              const tbc_transport_credentials_config_t *src);
+/**
+ * @brief  Clone a transport credentials configuration
+ *
+ * @param credentials    ThingsBoard MQTT Client Helper handle. client param of tbcmh_connect()
+ *
+ * @return a transport credentials configuration copy on successful
+ *         NULL on failure
+ * 
+ */
 tbc_transport_credentials_config_t *tbc_transport_credentials_clone(const tbc_transport_credentials_config_t *credentials);
-void *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src);
+
+/**
+ * @brief  Copy a transport credentials configuration
+ *
+ * @param dest    
+ * @param src    
+ *
+ * @return dest on successful
+ *         NULL on failure
+ */
+tbc_transport_credentials_config_t *tbc_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
+                                                const tbc_transport_credentials_config_t *src);
+
+/**
+ * @brief  Copy a transport configuration
+ *
+ * @param dest    
+ * @param src    
+ *
+ * @return dest on successful
+ *         NULL on failure
+ */
+tbc_transport_config_t *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src);
 
 #ifdef __cplusplus
 }
