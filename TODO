@@ -1,5 +1,6 @@
 # TODO List
 
+
 1. A new examples of all in one.
 
 1. S/W OTA update `testing`.
@@ -7,41 +8,27 @@
 1. security option `testing`.
 1. Device provisioning `testing`.
 
-1. docs...
+1. Docs...
 1. Append supported ThingsBoard MQTT API in commonents/README.md.
 1. Append some pictures of ThingsBoard in examples/.../README.md.
 
-1. lock dead? protected data? in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
-1. subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
+1. Dead lock & protected data in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
+
+1. Subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
 1. OTA update support MD5-checksum-ALG.
+1. Software OTA upgrade.
 
+-----------------------------------------------------------------------
+1. Is default login data correct?
+    constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
+    constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
+----------------------------------------------------------------------------
+
+1. OTA update only has Firmware OTA and Software OTA at most, no need to form a list.
+1. Provision has at most one request and does not require a list.
+------------------------------------------------------------------------
+
+1. Is there only one parameter for QoS of ThingsBoard MQTT API, which does not need to appear in every publish API?
+
+------------------------------------------------------------------------
 1. MQTT Gateway API.
-
-以下需要确认实现正确？
-------------------------------------------------------------------------
-// Default login data.
-constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
-constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
-
-Telemetry 可以支持时间戳，数组等， 甚至datapoint的回调函数。但组织成列表，是否有必要？
-----------------------------------------------------------------------------
-
-Firmware 但如果有Software升级时，这些操作不是确定的，该如何处理呢？
-写一些单独的类，专门实现Firmware OTA 或 Software OTA?
-----------------------------------------------------------------------------
-
-OTA update 最多只有 Firmware OTA 和 Software OTA，也无需组成列表
-----------------------------------------------------------------------------
-
-Provision 最多只有一个请求，不需要列表
-------------------------------------------------------------------------
-
-是否 ThingsBoard MQTT API 的 QoS 只配置一次即可，不需要在每个 publish API 中出现？
-------------------------------------------------------------------------------------
-bool m_qos; // Wheter QoS level 1 should be enabled or disabled (Resends the packet until the message was received and a PUBACK packet was returned).
-
-// Enables mqtt quality of service for the given underlying MQTT connection.
-// See https://assetwolf.com/learn/mqtt-qos-understanding-quality-of-service for more information, on quality of service.
-inline void enableMQTTQoS(const bool& enableQoS) {
-    m_qos = enableQoS;
-}
