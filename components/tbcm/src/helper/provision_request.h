@@ -27,7 +27,7 @@ extern "C" {
 /**
  * ThingsBoard MQTT Client Helper client-RPC
  */
-typedef struct deviceprovision
+typedef struct provision
 {
      tbcmh_handle_t client;        /*!< ThingsBoard MQTT Client Helper */
 
@@ -43,17 +43,17 @@ typedef struct deviceprovision
      tbcmh_provision_on_response_t on_response; /*!< Callback of provision response success */
      tbcmh_provision_on_timeout_t on_timeout;   /*!< Callback of provision response timeout */
 
-     LIST_ENTRY(deviceprovision) entry;
-} deviceprovision_t;
+     LIST_ENTRY(provision) entry;
+} provision_t;
 
-typedef LIST_HEAD(tbcmh_provision_list, deviceprovision) deviceprovision_list_t;
+typedef LIST_HEAD(tbcmh_provision_list, provision) provision_list_t;
 
-void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client);
-void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client);
-void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client);
-void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client);
-void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id, const tbcmh_provision_results_t *provision_results);
-void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
+void _tbcmh_provision_on_create(tbcmh_handle_t client);
+void _tbcmh_provision_on_destroy(tbcmh_handle_t client);
+void _tbcmh_provision_on_connected(tbcmh_handle_t client);
+void _tbcmh_provision_on_disconnected(tbcmh_handle_t client);
+void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id, const tbcmh_provision_results_t *provision_results);
+void _tbcmh_provision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp);
 
 #ifdef __cplusplus
 }

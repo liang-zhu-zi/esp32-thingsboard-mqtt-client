@@ -22,8 +22,8 @@
 
 const static char *TAG = "provision";
 
-/*!< Initialize deviceprovision_t */
-static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client,
+/*!< Initialize provision_t */
+static provision_t *_deviceprovision_create(tbcmh_handle_t client,
                                          uint32_t request_id,
                                          const tbcmh_provision_params_t *params,
                                          void *context,
@@ -32,13 +32,13 @@ static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client,
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_response, NULL);
 
-    deviceprovision_t *provision = TBC_MALLOC(sizeof(deviceprovision_t));
+    provision_t *provision = TBC_MALLOC(sizeof(provision_t));
     if (!provision) {
         TBC_LOGE("Unable to malloc memeory!");
         return NULL;
     }
 
-    memset(provision, 0x00, sizeof(deviceprovision_t));
+    memset(provision, 0x00, sizeof(provision_t));
     provision->client = client;
     provision->params = cJSON_Duplicate(params, true);
     provision->request_id = request_id;
@@ -49,8 +49,8 @@ static deviceprovision_t *_deviceprovision_create(tbcmh_handle_t client,
     return provision;
 }
 
-/*!< Destroys the deviceprovision_t */
-static tbc_err_t _deviceprovision_destroy(deviceprovision_t *provision)
+/*!< Destroys the provision_t */
+static tbc_err_t _deviceprovision_destroy(provision_t *provision)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(provision, ESP_FAIL);
 
@@ -170,7 +170,7 @@ static tbc_err_t __params_of_devices_supplies_x509_certificate(tbcmh_provision_p
 }
 
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
+static tbc_err_t _provision_request_with_params(tbcmh_handle_t client,
                                 const tbcmh_provision_params_t *params,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
@@ -215,7 +215,7 @@ static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
      }
 
      // Create provision
-     deviceprovision_t *provision = _deviceprovision_create(client, request_id, params, context, on_response, on_timeout);
+     provision_t *provision = _deviceprovision_create(client, request_id, params, context, on_response, on_timeout);
      if (!provision) {
           TBC_LOGE("Init provision failure! %s()", __FUNCTION__);
           xSemaphoreGive(client->_lock);
@@ -223,7 +223,7 @@ static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
      }
 
      // Insert provision to list
-     deviceprovision_t *it, *last = NULL;
+     provision_t *it, *last = NULL;
      if (LIST_FIRST(&client->deviceprovision_list) == NULL) {
           // Insert head
           LIST_INSERT_HEAD(&client->deviceprovision_list, provision, entry);
@@ -244,7 +244,7 @@ static tbc_err_t _deviceprovision_request_with_params(tbcmh_handle_t client,
 }
 
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
-tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
                                     const tbc_provison_config_t *config,
                                     void *context,
                                     tbcmh_provision_on_response_t on_response,
@@ -279,12 +279,12 @@ tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
     }
 
      // request_id
-     ret = _deviceprovision_request_with_params(client, params, context, on_response, on_timeout);
+     ret = _provision_request_with_params(client, params, context, on_response, on_timeout);
      cJSON_Delete(params); // delete json object     
      return ret;
 }
 
-void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client)
+void _tbcmh_provision_on_create(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
@@ -302,7 +302,7 @@ void _tbcmh_deviceprovision_on_create(tbcmh_handle_t client)
     // xSemaphoreGive(client->_lock);
 }
 
-void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client)
+void _tbcmh_provision_on_destroy(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
@@ -319,12 +319,12 @@ void _tbcmh_deviceprovision_on_destroy(tbcmh_handle_t client)
     // xSemaphoreGive(client->_lock);
 }
 
-void _tbcmh_deviceprovision_on_connected(tbcmh_handle_t client)
+void _tbcmh_provision_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
 }
 
-void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
+void _tbcmh_provision_on_disconnected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client);
@@ -336,7 +336,7 @@ void _tbcmh_deviceprovision_on_disconnected(tbcmh_handle_t client)
     // }
 
     // remove all item in deviceprovision_list
-    _tbcmh_deviceprovision_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
+    _tbcmh_provision_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
     memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
 
     // Give semaphore
@@ -453,7 +453,7 @@ static int __parse_provision_response(const tbcmh_provision_results_t *results,
 }
 
 //on response.
-void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id,
+void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id,
                                         const tbcmh_provision_results_t *provision_results)
 {
      TBC_CHECK_PTR(client);
@@ -468,7 +468,7 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id,
      bool isEmptyBefore = LIST_EMPTY(&client->deviceprovision_list);
 
      // Search provision
-     deviceprovision_t *provision = NULL, *next;
+     provision_t *provision = NULL, *next;
      LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
           if (provision && (provision->request_id==request_id)) {
               LIST_REMOVE(provision, entry);
@@ -507,7 +507,7 @@ void _tbcmh_deviceprovision_on_data(tbcmh_handle_t client, uint32_t request_id,
      _deviceprovision_destroy(provision);
 }
 
-void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
+void _tbcmh_provision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
 {
      TBC_CHECK_PTR(client);
 
@@ -520,13 +520,13 @@ void _tbcmh_deviceprovision_on_check_timeout(tbcmh_handle_t client, uint64_t tim
      bool isEmptyBefore = LIST_EMPTY(&client->deviceprovision_list);
 
      // Search & move timeout item to timeout_list
-     deviceprovision_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
-     deviceprovision_t *request = NULL, *next;
+     provision_list_t timeout_list = LIST_HEAD_INITIALIZER(timeout_list);
+     provision_t *request = NULL, *next;
      LIST_FOREACH_SAFE(request, &client->deviceprovision_list, entry, next) {
           if (request && request->timestamp + TB_MQTT_TIMEOUT <= timestamp) {
                LIST_REMOVE(request, entry);
                // append to timeout list
-               deviceprovision_t *it, *last = NULL;
+               provision_t *it, *last = NULL;
                if (LIST_FIRST(&timeout_list) == NULL) {
                     LIST_INSERT_HEAD(&timeout_list, request, entry);
                } else {

@@ -153,7 +153,7 @@ void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
     sleep(1);
     tbc_provison_config_t provision_config = {0};
     _provision_storage_copy_to_config(&_provision_storage, &provision_config);
-    tbcmh_deviceprovision_request(client, &provision_config, NULL,
+    tbcmh_provision_request(client, &provision_config, NULL,
                             _tb_provision_on_response,
                             _tb_provision_on_timeout);
 }

@@ -287,12 +287,12 @@ typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_deviceprovision_request(), this callback will be called
+ * - If you call tbcmh_provision_request(), this callback will be called
  *   when you receive provision response
  * - Parse and deal received credentials in this callback
  *
  * @param client        ThingsBoard MQTT Client Helper handle. client param of 
- *                          tbcmh_deviceprovision_request()
+ *                          tbcmh_provision_request()
  * @param context       context param 
  * @param credentials   it in received provision response
  *
@@ -306,12 +306,12 @@ typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
  * from ThingsBoard IoT platform
  *
  * Notes:
- * - If you call tbcmh_deviceprovision_request(), this callback will be called
+ * - If you call tbcmh_provision_request(), this callback will be called
  *   when provision response is timeout
  * - Parse and deal timeout event in this callback
  *
  * @param client        ThingsBoard MQTT Client Helper handle. client param of 
- *                          tbcmh_deviceprovision_request()
+ *                          tbcmh_provision_request()
  * @param context       context param 
  * @param credentials   it in received provision response
  *
@@ -731,7 +731,7 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(
  * @return  0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_deviceprovision_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
                                 const tbc_provison_config_t *config,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,

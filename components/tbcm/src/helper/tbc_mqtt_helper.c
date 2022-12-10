@@ -84,7 +84,7 @@ tbcmh_handle_t tbcmh_init(void)
      _tbcmh_clientrpc_on_create(client);        //req-resp
      _tbcmh_otaupdate_on_create(client);        //chunk: req-resp
      _tbcmh_claimingdevice_on_create(client);
-     _tbcmh_deviceprovision_on_create(client);  //req-resp
+     _tbcmh_provision_on_create(client);  //req-resp
 
      client->next_request_id = 0;
      client->last_check_timestamp = (uint64_t)time(NULL);
@@ -111,7 +111,7 @@ void tbcmh_destroy(tbcmh_handle_t client)
      _tbcmh_clientrpc_on_destroy(client);
      _tbcmh_otaupdate_on_destroy(client);
      _tbcmh_claimingdevice_on_destroy(client);
-     _tbcmh_deviceprovision_on_destroy(client);
+     _tbcmh_provision_on_destroy(client);
 
      if (client->_lock) {
           vSemaphoreDelete(client->_lock);
@@ -341,7 +341,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
      _tbcmh_attributessubscribe_on_disconnected(client);
      _tbcmh_serverrpc_on_disconnected(client);
      _tbcmh_clientrpc_on_disconnected(client);         //empty all request
-     _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
+     _tbcmh_provision_on_disconnected(client);   //empty all request
      _tbcmh_otaupdate_on_disconnected(client);         //empty all request
      _tbcmh_claimingdevice_on_disconnected(client);
 
@@ -379,7 +379,7 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
      _tbcmh_clientrpc_on_connected(client);
      _tbcmh_claimingdevice_on_connected(client);
      _tbcmh_otaupdate_on_connected(client);
-     _tbcmh_deviceprovision_on_connected(client);
+     _tbcmh_provision_on_connected(client);
 
      // clone parameter in lock/unlock
      void *context = client->context;
@@ -416,7 +416,7 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      _tbcmh_attributessubscribe_on_disconnected(client);
      _tbcmh_serverrpc_on_disconnected(client);
      _tbcmh_clientrpc_on_disconnected(client);         //empty all request
-     _tbcmh_deviceprovision_on_disconnected(client);   //empty all request
+     _tbcmh_provision_on_disconnected(client);   //empty all request
      _tbcmh_otaupdate_on_disconnected(client);         //empty all request
      _tbcmh_claimingdevice_on_disconnected(client);
 
@@ -481,7 +481,7 @@ static void __on_tbcm_data_handle(tbcm_event_t *event)
     
     case TBCM_RX_TOPIC_PROVISION_RESPONSE:   /*!< (no request_id)       payload, payload_len */
          object = cJSON_ParseWithLength(event->data.payload, event->data.payload_len);
-         _tbcmh_deviceprovision_on_data(client, event->data.request_id, object);
+         _tbcmh_provision_on_data(client, event->data.request_id, object);
          cJSON_Delete(object);
          break;
 
@@ -508,7 +508,7 @@ static void __on_tbcm_check_timeout(tbcmh_handle_t client)
 
      _tbcmh_attributesrequest_on_check_timeout(client, timestamp);
      _tbcmh_clientrpc_on_check_timeout(client, timestamp);
-     _tbcmh_deviceprovision_on_check_timeout(client, timestamp);
+     _tbcmh_provision_on_check_timeout(client, timestamp);
      _tbcmh_otaupdate_on_chunk_check_timeout(client, timestamp);
 }
 

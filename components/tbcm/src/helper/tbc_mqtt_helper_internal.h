@@ -36,7 +36,7 @@
 #include "attributes_request.h"
 #include "server_rpc.h"
 #include "client_rpc.h"
-#include "device_provision.h"
+#include "provision_request.h"
 #include "claiming_device.h"
 #include "ota_update.h"
 
@@ -70,7 +70,7 @@ typedef struct tbcmh_client
      serverrpc_list_t serverrpc_list; /*!< server side RPC entries */
      clientrpc_list_t clientrpc_list; /*!< client side RPC entries */
      otaupdate_list_t otaupdate_list; /*!< A device may have multiple firmware */
-     deviceprovision_list_t deviceprovision_list;     /*!< device provision entries */
+     provision_list_t deviceprovision_list;     /*!< device provision entries */
 
      //SemaphoreHandle_t lock;
      uint16_t next_request_id;

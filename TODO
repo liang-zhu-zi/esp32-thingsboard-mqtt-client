@@ -1,9 +1,6 @@
 # TODO List
 
 1. A new examples of all in one.
-1. rename device_provision.c/h to provision_request.c/h
-
-1. append some description for new API.
 
 1. S/W OTA update `testing`.
 1. Device claiming `testing`.
