@@ -203,7 +203,7 @@ void tbce_sharedattributes_subscribe(tbce_sharedattributes_handle_t sharedattrib
      }
 
      // unsubscribe if it's already subscribed.
-     if (sharedattributes->client != client) {
+     if (sharedattributes->client && sharedattributes->client != client) {
         tbce_sharedattributes_unsubscribe(sharedattributes);
      }
 
