@@ -256,10 +256,11 @@ static esp_err_t _parse_uri(tbc_transport_address_storage_t *address,
     return ESP_OK;
 }
 
-bool tbcmh_connect_using_url(tbcmh_handle_t client, const tbc_transport_config_esay_t *config,
-                   void *context,
-                   tbcmh_on_connected_t on_connected,
-                   tbcmh_on_disconnected_t on_disconnected)
+bool tbcmh_connect_using_url(tbcmh_handle_t client,
+                                const tbc_transport_config_esay_t *config,
+                                void *context,
+                                tbcmh_on_connected_t on_connected,
+                                tbcmh_on_disconnected_t on_disconnected)
 {
     if (!config) {
          TBC_LOGE("config is NULL! %s()", __FUNCTION__);
@@ -285,6 +286,20 @@ bool tbcmh_connect_using_url(tbcmh_handle_t client, const tbc_transport_config_e
     transport.address.schema = address.schema;
     transport.address.host   = address.host;
     transport.address.port   = address.port;
+    if (transport.address.port==0){
+        if (strcasecmp (transport.address.schema, "mqtt") == 0) {
+            transport.address.port = 1883;
+        }
+        else if (strcasecmp (transport.address.schema, "mqtts") == 0) {
+            transport.address.port = 8883;
+        }
+        else if (strcasecmp (transport.address.schema, "ws") == 0) {
+            transport.address.port = 80;
+        }
+        else if (strcasecmp (transport.address.schema, "wss") == 0) {
+            transport.address.port = 443;
+        }
+    }
     transport.address.path   = address.path;
     transport.credentials.username = credentials.username;
     transport.credentials.password = credentials.password;

@@ -340,7 +340,7 @@ bool tbcm_connect(tbcm_handle_t client,
      /*min_reconnect_delay=1, timeout=120, tls=False, ca_certs=None, cert_file=None, key_file=None*/
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, false);
      TBC_CHECK_PTR_WITH_RETURN_VALUE(config, false);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, false);
+     //TBC_CHECK_PTR_WITH_RETURN_VALUE(client->mqtt_handle, false);
 
      tbc_transport_storage_free_fields(&client->config);
      client->context = NULL;

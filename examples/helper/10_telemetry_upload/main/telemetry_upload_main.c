@@ -22,6 +22,8 @@
 
 static const char *TAG = "TELEMETRY_UPLOAD_MAIN";
 
+#if 1
+
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
 
@@ -195,6 +197,69 @@ exit_destroy:
     tbcmh_destroy(client);
 #endif
 }
+
+#else
+
+/*!< Callback of connected ThingsBoard MQTT */
+void tb_on_connected(tbcmh_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Connected to thingsboard server!");
+}
+
+/*!< Callback of disconnected ThingsBoard MQTT */
+void tb_on_disconnected(tbcmh_handle_t client, void *context)
+{
+    ESP_LOGI(TAG, "Disconnected from thingsboard server!");
+}
+
+void mqtt_app_start(void)
+{
+    ESP_LOGI(TAG, "Init tbcmh ...");
+    tbcmh_handle_t client = tbcmh_init();
+    if (!client) {
+        ESP_LOGE(TAG, "Failure to init tbcmh!");
+        return;
+    }
+
+    ESP_LOGI(TAG, "Connect tbcmh ...");
+    tbc_transport_config_esay_t config = {
+        .uri = "mqtt://192.168.0.186",          // Complete ThingsBoard MQTT broker URI
+        .access_token = "mKqOP8kQwxdDsVnCRU20", // ThingsBoard Access Token
+        .log_rxtx_package = true                // Print Rx/Tx MQTT package
+     };
+    bool result = tbcmh_connect_using_url(client, &config,
+                        NULL, tb_on_connected, tb_on_disconnected);
+    if (!result) {
+        ESP_LOGE(TAG, "failure to connect to tbcmh!");
+        goto exit_destroy;
+    }
+
+    ESP_LOGI(TAG, "connect tbcmh ...");
+    int i = 0;
+    while (i<4) {
+        if (tbcmh_has_events(client)) {
+            tbcmh_run(client);
+        }
+
+        i++;
+        if (tbcmh_is_connected(client)) {
+            tbcmh_telemetry_upload(client, "{\"temprature\": 25.5}",
+                    1/*qos*/, 0/*retain*/);
+        } else {
+            ESP_LOGI(TAG, "Still NOT connected to server!");
+        }
+        sleep(5);
+    }
+
+    ESP_LOGI(TAG, "Disconnect tbcmh ...");
+    tbcmh_disconnect(client);
+
+exit_destroy:
+    ESP_LOGI(TAG, "Destroy tbcmh ...");
+    tbcmh_destroy(client);
+}
+
+#endif
 
 void app_main(void)
 {
