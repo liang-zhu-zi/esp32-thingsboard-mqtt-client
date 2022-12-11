@@ -391,8 +391,7 @@ void tbcmh_destroy(tbcmh_handle_t client);
  *
  * @return true on successful, faiure on failure
  */
-bool tbcmh_connect_using_url(
-                                tbcmh_handle_t client,
+bool tbcmh_connect_using_url(tbcmh_handle_t client,
                                 const tbc_transport_config_esay_t *config,
                                 void *context,
                                 tbcmh_on_connected_t on_connected,
@@ -470,8 +469,7 @@ void tbcmh_run(tbcmh_handle_t client);
  *         0 if cannot publish
  *        -1/ESP_FAIL on error
  */
-int tbcmh_telemetry_upload(
-                                tbcmh_handle_t client,
+int tbcmh_telemetry_upload(tbcmh_handle_t client,
                                 const char *telemetry,
                                 int qos/*= 1*/,
                                 int retain/*= 0*/);
@@ -493,8 +491,7 @@ int tbcmh_telemetry_upload(
  *         0 if cannot publish
  *        -1/ESP_FAIL on error
  */
-int tbcmh_telemetry_upload_ex(
-                                tbcmh_handle_t client,
+int tbcmh_telemetry_upload_ex(tbcmh_handle_t client,
                                 const tbcmh_value_t *object,
                                 int qos/*= 1*/,
                                 int retain/*= 0*/);
@@ -518,8 +515,7 @@ int tbcmh_telemetry_upload_ex(
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcmh_attributes_update(
-                                tbcmh_handle_t client,
+int tbcmh_attributes_update(tbcmh_handle_t client,
                                 const char *attributes,
                                 int qos /*= 1*/,
                                 int retain /*= 0*/);
@@ -542,8 +538,7 @@ int tbcmh_attributes_update(
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcmh_attributes_update_ex(
-                                tbcmh_handle_t client,
+int tbcmh_attributes_update_ex(tbcmh_handle_t client,
                                 tbcmh_value_t *object,
                                 int qos/*= 1*/,
                                 int retain/*= 0*/);
@@ -562,8 +557,7 @@ int tbcmh_attributes_update_ex(
  * @return subscribe_id on success
  *         -1/ESP_FAIL on failure
  */
-int tbcmh_attributes_subscribe(
-                                tbcmh_handle_t client,
+int tbcmh_attributes_subscribe(tbcmh_handle_t client,
                                 void *context,
                                 tbcmh_attributes_on_update_t on_update,
                                 int count,
@@ -636,11 +630,11 @@ tbc_err_t tbcmh_attributes_request(
  */
 tbc_err_t tbcmh_clientattributes_request(
                                 tbcmh_handle_t client,
-                                 void *context,
-                                 tbcmh_attributes_on_response_t on_response,
-                                 tbcmh_attributes_on_timeout_t on_timeout,
-                                 int count,
-                                 /*const char *key,*/...);
+                                void *context,
+                                tbcmh_attributes_on_response_t on_response,
+                                tbcmh_attributes_on_timeout_t on_timeout,
+                                int count,
+                                /*const char *key,*/...);
 
 /**
  * @brief Request shared device attributes from the server
