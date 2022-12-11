@@ -29,7 +29,8 @@
 extern "C" {
 #endif
 
-//====0.tbcm client======================================================================
+//==== Data type ==============================================================
+
 /**
  * ThingsBoard MQTT Client Helper handle
  */
@@ -107,6 +108,8 @@ typedef enum
   TBCMH_OTAUPDATE_TYPE_SW      /*!< S/W OTA update */
 } tbcmh_otaupdate_type_t;
 
+//==== Callback ===============================================================
+
 /**
  * @brief  Callback of connected ThingsBoard IoT Platform
  *
@@ -135,12 +138,8 @@ typedef void (*tbcmh_on_connected_t)(tbcmh_handle_t client, void *context);
  */
 typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
 
-//====1.telemetry time-series data=======================================================
-//====2.client-side attribute============================================================
-//====3.subscriebe shared attributes update =============================================
-
 /**
- * @brief  Callback when shared attributes update is received 
+ * @brief  Callback when "Shared Attributes Update" is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -154,16 +153,16 @@ typedef void (*tbcmh_on_disconnected_t)(tbcmh_handle_t client, void *context);
  * @param object    shared attributes updated, possibly contains multiple shared attributes
  *
  * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
- *         1 if tbcmh_sharedattributes_unregister() or tbcmh_attributes_unsubscribe() 
- *              is called inside in this callback
+ *         1 if tbcmh_attributes_unsubscribe() is called inside in this callback
  *         0 on otherwise
- */ // TODO: remove retrn-value-1
-typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
-                                         void *context, const cJSON *object);
+ */
+typedef int  (*tbcmh_attributes_on_update_t)(
+                                tbcmh_handle_t client,
+                                void *context,
+                                const cJSON *object);
 
-//====4.attributes request for client-side_attributes & shared attributes ===============
 /**
- * @brief  Callback when client-side_attributes & shared attributes response is received 
+ * @brief  Callback when "Client-side Attributes & Shared Attributes Response" is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -179,13 +178,14 @@ typedef int  (*tbcmh_attributes_on_update_t)(tbcmh_handle_t client,
  * @param shared_attributes shared attributes response, possibly contains multiple shared attributes
  *
  */
-typedef void (*tbcmh_attributes_on_response_t)(tbcmh_handle_t client,
-                                        void *context,
-                                        const cJSON *client_attributes,
-                                        const cJSON *shared_attributes);
+typedef void (*tbcmh_attributes_on_response_t)(
+                                tbcmh_handle_t client,
+                                void *context,
+                                const cJSON *client_attributes,
+                                const cJSON *shared_attributes);
 
 /**
- * @brief  Callback when client-side_attributes & shared attributes response is timeout 
+ * @brief  Callback when Client-side Attributes & Shared Attributes response is Timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -202,13 +202,12 @@ typedef void (*tbcmh_attributes_on_response_t)(tbcmh_handle_t client,
  *         0/ESP_OK     on success
  *         -1/ESP_FAIL  on failure
  */
-typedef tbc_err_t (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
-                                        void *context);
-
-//====5.Server-side RPC==================================================================
+typedef tbc_err_t (*tbcmh_attributes_on_timeout_t)(
+                                tbcmh_handle_t client,
+                                void *context);
 
 /**
- * @brief  Callback when server-side RPC is received from ThingsBoard IoT platform
+ * @brief  Callback when "Server-side RPC Request" is received from ThingsBoard IoT platform
  *
  * Notes:
  * - If you call tbcmh_serverrpc_subscribe(), this callback will be called
@@ -227,13 +226,14 @@ typedef tbc_err_t (*tbcmh_attributes_on_timeout_t)(tbcmh_handle_t client,
  *         A rpc_results (cJSON object) if it is two-way server-side RPC with response,
  *              Free rpc_results by caller/(this library)!
  */
-typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t client,
-                                        void *context, uint32_t request_id,
-                                        const char *method, const tbcmh_rpc_params_t *rpc_params);
+typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(
+                                tbcmh_handle_t client,
+                                void *context, uint32_t request_id,
+                                const char *method,
+                                const tbcmh_rpc_params_t *rpc_params);
 
-//====6.Client-side RPC==================================================================
 /**
- * @brief  Callback when two-way client-side RPC response is received 
+ * @brief  Callback when two-way "Client-side RPC Response" is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -252,12 +252,14 @@ typedef tbcmh_rpc_results_t *(*tbcmh_serverrpc_on_request_t)(tbcmh_handle_t clie
  *              is called inside in this callback
  *         0 on otherwise
  */
-typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
-                                        void *context,
-                                        const char *method, const tbcmh_rpc_results_t *results);
+typedef void (*tbcmh_clientrpc_on_response_t)(
+                                tbcmh_handle_t client,
+                                void *context,
+                                const char *method,
+                                const tbcmh_rpc_results_t *results);
 
 /**
- * @brief  Callback when two-way client-side RPC response is timeout 
+ * @brief  Callback when two-way Client-side RPC response is Timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -274,16 +276,13 @@ typedef void (*tbcmh_clientrpc_on_response_t)(tbcmh_handle_t client,
  *         0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
-                                        void *context,
-                                        const char *method);
-
-//====7.Claiming device using device-side key scenario===================================
-
-//====8.Device provisioning==============================================================
+typedef int (*tbcmh_clientrpc_on_timeout_t)(
+                                tbcmh_handle_t client,
+                                void *context,
+                                const char *method);
 
 /**
- * @brief  Callback when provision response is received 
+ * @brief  Callback when "Provision Response" is received 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -297,12 +296,13 @@ typedef int (*tbcmh_clientrpc_on_timeout_t)(tbcmh_handle_t client,
  * @param credentials   it in received provision response
  *
  */
-typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
-                                        void *context,
-                                        const tbc_transport_credentials_config_t *credentials);
+typedef void (*tbcmh_provision_on_response_t)(
+                                tbcmh_handle_t client,
+                                void *context,
+                                const tbc_transport_credentials_config_t *credentials);
 
 /**
- * @brief  Callback when provision response is timeout 
+ * @brief  Callback when Rrovision response is Timeout 
  * from ThingsBoard IoT platform
  *
  * Notes:
@@ -321,8 +321,6 @@ typedef void (*tbcmh_provision_on_response_t)(tbcmh_handle_t client,
  *
  */
 typedef int (*tbcmh_provision_on_timeout_t)(tbcmh_handle_t client, void *context);
-
-//====9.Firmware/Software update=========================================================
 
 /**
  * @brief  Callback of get current F/W or S/W title
@@ -366,7 +364,8 @@ typedef const char* (*tbcmh_otaupdate_on_get_current_version_t)(void *context);
  */
 typedef void (*tbcmh_otaupdate_on_updated_t)(void *context, bool result);
 
-//====0.tbcm client======================================================================
+//==== MQTT connection =========================================================
+
 /**
  * @brief creates ThingsBoard client mqtt handle
  *
@@ -392,7 +391,8 @@ void tbcmh_destroy(tbcmh_handle_t client);
  *
  * @return true on successful, faiure on failure
  */
-bool tbcmh_connect_using_url(tbcmh_handle_t client,
+bool tbcmh_connect_using_url(
+                                tbcmh_handle_t client,
                                 const tbc_transport_config_esay_t *config,
                                 void *context,
                                 tbcmh_on_connected_t on_connected,
@@ -452,7 +452,7 @@ bool tbcmh_has_events(tbcmh_handle_t client);
  */
 void tbcmh_run(tbcmh_handle_t client);
 
-//====10.Publish Telemetry time-series data==============================================
+//==== Publish Telemetry time-series data =====================================
 /**
  * @brief Publish telemetry data to ThingsBoard platform
  *
@@ -470,8 +470,11 @@ void tbcmh_run(tbcmh_handle_t client);
  *         0 if cannot publish
  *        -1/ESP_FAIL on error
  */
-int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
-                                int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_telemetry_upload(
+                                tbcmh_handle_t client,
+                                const char *telemetry,
+                                int qos/*= 1*/,
+                                int retain/*= 0*/);
 
 /**
  * @brief Publish telemetry data to ThingsBoard platform
@@ -490,10 +493,13 @@ int tbcmh_telemetry_upload(tbcmh_handle_t client, const char *telemetry,
  *         0 if cannot publish
  *        -1/ESP_FAIL on error
  */
-int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, const tbcmh_value_t *object,
-                                int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_telemetry_upload_ex(
+                                tbcmh_handle_t client,
+                                const tbcmh_value_t *object,
+                                int qos/*= 1*/,
+                                int retain/*= 0*/);
 
-//====20.Publish client-side device attributes to the server=============================
+//==== Publish client-side device attributes to the server=====================
 /**
  * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
  *
@@ -512,8 +518,11 @@ int tbcmh_telemetry_upload_ex(tbcmh_handle_t client, const tbcmh_value_t *object
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
-                                int qos /*= 1*/, int retain /*= 0*/);
+int tbcmh_attributes_update(
+                                tbcmh_handle_t client,
+                                const char *attributes,
+                                int qos /*= 1*/,
+                                int retain /*= 0*/);
 
 /**
  * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
@@ -533,10 +542,14 @@ int tbcmh_attributes_update(tbcmh_handle_t client, const char *attributes,
  *         0 if cannot publish
  *        -1 if error
  */
-int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
-                                int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_attributes_update_ex(
+                                tbcmh_handle_t client,
+                                tbcmh_value_t *object,
+                                int qos/*= 1*/,
+                                int retain/*= 0*/);
 
-//====21.Subscribe to shared device attribute updates from the server====================
+//==== Subscribe to shared device attribute updates from the server============
+
 /**
  * @brief Subscribe to shared device attribute updates from the server
  *
@@ -549,10 +562,12 @@ int tbcmh_attributes_update_ex(tbcmh_handle_t client, tbcmh_value_t *object,
  * @return subscribe_id on success
  *         -1/ESP_FAIL on failure
  */
-int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+int tbcmh_attributes_subscribe(
+                                tbcmh_handle_t client,
                                 void *context,
                                 tbcmh_attributes_on_update_t on_update,
-                                int count, /*const char *key,*/...);
+                                int count,
+                                /*const char *key,*/...);
 
 /**
  * @brief Subscribe to shared device attribute updates from the server
@@ -566,7 +581,8 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
  * @return subscribe_id on success
  *         -1/ESP_FAIL on failure
  */
-int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client,
+int tbcmh_attributes_subscribe_of_array(
+                                tbcmh_handle_t client,
                                 void *context,
                                 tbcmh_attributes_on_update_t on_update,
                                 int count, const char *keys[]);
@@ -580,10 +596,11 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client,
  * @return 0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
+tbc_err_t tbcmh_attributes_unsubscribe(
+                                tbcmh_handle_t client,
                                 int subscribe_id);
 
-//====22.Request client-side or shared device attributes from the server=================
+//==== Request client-side or shared device attributes from the server ========
 /**
  * @brief Request client-side or shared device attributes from the server
  *
@@ -597,11 +614,13 @@ tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client,
  * @return 0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
-                                 void *context,
-                                 tbcmh_attributes_on_response_t on_response,
-                                 tbcmh_attributes_on_timeout_t on_timeout,
-                                 const char *client_keys, const char *shared_keys);
+tbc_err_t tbcmh_attributes_request(
+                                tbcmh_handle_t client,
+                                void *context,
+                                tbcmh_attributes_on_response_t on_response,
+                                tbcmh_attributes_on_timeout_t on_timeout,
+                                const char *client_keys,
+                                const char *shared_keys);
 
 /**
  * @brief Request client-side device attributes from the server
@@ -615,11 +634,13 @@ tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
  * @return 0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_clientattributes_request(
+                                tbcmh_handle_t client,
                                  void *context,
                                  tbcmh_attributes_on_response_t on_response,
                                  tbcmh_attributes_on_timeout_t on_timeout,
-                                 int count, /*const char *key,*/...);
+                                 int count,
+                                 /*const char *key,*/...);
 
 /**
  * @brief Request shared device attributes from the server
@@ -633,13 +654,15 @@ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
  * @return 0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
-                                 void *context,
-                                 tbcmh_attributes_on_response_t on_response,
-                                 tbcmh_attributes_on_timeout_t on_timeout,
-                                 int count, /*const char *key,*/...);
+tbc_err_t tbcmh_sharedattributes_request(
+                                tbcmh_handle_t client,
+                                void *context,
+                                tbcmh_attributes_on_response_t on_response,
+                                tbcmh_attributes_on_timeout_t on_timeout,
+                                int count, /*const char *key,*/...);
 
-//====30.Server-side RPC=================================================================
+//==== Server-side RPC ========================================================
+
 /**
  * @brief Subscribe to server-side RPC from the server
  *
@@ -651,8 +674,10 @@ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
  * @return  0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
-                                const char *method, void *context,
+tbc_err_t tbcmh_serverrpc_subscribe(
+                                tbcmh_handle_t client,
+                                const char *method,
+                                void *context,
                                 tbcmh_serverrpc_on_request_t on_request);
 
 /**
@@ -664,9 +689,12 @@ tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
  * @return  0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method);
+tbc_err_t tbcmh_serverrpc_unsubscribe(
+                                tbcmh_handle_t client,
+                                const char *method);
 
-//====31.Client-side RPC=================================================================
+//==== Client-side RPC ========================================================
+
 /**
  * @brief Send one-way client-side RPC request to the server
  *
@@ -677,8 +705,10 @@ tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method)
  * @return  0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client,
-                                const char *method, const tbcmh_rpc_params_t *params);
+tbc_err_t tbcmh_oneway_clientrpc_request(
+                                tbcmh_handle_t client,
+                                const char *method,
+                                const tbcmh_rpc_params_t *params);
 
 /**
  * @brief Send two-way client-side RPC request to the server
@@ -693,13 +723,15 @@ tbc_err_t tbcmh_oneway_clientrpc_request(tbcmh_handle_t client,
  * @return  0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client,
-                                const char *method, const tbcmh_rpc_params_t *params,
+tbc_err_t tbcmh_twoway_clientrpc_request(
+                                tbcmh_handle_t client,
+                                const char *method,
+                                const tbcmh_rpc_params_t *params,
                                 void *context,
                                 tbcmh_clientrpc_on_response_t on_response,
                                 tbcmh_clientrpc_on_timeout_t on_timeout);
 
-//====40.initiate claiming device using device-side key scenario=========================
+//==== initiate claiming device using device-side key scenario ================
 
 /**
  * @brief Send message of initiate claiming device to the server
@@ -716,9 +748,10 @@ tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client,
  */
 tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(
                                 tbcmh_handle_t client,
-                                const char *secret_key, uint32_t *duration_ms);
+                                const char *secret_key,
+                                uint32_t *duration_ms);
 
-//====50.Device provisioning=============================================================
+//==== Device provisioning ====================================================
 /**
  * @brief Send device provisoning request to the server
  *
@@ -731,13 +764,14 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(
  * @return  0/ESP_OK on successful
  *         -1/ESP_FAIL on otherwise
  */
-tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
+tbc_err_t tbcmh_provision_request(
+                                tbcmh_handle_t client,
                                 const tbc_provison_config_t *config,
                                 void *context,
                                 tbcmh_provision_on_response_t on_response,
                                 tbcmh_provision_on_timeout_t on_timeout);
 
-//====60.Firmware update=================================================================
+//==== Firmware update ========================================================
 /**
  * @brief Subscribe F/W or S/W OTA updates to the server
  *
@@ -752,7 +786,8 @@ tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
  * @return  0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
+tbc_err_t tbcmh_otaupdate_subscribe(
+                                tbcmh_handle_t client,
                                 const char *ota_description,  // TODO: remove it!
                                 tbcmh_otaupdate_type_t ota_type,
                                 void *context_user,
@@ -763,13 +798,15 @@ tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
 /**
  * @brief Unsubscribe F/W or S/W OTA updates from the server
  *
- * @param client                    ThingsBoard MQTT Client Helper handle
- * @param ota_description           descripion, see ota_description param of tbcmh_otaupdate_subscribe()
+ * @param client                ThingsBoard MQTT Client Helper handle
+ * @param ota_description       Descripion, see ota_description param of tbcmh_otaupdate_subscribe()
  * 
  * @return  0/ESP_OK on success
  *         -1/ESP_FAIL on failure
  */
-tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description);
+tbc_err_t tbcmh_otaupdate_unsubscribe(
+                                tbcmh_handle_t client,
+                                const char *ota_description);
 
 #ifdef __cplusplus
 }

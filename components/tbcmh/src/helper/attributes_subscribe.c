@@ -207,7 +207,7 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
                                 // xSemaphoreGive(client->_lock);
                                 return 2;
                             }
-                            if (result==1) { //called tbcmh_sharedattribute_unregister() inside on_set()
+                            if (result==1) { //called tbcmh_attributes_unsubscribe() inside on_set()
                                 return 1;
                             }
                         }

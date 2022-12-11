@@ -1215,6 +1215,12 @@ CONFIG_WPA_MBEDTLS_CRYPTO=y
 # CONFIG_WPA_WPS_STRICT is not set
 # CONFIG_WPA_11KV_SUPPORT is not set
 # end of Supplicant
+
+#
+# ThingsBoard MQTT Client library (TBMQTTClient)
+#
+CONFIG_TB_MQTT_CLIENT_HELPER_ENABLE=y
+# end of ThingsBoard MQTT Client library (TBMQTTClient)
 # end of Component config
 
 #

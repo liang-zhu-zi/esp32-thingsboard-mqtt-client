@@ -191,7 +191,8 @@ typedef struct
  *         NULL on failure
  * 
  */
-tbc_transport_credentials_config_t *tbc_transport_credentials_clone(const tbc_transport_credentials_config_t *credentials);
+tbc_transport_credentials_config_t *tbc_transport_credentials_clone(
+                                const tbc_transport_credentials_config_t *credentials);
 
 /**
  * @brief  Copy a transport credentials configuration
@@ -202,8 +203,9 @@ tbc_transport_credentials_config_t *tbc_transport_credentials_clone(const tbc_tr
  * @return dest on successful
  *         NULL on failure
  */
-tbc_transport_credentials_config_t *tbc_transport_credentials_config_copy(tbc_transport_credentials_config_t *dest,
-                                                const tbc_transport_credentials_config_t *src);
+tbc_transport_credentials_config_t *tbc_transport_credentials_config_copy(
+                                tbc_transport_credentials_config_t *dest,
+                                const tbc_transport_credentials_config_t *src);
 
 /**
  * @brief  Copy a transport configuration
@@ -214,7 +216,9 @@ tbc_transport_credentials_config_t *tbc_transport_credentials_config_copy(tbc_tr
  * @return dest on successful
  *         NULL on failure
  */
-tbc_transport_config_t *tbc_transport_config_copy(tbc_transport_config_t *dest, const tbc_transport_config_t *src);
+tbc_transport_config_t *tbc_transport_config_copy(
+                                tbc_transport_config_t *dest,
+                                const tbc_transport_config_t *src);
 
 #ifdef __cplusplus
 }
