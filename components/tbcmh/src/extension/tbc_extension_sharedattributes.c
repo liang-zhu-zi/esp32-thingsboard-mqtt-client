@@ -356,6 +356,17 @@ tbc_err_t tbce_sharedattributes_initialized(tbce_sharedattributes_handle_t share
              }
         }
     }
+
+    // last attributes request
+    if (i>0) {
+        tbcmh_attributes_request(client,
+                     sharedattributes/*context*/,
+                     _tbce_sharedattributes_on_initialized/*on_response*/,
+                     NULL/*on_timeout*/,
+                     NULL/*client_keys*/, shared_keys);
+        memset(shared_keys, 0x00, MAX_KEYS_LEN);
+        i=0;
+    }
  
     TBC_FREE(shared_keys);
     return ESP_OK;

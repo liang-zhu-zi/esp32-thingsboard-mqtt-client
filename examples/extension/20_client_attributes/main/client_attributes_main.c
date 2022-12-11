@@ -29,6 +29,9 @@ static const char *TAG = "CLIENT_ATTRIBUTES_MAIN";
 
 tbce_clientattributes_handle_t _clientattributes = NULL;
 
+static double setpoint = 24.0;
+
+
 //Don't call TBCMH API in these callback!
 //Free return value by caller/(tbcmh library)!
 tbcmh_value_t* tb_clientattribute_on_get_model(void *context)
@@ -42,9 +45,41 @@ tbcmh_value_t* tb_clientattribute_on_get_model(void *context)
 //Free return value by caller/(tbcmh library)!
 tbcmh_value_t* tb_clientattribute_on_get_setpoint(void *context)
 {
-    ESP_LOGI(TAG, "Get setpoint (a client attribute)");
+    ESP_LOGI(TAG, "Get setpoint (a client attribute) setpoint=%f", setpoint);
     
-    return cJSON_CreateNumber(25.5);
+    return cJSON_CreateNumber(setpoint);
+}
+
+/**
+ * @brief  callback of setting value of the device's client-side attribute.
+ * Only for initilizing client-side attribute
+ *
+ * Notes:
+ * - If you call tbce_clientattributes_register_with_set() & tbce_clientattributes_initialize(),
+ *    this callback will be called when you receied a initialization vlaue of client-side attribute
+ * - Don't call TBCMH API in this callback!
+ *
+ * @param context   context param 
+ * @param value     initialization value of the device's client-side attribute
+ *
+ * @return 2 if tbcmh_disconnect() or tbcmh_destroy() is called inside in this callback
+ *         1 if tbcmh_sharedattributes_unregister() or tbcmh_attributes_unsubscribe() 
+ *              is called inside in this callback
+ *         0/ESP_OK     on success
+ *         -1/ESP_FAIL  on failure
+ */
+tbc_err_t tb_clientattribute_on_set_setpoint(void *context, const tbcmh_value_t *value)
+{
+    ESP_LOGI(TAG, "Initilize/Set setpoint (a client attribute)");
+
+    if (cJSON_IsNumber(value)) {
+        setpoint = cJSON_GetNumberValue(value);
+        ESP_LOGI(TAG, "Receive setpoint = %f", setpoint);
+    } else {
+        ESP_LOGW(TAG, "Receive setpoint is NOT a Number!");
+    }
+
+    return ESP_OK;
 }
 
 void tb_clientattribute_send(tbcmh_handle_t client)
@@ -159,8 +194,9 @@ static void mqtt_app_start(void)
         goto exit_destroy;
     }
     ESP_LOGI(TAG, "Append client attribute: setpoint...");
-    err = tbce_clientattributes_register(_clientattributes, CLIENTATTRIBUTE_SETPOINT, NULL,
-                            tb_clientattribute_on_get_setpoint);
+    err = tbce_clientattributes_register_with_set(_clientattributes, CLIENTATTRIBUTE_SETPOINT, NULL,
+                            tb_clientattribute_on_get_setpoint,
+                            tb_clientattribute_on_set_setpoint);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "failure to append client attribute: %s!", CLIENTATTRIBUTE_SETPOINT);
         goto exit_destroy;

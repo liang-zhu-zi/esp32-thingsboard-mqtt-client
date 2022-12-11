@@ -251,6 +251,7 @@ tbc_err_t tbce_clientattributes_initialize(
 
     char *client_keys = TBC_MALLOC(MAX_KEYS_LEN);
     if (!client_keys) {
+        TBC_LOGE("Unable to malloc memeory!");
         return ESP_FAIL;
     }
     memset(client_keys, 0x00, MAX_KEYS_LEN);
@@ -279,6 +280,17 @@ tbc_err_t tbce_clientattributes_initialize(
                  memset(client_keys, 0x00, MAX_KEYS_LEN);
              }
         }
+    }
+
+    // last attributes request
+    if (i>0) {
+        tbcmh_attributes_request(client,
+             clientattributes/*context*/,
+             _tbce_clientattributes_on_initialized/*on_response*/,
+             NULL/*on_timeout*/,
+             client_keys, NULL);
+        i = 0;
+        memset(client_keys, 0x00, MAX_KEYS_LEN);
     }
 
     TBC_FREE(client_keys);

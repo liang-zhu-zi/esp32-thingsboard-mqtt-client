@@ -64,6 +64,10 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
+5. Check out the latest client attributes on ThingsBoard
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Attributes`  --> `Client Attributes` --> Check out the latest client attributes.
+
 ## Example Output
 
 ```none

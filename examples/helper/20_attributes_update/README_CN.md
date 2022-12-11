@@ -64,6 +64,10 @@
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
+5. 在 ThingsBoard 上查看最新的 client attributes
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes`  --> `Client Attributes` --> 查看最新的 Attributes.
+
 ## 日志输出
 
 ```none
