@@ -7,10 +7,9 @@
 
 本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
-本示例实现了 telemetry 与 client-side attributes 相关功能：
+本示例实现了 telemetry 相关功能：
 
 * 发送 telemetry: temprature, humidity
-* 发送 client-side attributes: model, setpoint
 
 ## 硬件需求
 
@@ -63,6 +62,10 @@
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
+
+5. 在 ThingsBoard 上查看最新的 telemetry data
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data.
 
 ## 日志输出
 
