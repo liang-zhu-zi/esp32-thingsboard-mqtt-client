@@ -116,7 +116,7 @@ I (688) wifi_init: tcp rx win: 5744
 I (688) wifi_init: tcp mss: 1440
 I (698) wifi_init: WiFi IRAM OP enabled
 I (698) wifi_init: WiFi RX IRAM OP enabled
-I (708) example_connect: Connecting to Duoman...
+I (708) example_connect: Connecting to MySSID...
 I (708) phy_init: phy_version 4670,719f9f6,Feb 18 2021,17:07:07
 I (818) wifi:mode : sta (bc:dd:c2:d1:be:b0)
 I (818) wifi:enable tsf
@@ -126,7 +126,7 @@ I (3618) wifi:state: init -> auth (b0)
 I (3618) wifi:state: auth -> assoc (0)
 I (3628) wifi:state: assoc -> run (10)
 W (3638) wifi:<ba-add>idx:0 (ifx:0, d8:0d:17:00:5b:13), tid:0, ssn:0, winSize:64
-I (3648) wifi:connected with Duoman, aid = 5, channel 2, BW20, bssid = d8:0d:17:00:5b:13
+I (3648) wifi:connected with MySSID, aid = 5, channel 2, BW20, bssid = d8:0d:17:00:5b:13
 I (3648) wifi:security: WPA2-PSK, phy: bgn, rssi: -42
 I (3648) wifi:pm start, type: 1
 

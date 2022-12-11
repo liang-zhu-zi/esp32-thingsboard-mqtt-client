@@ -198,7 +198,7 @@ exit_destroy:
 #endif
 }
 
-#else
+#else //Simplified version example
 
 /*!< Callback of connected ThingsBoard MQTT */
 void tb_on_connected(tbcmh_handle_t client, void *context)
@@ -223,8 +223,8 @@ void mqtt_app_start(void)
 
     ESP_LOGI(TAG, "Connect tbcmh ...");
     tbc_transport_config_esay_t config = {
-        .uri = "mqtt://192.168.0.186",          // Complete ThingsBoard MQTT broker URI
-        .access_token = "mKqOP8kQwxdDsVnCRU20", // ThingsBoard Access Token
+        .uri = "mqtt://192.168.0.186",          // TODO: replace it with your ThingsBoard URI
+        .access_token = "mKqOP8kQwxdDsVnCRU20", // TODO: replace it with your device's Access Token in ThingsBoard
         .log_rxtx_package = true                // Print Rx/Tx MQTT package
      };
     bool result = tbcmh_connect_using_url(client, &config,
