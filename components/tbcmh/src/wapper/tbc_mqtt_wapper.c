@@ -645,7 +645,7 @@ int tbcm_attributes_request_ex(tbcm_handle_t client,
      if (shared_keys && strlen(shared_keys) > 0) {
           shared_len = strlen(shared_keys);
      }
-     if ((client_len>0) && (shared_len>0)) {
+     if ((client_len<=0) && (shared_len<=0)) {
           TBC_LOGW("There are no keys to request");
           return -1;
      }
