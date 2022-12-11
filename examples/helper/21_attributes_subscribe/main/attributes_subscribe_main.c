@@ -77,15 +77,8 @@ void tb_on_disconnected(tbcmh_handle_t client, void *context)
 
 static void mqtt_app_start(void)
 {
-	//tbc_err_t err;
-#if 0
-    const esp_mqtt_client_config_t config = {
-        .uri = CONFIG_BROKER_URL
-    };
-#else
     const char *access_token = CONFIG_ACCESS_TOKEN;
     const char *uri = CONFIG_BROKER_URL;
-#endif
 
 #if CONFIG_BROKER_URL_FROM_STDIN
     char line_uri[128];
@@ -137,12 +130,6 @@ static void mqtt_app_start(void)
     }
 #endif /* CONFIG_ACCESS_TOKEN_FROM_STDIN */
 
-#if 0
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-    /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-    esp_mqtt_client_start(client);
-#else
     ESP_LOGI(TAG, "Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
@@ -151,19 +138,21 @@ static void mqtt_app_start(void)
     }
 
     ESP_LOGI(TAG, "Append shared attribue: sntp_server...");
-    tbc_err_t err = tbcmh_attributes_subscribe(client, NULL/*context*/,
+    int subscribe_id = tbcmh_attributes_subscribe(client, NULL/*context*/,
                                     tb_on_sntpserver_update,
                                     0/*count*/, SHAREDATTRIBUTE_SNTP_SERVER);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failure to append sntp_server: %s!", SHAREDATTRIBUTE_SNTP_SERVER);
+    if (subscribe_id < 0) {
+        ESP_LOGE(TAG, "Failure to append sntp_server: %s, subscribe_id=%d!",
+                SHAREDATTRIBUTE_SNTP_SERVER, subscribe_id);
         goto exit_destroy;
     }
 
-    err = tbcmh_attributes_subscribe(client, NULL/*context*/,
+    subscribe_id = tbcmh_attributes_subscribe(client, NULL/*context*/,
                                     tb_on_anyone_update,
                                     0/*count*/);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failure to subscribe all attirbutes update!");
+    if (subscribe_id < 0) {
+        ESP_LOGE(TAG, "Failure to subscribe all attirbutes update! subscribe_id=%d!",
+                subscribe_id);
         goto exit_destroy;
     }
 
@@ -200,7 +189,6 @@ static void mqtt_app_start(void)
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
-#endif
 }
 
 void app_main(void)

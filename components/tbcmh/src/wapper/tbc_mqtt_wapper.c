@@ -961,6 +961,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
         publish_data.payload    = payload;                        /*!< Payload associated with this event */
         publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
         __convert_data_event(&dst_event, src_event, &publish_data);
+        dst_event.client       = client;
+        dst_event.user_context = client->context;
         client->on_event(&dst_event);
 
          /*
@@ -993,6 +995,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          publish_data.payload    = payload;                        /*!< Payload associated with this event */
          publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
          __convert_data_event(&dst_event, src_event, &publish_data);
+         dst_event.client       = client;
+         dst_event.user_context = client->context;
          client->on_event(&dst_event);
 
          /*
@@ -1024,6 +1028,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          publish_data.payload    = payload;                        /*!< Payload associated with this event */
          publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
          __convert_data_event(&dst_event, src_event, &publish_data);
+         dst_event.client       = client;
+         dst_event.user_context = client->context;
          client->on_event(&dst_event);
 
          /*
@@ -1054,6 +1060,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          publish_data.payload    = payload;                        /*!< Payload associated with this event */
          publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
          __convert_data_event(&dst_event, src_event, &publish_data);
+         dst_event.client       = client;
+         dst_event.user_context = client->context;
          client->on_event(&dst_event);
 
          /*
@@ -1097,6 +1105,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          publish_data.payload    = payload;                        /*!< Payload associated with this event */
          publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
          __convert_data_event(&dst_event, src_event, &publish_data);
+         dst_event.client       = client;
+         dst_event.user_context = client->context;
          client->on_event(&dst_event);
 
          /*
@@ -1129,6 +1139,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          publish_data.payload    = payload;                        /*!< Payload associated with this event */
          publish_data.payload_len= payload_len;                    /*!< Length of the payload for this event */
          __convert_data_event(&dst_event, src_event, &publish_data);
+         dst_event.client       = client;
+         dst_event.user_context = client->context;
          client->on_event(&dst_event);
 
          /*

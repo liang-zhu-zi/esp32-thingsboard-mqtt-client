@@ -1,4 +1,4 @@
-/* MQTT (over TCP) Example
+/* Publish client-side device attributes to ThingsBoard platform
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 

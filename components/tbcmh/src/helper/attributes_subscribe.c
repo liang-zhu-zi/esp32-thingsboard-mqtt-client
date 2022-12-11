@@ -277,7 +277,9 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     }
 
     // Subscript topic <===  empty->non-empty
-    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)) {
+    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)
+        && tbcmh_is_connected(client))
+    {
         int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
@@ -336,7 +338,9 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
     }
 
     // Subscript topic <===  empty->non-empty
-    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)) {
+    if (isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)
+        && tbcmh_is_connected(client))
+    {
         int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);

@@ -1,4 +1,4 @@
-/* MQTT (over TCP) Example
+/* Publish telemetry data to ThingsBoard platform Example
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
 
