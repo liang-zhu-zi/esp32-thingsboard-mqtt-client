@@ -81,10 +81,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 
        (MyPassword) WiFi Password                  
-   Component config  --->
-       ThingsBoard MQTT Client library (TBMQTTClient)  ---> 
-           [*] Enable TBMQTTClient Helper
-           
    ```
 
    **Note**: The corresponding partition table of "Factory app, two OTA definitions" is [$ESP-IDF\components\partition_table\partitions_two_ota.csv](https://github.com/espressif/esp-idf/blob/master/components/partition_table/partitions_two_ota.csv).

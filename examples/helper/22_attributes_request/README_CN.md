@@ -60,9 +60,6 @@
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 
        (MyPassword) WiFi Password                  
-   Component config  --->
-       ThingsBoard MQTT Client library (TBMQTTClient)  ---> 
-           [*] Enable TBMQTTClient Helper
    ```
 
 1. 编译与运行 build, flash and monitor

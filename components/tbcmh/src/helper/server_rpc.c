@@ -223,7 +223,8 @@ void _tbcmh_serverrpc_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
     TBC_CHECK_PTR(client)
-    if (tbcmh_is_connected(client) && !LIST_EMPTY(&client->attributesrequest_list)) {
+
+    if (tbcmh_is_connected(client) && !LIST_EMPTY(&client->serverrpc_list)) {
         int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE, 0);
         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
                 msg_id, TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE);

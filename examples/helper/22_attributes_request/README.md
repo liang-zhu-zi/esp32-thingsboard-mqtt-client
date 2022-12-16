@@ -60,9 +60,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 
        (MyPassword) WiFi Password                  
-   Component config  --->
-       ThingsBoard MQTT Client library (TBMQTTClient)  ---> 
-           [*] Enable TBMQTTClient Helper
    ```
 
 1. build, flash and monitor

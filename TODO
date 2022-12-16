@@ -1,12 +1,14 @@
 # TODO List
 
 
-1. A new examples of all in one.
-
+1. Client-side RPC `testing`.
+1. Client-side RPC `testing`.
 1. S/W OTA update `testing`.
 1. Device claiming `testing`.
 1. security option `testing`.
 1. Device provisioning `testing`.
+
+1. A new examples of all in one.
 
 1. Docs...
 1. Append supported ThingsBoard MQTT API in commonents/README.md.
