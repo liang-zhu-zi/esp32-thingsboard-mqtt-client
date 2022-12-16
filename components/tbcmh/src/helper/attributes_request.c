@@ -198,6 +198,8 @@ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
                                  tbcmh_attributes_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...)
 {
+     char *client_keys = NULL;
+
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
      if (count <= 0) {
           TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
@@ -215,7 +217,7 @@ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
         goto attributesrequest_of_client_fail;
      }
 
-     char *client_keys = TBC_MALLOC(MAX_KEYS_LEN);
+     client_keys = TBC_MALLOC(MAX_KEYS_LEN);
      if (!client_keys) {
           goto attributesrequest_of_client_fail;
      }
@@ -304,7 +306,9 @@ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
                                  tbcmh_attributes_on_timeout_t on_timeout,
                                  int count, /*const char *key,*/...)
 {
+     char *shared_keys = NULL;
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+
      if (count <= 0) {
           TBC_LOGE("count(%d) is error! %s()", count, __FUNCTION__);
           return ESP_FAIL;
@@ -321,7 +325,7 @@ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
         goto attributesrequest_of_shared_fail;
      }
 
-     char *shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
+     shared_keys = TBC_MALLOC(MAX_KEYS_LEN);
      if ( !shared_keys) {
           goto attributesrequest_of_shared_fail;
      }
