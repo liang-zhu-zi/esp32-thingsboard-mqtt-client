@@ -187,7 +187,7 @@ static tbc_err_t _provision_request_with_params(tbcmh_handle_t client,
 
      // NOTE: It must subscribe response topic, then send request!
      // Subscript topic <===  empty->non-empty
-     if (LIST_EMPTY(&client->deviceprovision_list)) {
+     if (tbcmh_is_connected(client) && LIST_EMPTY(&client->deviceprovision_list)) {
         int msg_id = tbcm_subscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_PROVISION_RESPONSE, 0);
         TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
@@ -477,7 +477,7 @@ void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id,
      }
 
      // Unsubscript topic <===  non-empty->empty
-     if (!isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
+     if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
          int msg_id = tbcm_unsubscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_PROVISION_RESPONSE);
          TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
@@ -542,7 +542,7 @@ void _tbcmh_provision_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
      }
 
      // Unsubscript topic <===  non-empty->empty
-     if (!isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
+     if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->deviceprovision_list)) {
          int msg_id = tbcm_unsubscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_PROVISION_RESPONSE);
          TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",

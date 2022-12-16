@@ -492,10 +492,12 @@ static void _otaupdate_do_updated(otaupdate_t *otaupdate, bool success)
 
     // TODO: sw & fw are upgrading at same time!
     // Unsubscript topic <===  non-empty->empty
-    int msg_id = tbcm_unsubscribe(otaupdate->client->tbmqttclient,
-                            TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
-    TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
-                            msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+    if (tbcmh_is_connected(otaupdate->client)) {
+        int msg_id = tbcm_unsubscribe(otaupdate->client->tbmqttclient,
+                                TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+        TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                                msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+    }
 
     TBC_CHECK_PTR(otaupdate->config.on_ota_updated);
     otaupdate->config.on_ota_updated(otaupdate->config.context_user, success);
@@ -847,10 +849,12 @@ static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
         // TODO: sw & fw are upgrading at same time!
         // NOTE: It must subscribe response topic, then send request!
         // Subscript topic <===  empty->non-empty
-        int msg_id = tbcm_subscribe(client->tbmqttclient,
-                                TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
-        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                                msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+        if (tbcmh_is_connected(client)) {
+            int msg_id = tbcm_subscribe(client->tbmqttclient,
+                                    TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE, 0);
+            TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                                    msg_id, TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE);
+        }
 
         // chunk_request
         _otaupdate_publish_going_status(otaupdate, TB_MQTT_VALUE_FW_SW_STATE_DOWNLOADING);

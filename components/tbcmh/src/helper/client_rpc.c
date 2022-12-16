@@ -126,7 +126,7 @@ tbc_err_t tbcmh_twoway_clientrpc_request(tbcmh_handle_t client, const char *meth
 
      // NOTE: It must subscribe response topic, then send request!
      // Subscript topic <===  empty->non-empty
-     if (LIST_EMPTY(&client->clientrpc_list)) {
+     if (tbcmh_is_connected(client) && LIST_EMPTY(&client->clientrpc_list)) {
          int msg_id = tbcm_subscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE, 0);
          TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
@@ -278,7 +278,7 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
      }
 
      // Subscript topic <===  empty->non-empty
-     if (!isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
+     if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
@@ -339,7 +339,7 @@ void _tbcmh_clientrpc_on_check_timeout(tbcmh_handle_t client, uint64_t timestamp
      }
 
      // Subscript topic <===  empty->non-empty
-     if (!isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
+     if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->clientrpc_list)) {
         int msg_id = tbcm_unsubscribe(client->tbmqttclient,
                             TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE);
         TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
