@@ -456,6 +456,7 @@ void tbcmh_run(tbcmh_handle_t client);
  * @brief Publish telemetry data to ThingsBoard platform
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - A ThingsBoard MQTT Protocol message example:
  *      Topic: 'v1/devices/me/telemetry'
  *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
@@ -478,6 +479,7 @@ int tbcmh_telemetry_upload(tbcmh_handle_t client,
  * @brief Publish telemetry data to ThingsBoard platform
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - A ThingsBoard MQTT Protocol message example:
  *      Topic: 'v1/devices/me/telemetry'
  *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
@@ -501,6 +503,7 @@ int tbcmh_telemetry_upload_ex(tbcmh_handle_t client,
  * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
  * - A ThingsBoard MQTT Protocol message example:
  *      Topic: 'v1/devices/me/attributes'
@@ -524,6 +527,7 @@ int tbcmh_attributes_update(tbcmh_handle_t client,
  * @brief Client to send a 'Attributes' publish message to ThingsBoard platform
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
  * - A ThingsBoard MQTT Protocol message example:
  *      Topic: 'v1/devices/me/attributes'
@@ -548,6 +552,9 @@ int tbcmh_attributes_update_ex(tbcmh_handle_t client,
 /**
  * @brief Subscribe to shared device attribute updates from the server
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param context
  * @param on_update     calllback of shared device attributes update
@@ -565,6 +572,9 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
 
 /**
  * @brief Subscribe to shared device attribute updates from the server
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param context
@@ -584,6 +594,9 @@ int tbcmh_attributes_subscribe_of_array(
 /**
  * @brief Unsubscribe to shared device attribute updates from the server
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param subscribe_id  suscribe id
  * 
@@ -597,6 +610,9 @@ tbc_err_t tbcmh_attributes_unsubscribe(
 //==== Request client-side or shared device attributes from the server ========
 /**
  * @brief Request client-side or shared device attributes from the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param context
@@ -619,6 +635,9 @@ tbc_err_t tbcmh_attributes_request(
 /**
  * @brief Request client-side device attributes from the server
  *
+ * Notes:
+ * - It should be called after the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param context
  * @param on_response   calllback of device attributes response
@@ -638,6 +657,9 @@ tbc_err_t tbcmh_clientattributes_request(
 
 /**
  * @brief Request shared device attributes from the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param context
@@ -660,6 +682,9 @@ tbc_err_t tbcmh_sharedattributes_request(
 /**
  * @brief Subscribe to server-side RPC from the server
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param method        RPC method name
  * @param context
@@ -677,6 +702,9 @@ tbc_err_t tbcmh_serverrpc_subscribe(
 /**
  * @brief Subscribe to server-side RPC from the server
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param method        RPC method name
  * 
@@ -692,6 +720,9 @@ tbc_err_t tbcmh_serverrpc_unsubscribe(
 /**
  * @brief Send one-way client-side RPC request to the server
  *
+ * Notes:
+ * - It should be called after the MQTT connection is established
+ *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param method        RPC method name
  * @param params        RPC params
@@ -706,6 +737,9 @@ tbc_err_t tbcmh_oneway_clientrpc_request(
 
 /**
  * @brief Send two-way client-side RPC request to the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param method        RPC method name
@@ -731,7 +765,8 @@ tbc_err_t tbcmh_twoway_clientrpc_request(
  * @brief Send message of initiate claiming device to the server
  *
  * Notes:
- *      https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-scenarios
+ * - It should be called after the MQTT connection is established
+ * - See https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-scenarios
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param secret_key    adds security to the claiming process
@@ -748,6 +783,9 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(
 //==== Device provisioning ====================================================
 /**
  * @brief Send device provisoning request to the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param client        ThingsBoard MQTT Client Helper handle
  * @param config
@@ -768,6 +806,9 @@ tbc_err_t tbcmh_provision_request(
 //==== Firmware update ========================================================
 /**
  * @brief Subscribe F/W or S/W OTA updates to the server
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param client                    ThingsBoard MQTT Client Helper handle
  * @param ota_description           descripion
@@ -791,6 +832,9 @@ tbc_err_t tbcmh_otaupdate_subscribe(
 
 /**
  * @brief Unsubscribe F/W or S/W OTA updates from the server
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param client                ThingsBoard MQTT Client Helper handle
  * @param ota_description       Descripion, see ota_description param of tbcmh_otaupdate_subscribe()

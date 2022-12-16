@@ -78,6 +78,48 @@ static tbc_err_t _serverrpc_destroy(serverrpc_t *serverrpc)
     return ESP_OK;
 }
 
+void _tbcmh_serverrpc_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // list create
+    memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list)); //client->serverrpc_list = LIST_HEAD_INITIALIZER(client->serverrpc_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
+void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // items empty - remove all item in serverrpc_list
+    serverrpc_t *serverrpc = NULL, *next;
+    LIST_FOREACH_SAFE(serverrpc, &client->serverrpc_list, entry, next) {
+         // remove from serverrpc list and destory
+         LIST_REMOVE(serverrpc, entry);
+         _serverrpc_destroy(serverrpc);
+    }
+    memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
 //Call it before connect()
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
@@ -176,47 +218,6 @@ tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method)
      return ESP_OK;
 }
 
-void _tbcmh_serverrpc_on_create(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return;
-    // }
-
-    // list create
-    memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list)); //client->serverrpc_list = LIST_HEAD_INITIALIZER(client->serverrpc_list);
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
-}
-
-void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return;
-    // }
-
-    // items empty - remove all item in serverrpc_list
-    serverrpc_t *serverrpc = NULL, *next;
-    LIST_FOREACH_SAFE(serverrpc, &client->serverrpc_list, entry, next) {
-         // remove from serverrpc list and destory
-         LIST_REMOVE(serverrpc, entry);
-         _serverrpc_destroy(serverrpc);
-    }
-    memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list));
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
-}
 
 void _tbcmh_serverrpc_on_connected(tbcmh_handle_t client)
 {

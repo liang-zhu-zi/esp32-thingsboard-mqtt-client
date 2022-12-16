@@ -48,6 +48,9 @@ typedef tbcmh_value_t* (*tbce_timeseriesaxis_on_get_t)(void *context);
 /**
  * @brief   Creates TBCE Time-series data handle
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @return  tbce_timeseriesdata_handle_t if successfully created, NULL on error
  */
 tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
@@ -55,12 +58,18 @@ tbce_timeseriesdata_handle_t tbce_timeseriesdata_create(void);
 /**
  * @brief   Destroys TBCE Time-series data handle
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param   tsdata  TBCE Time-series data handle
  */
 void tbce_timeseriesdata_destroy(tbce_timeseriesdata_handle_t tsdata);
 
 /**
  * @brief Register a time axis to TBCE Time-series data set
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param tsdata        TBCE Time-series data handle
  * @param key           name of a Time-series axis
@@ -78,6 +87,9 @@ tbc_err_t tbce_timeseriesdata_register(tbce_timeseriesdata_handle_t tsdata,
 /**
  * @brief Unregister a time-series axis from TBCE Time-series data set
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param tsdata        TBCE Time-series data set
  * @param key           name of a Time-series axis
  * 
@@ -89,6 +101,9 @@ tbc_err_t tbce_timeseriesdata_unregister(tbce_timeseriesdata_handle_t tsdata,
 
 /**
  * @brief Publish some Time-series axes in TBCE Time-series data to the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param tsdata     TBCE Time-series data
  * @param client     ThingsBoard Client MQTT Helper handle

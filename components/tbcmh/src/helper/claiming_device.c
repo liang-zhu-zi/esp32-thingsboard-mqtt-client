@@ -23,7 +23,33 @@
 const static char *TAG = "claiming_device";
 
 //==== Claiming device using device-side key scenario =================================
+void _tbcmh_claimingdevice_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+    //...
+}
 
+void _tbcmh_claimingdevice_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+    //...
+}
+
+void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+    //......
+}
+
+void _tbcmh_claimingdevice_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+    // ...
+}
 
 tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(tbcmh_handle_t client,
                     const char *secret_key, uint32_t *duration_ms)
@@ -52,33 +78,5 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(tbcmh_handle_t cl
      // Give semaphore
      xSemaphoreGive(client->_lock);
      return (result > -1) ? ESP_OK : ESP_FAIL;
-}
-
-void _tbcmh_claimingdevice_on_create(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-    //...
-}
-
-void _tbcmh_claimingdevice_on_destroy(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-    //...
-}
-
-void _tbcmh_claimingdevice_on_connected(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-    //......
-}
-
-void _tbcmh_claimingdevice_on_disconnected(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-    // ...
 }
 

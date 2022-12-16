@@ -60,6 +60,65 @@ static tbc_err_t _deviceprovision_destroy(provision_t *provision)
     return ESP_OK;
 }
 
+void _tbcmh_provision_on_create(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // list create
+    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list)); //client->deviceprovision_list = LIST_HEAD_INITIALIZER(client->deviceprovision_list);
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
+void _tbcmh_provision_on_destroy(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
+void _tbcmh_provision_on_connected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+}
+
+void _tbcmh_provision_on_disconnected(tbcmh_handle_t client)
+{
+    // This function is in semaphore/client->_lock!!!
+    TBC_CHECK_PTR(client);
+
+    // Take semaphore
+    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    //      TBC_LOGE("Unable to take semaphore!");
+    //      return;
+    // }
+
+    // remove all item in deviceprovision_list
+    _tbcmh_provision_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
+    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
+
+    // Give semaphore
+    // xSemaphoreGive(client->_lock);
+}
+
 // return ESP_OK on successful, ESP_FAIL on failure
 static tbc_err_t __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
 {
@@ -185,6 +244,12 @@ static tbc_err_t _provision_request_with_params(tbcmh_handle_t client,
           return ESP_FAIL;
      }
 
+     if (!tbcmh_is_connected(client)) {
+         TBC_LOGW("It still not connnected to servers! %s()", __FUNCTION__);
+         xSemaphoreGive(client->_lock);
+         return ESP_FAIL;
+     }
+
      // NOTE: It must subscribe response topic, then send request!
      // Subscript topic <===  empty->non-empty
      if (tbcmh_is_connected(client) && LIST_EMPTY(&client->deviceprovision_list)) {
@@ -282,65 +347,6 @@ tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
      ret = _provision_request_with_params(client, params, context, on_response, on_timeout);
      cJSON_Delete(params); // delete json object     
      return ret;
-}
-
-void _tbcmh_provision_on_create(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return;
-    // }
-
-    // list create
-    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list)); //client->deviceprovision_list = LIST_HEAD_INITIALIZER(client->deviceprovision_list);
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
-}
-
-void _tbcmh_provision_on_destroy(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return;
-    // }
-
-    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
-}
-
-void _tbcmh_provision_on_connected(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-}
-
-void _tbcmh_provision_on_disconnected(tbcmh_handle_t client)
-{
-    // This function is in semaphore/client->_lock!!!
-    TBC_CHECK_PTR(client);
-
-    // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-    //      TBC_LOGE("Unable to take semaphore!");
-    //      return;
-    // }
-
-    // remove all item in deviceprovision_list
-    _tbcmh_provision_on_check_timeout(client, (uint64_t)time(NULL)+ TB_MQTT_TIMEOUT + 2);
-    memset(&client->deviceprovision_list, 0x00, sizeof(client->deviceprovision_list));
-
-    // Give semaphore
-    // xSemaphoreGive(client->_lock);
 }
 
 static char *__parse_string_item(const cJSON *object, const char* key)

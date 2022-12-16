@@ -68,12 +68,18 @@ typedef tbc_err_t (*tbce_clientattribute_on_set_t)(void *context, const tbcmh_va
 /**
  * @brief   Creates TBCE client-side attributes handle
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @return  tbce_clientattributes_handle_t if successfully created, NULL on error
  */
 tbce_clientattributes_handle_t tbce_clientattributes_create(void);
 
 /**
  * @brief   Destroys TBCE client-side attributes handle
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param   clientattributes    TTBCE client-side attributes handle
  */
@@ -82,6 +88,9 @@ void tbce_clientattributes_destroy(
 
 /**
  * @brief Register a client-side attribute to TBCE client-side attributes
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param clientattributes  TBCE client-side attributes handle
  * @param key               name of a client-side attribute
@@ -98,6 +107,9 @@ tbc_err_t tbce_clientattributes_register(
 
 /**
  * @brief Register a client-side attribute to TBCE client-side attributes
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param clientattributes  TBCE client-side attributes handle
  * @param key               name of a client-side attribute
@@ -116,6 +128,9 @@ tbc_err_t tbce_clientattributes_register_with_set(
 
 /**
  * @brief Unregister a client-side attribute from TBCE client-side attributes
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param clientattributes  TBCE client-side attributes handle
  * @param key               name of a client-side attribute
@@ -143,6 +158,7 @@ bool tbce_clientattributes_is_contained(
  * @brief Initilize some client-side attributes in TBCE client-side attribute set from the server
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - In order to initialize client-side attributes need to 
  *   send mutiple attributes request to the servere
  * - Only client-side attributes with tbce_clientattribute_on_set_t() callback
@@ -162,6 +178,9 @@ tbc_err_t tbce_clientattributes_initialize(
 
 /**
  * @brief Update some client-side attributes in TBCE client-side attribute set to the server
+ *
+ * Notes:
+ * - It should be called after the MQTT connection is established
  *
  * @param clientattributes      TBCE client-side attributes handle
  * @param client                ThingsBoard Client MQTT Helper handle

@@ -169,93 +169,6 @@ static tbc_err_t _otaupdate_destroy(otaupdate_t *otaupdate)
     return ESP_OK;
 }
 
-tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
-                const char *ota_description,  // TODO: remove it!
-                tbcmh_otaupdate_type_t ota_type,
-                void *context_user,
-                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
-                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
-                tbcmh_otaupdate_on_updated_t on_updated)
-{
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_title, ESP_FAIL);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_version, ESP_FAIL);
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // Create otaupdate
-     otaupdate_t *otaupdate = _otaupdate_create(client,
-                                ota_description, ota_type,
-                                context_user,
-                                on_get_current_title,
-                                on_get_current_version,
-                                on_updated);
-     if (!otaupdate) {
-          // Give semaphore
-          xSemaphoreGive(client->_lock);
-          TBC_LOGE("Init otaupdate failure! ota_description=%s. %s()", ota_description, __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // Insert otaupdate to list
-     otaupdate_t *it, *last = NULL;
-     if (LIST_FIRST(&client->otaupdate_list) == NULL) {
-          // Insert head
-          LIST_INSERT_HEAD(&client->otaupdate_list, otaupdate, entry);
-     } else {
-          // Insert last
-          LIST_FOREACH(it, &client->otaupdate_list, entry) {
-               last = it;
-          }
-          if (it == NULL) {
-               assert(last);
-               LIST_INSERT_AFTER(last, otaupdate, entry);
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-     return ESP_OK;
-}
-
-tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description)
-{
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
-
-     // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-          return ESP_FAIL;
-     }
-
-     // Search item
-     otaupdate_t *otaupdate = NULL;
-     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
-          if (otaupdate && strcmp(otaupdate->ota_description, ota_description)==0) {
-             // Remove from list and destroy
-             LIST_REMOVE(otaupdate, entry);
-             _otaupdate_destroy(otaupdate);
-             break;
-          }
-     }
-
-     // Give semaphore
-     xSemaphoreGive(client->_lock);
-
-     if (!otaupdate) {
-          TBC_LOGW("Unable to remove otaupdate data:%s! %s()", ota_description, __FUNCTION__);
-          return ESP_FAIL;
-     }
-     return ESP_OK;
-}
-
-
 //{"current_fw_title": "myFirmware", "current_fw_version": "1.2.3"}
 static void _otaupdate_publish_early_current_version(otaupdate_t *otaupdate)
 {
@@ -717,6 +630,93 @@ void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
     // Give semaphore
     // xSemaphoreGive(client->_lock);
 }
+
+tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
+                const char *ota_description,  // TODO: remove it!
+                tbcmh_otaupdate_type_t ota_type,
+                void *context_user,
+                tbcmh_otaupdate_on_get_current_title_t on_get_current_title,
+                tbcmh_otaupdate_on_get_current_version_t on_get_current_version,
+                tbcmh_otaupdate_on_updated_t on_updated)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_title, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_version, ESP_FAIL);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Create otaupdate
+     otaupdate_t *otaupdate = _otaupdate_create(client,
+                                ota_description, ota_type,
+                                context_user,
+                                on_get_current_title,
+                                on_get_current_version,
+                                on_updated);
+     if (!otaupdate) {
+          // Give semaphore
+          xSemaphoreGive(client->_lock);
+          TBC_LOGE("Init otaupdate failure! ota_description=%s. %s()", ota_description, __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Insert otaupdate to list
+     otaupdate_t *it, *last = NULL;
+     if (LIST_FIRST(&client->otaupdate_list) == NULL) {
+          // Insert head
+          LIST_INSERT_HEAD(&client->otaupdate_list, otaupdate, entry);
+     } else {
+          // Insert last
+          LIST_FOREACH(it, &client->otaupdate_list, entry) {
+               last = it;
+          }
+          if (it == NULL) {
+               assert(last);
+               LIST_INSERT_AFTER(last, otaupdate, entry);
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+     return ESP_OK;
+}
+
+tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_description)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
+
+     // Take semaphore
+     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+          return ESP_FAIL;
+     }
+
+     // Search item
+     otaupdate_t *otaupdate = NULL;
+     LIST_FOREACH(otaupdate, &client->otaupdate_list, entry) {
+          if (otaupdate && strcmp(otaupdate->ota_description, ota_description)==0) {
+             // Remove from list and destroy
+             LIST_REMOVE(otaupdate, entry);
+             _otaupdate_destroy(otaupdate);
+             break;
+          }
+     }
+
+     // Give semaphore
+     xSemaphoreGive(client->_lock);
+
+     if (!otaupdate) {
+          TBC_LOGW("Unable to remove otaupdate data:%s! %s()", ota_description, __FUNCTION__);
+          return ESP_FAIL;
+     }
+     return ESP_OK;
+}
+
 
 void _tbcmh_otaupdate_on_connected(tbcmh_handle_t client)
 {

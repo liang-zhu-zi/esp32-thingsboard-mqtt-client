@@ -153,6 +153,186 @@ void _tbcmh_attributessubscribe_on_destroy(tbcmh_handle_t client)
     // xSemaphoreGive(client->_lock);
 }
 
+int tbcmh_attributes_subscribe(tbcmh_handle_t client,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, /*const char *key,*/...)
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
+
+    // Take semaphore
+    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    // Create attributessubscribe
+    attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
+    if (!attributessubscribe) {
+         // Give semaphore
+         xSemaphoreGive(client->_lock);
+         TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    // Append key
+    if (count>0) {
+        va_list ap;
+        va_start(ap, count);
+        int i = 0;
+        for (i=0; i<count; i++) {
+            // insert key to attributessubscribe
+            const char *key = va_arg(ap, const char*);
+            _subscribekey_list_append(&attributessubscribe->key_list, key);
+        }
+        va_end(ap);
+    }
+
+    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
+
+    // Insert attributessubscribe to list
+    attributessubscribe_t *it, *last = NULL;
+    if (LIST_FIRST(&client->attributessubscribe_list) == NULL) {
+         // Insert head
+         LIST_INSERT_HEAD(&client->attributessubscribe_list, attributessubscribe, entry);
+    } else {
+         // Insert last
+         LIST_FOREACH(it, &client->attributessubscribe_list, entry) {
+              last = it;
+         }
+         if (it == NULL) {
+              assert(last);
+              LIST_INSERT_AFTER(last, attributessubscribe, entry);
+         }
+    }
+
+    // Subscript topic <===  empty->non-empty
+    if (tbcmh_is_connected(client) && isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list))
+    {
+        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+    }
+
+    // Give semaphore
+    xSemaphoreGive(client->_lock);
+    return attributessubscribe->subscribe_id;
+}
+
+int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
+                                        void *context,
+                                        tbcmh_attributes_on_update_t on_update,
+                                        int count, const char *keys[])
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
+
+    // Take semaphore
+    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    // Create attributessubscribe
+    attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
+    if (!attributessubscribe) {
+         // Give semaphore
+         xSemaphoreGive(client->_lock);
+         TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+    // Append key
+    int i = 0;
+    for (i=0; keys && i<count; i++) {
+        // insert key to attributessubscribe
+        _subscribekey_list_append(&attributessubscribe->key_list, keys[i]);
+    }
+
+    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
+
+    // Insert attributessubscribe to list
+    attributessubscribe_t *it, *last = NULL;
+    if (LIST_FIRST(&client->attributessubscribe_list) == NULL) {
+         // Insert head
+         LIST_INSERT_HEAD(&client->attributessubscribe_list, attributessubscribe, entry);
+    } else {
+         // Insert last
+         LIST_FOREACH(it, &client->attributessubscribe_list, entry) {
+              last = it;
+         }
+         if (it == NULL) {
+              assert(last);
+              LIST_INSERT_AFTER(last, attributessubscribe, entry);
+         }
+    }
+
+    // Subscript topic <===  empty->non-empty
+    if (tbcmh_is_connected(client) && isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list))
+    {
+        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
+        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+    }
+
+    // Give semaphore
+    xSemaphoreGive(client->_lock);
+    return attributessubscribe->subscribe_id;
+}
+
+/**
+ * @brief Unsubscribe the client to defined topic with defined qos
+ *
+ * Notes:
+ * - Client must be connected to send subscribe message
+ * - This API is could be executed from a user task or
+ * from a mqtt event callback i.e. internal mqtt task
+ * (API is protected by internal mutex, so it might block
+ * if a longer data receive operation is in progress.
+ *
+ * @param client    mqtt client handle
+ * @param topic
+ * @param qos
+ *
+ * @return  0/ESP_OK   on success
+ *         -1/ESP_FAIL on failure
+ */
+// remove attributessubscribe from tbcmh_attributessubscribe_list_t
+tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client, int attributes_subscribe_id)
+{
+    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
+
+    // Take semaphore
+    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
+         return ESP_FAIL;
+    }
+
+    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
+    
+    // Search item
+    attributessubscribe_t *attributessubscribe = NULL, *next;
+    LIST_FOREACH_SAFE(attributessubscribe, &client->attributessubscribe_list, entry, next) {
+         if (attributessubscribe && attributessubscribe->subscribe_id == attributes_subscribe_id) {
+             // Remove form list
+             LIST_REMOVE(attributessubscribe, entry);
+             _attributessubscribe_destroy(attributessubscribe);
+             break;
+         }
+    }
+    
+    // Unsubscript topic <===  non-empty->empty
+    if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->attributessubscribe_list)) {
+        int msg_id = tbcm_unsubscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+        TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
+                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
+    }
+
+    // Give semaphore
+    xSemaphoreGive(client->_lock);
+    return ESP_OK;  
+}
+
 void _tbcmh_attributessubscribe_on_connected(tbcmh_handle_t client)
 {
     // This function is in semaphore/client->_lock!!!
@@ -220,187 +400,5 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
      // Give semaphore
      // xSemaphoreGive(client->_lock);
      return result;
-}
-
-int tbcmh_attributes_subscribe(tbcmh_handle_t client,
-                                        void *context,
-                                        tbcmh_attributes_on_update_t on_update,
-                                        int count, /*const char *key,*/...)
-{
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
-
-    // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-
-    // Create attributessubscribe
-    attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
-    if (!attributessubscribe) {
-         // Give semaphore
-         xSemaphoreGive(client->_lock);
-         TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-
-    // Append key
-    if (count>0) {
-        va_list ap;
-        va_start(ap, count);
-        int i = 0;
-        for (i=0; i<count; i++) {
-            // insert key to attributessubscribe
-            const char *key = va_arg(ap, const char*);
-            _subscribekey_list_append(&attributessubscribe->key_list, key);
-        }
-        va_end(ap);
-    }
-
-    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
-
-    // Insert attributessubscribe to list
-    attributessubscribe_t *it, *last = NULL;
-    if (LIST_FIRST(&client->attributessubscribe_list) == NULL) {
-         // Insert head
-         LIST_INSERT_HEAD(&client->attributessubscribe_list, attributessubscribe, entry);
-    } else {
-         // Insert last
-         LIST_FOREACH(it, &client->attributessubscribe_list, entry) {
-              last = it;
-         }
-         if (it == NULL) {
-              assert(last);
-              LIST_INSERT_AFTER(last, attributessubscribe, entry);
-         }
-    }
-
-    // Subscript topic <===  empty->non-empty
-    if (tbcmh_is_connected(client) && isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)
-        && tbcmh_is_connected(client))
-    {
-        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-    }
-
-    // Give semaphore
-    xSemaphoreGive(client->_lock);
-    return attributessubscribe->subscribe_id;
-}
-
-int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
-                                        void *context,
-                                        tbcmh_attributes_on_update_t on_update,
-                                        int count, const char *keys[])
-{
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
-
-    // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-
-    // Create attributessubscribe
-    attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
-    if (!attributessubscribe) {
-         // Give semaphore
-         xSemaphoreGive(client->_lock);
-         TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-    // Append key
-    int i = 0;
-    for (i=0; keys && i<count; i++) {
-        // insert key to attributessubscribe
-        _subscribekey_list_append(&attributessubscribe->key_list, keys[i]);
-    }
-
-    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
-
-    // Insert attributessubscribe to list
-    attributessubscribe_t *it, *last = NULL;
-    if (LIST_FIRST(&client->attributessubscribe_list) == NULL) {
-         // Insert head
-         LIST_INSERT_HEAD(&client->attributessubscribe_list, attributessubscribe, entry);
-    } else {
-         // Insert last
-         LIST_FOREACH(it, &client->attributessubscribe_list, entry) {
-              last = it;
-         }
-         if (it == NULL) {
-              assert(last);
-              LIST_INSERT_AFTER(last, attributessubscribe, entry);
-         }
-    }
-
-    // Subscript topic <===  empty->non-empty
-    if (tbcmh_is_connected(client) && isEmptyBefore && !LIST_EMPTY(&client->attributessubscribe_list)
-        && tbcmh_is_connected(client))
-    {
-        int msg_id = tbcm_subscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES, 0);
-        TBC_LOGI("sent subscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-    }
-
-    // Give semaphore
-    xSemaphoreGive(client->_lock);
-    return attributessubscribe->subscribe_id;
-}
-
-/**
- * @brief Unsubscribe the client to defined topic with defined qos
- *
- * Notes:
- * - Client must be connected to send subscribe message
- * - This API is could be executed from a user task or
- * from a mqtt event callback i.e. internal mqtt task
- * (API is protected by internal mutex, so it might block
- * if a longer data receive operation is in progress.
- *
- * @param client    mqtt client handle
- * @param topic
- * @param qos
- *
- * @return  0/ESP_OK   on success
- *         -1/ESP_FAIL on failure
- */
-// remove attributessubscribe from tbcmh_attributessubscribe_list_t
-tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client, int attributes_subscribe_id)
-{
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
-
-    // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
-         TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
-         return ESP_FAIL;
-    }
-
-    bool isEmptyBefore = LIST_EMPTY(&client->attributessubscribe_list);
-    
-    // Search item
-    attributessubscribe_t *attributessubscribe = NULL, *next;
-    LIST_FOREACH_SAFE(attributessubscribe, &client->attributessubscribe_list, entry, next) {
-         if (attributessubscribe && attributessubscribe->subscribe_id == attributes_subscribe_id) {
-             // Remove form list
-             LIST_REMOVE(attributessubscribe, entry);
-             _attributessubscribe_destroy(attributessubscribe);
-             break;
-         }
-    }
-    
-    // Unsubscript topic <===  non-empty->empty
-    if (tbcmh_is_connected(client) && !isEmptyBefore && LIST_EMPTY(&client->attributessubscribe_list)) {
-        int msg_id = tbcm_unsubscribe(client->tbmqttclient, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-        TBC_LOGI("sent unsubscribe successful, msg_id=%d, topic=%s",
-                msg_id, TB_MQTT_TOPIC_SHARED_ATTRIBUTES);
-    }
-
-    // Give semaphore
-    xSemaphoreGive(client->_lock);
-    return ESP_OK;  
 }
 

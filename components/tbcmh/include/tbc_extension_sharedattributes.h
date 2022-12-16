@@ -50,6 +50,9 @@ typedef tbc_err_t (*tbce_sharedattribute_on_set_t)(void *context, const tbcmh_va
 /**
  * @brief   Creates TBCE shared attributes handle
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @return  tbce_sharedattributes_handle_t if successfully created, NULL on error
  */
 tbce_sharedattributes_handle_t tbce_sharedattributes_create(void);
@@ -57,12 +60,18 @@ tbce_sharedattributes_handle_t tbce_sharedattributes_create(void);
 /**
  * @brief   Destroys TBCE shared attributes handle
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param   sharedattriburtes    TTBCE shared attributes handle
  */
 void tbce_sharedattributes_destroy(tbce_sharedattributes_handle_t sharedattriburtes);
 
 /**
  * @brief Register a shared attribute to TBCE shared attribute set
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param sharedattriburtes TBCE shared attributes handle
  * @param key               name of a shared attribute
@@ -80,6 +89,9 @@ tbc_err_t tbce_sharedattributes_register(
 /**
  * @brief Unregister a shared attribute from TBCE shared attributes
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param sharedattriburtes   TBCE shared attributes handle
  * @param key                 name of a shared attribute
  * 
@@ -92,6 +104,9 @@ tbc_err_t tbce_sharedattributes_unregister(
 
 /**
  * @brief Subscirbe all of shared attributes in TBCE shared attribute set to the server
+ *
+ * Notes:
+ * - It may be called before the MQTT connection is established
  *
  * @param sharedattriburtes             TBCE shared attributes handle
  * @param client                        ThingsBoard Client MQTT Helper handle
@@ -106,6 +121,9 @@ void tbce_sharedattributes_subscribe(
 /**
  * @brief Unsubscirbe all of shared attributes in TBCE shared attribute set from the server
  *
+ * Notes:
+ * - It may be called before the MQTT connection is established
+ *
  * @param sharedattriburtes             TBCE shared attributes handle
  *
  */
@@ -117,6 +135,7 @@ void tbce_sharedattributes_unsubscribe(
  * @brief Initilize all of shared attributes in TBCE shared attribute set from the server
  *
  * Notes:
+ * - It should be called after the MQTT connection is established
  * - In order to initialize shared attributes need to 
  *   send mutiple attributes request to the servere
  * - All of shared attributes in TBCE shared attribute set
