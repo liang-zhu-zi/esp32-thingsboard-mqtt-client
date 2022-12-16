@@ -1,7 +1,6 @@
 set(includes "include")
 
-set(priv_includes "private_include"
-                  "src/transport"
+set(priv_includes "src/transport"
                   "src/wapper"
                   "src/helper"
                   "src/extension")
