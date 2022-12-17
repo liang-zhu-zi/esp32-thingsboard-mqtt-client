@@ -25,8 +25,7 @@
 
 static const char *TAG = "CLAIMING_DEVICE_EXAMPLE";
 
-void tb_claiming_device_using_device_side_key(tbcmh_handle_t client,
-                            void *context)
+void tb_claiming_device_using_device_side_key(tbcmh_handle_t client)
 {
     if (!client) {
         ESP_LOGW(TAG, "client is NULL in %s()!", __FUNCTION__);
@@ -43,6 +42,8 @@ void tb_claiming_device_using_device_side_key(tbcmh_handle_t client,
 void tb_on_connected(tbcmh_handle_t client, void *context)
 {
     ESP_LOGI(TAG, "Connected to thingsboard server!");
+
+    tb_claiming_device_using_device_side_key(client);
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
