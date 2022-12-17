@@ -1,0 +1,172 @@
+{
+  "ruleChain": {
+    "additionalInfo": {
+      "description": ""
+    },
+    "name": "ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null,
+    "externalId": null
+  },
+  "metadata": {
+    "firstNodeIndex": 0,
+    "nodes": [
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 270,
+          "layoutY": 151
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "filter rpcPublishLocalTime",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return msg.method === 'rpcPublishLocalTime';"
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 275,
+          "layoutY": 263
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "filter rpcGetCurrentTime",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return msg.method === 'rpcGetCurrentTime'; "
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 276,
+          "layoutY": 360
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "filter rpcLoopback",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return msg.method === 'rpcLoopback'; "
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 275,
+          "layoutY": 464
+        },
+        "type": "org.thingsboard.rule.engine.filter.TbJsFilterNode",
+        "name": "filter rpcNotImplementedTwoway",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "return msg.method === 'rpcNotImplementedTwoway'; "
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 550,
+          "layoutY": 262
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "build resp rpcGetCurrentTime",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "var rpcResponse = {\n    method: msg.method, //rpcGetCurrentTime\n    results: {\n        currentTime: new Date().getTime()\n    }\n};\n\nreturn {\n    msg: rpcResponse,\n    metadata: metadata,\n    msgType: msgType\n};"
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 840,
+          "layoutY": 318
+        },
+        "type": "org.thingsboard.rule.engine.rpc.TbSendRPCReplyNode",
+        "name": "send response",
+        "debugMode": false,
+        "configuration": {
+          "serviceIdMetaDataAttribute": "serviceId",
+          "sessionIdMetaDataAttribute": "sessionId",
+          "requestIdMetaDataAttribute": "requestId"
+        },
+        "externalId": null
+      },
+      {
+        "additionalInfo": {
+          "description": "",
+          "layoutX": 550,
+          "layoutY": 358
+        },
+        "type": "org.thingsboard.rule.engine.transform.TbTransformMsgNode",
+        "name": "build resp rpcLoopback",
+        "debugMode": false,
+        "configuration": {
+          "jsScript": "var rpcResponse = {\n    method: msg.method, //rpcLoopback\n    results: msg.params\n};\n\nreturn {\n    msg: rpcResponse,\n    metadata: metadata,\n    msgType: msgType\n};"
+        },
+        "externalId": null
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 1,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 0,
+        "toIndex": 1,
+        "type": "False"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "False"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 4,
+        "type": "True"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "Failure"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 3,
+        "type": "False"
+      },
+      {
+        "fromIndex": 2,
+        "toIndex": 6,
+        "type": "True"
+      },
+      {
+        "fromIndex": 4,
+        "toIndex": 5,
+        "type": "Success"
+      },
+      {
+        "fromIndex": 6,
+        "toIndex": 5,
+        "type": "Success"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

@@ -117,6 +117,8 @@
 
    * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
 
+1. 测试完成之后，请把 Root Rule Chain 恢复到原来的状态!
+
 ## 日志输出
 
 ```none

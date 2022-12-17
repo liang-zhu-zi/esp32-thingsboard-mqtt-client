@@ -111,6 +111,8 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
+1. Restore Root Rule Chain after the test is complete!
+
 ## Example Output
 
 ```none
