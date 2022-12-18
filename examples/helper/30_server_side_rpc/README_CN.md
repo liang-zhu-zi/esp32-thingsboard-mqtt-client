@@ -208,28 +208,28 @@ I (7208) tb_mqtt_client_helper: before call on_connected()...
 I (7208) SERVER_RPC_EXAMPLE: Connected to thingsboard server!
 I (7218) tb_mqtt_client_helper: after call on_connected()
 I (7218) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=41355
-I (7228) tb_mqtt_client: [Server-Side RPC][Rx] request_id=386 Payload={"method":"rpcQuerySetpoint","params":{}}
-I (7238) tb_mqtt_client: [Server-Side RPC][Rx] request_id=387 Payload={"method":"rpcChangeSetpoint","params":{"setpoint":26}}
+I (7228) tb_mqtt_wapper: [Server-Side RPC][Rx] request_id=386 Payload={"method":"rpcQuerySetpoint","params":{}}
+I (7238) tb_mqtt_wapper: [Server-Side RPC][Rx] request_id=387 Payload={"method":"rpcChangeSetpoint","params":{"setpoint":26}}
 I (8228) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (8228) SERVER_RPC_EXAMPLE: Receive server RPC request: rpcQuerySetpoint
-I (8228) tb_mqtt_client: [Server-Side RPC][Tx] request_id=386 Payload={"setpoint":25.5}
+I (8228) tb_mqtt_wapper: [Server-Side RPC][Tx] request_id=386 Payload={"setpoint":25.5}
 I (8238) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (8238) SERVER_RPC_EXAMPLE: Receive server RPC request: rpcChangeSetpoint
 I (8248) SERVER_RPC_EXAMPLE: Receive setpoint = 26.000000
 I (8248) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=2977
-I (16598) tb_mqtt_client: [Server-Side RPC][Rx] request_id=388 Payload={"method":"rpcQuerySetpoint","params":{}}
-I (16898) tb_mqtt_client: [Server-Side RPC][Rx] request_id=389 Payload={"method":"rpcChangeSetpoint","params":{"setpoint":26}}
+I (16598) tb_mqtt_wapper: [Server-Side RPC][Rx] request_id=388 Payload={"method":"rpcQuerySetpoint","params":{}}
+I (16898) tb_mqtt_wapper: [Server-Side RPC][Rx] request_id=389 Payload={"method":"rpcChangeSetpoint","params":{"setpoint":26}}
 I (16958) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (16958) SERVER_RPC_EXAMPLE: Receive server RPC request: rpcQuerySetpoint
-I (16958) tb_mqtt_client: [Server-Side RPC][Tx] request_id=388 Payload={"setpoint":26}
+I (16958) tb_mqtt_wapper: [Server-Side RPC][Tx] request_id=388 Payload={"setpoint":26}
 I (16968) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (16968) SERVER_RPC_EXAMPLE: Receive server RPC request: rpcChangeSetpoint
 I (16978) SERVER_RPC_EXAMPLE: Receive setpoint = 26.000000
 I (16978) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=58826
 I (27888) SERVER_RPC_EXAMPLE: Disconnect tbcmh ...
 I (27888) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
-I (27988) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27988) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27988) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27988) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27998) MQTT_CLIENT: Client asked to stop, but was not started
 I (28098) SERVER_RPC_EXAMPLE: Destroy tbcmh ...
 I (28098) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!

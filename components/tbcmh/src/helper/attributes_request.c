@@ -63,7 +63,7 @@ void _tbcmh_attributesrequest_on_create(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -72,7 +72,7 @@ void _tbcmh_attributesrequest_on_create(tbcmh_handle_t client)
     memset(&client->attributesrequest_list, 0x00, sizeof(client->attributesrequest_list)); //client->attributesrequest_list = LIST_HEAD_INITIALIZER(client->attributesrequest_list);
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client)
@@ -81,7 +81,7 @@ void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -89,7 +89,7 @@ void _tbcmh_attributesrequest_on_destroy(tbcmh_handle_t client)
     memset(&client->attributesrequest_list, 0x00, sizeof(client->attributesrequest_list));
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 void _tbcmh_attributesrequest_on_connected(tbcmh_handle_t client)
@@ -104,7 +104,7 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -114,7 +114,7 @@ void _tbcmh_attributesrequest_on_disconnected(tbcmh_handle_t client)
     memset(&client->attributesrequest_list, 0x00, sizeof(client->attributesrequest_list));
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
@@ -130,7 +130,7 @@ tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
      }
 
      // Take semaphore, malloc client_keys & shared_keys
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -183,11 +183,11 @@ tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      return ESP_OK;
 
 attributesrequest_fail:
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      return ESP_FAIL;
 }
 
@@ -207,7 +207,7 @@ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
      }
 
      // Take semaphore, malloc client_keys & shared_keys
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -285,13 +285,13 @@ tbc_err_t tbcmh_clientattributes_request(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
 
      TBC_FREE(client_keys);
      return ESP_OK;
 
 attributesrequest_of_client_fail:
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      if (!client_keys) {
           TBC_FREE(client_keys);
      }
@@ -315,7 +315,7 @@ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
      }
 
      // Take semaphore, malloc client_keys & shared_keys
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -393,13 +393,13 @@ tbc_err_t tbcmh_sharedattributes_request(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
 
      TBC_FREE(shared_keys);
      return ESP_OK;
 
 attributesrequest_of_shared_fail:
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      if (!shared_keys) {
           TBC_FREE(shared_keys);
      }
@@ -413,7 +413,7 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
      TBC_CHECK_PTR(object);
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -438,7 +438,7 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 
      if (!attributesrequest) {
           TBC_LOGW("Unable to find attribute request:%u! %s()", request_id, __FUNCTION__);
@@ -467,7 +467,7 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -505,7 +505,7 @@ void _tbcmh_attributesrequest_on_check_timeout(tbcmh_handle_t client, uint64_t t
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 
      // Deal timeout
      bool clientIsValid = true;

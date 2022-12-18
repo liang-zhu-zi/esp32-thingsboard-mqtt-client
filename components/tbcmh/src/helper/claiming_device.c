@@ -57,7 +57,7 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(tbcmh_handle_t cl
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -76,7 +76,7 @@ tbc_err_t tbcmh_claiming_device_initiate_using_device_side_key(tbcmh_handle_t cl
      cJSON_Delete(object); // delete json object
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      return (result > -1) ? ESP_OK : ESP_FAIL;
 }
 

@@ -156,25 +156,25 @@ I (7199) SHARED_ATTR_MAIN: Subscribe shared attributes!
 I (7209) ATTRIBUTES_SUBSCRIBE: sent subscribe successful, msg_id=702, topic=v1/devices/me/attributes
 I (7219) SHARED_ATTR_MAIN: Initilize shared attributes!
 I (7219) attributesrequest: sent subscribe successful, msg_id=30938, topic=v1/devices/me/attributes/response/+
-I (7229) tb_mqtt_client: [Attributes Request][Tx] request_id=1, {"sharedKeys":"sntp_server"}
+I (7229) tb_mqtt_wapper: [Attributes Request][Tx] request_id=1, {"sharedKeys":"sntp_server"}
 I (7239) tb_mqtt_client_helper: after call on_connected()
 I (7239) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=702
 I (7249) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=30938
 I (7259) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=30312
-I (7299) tb_mqtt_client: [Attributes Request][Rx] request_id=1 {"shared":{"sntp_server":"uk.pool.ntp.org"}}
+I (7299) tb_mqtt_wapper: [Attributes Request][Rx] request_id=1 {"shared":{"sntp_server":"uk.pool.ntp.org"}}
 I (8259) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (8259) attributesrequest: sent unsubscribe successful, msg_id=59999, topic=v1/devices/me/attributes/response/+
 I (8259) SHARED_ATTR_MAIN: Set sntp_server (a shared attribute)
 I (8269) SHARED_ATTR_MAIN: Receive sntp_server = uk.pool.ntp.org
 I (8279) tb_mqtt_client_helper: TBCM_EVENT_UNSUBSCRIBED, msg_id=59999
-I (12759) tb_mqtt_client: [Subscribe Shared Attributes][Rx] {"sntp_server":"hk.pool.ntp.org"}
+I (12759) tb_mqtt_wapper: [Subscribe Shared Attributes][Rx] {"sntp_server":"hk.pool.ntp.org"}
 I (13679) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (13679) SHARED_ATTR_MAIN: Set sntp_server (a shared attribute)
 I (13679) SHARED_ATTR_MAIN: Receive sntp_server = hk.pool.ntp.org
 I (27879) SHARED_ATTR_MAIN: Disconnect tbcmh ...
 I (27879) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
-I (27979) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27989) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27979) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27989) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27989) MQTT_CLIENT: Client asked to stop, but was not started
 I (28089) SHARED_ATTR_MAIN: Destroy tbcmh ...
 I (28089) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!

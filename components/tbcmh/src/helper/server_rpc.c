@@ -84,7 +84,7 @@ void _tbcmh_serverrpc_on_create(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -93,7 +93,7 @@ void _tbcmh_serverrpc_on_create(tbcmh_handle_t client)
     memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list)); //client->serverrpc_list = LIST_HEAD_INITIALIZER(client->serverrpc_list);
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
@@ -102,7 +102,7 @@ void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -117,7 +117,7 @@ void _tbcmh_serverrpc_on_destroy(tbcmh_handle_t client)
     memset(&client->serverrpc_list, 0x00, sizeof(client->serverrpc_list));
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 //Call it before connect()
@@ -129,7 +129,7 @@ tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -138,7 +138,7 @@ tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
      serverrpc_t *serverrpc = _serverrpc_create(client, method, context, on_request);
      if (!serverrpc) {
           // Give semaphore
-          xSemaphoreGive(client->_lock);
+          xSemaphoreGiveRecursive(client->_lock);
           TBC_LOGE("Init serverrpc failure! method=%s. %s()", method, __FUNCTION__);
           return ESP_FAIL;
      }
@@ -170,7 +170,7 @@ tbc_err_t tbcmh_serverrpc_subscribe(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      return ESP_OK;
 }
 
@@ -182,7 +182,7 @@ tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method)
      TBC_CHECK_PTR_WITH_RETURN_VALUE(method, ESP_FAIL);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -209,7 +209,7 @@ tbc_err_t tbcmh_serverrpc_unsubscribe(tbcmh_handle_t client, const char *method)
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
 
      if (!serverrpc)  {
           TBC_LOGW("Unable to remove server-rpc:%s! %s()", method, __FUNCTION__);
@@ -251,7 +251,7 @@ void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
      }
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -266,7 +266,7 @@ void _tbcmh_serverrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 
      if (!cache) {
           TBC_LOGW("Unable to deal server-rpc:%s! %s()", method, __FUNCTION__);

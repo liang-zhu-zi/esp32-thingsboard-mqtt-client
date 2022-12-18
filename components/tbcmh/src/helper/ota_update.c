@@ -396,7 +396,7 @@ static void _otaupdate_reset(otaupdate_t *otaupdate)
     otaupdate->state.chunk_id = 0;
     otaupdate->state.received_len = 0;
     otaupdate->state.checksum = 0;
-    //otaupdate->state.timestamp = (uint64_t)time(NULL);;
+    otaupdate->state.timestamp = 0;
 }
 
 static void _otaupdate_do_updated(otaupdate_t *otaupdate, bool success)
@@ -591,7 +591,7 @@ void _tbcmh_otaupdate_on_create(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -600,7 +600,7 @@ void _tbcmh_otaupdate_on_create(tbcmh_handle_t client)
     memset(&client->otaupdate_list, 0x00, sizeof(client->otaupdate_list)); //client->otaupdate_list = LIST_HEAD_INITIALIZER(client->otaupdate_list);
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
@@ -609,7 +609,7 @@ void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -628,7 +628,7 @@ void _tbcmh_otaupdate_on_destroy(tbcmh_handle_t client)
     memset(&client->otaupdate_list, 0x00, sizeof(client->otaupdate_list));
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client, 
@@ -645,7 +645,7 @@ tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
      TBC_CHECK_PTR_WITH_RETURN_VALUE(on_get_current_version, ESP_FAIL);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -659,7 +659,7 @@ tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
                                 on_updated);
      if (!otaupdate) {
           // Give semaphore
-          xSemaphoreGive(client->_lock);
+          xSemaphoreGiveRecursive(client->_lock);
           TBC_LOGE("Init otaupdate failure! ota_description=%s. %s()", ota_description, __FUNCTION__);
           return ESP_FAIL;
      }
@@ -681,7 +681,7 @@ tbc_err_t tbcmh_otaupdate_subscribe(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      return ESP_OK;
 }
 
@@ -691,7 +691,7 @@ tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_des
      TBC_CHECK_PTR_WITH_RETURN_VALUE(ota_description, ESP_FAIL);
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -708,7 +708,7 @@ tbc_err_t tbcmh_otaupdate_unsubscribe(tbcmh_handle_t client, const char *ota_des
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
 
      if (!otaupdate) {
           TBC_LOGW("Unable to remove otaupdate data:%s! %s()", ota_description, __FUNCTION__);
@@ -810,7 +810,7 @@ static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
      tbcm_handle_t tbcm_handle = client->tbmqttclient;
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      _otaupdate_publish_early_failed_status(tbcm_handle, ota_type, "Device code is error!");
      //      return;;
@@ -832,7 +832,7 @@ static void __otaupdate_on_sharedattributes(tbcmh_handle_t client,
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 
      if (!otaupdate) {
           TBC_LOGW("Unable to find otaupdate:%s! %s()", ota_title, __FUNCTION__);
@@ -891,7 +891,10 @@ static int _otaupdate_on_fw_attributesupdate(tbcmh_handle_t client,
 {
 
      TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
-     TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
+     if (!object) { \
+          TBC_LOGW("object is NULL! %s() %d", __FUNCTION__, __LINE__);
+          return 0;
+     }
 
      if (cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_TITLE) &&
          cJSON_HasObjectItem(object, TB_MQTT_KEY_FW_VERSION) &&
@@ -919,7 +922,10 @@ static int _otaupdate_on_sw_attributesupdate(tbcmh_handle_t client,
 {
 
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, 0);
-    TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
+    if (!object) { \
+         TBC_LOGW("object is NULL! %s() %d", __FUNCTION__, __LINE__);
+         return 0;
+    }
 
     if (cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_TITLE) &&
         cJSON_HasObjectItem(object, TB_MQTT_KEY_SW_VERSION) &&
@@ -944,7 +950,10 @@ static void _otaupdate_on_fw_attributesrequest_response(tbcmh_handle_t client,
                       const cJSON *shared_attributes)//, uint32_t request_id
 {
     TBC_CHECK_PTR(client);
-    TBC_CHECK_PTR(shared_attributes);
+    if (!shared_attributes) {
+         TBC_LOGW("shared_attributes is NULL! %s() %d", __FUNCTION__, __LINE__);
+         return;
+    }
 
     _otaupdate_on_fw_attributesupdate(client, context, shared_attributes);
 }
@@ -955,7 +964,10 @@ static void _otaupdate_on_sw_attributesrequest_response(tbcmh_handle_t client,
                       const cJSON *shared_attributes)//, uint32_t request_id
 {
     TBC_CHECK_PTR(client);
-    TBC_CHECK_PTR(shared_attributes);
+    if (!shared_attributes) {
+         TBC_LOGW("shared_attributes is NULL! %s() %d", __FUNCTION__, __LINE__);
+         return;
+    }
 
     _otaupdate_on_sw_attributesupdate(client, context, shared_attributes);
 }
@@ -969,7 +981,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -983,7 +995,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
      }
      if (!otaupdate) {
           // Give semaphore
-          // xSemaphoreGive(client->_lock);
+          // xSemaphoreGiveRecursive(client->_lock);
           TBC_LOGW("Unable to find otaupdate:%u! %s()", request_id, __FUNCTION__);
           return;
      }
@@ -1054,7 +1066,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
       }
  
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 }
  
 void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t timestamp)
@@ -1062,7 +1074,7 @@ void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t tim
      TBC_CHECK_PTR(client);
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -1070,7 +1082,10 @@ void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t tim
      // Search timeout item
      otaupdate_t *request = NULL, *next;
      LIST_FOREACH_SAFE(request, &client->otaupdate_list, entry, next) {
-          if (request && request->state.timestamp + TB_MQTT_TIMEOUT <= timestamp) {
+          if (request &&
+             (request->state.request_id>0) &&
+             (request->state.timestamp>0) &&
+             (request->state.timestamp+TB_MQTT_TIMEOUT<=timestamp)) {
                 // Deal timeout & abort ota
                 _otaupdate_publish_late_failed_status(request, "OTA response timeout!");
                 _otaupdate_do_abort(request);
@@ -1080,6 +1095,6 @@ void _tbcmh_otaupdate_on_chunk_check_timeout(tbcmh_handle_t client, uint64_t tim
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 }
 

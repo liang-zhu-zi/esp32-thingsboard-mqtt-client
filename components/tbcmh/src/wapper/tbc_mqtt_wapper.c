@@ -53,7 +53,7 @@ typedef struct tbcm_client
 
 static void _on_mqtt_event_handle(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 
-const static char *TAG = "tb_mqtt_client";
+const static char *TAG = "tb_mqtt_wapper";
 
 static bool __convert_timer_event(tbcm_event_t *dst_event)
 {
@@ -916,8 +916,8 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[FW update][Tx] request_id=%u %.*s",
-              request_id, strlen(payload), payload);
+        TBC_LOGI("[FW update][Tx] request_id=%u chunk_id=%u payload=%.*s",
+              request_id, chunk_id, strlen(payload), payload);
      }
 
      int msg_id = _tbcm_publish(client, topic, payload, qos, retain);
@@ -1095,8 +1095,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          }
 
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[FW update][Rx] request_id=%u, payload_len=%d",
-                   request_id, payload_len);
+             TBC_LOGI("[FW update][Rx] request_id=%u, chunk_id=%u, payload_len=%d",
+                   request_id, chunk_id, payload_len);
          }
 
          publish_data.topic = TBCM_RX_TOPIC_FW_RESPONSE;          /*!< Topic associated with this event */

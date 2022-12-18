@@ -152,7 +152,7 @@ I (688) wifi_init: tcp rx win: 5744
 I (688) wifi_init: tcp mss: 1440
 I (698) wifi_init: WiFi IRAM OP enabled
 I (698) wifi_init: WiFi RX IRAM OP enabled
-I (708) example_connect: Connecting to Duoman...
+I (708) example_connect: Connecting to MySSID...
 I (708) phy_init: phy_version 4670,719f9f6,Feb 18 2021,17:07:07
 I (818) wifi:mode : sta (bc:dd:c2:d1:be:b0)
 I (818) wifi:enable tsf
@@ -162,7 +162,7 @@ I (3608) wifi:state: init -> auth (b0)
 I (3618) wifi:state: auth -> assoc (0)
 I (3618) wifi:state: assoc -> run (10)
 W (3628) wifi:<ba-add>idx:0 (ifx:0, d8:0d:17:00:5b:13), tid:0, ssn:0, winSize:64
-I (3638) wifi:connected with Duoman, aid = 3, channel 2, BW20, bssid = d8:0d:17:00:5b:13
+I (3638) wifi:connected with MySSID, aid = 3, channel 2, BW20, bssid = d8:0d:17:00:5b:13
 I (3638) wifi:security: WPA2-PSK, phy: bgn, rssi: -37
 I (3638) wifi:pm start, type: 1
 
@@ -185,13 +185,13 @@ I (7178) tb_mqtt_client_helper: Connected to thingsboard MQTT server!
 I (7178) tb_mqtt_client_helper: before call on_connected()...
 I (7188) CLAIMING_DEVICE_EXAMPLE: Connected to thingsboard server!
 I (7198) CLAIMING_DEVICE_EXAMPLE: Claiming device using device-side key... secretKey=abcdefgabcdefg, durationMs=60000
-I (7208) tb_mqtt_client: [Claiming][Tx] {"secretKey":"abcdefgabcdefg","durationMs":60000}
+I (7208) tb_mqtt_wapper: [Claiming][Tx] {"secretKey":"abcdefgabcdefg","durationMs":60000}
 I (7218) tb_mqtt_client_helper: after call on_connected()
 I (8218) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=40552
 I (71718) CLAIMING_DEVICE_EXAMPLE: Disconnect tbcmh ...
 I (71718) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
-I (71818) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (71828) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (71818) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (71828) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (71828) MQTT_CLIENT: Client asked to stop, but was not started
 I (71928) CLAIMING_DEVICE_EXAMPLE: Destroy tbcmh ...
 I (71928) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!

@@ -381,7 +381,7 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
      }
 
      // Take semaphore
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return;
      }
@@ -401,7 +401,7 @@ static void __on_tbcm_connected(tbcmh_handle_t client)
      tbcmh_on_connected_t on_connected = client->on_connected;
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
   
      // do callback
      TBC_LOGI("before call on_connected()...");
@@ -420,7 +420,7 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      }
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return;
      // }
@@ -440,7 +440,7 @@ static void __on_tbcm_disonnected(tbcmh_handle_t client)
      tbcmh_on_disconnected_t on_disconnected = client->on_disconnected;
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
 
      // do callback
      if (on_disconnected) {
@@ -609,7 +609,7 @@ static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client)
     
     // TODO: whether to insert lock?
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return false;
     // }
@@ -633,7 +633,7 @@ static void _on_tbcm_event_bridge_receive(tbcmh_handle_t client)
     }
     
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 // call in user task, NOT mqtt task!
@@ -692,7 +692,7 @@ static void _on_tbcm_event_bridge_send(tbcm_event_t *event)
 
     // TODO: whether/how to insert lock?
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return false;
     // }
@@ -717,6 +717,6 @@ static void _on_tbcm_event_bridge_send(tbcm_event_t *event)
     }
     
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 

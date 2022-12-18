@@ -272,20 +272,20 @@ I (9679) CLIENT_RPC_EXAMPLE: Connected to thingsboard server!
 I (9689) tb_mqtt_client_helper: after call on_connected()
 I (23989) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcPublishLocalTime
 I (23989) CLIENT_RPC_EXAMPLE: The current date/time in HongKong is: Thu Jan  1 08:00:23 1970
-I (23989) tb_mqtt_client: [Client-Side RPC][Tx] request_id=1 {"method":"rpcPublishLocalTime","params":{"localTime":23}}
+I (23989) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=1 {"method":"rpcPublishLocalTime","params":{"localTime":23}}
 I (24009) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (24009) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcGetCurrentTime
 I (24019) clientrpc: sent subscribe successful, msg_id=59215, topic=v1/devices/me/rpc/response/+
-I (24029) tb_mqtt_client: [Client-Side RPC][Tx] request_id=2 {"method":"rpcGetCurrentTime","params":{}}
+I (24029) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=2 {"method":"rpcGetCurrentTime","params":{}}
 I (24039) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (24039) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcLoopback
-I (24049) tb_mqtt_client: [Client-Side RPC][Tx] request_id=3 {"method":"rpcLoopback","params":{"id":9001}}
+I (24049) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=3 {"method":"rpcLoopback","params":{"id":9001}}
 I (24059) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (24069) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcNotImplementedTwoway
-I (24079) tb_mqtt_client: [Client-Side RPC][Tx] request_id=4 {"method":"rpcNotImplementedTwoway","params":{"id":4001}}
+I (24079) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=4 {"method":"rpcNotImplementedTwoway","params":{"id":4001}}
 I (24089) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
-I (24389) tb_mqtt_client: [Client-Side RPC][Rx] request_id=3 {"method":"rpcLoopback","results":{"id":9001}}
-I (24399) tb_mqtt_client: [Client-Side RPC][Rx] request_id=2 {"method":"rpcGetCurrentTime","results":{"currentTime":1671243917164}}
+I (24389) tb_mqtt_wapper: [Client-Side RPC][Rx] request_id=3 {"method":"rpcLoopback","results":{"id":9001}}
+I (24399) tb_mqtt_wapper: [Client-Side RPC][Rx] request_id=2 {"method":"rpcGetCurrentTime","results":{"currentTime":1671243917164}}
 I (25089) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=21078
 I (25089) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=59215
 I (25089) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=50243
@@ -302,20 +302,20 @@ I (39349) CLIENT_RPC_EXAMPLE: Client-side RPC timeout: method=rpcNotImplementedT
 I (39359) tb_mqtt_client_helper: TBCM_EVENT_UNSUBSCRIBED, msg_id=35908
 I (40469) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcPublishLocalTime
 I (40469) CLIENT_RPC_EXAMPLE: The current date/time in HongKong is: Sat Dec 17 10:25:32 2022
-I (40469) tb_mqtt_client: [Client-Side RPC][Tx] request_id=5 {"method":"rpcPublishLocalTime","params":{"localTime":1671243932}}
+I (40469) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=5 {"method":"rpcPublishLocalTime","params":{"localTime":1671243932}}
 I (40489) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (40489) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcGetCurrentTime
 I (40499) clientrpc: sent subscribe successful, msg_id=27545, topic=v1/devices/me/rpc/response/+
-I (40509) tb_mqtt_client: [Client-Side RPC][Tx] request_id=6 {"method":"rpcGetCurrentTime","params":{}}
+I (40509) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=6 {"method":"rpcGetCurrentTime","params":{}}
 I (40519) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (40519) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcLoopback
-I (40529) tb_mqtt_client: [Client-Side RPC][Tx] request_id=7 {"method":"rpcLoopback","params":{"id":9002}}
+I (40529) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=7 {"method":"rpcLoopback","params":{"id":9002}}
 I (40549) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
 I (40549) CLIENT_RPC_EXAMPLE: Send Client-side RPC: method=rpcNotImplementedTwoway
-I (40559) tb_mqtt_client: [Client-Side RPC][Rx] request_id=6 {"method":"rpcGetCurrentTime","results":{"currentTime":1671243933380}}
-I (40559) tb_mqtt_client: [Client-Side RPC][Tx] request_id=8 {"method":"rpcNotImplementedTwoway","params":{"id":4002}}
+I (40559) tb_mqtt_wapper: [Client-Side RPC][Rx] request_id=6 {"method":"rpcGetCurrentTime","results":{"currentTime":1671243933380}}
+I (40559) tb_mqtt_wapper: [Client-Side RPC][Tx] request_id=8 {"method":"rpcNotImplementedTwoway","params":{"id":4002}}
 I (40579) CLIENT_RPC_EXAMPLE: Send Client-side RPC: result=0
-I (40599) tb_mqtt_client: [Client-Side RPC][Rx] request_id=7 {"method":"rpcLoopback","results":{"id":9002}}
+I (40599) tb_mqtt_wapper: [Client-Side RPC][Rx] request_id=7 {"method":"rpcLoopback","results":{"id":9002}}
 I (41589) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=26611
 I (41589) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=27545
 I (41589) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=14523
@@ -329,8 +329,8 @@ I (41639) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (41649) CLIENT_RPC_EXAMPLE: Client-side RPC response: method=rpcLoopback
 I (52549) CLIENT_RPC_EXAMPLE: Disconnect tbcmh ...
 I (52549) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
-I (52649) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (52659) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (52649) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (52659) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (52659) MQTT_CLIENT: Client asked to stop, but was not started
 I (52759) CLIENT_RPC_EXAMPLE: Client-side RPC timeout: method=rpcNotImplementedTwoway
 I (52759) CLIENT_RPC_EXAMPLE: Destroy tbcmh ...

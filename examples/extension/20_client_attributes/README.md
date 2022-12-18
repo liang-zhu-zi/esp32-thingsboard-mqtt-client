@@ -154,10 +154,10 @@ I (7199) tb_mqtt_client_helper: before call on_connected()...
 I (7209) CLIENT_ATTRIBUTES_MAIN: Connected to thingsboard server!
 I (7219) CLIENT_ATTRIBUTES_MAIN: Initilize client attributes those store at the server!
 I (7229) attributesrequest: sent subscribe successful, msg_id=13880, topic=v1/devices/me/attributes/response/+
-I (7239) tb_mqtt_client: [Attributes Request][Tx] request_id=1, {"clientKeys":"setpoint"}
+I (7239) tb_mqtt_wapper: [Attributes Request][Tx] request_id=1, {"clientKeys":"setpoint"}
 I (7249) tb_mqtt_client_helper: after call on_connected()
 I (7249) tb_mqtt_client_helper: TBCM_EVENT_SUBSCRIBED, msg_id=13880
-I (7319) tb_mqtt_client: [Attributes Request][Rx] request_id=1 {"client":{"setpoint":29}}
+I (7319) tb_mqtt_wapper: [Attributes Request][Rx] request_id=1 {"client":{"setpoint":29}}
 I (8259) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=22740
 I (8259) tb_mqtt_client_helper: TBCM_EVENT_DATA
 I (8259) attributesrequest: sent unsubscribe successful, msg_id=19912, topic=v1/devices/me/attributes/response/+
@@ -167,27 +167,27 @@ I (8279) tb_mqtt_client_helper: TBCM_EVENT_UNSUBSCRIBED, msg_id=19912
 I (10489) CLIENT_ATTRIBUTES_MAIN: Send client attributes: model, setpoint
 I (10489) CLIENT_ATTRIBUTES_MAIN: Get model (a client attribute)
 I (10489) CLIENT_ATTRIBUTES_MAIN: Get setpoint (a client attribute) setpoint=29.000000
-I (10499) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
+I (10499) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
 I (11509) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=9156
 I (15909) CLIENT_ATTRIBUTES_MAIN: Send client attributes: model, setpoint
 I (15909) CLIENT_ATTRIBUTES_MAIN: Get model (a client attribute)
 I (15909) CLIENT_ATTRIBUTES_MAIN: Get setpoint (a client attribute) setpoint=29.000000
-I (15919) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
+I (15919) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
 I (16929) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=36597
 I (21329) CLIENT_ATTRIBUTES_MAIN: Send client attributes: model, setpoint
 I (21329) CLIENT_ATTRIBUTES_MAIN: Get model (a client attribute)
 I (21329) CLIENT_ATTRIBUTES_MAIN: Get setpoint (a client attribute) setpoint=29.000000
-I (21339) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
+I (21339) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
 I (22349) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=13935
 I (26749) CLIENT_ATTRIBUTES_MAIN: Send client attributes: model, setpoint
 I (26749) CLIENT_ATTRIBUTES_MAIN: Get model (a client attribute)
 I (26749) CLIENT_ATTRIBUTES_MAIN: Get setpoint (a client attribute) setpoint=29.000000
-I (26759) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
+I (26759) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":29}
 I (27769) CLIENT_ATTRIBUTES_MAIN: Disconnect tbcmh ...
 I (27769) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
 I (27769) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=5061
-I (27879) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27879) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27879) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27879) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27889) MQTT_CLIENT: Client asked to stop, but was not started
 I (27989) CLIENT_ATTRIBUTES_MAIN: Destroy tbcmh ...
 I (27989) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!

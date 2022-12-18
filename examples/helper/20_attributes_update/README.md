@@ -153,27 +153,27 @@ I (7188) tb_mqtt_client_helper: after call on_connected()
 I (10488) ATTR_UPDATE_MAIN: Update attributes: model, setpoint
 I (10488) ATTR_UPDATE_MAIN: Get model (a client attribute)
 I (10488) ATTR_UPDATE_MAIN: Get setpoint (a client attribute)
-I (10498) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
+I (10498) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (11508) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=59089
 I (15908) ATTR_UPDATE_MAIN: Update attributes: model, setpoint
 I (15908) ATTR_UPDATE_MAIN: Get model (a client attribute)
 I (15908) ATTR_UPDATE_MAIN: Get setpoint (a client attribute)
-I (15918) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
+I (15918) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (16928) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=36172
 I (21328) ATTR_UPDATE_MAIN: Update attributes: model, setpoint
 I (21328) ATTR_UPDATE_MAIN: Get model (a client attribute)
 I (21328) ATTR_UPDATE_MAIN: Get setpoint (a client attribute)
-I (21338) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
+I (21338) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (22348) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=53294
 I (26748) ATTR_UPDATE_MAIN: Update attributes: model, setpoint
 I (26748) ATTR_UPDATE_MAIN: Get model (a client attribute)
 I (26748) ATTR_UPDATE_MAIN: Get setpoint (a client attribute)
-I (26758) tb_mqtt_client: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
+I (26758) tb_mqtt_wapper: [Client-Side Attributes][Tx] {"model":"TH_001","setpoint":25.5}
 I (27768) ATTR_UPDATE_MAIN: Disconnect tbcmh ...
 I (27768) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
 I (27768) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=1501
-I (27868) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27868) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27868) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27868) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27868) MQTT_CLIENT: Client asked to stop, but was not started
 I (27978) ATTR_UPDATE_MAIN: Destroy tbcmh ...
 I (27978) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!

@@ -117,7 +117,7 @@ void _tbcmh_attributessubscribe_on_create(tbcmh_handle_t client)
     TBC_CHECK_PTR(client)
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -126,7 +126,7 @@ void _tbcmh_attributessubscribe_on_create(tbcmh_handle_t client)
     memset(&client->attributessubscribe_list, 0x00, sizeof(client->attributessubscribe_list)); //client->attributessubscribe_list = LIST_HEAD_INITIALIZER(client->attributessubscribe_list);
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 void _tbcmh_attributessubscribe_on_destroy(tbcmh_handle_t client)
@@ -135,7 +135,7 @@ void _tbcmh_attributessubscribe_on_destroy(tbcmh_handle_t client)
     TBC_CHECK_PTR(client);
 
     // Take semaphore
-    // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
     //      TBC_LOGE("Unable to take semaphore!");
     //      return;
     // }
@@ -150,7 +150,7 @@ void _tbcmh_attributessubscribe_on_destroy(tbcmh_handle_t client)
     memset(&client->attributessubscribe_list, 0x00, sizeof(client->attributessubscribe_list));
 
     // Give semaphore
-    // xSemaphoreGive(client->_lock);
+    // xSemaphoreGiveRecursive(client->_lock);
 }
 
 int tbcmh_attributes_subscribe(tbcmh_handle_t client,
@@ -162,7 +162,7 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
 
     // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
@@ -171,7 +171,7 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
     if (!attributessubscribe) {
          // Give semaphore
-         xSemaphoreGive(client->_lock);
+         xSemaphoreGiveRecursive(client->_lock);
          TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
@@ -216,7 +216,7 @@ int tbcmh_attributes_subscribe(tbcmh_handle_t client,
     }
 
     // Give semaphore
-    xSemaphoreGive(client->_lock);
+    xSemaphoreGiveRecursive(client->_lock);
     return attributessubscribe->subscribe_id;
 }
 
@@ -229,7 +229,7 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
     TBC_CHECK_PTR_WITH_RETURN_VALUE(on_update, ESP_FAIL);
 
     // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
@@ -238,7 +238,7 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
     attributessubscribe_t *attributessubscribe = _attributessubscribe_create(context, on_update);
     if (!attributessubscribe) {
          // Give semaphore
-         xSemaphoreGive(client->_lock);
+         xSemaphoreGiveRecursive(client->_lock);
          TBC_LOGE("Init attributessubscribe failure! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
@@ -276,7 +276,7 @@ int tbcmh_attributes_subscribe_of_array(tbcmh_handle_t client, //int qos /*=0*/,
     }
 
     // Give semaphore
-    xSemaphoreGive(client->_lock);
+    xSemaphoreGiveRecursive(client->_lock);
     return attributessubscribe->subscribe_id;
 }
 
@@ -303,7 +303,7 @@ tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client, int attributes_sub
     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, ESP_FAIL);
 
     // Take semaphore
-    if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+    if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
          TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
          return ESP_FAIL;
     }
@@ -329,7 +329,7 @@ tbc_err_t tbcmh_attributes_unsubscribe(tbcmh_handle_t client, int attributes_sub
     }
 
     // Give semaphore
-    xSemaphoreGive(client->_lock);
+    xSemaphoreGiveRecursive(client->_lock);
     return ESP_OK;  
 }
 
@@ -362,7 +362,7 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
      TBC_CHECK_PTR_WITH_RETURN_VALUE(object, 0);
 
      // Take semaphore
-     // if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     // if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
      //      TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
      //      return 0;
      // }
@@ -384,7 +384,7 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
                             result = attributessubscribe->on_update(client, attributessubscribe->context, object); //cJSON *value = cJSON_GetObjectItem(object, key);
                             if (result==2) { //called tbcmh_disconnect()/tbcmh_destroy() inside on_set()
                                 // Give semaphore
-                                // xSemaphoreGive(client->_lock);
+                                // xSemaphoreGiveRecursive(client->_lock);
                                 return 2;
                             }
                             if (result==1) { //called tbcmh_attributes_unsubscribe() inside on_set()
@@ -398,7 +398,7 @@ int _tbcmh_attributessubscribe_on_data(tbcmh_handle_t client, const cJSON *objec
      }
 
      // Give semaphore
-     // xSemaphoreGive(client->_lock);
+     // xSemaphoreGiveRecursive(client->_lock);
      return result;
 }
 

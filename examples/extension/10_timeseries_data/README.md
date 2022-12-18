@@ -155,27 +155,27 @@ I (7219) tb_mqtt_client_helper: after call on_connected()
 I (10519) TIMESERIES_DATA_MAIN: Send telemetry: temprature, humidity
 I (10519) TIMESERIES_DATA_MAIN: Get temperature (a time-series data)
 I (10519) TIMESERIES_DATA_MAIN: Get humidity (a time-series data)
-I (10529) tb_mqtt_client: [Telemetry][Tx] {"temprature":25,"humidity":26}
+I (10529) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":25,"humidity":26}
 I (11539) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=44635
 I (15939) TIMESERIES_DATA_MAIN: Send telemetry: temprature, humidity
 I (15939) TIMESERIES_DATA_MAIN: Get temperature (a time-series data)
 I (15939) TIMESERIES_DATA_MAIN: Get humidity (a time-series data)
-I (15949) tb_mqtt_client: [Telemetry][Tx] {"temprature":25.5,"humidity":27}
+I (15949) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":25.5,"humidity":27}
 I (16959) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=64872
 I (21359) TIMESERIES_DATA_MAIN: Send telemetry: temprature, humidity
 I (21359) TIMESERIES_DATA_MAIN: Get temperature (a time-series data)
 I (21359) TIMESERIES_DATA_MAIN: Get humidity (a time-series data)
-I (21369) tb_mqtt_client: [Telemetry][Tx] {"temprature":26,"humidity":28}
+I (21369) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":26,"humidity":28}
 I (22379) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=46914
 I (26779) TIMESERIES_DATA_MAIN: Send telemetry: temprature, humidity
 I (26779) TIMESERIES_DATA_MAIN: Get temperature (a time-series data)
 I (26779) TIMESERIES_DATA_MAIN: Get humidity (a time-series data)
-I (26789) tb_mqtt_client: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
+I (26789) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
 I (27799) TIMESERIES_DATA_MAIN: Disconnect tbcmh ...
 I (27799) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
 I (27799) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=28320
-I (27909) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27909) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27909) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27909) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27909) MQTT_CLIENT: Client asked to stop, but was not started
 I (28019) TIMESERIES_DATA_MAIN: Unregister time-series data: humidity!
 I (28019) TIMESERIES_DATA_MAIN: Unregister time-series data: humidity!

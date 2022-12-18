@@ -364,7 +364,7 @@ tbc_err_t tbcmh_attributes_request(tbcmh_handle_t client,
      }
 
      // Take semaphore, malloc client_keys & shared_keys
-     if (xSemaphoreTake(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
+     if (xSemaphoreTakeRecursive(client->_lock, (TickType_t)0xFFFFF) != pdTRUE) {
           TBC_LOGE("Unable to take semaphore! %s()", __FUNCTION__);
           return ESP_FAIL;
      }
@@ -461,14 +461,14 @@ next_attribute_key:
      }
 
      // Give semaphore
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
 
      TBC_FREE(client_keys);
      TBC_FREE(shared_keys);
      return ESP_OK;
 
 attributesrequest_fail:
-     xSemaphoreGive(client->_lock);
+     xSemaphoreGiveRecursive(client->_lock);
      if (!client_keys) {
           TBC_FREE(client_keys);
      }

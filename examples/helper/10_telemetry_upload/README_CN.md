@@ -152,27 +152,27 @@ I (7198) tb_mqtt_client_helper: after call on_connected()
 I (10498) TELEMETRY_UPLOAD_MAIN: Send telemetry: temprature, humidity
 I (10498) TELEMETRY_UPLOAD_MAIN: Get temperature (a time-series data)
 I (10498) TELEMETRY_UPLOAD_MAIN: Get humidity (a time-series data)
-I (10508) tb_mqtt_client: [Telemetry][Tx] {"temprature":25,"humidity":26}
+I (10508) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":25,"humidity":26}
 I (11518) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=56266
 I (15918) TELEMETRY_UPLOAD_MAIN: Send telemetry: temprature, humidity
 I (15918) TELEMETRY_UPLOAD_MAIN: Get temperature (a time-series data)
 I (15918) TELEMETRY_UPLOAD_MAIN: Get humidity (a time-series data)
-I (15928) tb_mqtt_client: [Telemetry][Tx] {"temprature":25.5,"humidity":27}
+I (15928) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":25.5,"humidity":27}
 I (16938) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=848
 I (21338) TELEMETRY_UPLOAD_MAIN: Send telemetry: temprature, humidity
 I (21338) TELEMETRY_UPLOAD_MAIN: Get temperature (a time-series data)
 I (21338) TELEMETRY_UPLOAD_MAIN: Get humidity (a time-series data)
-I (21348) tb_mqtt_client: [Telemetry][Tx] {"temprature":26,"humidity":28}
+I (21348) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":26,"humidity":28}
 I (22358) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=17211
 I (26758) TELEMETRY_UPLOAD_MAIN: Send telemetry: temprature, humidity
 I (26758) TELEMETRY_UPLOAD_MAIN: Get temperature (a time-series data)
 I (26758) TELEMETRY_UPLOAD_MAIN: Get humidity (a time-series data)
-I (26768) tb_mqtt_client: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
+I (26768) tb_mqtt_wapper: [Telemetry][Tx] {"temprature":26.5,"humidity":29}
 I (27778) TELEMETRY_UPLOAD_MAIN: Disconnect tbcmh ...
 I (27778) tb_mqtt_client_helper: disconnecting from mqtt://192.168.0.186:1883 ...
 I (27778) tb_mqtt_client_helper: TBCM_EVENT_PUBLISHED, msg_id=52926
-I (27888) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_stop()...
-I (27898) tb_mqtt_client: tbcm_disconnect(): call esp_mqtt_client_destroy()...
+I (27888) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_stop()...
+I (27898) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27898) MQTT_CLIENT: Client asked to stop, but was not started
 I (27998) TELEMETRY_UPLOAD_MAIN: Destroy tbcmh ...
 I (27998) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
