@@ -1,35 +1,35 @@
 # Examples
 
 * Without the API -- (Only for debug)
-  * Hello world: [00_hello_world](./helper/00_hello_world)
+  * Hello world: [g00_hello_world](./getstarted/g00_hello_world)
 
 * Using Helper API -- tbc_mqtt_helper.h
-  * Telemetry upload API: [10_telemetry_upload](./helper/10_telemetry_upload)
+  * Telemetry upload API: [h10_telemetry_upload](./helper/h10_telemetry_upload)
   * Attributes API
-    * Publish attribute update to the server: [20_attributes_update](./helper/20_attributes_update)
-    * Subscribe to attribute updates from the server: [21_attributes_subscribe](./helper/21_attributes_subscribe)
-    * Request attribute values from the server: [22_attributes_request](./helper/22_attributes_request)
+    * Publish attribute update to the server: [h20_attributes_update](./helper/h20_attributes_update)
+    * Subscribe to attribute updates from the server: [h21_attributes_subscribe](./helper/h21_attributes_subscribe)
+    * Request attribute values from the server: [h22_attributes_request](./helper/h22_attributes_request)
   * RPC API
-    * Server-side RPC: [30_server_side_rpc](./helper/30_server_side_rpc)
-    * Client-side RPC: [31_client_side_rpc](./helper/31_client_side_rpc)
-  * Claiming devices: [40_claiming_device](./helper/40_claiming_device)
-  * Firmware API: [50_fw_update](./helper/50_fw_update)
+    * Server-side RPC: [h30_server_side_rpc](./helper/h30_server_side_rpc)
+    * Client-side RPC: [h31_client_side_rpc](./helper/h31_client_side_rpc)
+  * Claiming devices: [h40_claiming_device](./helper/h40_claiming_device)
+  * Firmware API: [h50_fw_update](./helper/h50_fw_update)
 
 * Using Extension API -- tbc_extension.h
-  * Time-series data API: [10_timeseries_data](./extension/10_timeseries_data)
-  * Client-side attributes API: [20_client_attributes](./extension/20_client_attributes)
-  * Shared attributes API: [30_shared_attributes](./extension/30_shared_attributes)
+  * Time-series data API: [e10_timeseries_data](./extension/e10_timeseries_data)
+  * Client-side attributes API: [e20_client_attributes](./extension/e20_client_attributes)
+  * Shared attributes API: [e30_shared_attributes](./extension/e30_shared_attributes)
 
 * Security authentication <https://thingsboard.io/docs/user-guide/device-credentials/>
   * Access Tokens
-    * Plain MQTT (without SSL): [s11_access_token_without_ssl](./security_auth/s11_access_token_without_ssl)
-    * MQTTS (MQTT over SSL): [s12_access_token_with_onewayssl](./security_auth/s12_access_token_with_onewayssl)
+    * Plain MQTT (without SSL): [a11_access_token_without_ssl](./authentication/a11_access_token_without_ssl)
+    * MQTTS (MQTT over SSL): [a12_access_token_with_onewayssl](./authentication/a12_access_token_with_onewayssl)
   * Basic MQTT Credentials
-    * Authentication based on Client ID only: [s21_basic_mqtt_credential_c_without_ssl](./security_auth/s21_basic_mqtt_credential_c_without_ssl)
-    * Authentication based on Username and Password: [s22_basic_mqtt_credential_u_p_without_ssl](./security_auth/s22_basic_mqtt_credential_u_p_without_ssl)
-    * Authentication based on Client ID, Username and Password: [s23_basic_mqtt_credential_c_u_p_without_ssl](security_auth/s23_basic_mqtt_credential_c_u_p_without_ssl)
-    * MQTTS (MQTT over TLS): [s24_basic_mqtt_credential_c_u_p_with_onewayssl](./security_auth/s24_basic_mqtt_credential_c_u_p_with_onewayssl)
-  * X.509 Certificates: [s31_x.509_ceritificate_with_twowayssl](./security_auth/s31_x.509_ceritificate_with_twowayssl)
+    * Authentication based on Client ID only: [a21_basic_mqtt_credential_c_without_ssl](./authentication/a21_basic_mqtt_credential_c_without_ssl)
+    * Authentication based on Username and Password: [a22_basic_mqtt_credential_u_p_without_ssl](./authentication/a22_basic_mqtt_credential_u_p_without_ssl)
+    * Authentication based on Client ID, Username and Password: [a23_basic_mqtt_credential_c_u_p_without_ssl](authentication/a23_basic_mqtt_credential_c_u_p_without_ssl)
+    * MQTTS (MQTT over TLS): [a24_basic_mqtt_credential_c_u_p_with_onewayssl](./authentication/a24_basic_mqtt_credential_c_u_p_with_onewayssl)
+  * X.509 Certificates: [a31_x.509_ceritificate_with_twowayssl](./authentication/a31_x.509_ceritificate_with_twowayssl)
 
     These examples in this section differ only in the MQTT parameters. The comparison of these parameters is similar to:
 
@@ -48,4 +48,4 @@
     |                                        | -P: password                                             |
 
 * Provision
-  * Device provisioning: [60_device_provisioning](./helper/60_device_provisioning)
+  * Device provisioning: [h60_device_provisioning](./helper/h60_device_provisioning)
