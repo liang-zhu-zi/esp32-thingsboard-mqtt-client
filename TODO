@@ -1,31 +1,31 @@
-# TODO List
+TODO List
+============
 
-1. security option `testing`.
-1. Device provisioning `testing`.
+* Security option `testing`.
+* Device provisioning `testing`.
 
-1. A new examples of all in one.
+* A new examples of all in one.
 
-1. Docs...
-1. Append supported ThingsBoard MQTT API in commonents/README.md.
-1. Append some pictures of ThingsBoard in examples/.../README.md.
+* Docs...
+* Append supported ThingsBoard MQTT API in commonents/README.md.
+* Append some pictures of ThingsBoard in examples/.../README.md.
 
-1. Dead lock & protected data in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
+* Dead lock & protected data in tb_mqtt.c/.h & tb_mqtt_helper.c/h.
 
-1. Subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
-1. OTA update support MD5-checksum-ALG.
-1. Software OTA upgrade.
+* Subscribe/unsubscribe fw_chunk_response topic if sw & fw are upgrading at same time.
+* OTA update support MD5-checksum-ALG.
+* Software OTA upgrade.
 
 -----------------------------------------------------------------------
-1. Is default login data correct?
+* Is default login data correct?
     constexpr char PROV_ACCESS_TOKEN[] = PSTR("provision");
     constexpr char DEFAULT_CLIENT_ID[] = PSTR("TbDev");
-----------------------------------------------------------------------------
 
-1. OTA update only has Firmware OTA and Software OTA at most, no need to form a list.
-1. Provision has at most one request and does not require a list.
-------------------------------------------------------------------------
-
-1. Is there only one parameter for QoS of ThingsBoard MQTT API, which does not need to appear in every publish API?
+* OTA update only has Firmware OTA and Software OTA at most, no need to form a list.
+* Provision has at most one request and does not require a list.
 
 ------------------------------------------------------------------------
-1. MQTT Gateway API.
+* Is there only one parameter for QoS of ThingsBoard MQTT API, which does not need to appear in every publish API?
+
+------------------------------------------------------------------------
+* MQTT Gateway API.

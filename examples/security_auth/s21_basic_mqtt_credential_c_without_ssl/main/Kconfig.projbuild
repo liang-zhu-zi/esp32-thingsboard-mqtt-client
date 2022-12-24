@@ -1,0 +1,21 @@
+menu "Example Configuration"
+
+    config TBC_TRANSPORT_ADDRESS_HOST
+        string "Hostname, to set ipv4 pass it as string"
+        default ""
+        help
+            Hostname to connect to server/broker
+
+    config TBC_TRANSPORT_ADDRESS_PORT
+        int "Port"
+        default 1883
+        help
+            MQTT over TCP:1883. MQTT over SSL: 8883. MQTT over WebSocket:80. MQTT over WebSocket Secure:443.
+
+    config TBC_TRANSPORT_CREDENTIALS_CLIENT_ID
+        string "Client ID"
+        default ""
+        help
+            Client ID to connect to broker
+
+endmenu

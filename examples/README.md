@@ -14,9 +14,38 @@
     * Client-side RPC: [31_client_side_rpc](./helper/31_client_side_rpc)
   * Claiming devices: [40_claiming_device](./helper/40_claiming_device)
   * Firmware API: [50_fw_update](./helper/50_fw_update)
-  * Device provisioning: [60_device_provisioning](./helper/60_device_provisioning)
 
 * Using Extension API -- tbc_extension.h
   * Time-series data API: [10_timeseries_data](./extension/10_timeseries_data)
   * Client-side attributes API: [20_client_attributes](./extension/20_client_attributes)
   * Shared attributes API: [30_shared_attributes](./extension/30_shared_attributes)
+
+* Security authentication <https://thingsboard.io/docs/user-guide/device-credentials/>
+  * Access Tokens
+    * Plain MQTT (without SSL): [s11_access_token_without_ssl](./security_auth/s11_access_token_without_ssl)
+    * MQTTS (MQTT over SSL): [s12_access_token_with_onewayssl](./security_auth/s12_access_token_with_onewayssl)
+  * Basic MQTT Credentials
+    * Authentication based on Client ID only: [s21_basic_mqtt_credential_c_without_ssl](./security_auth/s21_basic_mqtt_credential_c_without_ssl)
+    * Authentication based on Username and Password: [s22_basic_mqtt_credential_u_p_without_ssl](./security_auth/s22_basic_mqtt_credential_u_p_without_ssl)
+    * Authentication based on Client ID, Username and Password: [s23_basic_mqtt_credential_c_u_p_without_ssl](security_auth/s23_basic_mqtt_credential_c_u_p_without_ssl)
+    * MQTTS (MQTT over TLS): [s24_basic_mqtt_credential_c_u_p_with_onewayssl](./security_auth/s24_basic_mqtt_credential_c_u_p_with_onewayssl)
+  * X.509 Certificates: [s31_x.509_ceritificate_with_twowayssl](./security_auth/s31_x.509_ceritificate_with_twowayssl)
+
+    These examples in this section differ only in the MQTT parameters. The comparison of these parameters is similar to:
+
+    | Device authentication options          |                                                          | token                | clientId            | username                  | password                  |  | ca_certs="mqttserver.pub.pem" | certfile="cert.pem" | keyfile="key.pem" |  | Default Port |
+    |----------------------------------------|----------------------------------------------------------|----------------------|---------------------|---------------------------|---------------------------|--|-------------------------------|---------------------|-------------------|--|--------------|
+    | Access Token                           | Plain MQTT (without SSL)                                 | -u YOUR_ACCESS_TOKEN |                     |                           |                           |  |                               |                     |                   |  | -p "1883"    |
+    |                                        | MQTTS (MQTT over SSL)                                    | -u YOUR_ACCESS_TOKEN |                     |                           |                           |  | --cafile tb-server-chain.pem  |                     |                   |  | -p "8883"    |
+    | Basic MQTT authentication              | Authentication based on Client ID only                   |                      | -i "YOUR_CLIENT_ID" |                           |                           |  |                               |                     |                   |  | -p "1883"    |
+    |                                        | Authentication based on Username and Password            |                      |                     | -u "YOUR_CLIENT_USERNAME" | -P "YOUR_CLIENT_PASSWORD" |  |                               |                     |                   |  | -p "1883"    |
+    |                                        | Authentication based on Client ID, Username and Password |                      | -i "YOUR_CLIENT_ID" | -u "YOUR_CLIENT_USERNAME" | -P "YOUR_CLIENT_PASSWORD" |  |                               |                     |                   |  | -p "1883"    |
+    |                                        | MQTTS (MQTT over TLS)                                    |                      | -i "YOUR_CLIENT_ID" | -u "YOUR_CLIENT_USERNAME" | -P "YOUR_CLIENT_PASSWORD" |  | --cafile tb-server-chain.pem  |                     |                   |  | -p "8883"    |
+    | X.509 Certificate Based Authentication | (two-way SSL)                                            |                      |                     |                           |                           |  | --cafile tb-server-chain.pem  | --cert cert.pem     | --key key.pem     |  | -p "8883"    |
+    |                                        |                                                          |                      |                     |                           |                           |  |                               |                     |                   |  |              |
+    |                                        | -i: client ID                                            |                      |                     |                           |                           |  |                               |                     |                   |  |              |
+    |                                        | -u: user name                                            |                      |                     |                           |                           |  |                               |                     |                   |  |              |
+    |                                        | -P: password                                             |
+
+* Provision
+  * Device provisioning: [60_device_provisioning](./helper/60_device_provisioning)
