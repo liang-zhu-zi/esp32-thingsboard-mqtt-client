@@ -1,0 +1,314 @@
+menu "Example ThingsBoard MQTT Configuration"
+
+    # config BROKER_URL
+    #     string "Broker URL"
+    #     default "mqtt://mqtt.eclipseprojects.io"
+    #     help
+    #         URL of the broker to connect to ThingsBoard (MQTT) Server, eg,
+    #             "mqtt://iot.eclipse.org" : MQTT over TCP, default port 1883
+    #             "mqtt://iot.eclipse.org:1884" : MQTT over TCP, port 1884
+    #             "mqtt://username:password@iot.eclipse.org:1884" : MQTT over TCP, port 1884, with username and password
+
+    # config ACCESS_TOKEN
+    #     string "Access Token"
+    #     default ""
+    #     help
+    #         Access token to connect to broker
+
+    # config BROKER_URL_FROM_STDIN
+    #    bool
+    #    default y if BROKER_URL = "FROM_STDIN"
+
+    # config ACCESS_TOKEN_FROM_STDIN
+    #    bool
+    #    default y if ACCESS_TOKEN = "FROM_STDIN"
+
+    config TBC_TRANSPORT_WITH_PROVISION
+        prompt "Transport with device provisioning"
+        bool
+        default n
+
+    choice TBC_TRANSPORT_TYPE_SELECTION
+        prompt "Transport to use ?"
+        default TBC_TRANSPORT_TYPE_USE_MQTT
+
+        config TBC_TRANSPORT_TYPE_USE_MQTT
+            prompt "MQTT/MQTTS"
+            bool
+
+        # NOT implemented
+        # config TBC_TRANSPORT_TYPE_USE_HTTP
+        #    prompt "HTTP/HTTPS"
+        #    bool
+
+        # NOT implemented
+        # config TBC_TRANSPORT_TYPE_USE_COAP
+        #    prompt "CoAP/CoAPS"
+        #    bool
+    endchoice
+
+    menu "Transport server address"
+
+        choice TBC_TRANSPORT_ADDRESS_SCHEMA_SELECTION
+            prompt "Schema to use ?"
+            default TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT if TBC_TRANSPORT_TYPE_USE_MQTT
+            # default TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP if TBC_TRANSPORT_TYPE_USE_HTTP
+            # default TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAP if TBC_TRANSPORT_TYPE_USE_COAP
+
+            ###### MQTT ##################################################
+            config TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT
+                prompt "MQTT over TCP"
+                bool
+                depends on TBC_TRANSPORT_TYPE_USE_MQTT
+
+            config TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS
+                prompt "MQTT over SSL"
+                bool
+                depends on TBC_TRANSPORT_TYPE_USE_MQTT
+                select TBC_TRANSPORT_USE_CERT_PEM
+
+            # TB NOT implemented
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WS
+            #    prompt "MQTT over WebSocket"
+            #    bool
+            #    depends on TBC_TRANSPORT_TYPE_USE_MQTT
+
+            # TB NOT implemented
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS
+            #    prompt "MQTT over WebSocket Secure"
+            #    bool
+            #    depends on TBC_TRANSPORT_TYPE_USE_MQTT
+            #    select TBC_TRANSPORT_USE_CERT_PEM
+
+            ###### HTTP ##################################################
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP
+            #     prompt "HTTP over TCP"
+            #     bool
+            #     depends on TBC_TRANSPORT_TYPE_USE_HTTP
+
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS
+            #     prompt "HTTP over SSL"
+            #     bool
+            #     depends on TBC_TRANSPORT_TYPE_USE_HTTP
+            #     select TBC_TRANSPORT_USE_CERT_PEM
+
+            ###### CoAP ##################################################
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAP
+            #     prompt "CoAP over UDP"
+            #     bool
+            #     depends on TBC_TRANSPORT_TYPE_USE_COAP
+
+            # config TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS
+            #     prompt "CoAP over DTLS"
+            #     bool
+            #     depends on TBC_TRANSPORT_TYPE_USE_COAP
+            #     select TBC_TRANSPORT_USE_CERT_PEM
+        endchoice
+
+        config TBC_TRANSPORT_ADDRESS_HOST
+            string "Hostname, to set ipv4 pass it as string"
+            default ""
+            help
+                Hostname to connect to server/broker
+
+        config TBC_TRANSPORT_ADDRESS_PORT
+            int "Port"
+            default 1883 if TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT
+            default 8883 if TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS
+            # default 80   if TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WS
+            # default 443  if TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS
+            # default 80   if TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP
+            # default 80   if TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS
+            # default 5683 if TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAP
+            # default 5684 if TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS
+            help
+                MQTT over TCP:1883. MQTT over SSL: 8883. MQTT over WebSocket:80. MQTT over WebSocket Secure:443.
+
+        # config TBC_TRANSPORT_ADDRESS_PATH
+        #     string "Path in URI"
+        #     default ""
+        #     depends on (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WS || TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS \
+        #              || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS \
+        #              || TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAP || TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS)
+        #     help
+        #         Path in URI
+    endmenu
+
+    menu "Provisioning config"
+        depends on TBC_TRANSPORT_WITH_PROVISION
+
+        choice TBC_PROVISION_TYPE_SELECTION
+            prompt "Provison type to use ?"
+            default TBC_PROVISION_TYPE_SERVER_GENERATES_CREDENTIALS
+
+            config TBC_PROVISION_TYPE_SERVER_GENERATES_CREDENTIALS
+                prompt "Credentials generated by the ThingsBoard server"
+                bool
+
+            config TBC_PROVISION_TYPE_DEVICE_SUPPLIES_ACCESS_TOKEN
+                prompt "Devices supplies Access Token"
+                bool
+
+            config TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS
+                prompt "Devices supplies Basic MQTT Credentials"
+                bool
+                depends on TBC_TRANSPORT_TYPE_USE_MQTT
+
+            config TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS
+                prompt "Devices supplies X.509 Certificate"
+                depends on (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS ) 
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS \
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS \
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS \
+                select TBC_PROVISION_USE_HASH
+                bool
+        endchoice
+
+        config TBC_PROVISION_DEVICE_NAME
+            string "Device name (Optional)"
+            default ""
+            help
+                e.g., ESP32 chip ID
+
+        config TBC_PROVISION_DEVICE_KEY
+            string "Device key"
+            default ""
+            help
+                ThingsBoard --> Device profiles --> Click a row --> Device provisiong --> Provison device key.
+
+        config TBC_PROVISION_DEVICE_SECRET
+            string "Device secret"
+            default ""
+            help
+                ThingsBoard --> Device profiles --> Click a row --> Device provisiong --> Provison device secret.
+
+        config TBC_PROVISION_TOKEN
+            string "Token"
+            default ""
+            depends on TBC_PROVISION_TYPE_DEVICE_SUPPLIES_ACCESS_TOKEN
+
+        config TBC_PROVISION_CLIENT_ID
+            string "Client ID"
+            default ""
+            depends on TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS
+
+        config TBC_PROVISION_USER_NAME
+            string "User name"
+            default ""
+            depends on TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS
+                        # \
+                        # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS
+
+        config TBC_PROVISION_PASSWORD
+            string "Password"
+            default ""
+            depends on TBC_PROVISION_TYPE_DEVICE_SUPPLIES_BASIC_MQTT_CREDENTIALS
+                        # \
+                        # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTP || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS
+
+        config TBC_PROVISION_USE_HASH
+            bool "Hash / Public key X.509 of device"
+            default n
+            depends on TBC_PROVISION_TYPE_DEVICE_SUPPLIES_X509_CREDENTIALS
+    endmenu
+
+
+    menu "Transport credentials"
+        depends on !TBC_TRANSPORT_WITH_PROVISION
+
+        choice TBC_TRANSPORT_CREDENTIALS_TYPE_SELECTION
+            prompt "Credentials type to use ?"   # depends on MQTT_TASK_CORE_SELECTION_ENABLED
+            default TBC_TRANSPORT_CREDENTIALS_TYPE_USE_ACCESS_TOKEN
+
+            config TBC_TRANSPORT_CREDENTIALS_TYPE_USE_ACCESS_TOKEN
+                prompt "Access token"
+                bool
+
+            config TBC_TRANSPORT_CREDENTIALS_TYPE_USE_BASIC_MQTT
+                prompt "Basic MQTT credentials"
+                bool
+                depends on TBC_TRANSPORT_TYPE_USE_MQTT
+
+            config TBC_TRANSPORT_CREDENTIALS_TYPE_USE_X509
+                prompt "X.509 certificate"
+                bool
+                depends on (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS)
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS \
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS
+                            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS
+                select TBC_TRANSPORT_USE_CLIENT_CERT_PEM
+                select TBC_TRANSPORT_USE_CLIENT_KEY_PEM
+        endchoice
+
+        config TBC_TRANSPORT_CREDENTIALS_CLIENT_ID
+            string "Client ID"
+            default ""
+            depends on TBC_TRANSPORT_CREDENTIALS_TYPE_USE_BASIC_MQTT
+            help
+                Client ID
+
+        config TBC_TRANSPORT_CREDENTIALS_USERNAME
+            string "User name"
+            default ""
+            depends on TBC_TRANSPORT_CREDENTIALS_TYPE_USE_BASIC_MQTT
+            help
+                User name
+
+        config TBC_TRANSPORT_CREDENTIALS_PASSWORD
+            string "Password"
+            default ""
+            depends on TBC_TRANSPORT_CREDENTIALS_TYPE_USE_BASIC_MQTT
+            help
+                Password
+
+        config TBC_TRANSPORT_CREDENTIALS_TOKEN
+            string "Token"
+            default ""
+            depends on TBC_TRANSPORT_CREDENTIALS_TYPE_USE_ACCESS_TOKEN
+            help
+                Token. Fill to username in TB MQTT; Fill to url in TB HTTP/CoAP.
+    endmenu
+
+
+    menu "Transport verification / Server certificate"
+        depends on (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS)
+            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS \
+            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS \
+            # || TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS
+
+        config TBC_TRANSPORT_USE_CERT_PEM
+            prompt "Use certificate data in PEM format for server verify (with SSL)"
+            bool
+
+        config TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK
+            prompt "Skip any validation of server certificate CN field"
+            bool
+            help 
+                Skip any validation of server certificate CN field, this reduces the 
+                security of TLS and makes the mqtt client susceptible to MITM attacks
+    endmenu
+
+
+    menu "Transport authentication / Client certificate & private key"
+        depends on  (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTTS && TBC_TRANSPORT_CREDENTIALS_TYPE_USE_X509) 
+                    #  \
+                    # || (TBC_TRANSPORT_ADDRESS_SHEMA_USE_MQTT_WSS  && TBC_TRANSPORT_CREDENTIALS_TYPE_USE_X509) \
+                    # ||  TBC_TRANSPORT_ADDRESS_SHEMA_USE_HTTPS \
+                    # || (TBC_TRANSPORT_ADDRESS_SHEMA_USE_COAPS &&  TBC_TRANSPORT_CREDENTIALS_TYPE_USE_X509)
+
+        config TBC_TRANSPORT_USE_CLIENT_CERT_PEM
+            prompt "Use certificate data in PEM format for for SSL mutual authentication"
+            bool
+            help
+                Certificate data in PEM format for SSL mutual authentication, default 
+                is not required if mutual authentication is not needed.
+
+        config TBC_TRANSPORT_USE_CLIENT_KEY_PEM
+            prompt "Use private key data in PEM format for SSL mutual authentication"
+            bool
+            help 
+                Private key data in PEM format for SSL mutual authentication, default 
+                is not required if mutual authentication is not needed. 
+    endmenu
+
+endmenu

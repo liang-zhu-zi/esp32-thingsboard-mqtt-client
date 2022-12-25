@@ -1,0 +1,10 @@
+#set(COMPONENT_REQUIRES json)
+
+idf_component_register(SRCS "dev_sup_x.509_ceritificate_w_twowayssl_main.c"
+							"tbc_front_connection.c"
+							"tbc_normal_connection.c"
+                            "tbc_transport_credentials_memory.c"
+                    INCLUDE_DIRS ""
+                    EMBED_TXTFILES mqtt_thingsboard_server_cert.pem client.crt client.key)
+
+                    

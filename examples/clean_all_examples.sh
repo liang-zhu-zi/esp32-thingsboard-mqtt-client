@@ -47,11 +47,6 @@ cd helper/h50_fw_update
 idf.py clean > log.txt
 cd ../..
 
-echo helper/h60_device_provisioning
-cd helper/h60_device_provisioning
-idf.py clean > log.txt
-cd ../..
-
 echo ================================================
 
 echo extension/e10_timeseries_data
@@ -74,42 +69,96 @@ cd ../..
 
 echo ================================================
 
-echo authentication/a11_access_token_without_ssl
-cd authentication/a11_access_token_without_ssl
+echo authentication/a11_access_token_wo_ssl
+cd authentication/a11_access_token_wo_ssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a12_access_token_with_onewayssl
-cd authentication/a12_access_token_with_onewayssl
+echo authentication/a12_access_token_w_onewayssl
+cd authentication/a12_access_token_w_onewayssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a21_basic_mqtt_credential_c_without_ssl
-cd authentication/a21_basic_mqtt_credential_c_without_ssl
+echo authentication/a21_basic_mqtt_credential_c_wo_ssl
+cd authentication/a21_basic_mqtt_credential_c_wo_ssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a22_basic_mqtt_credential_u_p_without_ssl
-cd authentication/a22_basic_mqtt_credential_u_p_without_ssl
+echo authentication/a22_basic_mqtt_credential_up_wo_ssl
+cd authentication/a22_basic_mqtt_credential_up_wo_ssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a23_basic_mqtt_credential_c_u_p_without_ssl
-cd authentication/a23_basic_mqtt_credential_c_u_p_without_ssl
+echo authentication/a23_basic_mqtt_credential_cup_wo_ssl
+cd authentication/a23_basic_mqtt_credential_cup_wo_ssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a24_basic_mqtt_credential_c_u_p_with_onewayssl
-cd authentication/a24_basic_mqtt_credential_c_u_p_with_onewayssl
+echo authentication/a24_basic_mqtt_credential_cup_w_onewayssl
+cd authentication/a24_basic_mqtt_credential_cup_w_onewayssl
 idf.py clean > log.txt
 cd ..\..
 
-echo authentication/a31_x.509_ceritificate_with_twowayssl
-cd authentication/a31_x.509_ceritificate_with_twowayssl
+echo authentication/a31_x.509_ceritificate_w_twowayssl
+cd authentication/a31_x.509_ceritificate_w_twowayssl
 idf.py clean > log.txt
 cd ..\..
 
 echo ================================================
+
+echo provision/pd11_dev_sup_access_token_wo_ssl
+cd provision/pd11_dev_sup_access_token_wo_ssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd12_dev_sup_access_token_w_onewayssl
+cd provision/pd12_dev_sup_access_token_w_onewayssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd21_dev_sup_basic_mqtt_credential_c_wo_ssl
+cd provision/pd21_dev_sup_basic_mqtt_credential_c_wo_ssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd22_dev_sup_basic_mqtt_credential_up_wo_ssl
+cd provision/pd22_dev_sup_basic_mqtt_credential_up_wo_ssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd23_dev_sup_basic_mqtt_credential_cup_wo_ssl
+cd provision/pd23_dev_sup_basic_mqtt_credential_cup_wo_ssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd24_dev_sup_basic_mqtt_credential_cup_w_onewayssl
+cd provision/pd24_dev_sup_basic_mqtt_credential_cup_w_onewayssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/pd31_dev_sup_x.509_ceritificate_w_twowayssl
+cd provision/pd31_dev_sup_x.509_ceritificate_w_twowayssl
+idf.py clean > log.txt
+cd ../..
+
+
+echo provision/ps10_srv_gen_credentials_wo_ssl
+cd provision/ps10_srv_gen_credentials_wo_ssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/ps20_srv_gen_credentials_w_onewayssl
+cd provision/ps20_srv_gen_credentials_w_onewayssl
+idf.py clean > log.txt
+cd ../..
+
+echo provision/px00_device_provisioning
+cd provision/px00_device_provisioning
+idf.py clean > log.txt
+cd ../..
+
+echo ================================================
+
 
 
 set echo on

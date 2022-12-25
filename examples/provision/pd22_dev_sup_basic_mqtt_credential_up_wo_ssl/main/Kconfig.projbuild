@@ -1,0 +1,46 @@
+menu "Example ThingsBoard MQTT Configuration"
+
+    menu "Transport server address"
+        config TBC_TRANSPORT_ADDRESS_HOST
+            string "Hostname, to set ipv4 pass it as string"
+            default ""
+            help
+                Hostname to connect to server/broker
+
+        config TBC_TRANSPORT_ADDRESS_PORT
+            int "Port"
+            default 8883
+            help
+                MQTT over TCP:1883. MQTT over SSL: 8883. MQTT over WebSocket:80. MQTT over WebSocket Secure:443.
+    endmenu
+
+    menu "Provisioning config"
+        config TBC_PROVISION_DEVICE_NAME
+            string "Device name (Optional)"
+            default ""
+            help
+                e.g., ESP32 chip ID
+
+        config TBC_PROVISION_DEVICE_KEY
+            string "Device key"
+            default ""
+            help
+                ThingsBoard --> Device profiles --> Click a row --> Device provisiong --> Provison device key.
+
+        config TBC_PROVISION_DEVICE_SECRET
+            string "Device secret"
+            default ""
+            help
+                ThingsBoard --> Device profiles --> Click a row --> Device provisiong --> Provison device secret.
+
+        config TBC_PROVISION_USER_NAME
+            string "User name"
+            default ""
+
+        config TBC_PROVISION_PASSWORD
+            string "Password"
+            default ""
+
+    endmenu
+
+endmenu
