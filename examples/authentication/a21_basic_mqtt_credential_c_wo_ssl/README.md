@@ -68,6 +68,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data.
 
    ![image](./basic_mqtt_credential_c_wo_ssl_2.png)
+
 ## Example Output
 
 ```none
