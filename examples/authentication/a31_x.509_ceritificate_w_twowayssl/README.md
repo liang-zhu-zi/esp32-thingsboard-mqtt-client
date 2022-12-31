@@ -11,6 +11,8 @@ This example implements telemetry related functions:
 
 * Publish telemetry: temprature, humidity
 
+Refer [here](https://thingsboard.io/docs/user-guide/certificates/).
+
 ## Hardware Required
 
 * A development board with ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
@@ -44,8 +46,9 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    ```menuconfig
    Example Configuration  --->
-       (mqtt://MyThingsboardServerIP) Broker URL
-       (MyDeviceToken) Access Token 
+      (mqtt://MyThingsboardServerIP) Broker URL
+      (8883) Port
+      [*] Skip any validation of server certificate CN field
    Example Connection Configuration  --->
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 

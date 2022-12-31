@@ -12,6 +12,8 @@
 * 基本的 MQTT 认证 - 基于 Client ID, Username 和 Password 的认证 (无 SSL)
 * 发送 telemetry: temprature, humidity
 
+参考 [这里](https://thingsboard.io/docs/user-guide/basic-mqtt/#authentication-based-on-client-id-username-and-password).
+
 ## 硬件需求
 
 * 一个载有 ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC 的开发板(例如, ESP32-DevKitC, ESP-WROVER-KIT 等等)
@@ -47,8 +49,11 @@
 
    ```menuconfig
    Example Configuration  --->
-       (mqtt://MyThingsboardServerIP) Broker URL
-       (MyDeviceToken) Access Token 
+      (mqtt://MyThingsboardServerIP) Broker URL
+      (1883) Port
+      (MY_CLIENT_ID) Client ID
+      (MY_USER_NAME) User name
+      (MY_PASSWORD) Password 
    Example Connection Configuration  --->
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 

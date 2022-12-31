@@ -12,6 +12,8 @@
 * 基于 Access Token 的认证 - Plain MQTT (无 SSL)
 * 发送 telemetry: temprature, humidity
 
+流程参考 [这里](https://thingsboard.io/docs/user-guide/access-token/#plain-mqtt-without-ssl).
+
 ## 硬件需求
 
 * 一个载有 ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC 的开发板(例如, ESP32-DevKitC, ESP-WROVER-KIT 等等)
@@ -48,6 +50,7 @@
    ```menuconfig
    Example Configuration  --->
        (mqtt://MyThingsboardServerIP) Broker URL
+       (1883) Port
        (MyDeviceToken) Access Token 
    Example Connection Configuration  --->
        [*] connect using WiFi interface

@@ -12,6 +12,8 @@ This example implements some functions:
 * Access Token based authentication - Plain MQTT (without SSL)
 * Publish telemetry: temprature, humidity
 
+Refer [here](https://thingsboard.io/docs/user-guide/access-token/#plain-mqtt-without-ssl).
+
 ## Hardware Required
 
 * A development board with ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
@@ -48,6 +50,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    ```menuconfig
    Example Configuration  --->
        (mqtt://MyThingsboardServerIP) Broker URL
+       (1883) Port
        (MyDeviceToken) Access Token 
    Example Connection Configuration  --->
        [*] connect using WiFi interface

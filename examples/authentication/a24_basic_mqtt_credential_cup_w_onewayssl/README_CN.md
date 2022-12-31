@@ -11,6 +11,8 @@
 
 * 发送 telemetry: temprature, humidity
 
+参考 [这里](https://thingsboard.io/docs/user-guide/basic-mqtt/#mqtts-mqtt-over-tls).
+
 ## 硬件需求
 
 * 一个载有 ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC 的开发板(例如, ESP32-DevKitC, ESP-WROVER-KIT 等等)
@@ -44,8 +46,12 @@
 
    ```menuconfig
    Example Configuration  --->
-       (mqtt://MyThingsboardServerIP) Broker URL
-       (MyDeviceToken) Access Token 
+      (mqtt://MyThingsboardServerIP) Broker URL
+      (8883) Port
+      (MY_CLIENT_ID) Client ID
+      (MY_USER_NAME) User name
+      (MY_PASSWORD) Password
+      [*] Skip any validation of server certificate CN field
    Example Connection Configuration  --->
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 

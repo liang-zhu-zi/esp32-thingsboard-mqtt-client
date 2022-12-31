@@ -12,6 +12,8 @@ This example implements some functions:
 * Basic MQTT authentication - Authentication based on Client ID, Username and Password (without SSL)
 * Publish telemetry: temprature, humidity
 
+Refer [here](https://thingsboard.io/docs/user-guide/basic-mqtt/#authentication-based-on-client-id-username-and-password).
+
 ## Hardware Required
 
 * A development board with ESP32/ESP32-C3/ESP32-H2/ESP32-C2/ESP32-S3 SoC (e.g., ESP32-DevKitC, ESP-WROVER-KIT, etc.)
@@ -47,8 +49,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    ```menuconfig
    Example Configuration  --->
-       (mqtt://MyThingsboardServerIP) Broker URL
-       (MyDeviceToken) Access Token 
+      (mqtt://MyThingsboardServerIP) Broker URL
+      (1883) Port
+      (MY_CLIENT_ID) Client ID
+      (MY_USER_NAME) User name
+      (MY_PASSWORD) Password 
    Example Connection Configuration  --->
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 
