@@ -223,7 +223,7 @@ void mqtt_app_start(void)
 
     ESP_LOGI(TAG, "Connect tbcmh ...");
     tbc_transport_config_esay_t config = {
-        .uri = "mqtt://192.168.0.186",          // TODO: replace it with your ThingsBoard URI
+        .uri = "mqtt://192.168.0.187",          // TODO: replace it with your ThingsBoard URI
         .access_token = "mKqOP8kQwxdDsVnCRU20", // TODO: replace it with your device's Access Token in ThingsBoard
         .log_rxtx_package = true                // Print Rx/Tx MQTT package
      };
