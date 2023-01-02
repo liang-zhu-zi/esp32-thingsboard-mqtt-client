@@ -1219,6 +1219,7 @@ static void _on_mqtt_event_handle(void *handler_args, esp_event_base_t base, int
     case MQTT_EVENT_BEFORE_CONNECT:
     default:
         {
+            TBC_LOGI("src_event->event_id=%d", src_event->event_id);
             tbcm_event_t dst_event;
             __convert_nondata_event(&dst_event, src_event);
             dst_event.client       = client;

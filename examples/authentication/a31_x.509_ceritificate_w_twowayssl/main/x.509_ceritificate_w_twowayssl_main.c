@@ -29,7 +29,7 @@ extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
 extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
 
-static const char *TAG = "EXAM_ACCESS_TOKEN_WO_SSL";
+static const char *TAG = "EXAM_X509_W_TWOWAYSSL";
 
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
