@@ -186,8 +186,6 @@ I (27891) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (27901) MQTT_CLIENT: Client asked to stop, but was not started
 I (28001) EXAM_ACCESS_TOKEN_WO_SSL: Destroy tbcmh ...
 I (28001) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
-
 ```
 
 ## ThingsBoard Data
