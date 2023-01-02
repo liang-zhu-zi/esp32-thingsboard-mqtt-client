@@ -23,7 +23,7 @@
 extern const uint8_t mqtt_thingsboard_server_cert_pem_start[] asm("_binary_mqtt_thingsboard_server_cert_pem_start");
 extern const uint8_t mqtt_thingsboard_server_cert_pem_end[] asm("_binary_mqtt_thingsboard_server_cert_pem_end");
 
-static const char *TAG = "EXAM_ACCESS_TOKEN_WO_SSL";
+static const char *TAG = "EXAM_ACCESS_TOKEN_W_SSL";
 
 #define TELEMETYR_TEMPRATUE         	"temprature"
 #define TELEMETYR_HUMIDITY          	"humidity"
