@@ -215,7 +215,7 @@ This library comes with a number of example. See [here](./examples).
 
 ## Documentation
 
-*Coming soon...*
+* [Here](README.docs.md)
 
 ## Have a question or proposal?
 

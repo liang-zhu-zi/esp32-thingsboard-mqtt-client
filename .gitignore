@@ -58,8 +58,11 @@ sdkconfig.old
 # Visual Studio Code
 .vscode/
 
-# Sphinx documentation
-docs/_build/
+#python
+.venv
+
+# Sphinx
+docs/_build/*
 
 # This project
 log.txt

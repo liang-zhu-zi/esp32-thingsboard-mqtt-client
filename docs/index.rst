@@ -37,7 +37,7 @@ Contents
    /concepts/attributes
    /concepts/rpc
    /concepts/claiming_devices
-   /concepts/otaupdate
+   /concepts/ota_update
    /concepts/provision
 
 

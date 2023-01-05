@@ -82,7 +82,7 @@ Data points
 -----------------
 
 
-improvement
+Improvement
 -----------------
 
 * 把 Alarm 机制由 Server 移到 Client/Deivce 端; 或者在 Client/Deivce 端加一个新的较弱 Alarm 机制; 或者只是为 Time-series data 加几个属性, 告诉 Client/Device 该如何更好的上传 Time-series data:
