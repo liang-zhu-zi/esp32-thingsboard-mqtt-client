@@ -58,13 +58,13 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 1. Add device profile:
 
    * `Login in ThingsBoard CE/PE` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input **Device Profile Name** --> `Device provisioning Optional`.
-      ![image](.\server_generate_access_token_without_ssl_add_provision_1.png)
+      ![image](./server_generate_access_token_without_ssl_add_provision_1.png)
 
    * `Allow to create new devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Add`.
-      ![image](.\server_generate_access_token_without_ssl_add_provision_2.png)
+      ![image](./server_generate_access_token_without_ssl_add_provision_2.png)
   
    * Now my device profile should be listed first, since the table sort devices using the time of the creation by default..
-      ![image](.\server_generate_access_token_without_ssl_add_provision_3.png)
+      ![image](./server_generate_access_token_without_ssl_add_provision_3.png)
 
 1. set-targe (optional)
 
