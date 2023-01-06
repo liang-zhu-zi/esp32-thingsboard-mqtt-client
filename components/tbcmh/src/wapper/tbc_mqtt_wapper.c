@@ -871,7 +871,7 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
 
       if (client->config.log_rxtx_package)
       {
-           TBC_LOGI("[FW update][Tx] request_id=%u %.*s",
+           TBC_LOGI("[Provision][Tx] request_id=%u %.*s",
                     request_id, strlen(payload), payload);
       }
 
@@ -1129,8 +1129,8 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
                 strlen(TB_MQTT_TOPIC_PROVISION_RESPONSE)) == 0) {
          // 6.TB_MQTT_TOPIC_PROVISION_RESPONSE
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[Provision][Rx] topic_type=%d, payload_len=%d",
-                   TBCM_RX_TOPIC_PROVISION_RESPONSE, payload_len);
+             TBC_LOGI("[Provision][Rx] topic_type=%d, payload_len=%d %.*s",
+                   TBCM_RX_TOPIC_PROVISION_RESPONSE, payload_len, payload_len, payload);
          }
 
          publish_data.topic = TBCM_RX_TOPIC_PROVISION_RESPONSE;   /*!< Topic associated with this event */

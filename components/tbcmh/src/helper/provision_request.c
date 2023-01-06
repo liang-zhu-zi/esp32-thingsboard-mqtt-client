@@ -476,7 +476,7 @@ void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id,
      // Search provision
      provision_t *provision = NULL, *next;
      LIST_FOREACH_SAFE(provision, &client->deviceprovision_list, entry, next) {
-          if (provision && (provision->request_id==request_id)) {
+          if (provision) { // request_id is meaningless in provision! // && (provision->request_id==request_id)
               LIST_REMOVE(provision, entry);
               break;
           }
@@ -494,8 +494,15 @@ void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id,
      // xSemaphoreGiveRecursive(client->_lock);
 
      if (!provision) {
-          TBC_LOGW("Unable to find provision:%u! %s()", request_id, __FUNCTION__);
-          return;
+		if (!provision_results) {
+			TBC_LOGW("Unable to find provision:%u! %s()", request_id, __FUNCTION__);
+		} else {
+			char *response = cJSON_PrintUnformatted(provision_results); //cJSON_Print()
+			TBC_LOGW("Unable to find provision: request_id=%u, response=%s! %s()",
+				request_id, response, __FUNCTION__);		 
+			cJSON_free(response); // free memory
+		}
+       	return;
      }
 
      // Do response - parse results of provision response

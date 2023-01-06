@@ -7,21 +7,23 @@
 
 This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
-This example implements server-side RPC related functions:
+This example implements the fllowing functions:
 
 * Publish client-side RPC to the server and receive the response:
   * rpcPublishLocalTime (One-way RPC):
     * Publish: `{"method":"rpcPublishLocalTime","params":{"localTime":1664603252}}`
-  * rpcGetCurrentTime (Two-way RPC):
-    * Publish: `{"method":"rpcGetCurrentTime","params":{}}`
-    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}
-  * rpcLoopback (Two-way RPC):
-    * Publish: `{"method":"rpcLoopback","params":{"id":9002}}`
-    * Receive: `{"method":"rpcLoopback","results":{"id":9002}}`
-  * rpcNotImplementedTwoway (Two-way RPC, but NO response from the server):
-    * Pubish: `{"method":"rpcNotImplementedTwoway","params":{"id":4002}}`
 
-***Note: Please use `params` in a request and `results` in a response, otherwise you will get an exception !***
+* Allowing creating new devices - (Users cannot control the server to automatically generate credentials for new devices)
+   * ~~case-ps12_server_generate_access_token_with_onewayssl~~
+   * ~~case-ps24_1_server_generate_basic_mqtt_credential_c_with_onewayssl~~
+   * ~~case-ps24_2_server_generate_basic_mqtt_credential_u_p_with_onewayssl~~
+   * ~~case-ps24_3_server_generate_basic_mqtt_credential_c_u_p_with_onewayssl~~
+
+* Checking pre-provisioned devices with **device name** - (The user manually generates the credential certificate of the new device on the server)
+   * case-ps12_server_generate_access_token_with_onewayssl
+   * case-ps24_1_server_generate_basic_mqtt_credential_c_with_onewayssl
+   * case-ps24_2_server_generate_basic_mqtt_credential_u_p_with_onewayssl
+   * case-ps24_3_server_generate_basic_mqtt_credential_c_u_p_with_onewayssl
 
 ## Hardware Required
 
