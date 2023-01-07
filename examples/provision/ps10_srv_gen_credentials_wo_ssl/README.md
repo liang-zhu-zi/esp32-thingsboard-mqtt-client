@@ -342,7 +342,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 #### ThingsBoard Data
 
-1. Provisiong Result
+1. Check device provisioning results
 
    * Now my new device should be listed first.
       ![image](server_generate_access_token_without_ssl_result_1.png)
