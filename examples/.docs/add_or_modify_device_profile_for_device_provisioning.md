@@ -1,17 +1,17 @@
-# Add / Modify device profile for device provisioning
+# Add / Modify a device profile for device provisioning
 
-- [Add / Modify device profile for device provisioning](#add--modify-device-profile-for-device-provisioning)
-  - [Add / Modify device profile for device provisioning - Allow to create new devices](#add--modify-device-profile-for-device-provisioning---allow-to-create-new-devices)
-    - [Add device profile and allow to create new devices](#add-device-profile-and-allow-to-create-new-devices)
-    - [Modify device profile to allow to create new devices](#modify-device-profile-to-allow-to-create-new-devices)
-  - [Add / Modify device profile for device provisioning - Check for pre-provisioned devices](#add--modify-device-profile-for-device-provisioning---check-for-pre-provisioned-devices)
-    - [Add device profile and check for pre-provisioned devices](#add-device-profile-and-check-for-pre-provisioned-devices)
-    - [Modify device profile to check for pre-provisioned devices](#modify-device-profile-to-check-for-pre-provisioned-devices)
+- [Add / Modify a device profile for device provisioning](#add--modify-a-device-profile-for-device-provisioning)
+  - [Add / Modify a device profile for device provisioning - Allow to create new devices](#add--modify-a-device-profile-for-device-provisioning---allow-to-create-new-devices)
+    - [Add a new device profile and allow to create new devices](#add-a-new-device-profile-and-allow-to-create-new-devices)
+    - [Modify a device profile to allow to create new devices](#modify-a-device-profile-to-allow-to-create-new-devices)
+  - [Add / Modify a device profile for device provisioning - Check for pre-provisioned devices](#add--modify-a-device-profile-for-device-provisioning---check-for-pre-provisioned-devices)
+    - [Add a new device profile and check for pre-provisioned devices](#add-a-new-device-profile-and-check-for-pre-provisioned-devices)
+    - [Modify a device profile to check for pre-provisioned devices](#modify-a-device-profile-to-check-for-pre-provisioned-devices)
 
 
-## Add / Modify device profile for device provisioning - Allow to create new devices
+## Add / Modify a device profile for device provisioning - Allow to create new devices
 
-### Add device profile and allow to create new devices
+### Add a new device profile and allow to create new devices
 
 1. `Login in ThingsBoard CE/PE` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input *Device Profile Name* --> `Device provisioning Optional`.
 
@@ -25,7 +25,7 @@
 
     ![image](images/add_or_modify_device_profile_for_device_provisioning/add-device-profile-3.png)
 
-### Modify device profile to allow to create new devices
+### Modify a device profile to allow to create new devices
 
 1. `Login in ThingsBoard CE/PE` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
 
@@ -36,9 +36,9 @@
     ![image](images/add_or_modify_device_profile_for_device_provisioning/modify-device-profile-to-allow-to-create-new-devices-2.png)
 
 
-## Add / Modify device profile for device provisioning - Check for pre-provisioned devices
+## Add / Modify a device profile for device provisioning - Check for pre-provisioned devices
 
-### Add device profile and check for pre-provisioned devices
+### Add a new device profile and check for pre-provisioned devices
 
 1. `Login in ThingsBoard CE/PE` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input *Device Profile Name* --> `Device provisioning Optional`.
 
@@ -53,7 +53,7 @@
     ![image](images/add_or_modify_device_profile_for_device_provisioning/add-device-profile-3.png)
 
 
-### Modify device profile to check for pre-provisioned devices
+### Modify a device profile to check for pre-provisioned devices
 
 1. `Login in ThingsBoard CE/PE` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
 
