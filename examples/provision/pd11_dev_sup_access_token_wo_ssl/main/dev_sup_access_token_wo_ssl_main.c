@@ -26,51 +26,17 @@
 
 #include "tbc_transport_credentials_memory.h"
 
-static const char *TAG = "DEV_SUP_ACCESS_TOKEN_W_ONEWAYSSL_MAIN";
+static const char *TAG = "DEV_SUP_ACCESS_TOKEN_WO_SSL_MAIN";
 
 extern tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                             const tbc_provison_config_t *provision);
 extern tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport);
 
-/*
- * Define psk key and hint as defined in mqtt broker
- * example for mosquitto server, content of psk_file:
- * hint:BAD123
- *
- */
-/*
-static const uint8_t s_key[] = { 0xBA, 0xD1, 0x23 };
-
-static const psk_hint_key_t psk_hint_key = {
-            .key = s_key,
-            .key_size = sizeof(s_key),
-            .hint = "hint"
-        };
-*/
-
-extern const uint8_t mqtt_thingsboard_server_cert_pem_start[] asm("_binary_mqtt_thingsboard_server_cert_pem_start");
-extern const uint8_t mqtt_thingsboard_server_cert_pem_end[] asm("_binary_mqtt_thingsboard_server_cert_pem_end");
-
-
-///////// verification //////////////////////////////////////////////////////////////
-
-#if CONFIG_TBC_TRANSPORT_USE_CERT_PEM //"Use certificate data in PEM format for server verify (with SSL)"
-    #define _VERIFICATION_CERT_PEM  (const char *)mqtt_thingsboard_server_cert_pem_start
-#else
-    #define _VERIFICATION_CERT_PEM  NULL
-#endif
-
-#if CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK //"Skip any validation of server certificate CN field"
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   true
-#else
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   false
-#endif
-
 
 static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server, CoAP: server */
             {
                 //bool tlsEnabled,                              /*!< Enabled TLS/SSL or DTLS */
-                .schema = "mqtts",                              /*!< MQTT: mqtt/mqtts/ws/wss, HTTP: http/https, CoAP: coap/coaps */
+                .schema = "mqtt",                              /*!< MQTT: mqtt/mqtts/ws/wss, HTTP: http/https, CoAP: coap/coaps */
                 .host   = CONFIG_TBC_TRANSPORT_ADDRESS_HOST,    /*!< MQTT/HTTP/CoAP server domain, hostname, to set ipv4 pass it as string */
                 .port   = CONFIG_TBC_TRANSPORT_ADDRESS_PORT,    /*!< MQTT/HTTP/CoAP server port */
                 .path   = NULL,                                 /*!< Path in the URI*/
@@ -96,14 +62,14 @@ static tbc_transport_verification_config_t _verification = /*!< Security verific
                  //bool      use_global_ca_store;               /*!< Use a global ca_store, look esp-tls documentation for details. */
                  //esp_err_t (*crt_bundle_attach)(void *conf); 
                                                                 /*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
-                 .cert_pem = _VERIFICATION_CERT_PEM,            /*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
+                 .cert_pem = NULL,            					/*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
                  .cert_len = 0,                                 /*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
                  //.psk_hint_key = &psk_hint_key,
                                                                 /*!< Pointer to PSK struct defined in esp_tls.h to enable PSK
                                                                   authentication (as alternative to certificate verification).
                                                                   PSK is enabled only if there are no other ways to
                                                                   verify broker.*/
-                 .skip_cert_common_name_check = _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK,
+                 .skip_cert_common_name_check = false,
                                                                 /*!< Skip any validation of server certificate CN field, this reduces the security of TLS and makes the mqtt client susceptible to MITM attacks  */
                  //const char **alpn_protos;                    /*!< NULL-terminated list of supported application protocols to be used for ALPN */
             };

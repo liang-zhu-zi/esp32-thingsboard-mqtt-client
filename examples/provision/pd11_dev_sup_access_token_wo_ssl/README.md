@@ -1,27 +1,19 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Client-side RPC - ThingsBoard MQTT Client Example
+# Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
+This example implements the fllowing functions:
 
-This example implements server-side RPC related functions:
+*Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)
+  * Use Case 1: Allowing creating new devices with **device name** 
+  * Use Case 2: Checking pre-provisioned devices with **device name**
+* Publish telemetry: temprature, humidity
+  * Publish: `{"temprature":25,"humidity":26}`
 
-* Publish client-side RPC to the server and receive the response:
-  * rpcPublishLocalTime (One-way RPC):
-    * Publish: `{"method":"rpcPublishLocalTime","params":{"localTime":1664603252}}`
-  * rpcGetCurrentTime (Two-way RPC):
-    * Publish: `{"method":"rpcGetCurrentTime","params":{}}`
-    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}
-  * rpcLoopback (Two-way RPC):
-    * Publish: `{"method":"rpcLoopback","params":{"id":9002}}`
-    * Receive: `{"method":"rpcLoopback","results":{"id":9002}}`
-  * rpcNotImplementedTwoway (Two-way RPC, but NO response from the server):
-    * Pubish: `{"method":"rpcNotImplementedTwoway","params":{"id":4002}}`
-
-***Note: Please use `params` in a request and `results` in a response, otherwise you will get an exception !***
+Refer [here](https://thingsboard.io/docs/user-guide/device-provisioning/).
 
 ## Hardware Required
 
@@ -32,123 +24,14 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-1. Get a device access token
+1. ThingsBoard CE/PE : Device profile - Allowing creating new devices with **device name**
+   
+
+2. Get a device access token
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
 
-1. `RPC Reply with the Rule Engine` in ThingsBoard
-
-   Referece [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/)
-
-   * Create a new Rule Chain: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain`
-
-       ![image](./ESP-IDF-Thingsboard-MQTT_Client-side_RPC_Test_Rule_Chain.png)
-
-      * filter rpcPublishLocalTime
-        * Name: filter rpcPublishLocalTime
-        * Type: Filter - script
-        * Code:
-
-           ```json
-           return msg.method === 'rpcPublishLocalTime';
-           ```
-
-      * filter rpcGetCurrentTime
-        * Name: filter rpcGetCurrentTime
-        * Type: Filter - script
-        * Code:
-
-           ```json
-           return msg.method === 'rpcGetCurrentTime'; 
-           ```
-
-      * filter rpcLoopback
-        * Name: filter rpcLoopback
-        * Type: Filter - script
-        * Code:
-
-           ```json
-           return msg.method === 'rpcLoopback'; 
-           ```
-
-      * filter rpcNotImplementedTwoway
-        * Name: filter rpcNotImplementedTwoway
-        * Type: Filter - script
-        * Code:
-
-           ```json
-           return msg.method === 'rpcNotImplementedTwoway'; 
-           ```
-
-      * build resp rpcGetCurrentTime
-        * Name: build resp rpcGetCurrentTime
-        * Type: Transformation - script
-        * Code:
-
-           ```json
-           var rpcResponse = {
-              method: msg.method, //rpcGetCurrentTime
-              results: {
-                 currentTime: new Date().getTime()
-              }
-           };
-
-           return {
-              msg: rpcResponse,
-              metadata: metadata,
-              msgType: msgType
-           };
-           ```
-
-      * build resp rpcLoopback
-        * Name: build resp rpcLoopback
-        * Type: Transformation - script
-        * Code:
-
-           ```json
-           var rpcResponse = {
-               method: msg.method, //rpcLoopback
-               results: msg.params
-           };
-
-           return {
-               msg: rpcResponse,
-               metadata: metadata,
-               msgType: msgType
-           };
-           ```
-
-   * Modify Root Rule Chain:
-
-      ![image](./Root_Rule_Chain.png)
-
-      * filter client-side RPC
-        * Name: filter client-side RPC
-        * Type: Filter - script
-        * Code:
-
-           ```json
-           return (msg.method === "rpcPublishLocalTime")
-            || (msg.method === "rpcGetCurrentTime")
-            || (msg.method === "rpcLoopback")
-            || (msg.method === "rpcNotImplementedTwoway");
-           ```
-
-      * Log Other RPC from Device
-        * Name: Log Other RPC from Device
-        * Type: Action - log
-        * Code:
-
-           ```json
-           return 'Unexpected RPC call request message:\n' + JSON.stringify(msg) + '\metadata:\n' + JSON.stringify(metadata);
-           ```
-
-      * Rule Chain ESP-IDF-TB-MQTT Client RPC
-        * Name: Rule Chain ESP-IDF-TB-MQTT Client RPC
-        * Type: Flow - rule chain
-        * Rule Chain: ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain
-
-1. set-targe (optional)
+3. set-targe (optional)
 
    Before project configuration and build, be sure to set the correct chip target using:
 
@@ -156,7 +39,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    idf.py set-target <chip_name>
    ```
 
-1. menuconfig
+4. menuconfig
 
    Then project configuration:
 
@@ -167,16 +50,22 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    Configuration: ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
 
    ```menuconfig
-   Example Configuration  --->
-       (mqtt://MyThingsboardServerIP) Broker URL
-       (MyDeviceToken) Access Token 
+   Example ThingsBoard MQTT Configuration  ---> 
+      Transport server address  --->
+         (MyThingsboardServerIP) Hostname, to set ipv4 pass it as string
+         (1883) Port
+      Provisioning config  --->
+         (MY_DEVICE_NAME) Device name (Optional)
+         (MY_PROVISION_KEY) Device key
+         (MY_PROVISION_SECRET) Device secret
+         (MY_ACCESS_TOKEN) Access Token 
    Example Connection Configuration  --->
        [*] connect using WiFi interface
        (MySSID) WiFi SSID 
        (MyPassword) WiFi Password                  
    ```
 
-1. build, flash and monitor
+5. build, flash and monitor
 
    Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 

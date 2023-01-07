@@ -132,7 +132,7 @@ static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
 
    tbc_transport_credentials_memory_save(credentials);
 
-   TBC_LOGE("Provision failurs and the device will not work!");
+   TBC_LOGI("Provision successful and the device will work!");
 }
 
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.

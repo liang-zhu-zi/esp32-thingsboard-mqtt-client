@@ -132,7 +132,7 @@ static void _tb_provision_on_response(tbcmh_handle_t client, void *context,
 
    tbc_transport_credentials_memory_save(credentials);
 
-   TBC_LOGE("Provision failurs and the device will not work!");
+   TBC_LOGI("Provision successful and the device will work!");
 }
 
 // return 2 if tbcmh_disconnect()/tbcmh_destroy() is called inside it.
@@ -148,7 +148,7 @@ static int _tb_provision_on_timeout(tbcmh_handle_t client, void *context) //, ui
 /*!< Callback of connected ThingsBoard MQTT */
 void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
 {
-    ESP_LOGI(TAG, "FRONT CONN: Connected to thingsboard server!");
+    TBC_LOGI("Connected to thingsboard server!");
 
     sleep(1);
     tbc_provison_config_t provision_config = {0};
@@ -161,7 +161,7 @@ void tb_frontconn_on_connected(tbcmh_handle_t client, void *context)
 /*!< Callback of disconnected ThingsBoard MQTT */
 void tb_frontconn_on_disconnected(tbcmh_handle_t client, void *context)
 {
-   ESP_LOGI(TAG, "FRONT CONN: Disconnected from thingsboard server!");
+   TBC_LOGI("Disconnected from thingsboard server!");
 }
 
 // self._username = "provision"
@@ -172,22 +172,22 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                       const tbc_provison_config_t *provision)
 {
     if (!transport) {
-        ESP_LOGE(TAG, "FRONT CONN: transport is NULL!");
+        TBC_LOGE("transport is NULL!");
         return NULL;
     }
     if (!provision) {
-        ESP_LOGE(TAG, "FRONT CONN: provision is NULL!");
+        TBC_LOGE("provision is NULL!");
         return NULL;
     }
 
-    ESP_LOGI(TAG, "FRONT CONN: Init tbcmh ...");
+    TBC_LOGI("Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "FRONT CONN: Failure to init tbcmh!");
+        TBC_LOGE("Failure to init tbcmh!");
         return NULL;
     }
 
-    ESP_LOGI(TAG, "FRONT CONN: Connect tbcmh ...");
+    TBC_LOGI("Connect tbcmh ...");
     // prepare credentials for provision
     tbc_transport_config_t temp = {0};
     tbc_transport_config_copy(&temp, transport);
@@ -200,8 +200,8 @@ tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                    tb_frontconn_on_connected,
                                    tb_frontconn_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "FRONT CONN: failure to connect to tbcmh!");
-        ESP_LOGI(TAG, "FRONT CONN: Destroy tbcmh ...");
+        TBC_LOGE("failure to connect to tbcmh!");
+        TBC_LOGI("Destroy tbcmh ...");
         tbcmh_destroy(client);
         return NULL;
     }
