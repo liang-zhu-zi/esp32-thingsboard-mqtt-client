@@ -139,8 +139,8 @@ CONFIG_PARTITION_TABLE_MD5=y
 #
 # Transport server address
 #
-CONFIG_TBC_TRANSPORT_ADDRESS_HOST="192.168.0.187"
-CONFIG_TBC_TRANSPORT_ADDRESS_PORT=1883
+CONFIG_TBC_TRANSPORT_ADDRESS_HOST="192.168.0.210"
+CONFIG_TBC_TRANSPORT_ADDRESS_PORT=8883
 # end of Transport server address
 
 #
@@ -154,7 +154,7 @@ CONFIG_TBC_PROVISION_DEVICE_SECRET="MY_PROVISION_SECRET"
 #
 # Transport verification / Server certificate
 #
-# CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK is not set
+CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK=y
 # end of Transport verification / Server certificate
 # end of Example ThingsBoard MQTT Configuration
 

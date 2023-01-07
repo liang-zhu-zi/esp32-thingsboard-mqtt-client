@@ -82,7 +82,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Copy `server.pem` and rename it to `main\mqtt_thingsboard_server_cert.pem`;
 
-1. Get a device token
+1. Get a device token from ThingsBoard CE/PE
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
 
@@ -125,12 +125,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    (To exit the serial monitor, type ``Ctrl-]``.)
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
-
-1. Check out the latest Telemetry data on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data.
-
-   ![image](./access_token_w_onewayssl_2.png)
 
 ## Example Output
 
@@ -250,7 +244,11 @@ I (28031) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* Check out the latest Telemetry data on ThingsBoard
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data. You can find `humidity` and `temprature`. Their values change over time.
+
+   ![image](./access_token_w_onewayssl_2.png)
 
 ## Troubleshooting
 

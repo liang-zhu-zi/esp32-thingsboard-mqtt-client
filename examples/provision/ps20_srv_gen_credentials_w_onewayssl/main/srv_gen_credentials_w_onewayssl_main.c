@@ -52,23 +52,6 @@ extern const uint8_t mqtt_thingsboard_server_cert_pem_start[] asm("_binary_mqtt_
 extern const uint8_t mqtt_thingsboard_server_cert_pem_end[] asm("_binary_mqtt_thingsboard_server_cert_pem_end");
 
 
-///////// verification //////////////////////////////////////////////////////////////
-
-#if CONFIG_TBC_TRANSPORT_USE_CERT_PEM //"Use certificate data in PEM format for server verify (with SSL)"
-    #define _VERIFICATION_CERT_PEM  (const char *)mqtt_thingsboard_server_cert_pem_start
-#else
-    #define _VERIFICATION_CERT_PEM  NULL
-#endif
-
-
-#if CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK //"Skip any validation of server certificate CN field"
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   true
-#else
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   false
-#endif
-
-
-
 static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server, CoAP: server */
             {
                 //bool tlsEnabled,                              /*!< Enabled TLS/SSL or DTLS */
@@ -86,26 +69,26 @@ static tbc_provison_config_t  _provision =
               .provisionDeviceKey = CONFIG_TBC_PROVISION_DEVICE_KEY,        // Provision device key     // Hardcode or device profile. Each model is different. 
               .provisionDeviceSecret = CONFIG_TBC_PROVISION_DEVICE_SECRET,  // Provision device secret  // Hardcode or device profile. Each model is different.
 
-              .token    = NULL,         // Access token for device             // Randomly generated. Each device is different.
-              .clientId = NULL,         // Client id for device                // Randomly generated. Each device is different.
-              .username = NULL,         // Username for device                 // Randomly generated. Each device is different.
-              .password = NULL,         // Password for device                 // Randomly generated. Each device is different.
-              .hash     = NULL,         // Public key X509 hash for device     // Public key X509.    Each device is different.
+              .token    = NULL,                 // Access token for device             // Randomly generated. Each device is different.
+              .clientId = NULL,                 // Client id for device                // Randomly generated. Each device is different.
+              .username = NULL,                 // Username for device                 // Randomly generated. Each device is different.
+              .password = NULL,                 // Password for device                 // Randomly generated. Each device is different.
+              .hash     = NULL,                 // Public key X509 hash for device     // Public key X509.    Each device is different.
             };
 
 static tbc_transport_verification_config_t _verification = /*!< Security verification of the broker/server */
             {       
-                 //bool      use_global_ca_store;               /*!< Use a global ca_store, look esp-tls documentation for details. */
+                 //bool      use_global_ca_store;               					/*!< Use a global ca_store, look esp-tls documentation for details. */
                  //esp_err_t (*crt_bundle_attach)(void *conf); 
-                                                                /*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
-                 .cert_pem = _VERIFICATION_CERT_PEM,            /*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
-                 .cert_len = 0,                                 /*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
+                                                                					/*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
+                 .cert_pem = (const char *)mqtt_thingsboard_server_cert_pem_start,	/*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
+                 .cert_len = 0,                                 					/*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
                  //.psk_hint_key = &psk_hint_key,
                                                                 /*!< Pointer to PSK struct defined in esp_tls.h to enable PSK
                                                                   authentication (as alternative to certificate verification).
                                                                   PSK is enabled only if there are no other ways to
                                                                   verify broker.*/
-                 .skip_cert_common_name_check = _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK,
+                 .skip_cert_common_name_check = CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK,
                                                                 /*!< Skip any validation of server certificate CN field, this reduces the security of TLS and makes the mqtt client susceptible to MITM attacks  */
                  //const char **alpn_protos;                    /*!< NULL-terminated list of supported application protocols to be used for ALPN */
             };
@@ -185,7 +168,6 @@ static void mqtt_app_start()
 
     tbc_transport_credentials_memory_uninit();
 }
-
 
 void app_main(void)
 {

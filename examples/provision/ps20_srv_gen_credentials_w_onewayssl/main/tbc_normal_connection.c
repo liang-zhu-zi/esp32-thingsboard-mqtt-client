@@ -30,39 +30,87 @@
 
 static const char *TAG = "NORMAL-CONN";
 
+#define TELEMETYR_TEMPRATUE         	"temprature"
+#define TELEMETYR_HUMIDITY          	"humidity"
+
+//Don't call TBCMH API in this callback!
+//Free return value by caller/(tbcmh library)!
+tbcmh_value_t* tb_telemetry_on_get_temperature(void)
+{
+    TBC_LOGI("Get temperature (a time-series data)");
+    static float temp_array[] = {25.0, 25.5, 26.0, 26.5, 27.0, 27.5, 28.0, 27.5, 27.0, 26.5};
+    static int i = 0;
+
+    cJSON* temp = cJSON_CreateNumber(temp_array[i]);
+    i++;
+    i = i % (sizeof(temp_array)/sizeof(temp_array[0]));
+
+    return temp;
+}
+
+//Don't call TBCMH API in this callback!
+//Free return value by caller/(tbcmh library)!
+tbcmh_value_t* tb_telemetry_on_get_humidity(void)
+{
+    TBC_LOGI("Get humidity (a time-series data)");
+
+    static int humi_array[] = {26, 27, 28, 29, 30, 31, 32, 31, 30, 29};
+    static int i = 0;
+
+    cJSON* humi = cJSON_CreateNumber(humi_array[i]);
+    i++;
+    i = i % (sizeof(humi_array)/sizeof(humi_array[0]));
+
+    return humi;
+}
+
+void tb_telemetry_send(tbcmh_handle_t client)
+{
+    TBC_LOGI("Send telemetry: %s, %s", TELEMETYR_TEMPRATUE, TELEMETYR_HUMIDITY);
+
+    cJSON *object = cJSON_CreateObject(); // create json object
+    cJSON_AddItemToObject(object, TELEMETYR_TEMPRATUE, tb_telemetry_on_get_temperature());
+    cJSON_AddItemToObject(object, TELEMETYR_HUMIDITY, tb_telemetry_on_get_humidity());
+    tbcmh_telemetry_upload_ex(client, object, 1/*qos*/, 0/*retain*/);
+    cJSON_Delete(object); // delete json object
+}
+
+
 /*!< Callback of connected ThingsBoard MQTT */
 void tb_normalconn_on_connected(tbcmh_handle_t client, void *context)
 {
-   ESP_LOGI(TAG, "NORMAL CONN: Connected to thingsboard server!");
+   TBC_LOGI("Connected to thingsboard server!");
+
+   tb_telemetry_send(client);
 }
 
 /*!< Callback of disconnected ThingsBoard MQTT */
 void tb_normalconn_on_disconnected(tbcmh_handle_t client, void *context)
 {
-   ESP_LOGI(TAG, "NORMAL CONN: Disconnected from thingsboard server!");
+   TBC_LOGI("Disconnected from thingsboard server!");
 }
 
 tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport)
 {
     if (!transport) {
-        ESP_LOGE(TAG, "NORMAL CONN: transport is NULL!");
+        TBC_LOGE("transport is NULL!");
         return NULL;
     }
         
-    ESP_LOGI(TAG, "NORMAL CONN: Init tbcmh ...");
+    TBC_LOGI("Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
-        ESP_LOGE(TAG, "NORMAL CONN: Failure to init tbcmh!");
+        TBC_LOGE("Failure to init tbcmh!");
         return NULL;
     }
 
-    ESP_LOGI(TAG, "NORMAL CONN: Connect tbcmh ...");
+    TBC_LOGI("Connect tbcmh ...");
     bool result = tbcmh_connect(client, transport, NULL,
                                    tb_normalconn_on_connected,
                                    tb_normalconn_on_disconnected);
     if (!result) {
-        ESP_LOGE(TAG, "NORMAL CONN: failure to connect to tbcmh!");
-        ESP_LOGI(TAG, "NORMAL CONN: Destroy tbcmh ...");
+        TBC_LOGE("failure to connect to tbcmh!");
+        TBC_LOGI("Destroy tbcmh ...");
         tbcmh_destroy(client);
     }
 
