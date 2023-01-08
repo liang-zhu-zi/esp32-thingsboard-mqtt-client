@@ -18,7 +18,6 @@
     - [ThingsBoard CE/PE Data](#thingsboard-cepe-data-1)
   - [Troubleshooting](#troubleshooting)
 
-
 ## Introduction
 
 This example implements the following functions:
@@ -233,7 +232,7 @@ I (53675) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - checking pre-provisioned devices. 
 
-   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices.d)
+   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning-using-pre-provisioned-devices.md)
 
 1. **ThingsBoard CE/PE**: pre-provisioning device with Access token. 
 

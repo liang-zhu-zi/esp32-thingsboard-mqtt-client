@@ -9,7 +9,7 @@ menu "Example ThingsBoard MQTT Configuration"
 
         config TBC_TRANSPORT_ADDRESS_PORT
             int "Port"
-            default 8883
+            default 1883
             help
                 MQTT over TCP:1883. MQTT over SSL: 8883. MQTT over WebSocket:80. MQTT over WebSocket Secure:443.
     endmenu
