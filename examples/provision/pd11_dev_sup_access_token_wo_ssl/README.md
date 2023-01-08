@@ -5,11 +5,24 @@
 
 * [中文版](./README_CN.md)
 
+- [Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)](#device-provisioning---devices-supplies-access-token---plain-mqtt-without-ssl)
+  - [Hardware Required](#hardware-required)
+  - [Use Case 1: Allowing creating new devices with **device name**](#use-case-1-allowing-creating-new-devices-with-device-name)
+    - [How to Use Example](#how-to-use-example)
+    - [Example Output](#example-output)
+    - [ThingsBoard CE/PE Data](#thingsboard-cepe-data)
+  - [Use Case 2: Checking pre-provisioned devices with **device name**](#use-case-2-checking-pre-provisioned-devices-with-device-name)
+    - [How to Use Example](#how-to-use-example-1)
+    - [Example Output](#example-output-1)
+    - [ThingsBoard CE/PE Data](#thingsboard-cepe-data-1)
+  - [Troubleshooting](#troubleshooting)
+
+
 This example implements the fllowing functions:
 
 *Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)
-  * Use Case 1: Allowing creating new devices with **device name**
-  * Use Case 2: Checking pre-provisioned devices with **device name**
+  * Use Case 1: Allowing creating new devices with **device name**. [here](#use-case-1-allowing-creating-new-devices-with-device-name)
+  * Use Case 2: Checking pre-provisioned devices with **device name**. [here](#use-case-2-checking-pre-provisioned-devices-with-device-name)
 * Publish telemetry: temprature, humidity
   * Publish: `{"temprature":25,"humidity":26}`
 
