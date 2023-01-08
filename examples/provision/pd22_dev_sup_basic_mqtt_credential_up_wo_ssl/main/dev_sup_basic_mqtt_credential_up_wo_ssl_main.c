@@ -26,27 +26,12 @@
 
 #include "tbc_transport_credentials_memory.h"
 
-static const char *TAG = "DEVICE_PROVISION_MAIN";
+static const char *TAG = "DEV_SUP_BASIC_MQTT_CRED_UP_WO_SSL_MAIN";
 
 extern tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                             const tbc_provison_config_t *provision);
 extern tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport);
 
-/*
- * Define psk key and hint as defined in mqtt broker
- * example for mosquitto server, content of psk_file:
- * hint:BAD123
- *
- */
-/*
-static const uint8_t s_key[] = { 0xBA, 0xD1, 0x23 };
-
-static const psk_hint_key_t psk_hint_key = {
-            .key = s_key,
-            .key_size = sizeof(s_key),
-            .hint = "hint"
-        };
-*/
 
 static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server, CoAP: server */
             {
@@ -77,8 +62,7 @@ static tbc_transport_verification_config_t _verification = /*!< Security verific
                  //bool      use_global_ca_store;               /*!< Use a global ca_store, look esp-tls documentation for details. */
                  //esp_err_t (*crt_bundle_attach)(void *conf); 
                                                                 /*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
-                 .cert_pem = NULL,
-                                                                /*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
+                 .cert_pem = NULL,            					/*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
                  .cert_len = 0,                                 /*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
                  //.psk_hint_key = &psk_hint_key,
                                                                 /*!< Pointer to PSK struct defined in esp_tls.h to enable PSK
