@@ -5,7 +5,7 @@
 
 * [中文版](./README_CN.md)
 
-- [Device provisioning - Devices supplies Basic MQTT Credentials- Plain MQTT (without SSL)](#device-provisioning---devices-supplies-basic-mqtt-credentials--plain-mqtt-without-ssl)
+- [Device provisioning - Devices supplies Basic MQTT Credentials, Client ID - Plain MQTT (without SSL)](#device-provisioning---devices-supplies-basic-mqtt-credentials-client-id---plain-mqtt-without-ssl)
   - [Introduction](#introduction)
   - [Hardware Required](#hardware-required)
   - [Use Case 1 - Allowing creating new devices with **device name**](#use-case-1---allowing-creating-new-devices-with-device-name)
