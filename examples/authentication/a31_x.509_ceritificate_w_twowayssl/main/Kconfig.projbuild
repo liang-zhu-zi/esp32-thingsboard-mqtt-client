@@ -1,4 +1,4 @@
-menu "Example Configuration"
+menu "Example ThingsBoard MQTT Configuration"
 
     config TBC_TRANSPORT_ADDRESS_HOST
         string "Hostname, to set ipv4 pass it as string"

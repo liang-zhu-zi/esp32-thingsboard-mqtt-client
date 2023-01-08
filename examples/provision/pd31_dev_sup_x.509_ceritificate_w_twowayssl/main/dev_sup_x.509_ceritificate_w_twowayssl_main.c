@@ -57,8 +57,6 @@ extern const uint8_t client_cert_pem_end[] asm("_binary_client_crt_end");
 extern const uint8_t client_key_pem_start[] asm("_binary_client_key_start");
 extern const uint8_t client_key_pem_end[] asm("_binary_client_key_end");
 
-#define _PROVISION_HASH  (const char*)client_cert_pem_start  // TODO: // "Hash / Public key X.509 of device"
-
 static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server, CoAP: server */
             {
                 //bool tlsEnabled,                              /*!< Enabled TLS/SSL or DTLS */
@@ -76,20 +74,20 @@ static tbc_provison_config_t  _provision =
               .provisionDeviceKey = CONFIG_TBC_PROVISION_DEVICE_KEY,        // Provision device key     // Hardcode or device profile. Each model is different. 
               .provisionDeviceSecret = CONFIG_TBC_PROVISION_DEVICE_SECRET,  // Provision device secret  // Hardcode or device profile. Each model is different.
 
-              .token    = NULL,                         // Access token for device             // Randomly generated. Each device is different.
-              .clientId = NULL,                         // Client id for device                // Randomly generated. Each device is different.
-              .username = NULL,                         // Username for device                 // Randomly generated. Each device is different.
-              .password = NULL,                         // Password for device                 // Randomly generated. Each device is different.
-              .hash     = _PROVISION_HASH,              // Public key X509 hash for device     // Public key X509.    Each device is different.
+              .token    = NULL,                         		// Access token for device             // Randomly generated. Each device is different.
+              .clientId = NULL,                        			// Client id for device                // Randomly generated. Each device is different.
+              .username = NULL,                         		// Username for device                 // Randomly generated. Each device is different.
+              .password = NULL,                         		// Password for device                 // Randomly generated. Each device is different.
+              .hash     = (const char*)client_cert_pem_start,	// Public key X509 hash for device     // Public key X509.    Each device is different.
             };
 
 static tbc_transport_verification_config_t _verification = /*!< Security verification of the broker/server */
             {       
-                 //bool      use_global_ca_store;                                   /*!< Use a global ca_store, look esp-tls documentation for details. */
+                 //bool      use_global_ca_store;               					/*!< Use a global ca_store, look esp-tls documentation for details. */
                  //esp_err_t (*crt_bundle_attach)(void *conf); 
-                                                                                    /*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
-                 .cert_pem = (const char *)mqtt_thingsboard_server_cert_pem_start,  /*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
-                 .cert_len = 0,                                                     /*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
+                                                                					/*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
+                 .cert_pem = (const char *)mqtt_thingsboard_server_cert_pem_start,	/*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
+                 .cert_len = 0,                                 					/*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
                  //.psk_hint_key = &psk_hint_key,
                                                                 /*!< Pointer to PSK struct defined in esp_tls.h to enable PSK
                                                                   authentication (as alternative to certificate verification).
