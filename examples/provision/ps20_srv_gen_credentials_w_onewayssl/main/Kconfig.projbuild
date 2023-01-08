@@ -32,6 +32,7 @@ menu "Example ThingsBoard MQTT Configuration"
             default ""
             help
                 ThingsBoard --> Device profiles --> Click a row --> Device provisiong --> Provison device secret.
+
     endmenu
  
     menu "Transport verification / Server certificate"

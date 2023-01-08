@@ -69,11 +69,11 @@ static tbc_provison_config_t  _provision =
               .provisionDeviceKey = CONFIG_TBC_PROVISION_DEVICE_KEY,        // Provision device key     // Hardcode or device profile. Each model is different. 
               .provisionDeviceSecret = CONFIG_TBC_PROVISION_DEVICE_SECRET,  // Provision device secret  // Hardcode or device profile. Each model is different.
 
-              .token    = NULL,                 // Access token for device             // Randomly generated. Each device is different.
-              .clientId = NULL,                 // Client id for device                // Randomly generated. Each device is different.
-              .username = NULL,                 // Username for device                 // Randomly generated. Each device is different.
-              .password = NULL,                 // Password for device                 // Randomly generated. Each device is different.
-              .hash     = NULL,                 // Public key X509 hash for device     // Public key X509.    Each device is different.
+              .token    = NULL,                 		// Access token for device             // Randomly generated. Each device is different.
+              .clientId = NULL,                 		// Client id for device                // Randomly generated. Each device is different.
+              .username = NULL,                 		// Username for device                 // Randomly generated. Each device is different.
+              .password = NULL,                 		// Password for device                 // Randomly generated. Each device is different.
+              .hash     = NULL,                 		// Public key X509 hash for device     // Public key X509.    Each device is different.
             };
 
 static tbc_transport_verification_config_t _verification = /*!< Security verification of the broker/server */

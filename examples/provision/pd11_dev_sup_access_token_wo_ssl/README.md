@@ -21,7 +21,7 @@
 
 ## Introduction
 
-This example implements the fllowing functions:
+This example implements the following functions:
 
 * Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)
   * Use Case 1 - Allowing creating new devices with **device name**. [here](#use-case-1---allowing-creating-new-devices-with-device-name)
