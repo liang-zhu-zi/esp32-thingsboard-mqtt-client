@@ -7,11 +7,11 @@
 
 - [Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)](#device-provisioning---devices-supplies-access-token---plain-mqtt-without-ssl)
   - [Hardware Required](#hardware-required)
-  - [Use Case 1: Allowing creating new devices with **device name**](#use-case-1-allowing-creating-new-devices-with-device-name)
+  - [Use Case 1 - Allowing creating new devices with **device name**](#use-case-1---allowing-creating-new-devices-with-device-name)
     - [How to Use Example](#how-to-use-example)
     - [Example Output](#example-output)
     - [ThingsBoard CE/PE Data](#thingsboard-cepe-data)
-  - [Use Case 2: Checking pre-provisioned devices with **device name**](#use-case-2-checking-pre-provisioned-devices-with-device-name)
+  - [Use Case 2 - Checking pre-provisioned devices with **device name**](#use-case-2---checking-pre-provisioned-devices-with-device-name)
     - [How to Use Example](#how-to-use-example-1)
     - [Example Output](#example-output-1)
     - [ThingsBoard CE/PE Data](#thingsboard-cepe-data-1)
@@ -21,8 +21,8 @@
 This example implements the fllowing functions:
 
 *Device provisioning - Devices supplies Access Token - Plain MQTT (without SSL)
-  * Use Case 1: Allowing creating new devices with **device name**. [here](#use-case-1-allowing-creating-new-devices-with-device-name)
-  * Use Case 2: Checking pre-provisioned devices with **device name**. [here](#use-case-2-checking-pre-provisioned-devices-with-device-name)
+  * Use Case 1 - Allowing creating new devices with **device name**. [here](#use-case-1---allowing-creating-new-devices-with-device-name)
+  * Use Case 2 - Checking pre-provisioned devices with **device name**. [here](#use-case-2---checking-pre-provisioned-devices-with-device-name)
 * Publish telemetry: temprature, humidity
   * Publish: `{"temprature":25,"humidity":26}`
 
@@ -35,11 +35,13 @@ Refer [here](https://thingsboard.io/docs/user-guide/device-provisioning/).
 
 See [Development Boards](https://www.espressif.com/en/products/devkits) for more information about it.
 
-## Use Case 1: Allowing creating new devices with **device name**
+## Use Case 1 - Allowing creating new devices with **device name**
 
 ### How to Use Example
 
-1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - Allow to create new devices. See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning.md#add--modify-a-device-profile-for-device-provisioning---allow-to-create-new-devices)
+1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - Allow to create new devices.
+
+   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices.md)
 
 1. set-targe (optional)
 
@@ -94,13 +96,15 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 Reference [here](../../.docs/device-provisioning-results-that-allow-to-create-new-devices.md).
 
-## Use Case 2: Checking pre-provisioned devices with **device name**
+## Use Case 2 - Checking pre-provisioned devices with **device name**
 
 ### How to Use Example
 
-1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - Checking pre-provisioned devices. See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning.md#add--modify-a-device-profile-for-device-provisioning---check-for-pre-provisioned-devices)
+1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - Checking pre-provisioned devices. 
 
-2. set-targe (optional)
+   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning.md#add--modify-a-device-profile-for-device-provisioning---check-for-pre-provisioned-devices)
+
+1. set-targe (optional)
 
    Before project configuration and build, be sure to set the correct chip target using:
 
@@ -108,7 +112,7 @@ Reference [here](../../.docs/device-provisioning-results-that-allow-to-create-ne
    idf.py set-target <chip_name>
    ```
 
-3. menuconfig
+1. menuconfig
 
    Then project configuration:
 
@@ -134,7 +138,7 @@ Reference [here](../../.docs/device-provisioning-results-that-allow-to-create-ne
        (MyPassword) WiFi Password                  
    ```
 
-4. build, flash and monitor
+1. build, flash and monitor
 
    Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
