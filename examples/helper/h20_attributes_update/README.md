@@ -179,7 +179,7 @@ I (27978) ATTR_UPDATE_MAIN: Destroy tbcmh ...
 I (27978) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## ThingsBoard Data
+## ThingsBoard CE/PE Data
 
 * `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
 

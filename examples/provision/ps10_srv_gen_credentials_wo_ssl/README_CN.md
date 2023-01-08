@@ -11,16 +11,16 @@
     - [Use Case PSA11: server\_generate\_access\_token\_without\_ssl](#user-case-psa11-server_generate_access_token_without_ssl)
       - [How to Use Example](#how-to-use-example)
       - [Example Output](#example-output)
-      - [ThingsBoard Data](#thingsboard-data)
+      - [ThingsBoard CE/PE Data](#thingsboard-data)
   - [Checking pre-provisioned devices with **device name**](#checking-pre-provisioned-devices-with-device-name)
     - [Use Case PSC11：server\_generate\_access\_token\_without\_ssl](#user-case-psc11server_generate_access_token_without_ssl)
       - [How to Use Example](#how-to-use-example-1)
       - [Example Output](#example-output-1)
-      - [ThingsBoard Data](#thingsboard-data-1)
+      - [ThingsBoard CE/PE Data](#thingsboard-data-1)
     - [Use Case PSC23: server\_generate\_basic\_mqtt\_credential\_c\_u\_p\_without\_ssl](#user-case-psc23-server_generate_basic_mqtt_credential_c_u_p_without_ssl)
       - [How to Use Example](#how-to-use-example-2)
       - [Example Output](#example-output-2)
-      - [ThingsBoard Data](#thingsboard-data-2)
+      - [ThingsBoard CE/PE Data](#thingsboard-data-2)
   - [Troubleshooting](#troubleshooting)
 
 
@@ -341,7 +341,7 @@
    I (51055) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
    ```
 
-#### ThingsBoard Data
+#### ThingsBoard CE/PE Data
 
 1. Provisiong Result
 
@@ -557,7 +557,7 @@ I (51155) SRV_GEN_CREDENTIALS_WO_SSL: Destroy tbcmh ...
 I (51155) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-#### ThingsBoard Data
+#### ThingsBoard CE/PE Data
 
 1. Provisiong Result
 
@@ -772,7 +772,7 @@ I (51155) SRV_GEN_CREDENTIALS_WO_SSL: Destroy tbcmh ...
 I (51155) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-#### ThingsBoard Data
+#### ThingsBoard CE/PE Data
 
 1. Provisiong Result
 

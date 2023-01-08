@@ -242,7 +242,7 @@ I (28031) EXAM_ACCESS_TOKEN_W_SSL: Destroy tbcmh ...
 I (28031) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## ThingsBoard Data
+## ThingsBoard CE/PE Data
 
 * Check out the latest Telemetry data on ThingsBoard
 

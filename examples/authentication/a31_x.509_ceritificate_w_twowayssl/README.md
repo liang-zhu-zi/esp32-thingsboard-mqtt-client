@@ -271,7 +271,7 @@ I (29456) EXAM_X509_W_TWOWAYSSL: Destroy tbcmh ...
 I (29456) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## ThingsBoard Data
+## ThingsBoard CE/PE Data
 
 * `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 

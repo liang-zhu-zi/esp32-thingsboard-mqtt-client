@@ -186,7 +186,7 @@ I (28000) EXAM_ACCESS_TOKEN_WO_SSL: Destroy tbcmh ...
 I (28000) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
-## ThingsBoard Data
+## ThingsBoard CE/PE Data
 
 * `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 
