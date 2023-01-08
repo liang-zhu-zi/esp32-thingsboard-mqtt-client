@@ -218,7 +218,7 @@ I (53675) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 1. Device provisiong results.
 
-   Reference [here](../../.docs/device-provisioning-results-that-allow-to-create-new-devices.md).
+   Refer [here](../../.docs/device-provisioning-results-that-allow-to-create-new-devices.md).
 
 1. **Delete new provisioned device**. 
 
@@ -395,7 +395,7 @@ I (51165) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 1. Device provisiong results.
 
-   Reference [here](../../.docs/device-provisioning-results-using-pre-provisioned-devices.md).
+   Refer [here](../../.docs/device-provisioning-results-using-pre-provisioned-devices.md).
 
 1. **Delete new provisioned device**. 
 
