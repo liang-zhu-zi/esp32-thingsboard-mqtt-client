@@ -26,7 +26,7 @@
 
 #include "tbc_transport_credentials_memory.h"
 
-static const char *TAG = "DEVICE_PROVISION_MAIN";
+static const char *TAG = "DEV_SUP_BASIC_MQTT_CUP_W_ONEWAYSSL_MAIN";
 
 extern tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
                                             const tbc_provison_config_t *provision);
@@ -51,12 +51,6 @@ static const psk_hint_key_t psk_hint_key = {
 extern const uint8_t mqtt_thingsboard_server_cert_pem_start[] asm("_binary_mqtt_thingsboard_server_cert_pem_start");
 extern const uint8_t mqtt_thingsboard_server_cert_pem_end[] asm("_binary_mqtt_thingsboard_server_cert_pem_end");
 
-///////// verification //////////////////////////////////////////////////////////////
-#if CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK //"Skip any validation of server certificate CN field"
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   true
-#else
-    #define _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK   false
-#endif
 
 static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server, CoAP: server */
             {
@@ -79,23 +73,22 @@ static tbc_provison_config_t  _provision =
               .clientId = CONFIG_TBC_PROVISION_CLIENT_ID, // Client id for device                // Randomly generated. Each device is different.
               .username = CONFIG_TBC_PROVISION_USER_NAME, // Username for device                 // Randomly generated. Each device is different.
               .password = CONFIG_TBC_PROVISION_PASSWORD,  // Password for device                 // Randomly generated. Each device is different.
-              .hash     = NULL,                           // Public key X509 hash for device     // Public key X509.    Each device is different.
+              .hash     = NULL,                 		// Public key X509 hash for device     // Public key X509.    Each device is different.
             };
 
 static tbc_transport_verification_config_t _verification = /*!< Security verification of the broker/server */
             {       
-                 //bool      use_global_ca_store;               /*!< Use a global ca_store, look esp-tls documentation for details. */
+                 //bool      use_global_ca_store;               					/*!< Use a global ca_store, look esp-tls documentation for details. */
                  //esp_err_t (*crt_bundle_attach)(void *conf); 
-                                                                /*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
-                 .cert_pem = (const char *)mqtt_thingsboard_server_cert_pem_start,
-                                                                /*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
-                 .cert_len = 0,                                 /*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
+                                                                					/*!< Pointer to ESP x509 Certificate Bundle attach function for the usage of certificate bundles. */
+                 .cert_pem = (const char *)mqtt_thingsboard_server_cert_pem_start,	/*!< Pointer to certificate data in PEM or DER format for server verify (with SSL), default is NULL, not required to verify the server. PEM-format must have a terminating NULL-character. DER-format requires the length to be passed in cert_len. */
+                 .cert_len = 0,                                 					/*!< Length of the buffer pointed to by cert_pem. May be 0 for null-terminated pem */
                  //.psk_hint_key = &psk_hint_key,
                                                                 /*!< Pointer to PSK struct defined in esp_tls.h to enable PSK
                                                                   authentication (as alternative to certificate verification).
                                                                   PSK is enabled only if there are no other ways to
                                                                   verify broker.*/
-                 .skip_cert_common_name_check = _VERIFICATION_SKIP_CERT_COMMON_NAME_CHECK,
+                 .skip_cert_common_name_check = CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK,
                                                                 /*!< Skip any validation of server certificate CN field, this reduces the security of TLS and makes the mqtt client susceptible to MITM attacks  */
                  //const char **alpn_protos;                    /*!< NULL-terminated list of supported application protocols to be used for ALPN */
             };

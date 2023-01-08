@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Device provisioning - Devices supplies Basic MQTT Credentials- Plain MQTT (without SSL)
+# Device provisioning - Devices supplies Basic MQTT Credentials, Client ID, Username and Password- Plain MQTT (without SSL)
 
 * [English Version](./README.md)
 
@@ -22,7 +22,7 @@
 
 本示例实现了以下功能：
 
-* Device provisioning - Devices supplies Basic MQTT Credentials- Plain MQTT (without SSL)
+* Device provisioning - Devices supplies Basic MQTT Credentials, Client ID, Username and Password - Plain MQTT (without SSL)
   * Use Case 1 - Allowing creating new devices with **device name**. [here](#use-case-1---allowing-creating-new-devices-with-device-name)
   * Use Case 2 - Checking pre-provisioned devices with **device name**. [here](#use-case-2---checking-pre-provisioned-devices-with-device-name)
 * Publish telemetry: temprature, humidity
