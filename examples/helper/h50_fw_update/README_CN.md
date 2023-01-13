@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# F/W OTA Update - ThingsBoard MQTT Client 示例
+# 固件在线更新 F/W OTA Update - ThingsBoard MQTT Client 示例
 
 * [English Version](./README.md)
 
@@ -25,7 +25,7 @@
 
      Replace `{chunk_id}` with your chunk_id from `0`, then incremen.
 
-     Replace `chunk_size` with your chunk size, eg: `16384`
+     Replace `chunk_size` with your chunk size, eg: `8192`，`16384`
 
 * Subscirbe to and process F/W response of F/W chunk:
   * Topic: ``v2/fw/response/{request_id}/chunk/{chunk_id}``
@@ -69,9 +69,9 @@
    配置以下选项 Partition table, ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
 
    ```menuconfig
-    Serial flasher config  --->
-        Flash size (4 MB)  --->
-            (X) 4 MB 
+   Serial flasher config  --->
+       Flash size (4 MB)  --->
+           (X) 4 MB 
    Partition Table  --->
        Partition Table --->
            (X) Factory app, two OTA definitions 
@@ -101,9 +101,7 @@
    **注意**: `fw_update` is your F/W title, `0.1.0.2` is your F/W version.
 
    运行 `idf.py build` 编译本项目, 复制 `build\fw_update.bin` 到你保存文件的位置.
-   修改 `0.1.0.2` 为 `0.1.0.3`, 然后重做一次。
-   修改 `0.1.0.3` 为 `0.1.0.4`, 然后重做一次。
-   现在你有 3 个版本的 `fw_update`, 分别是 `0.1.0.2`, `0.1.0.3` 与 `0.1.0.4` 。
+   现在你有 1 个版本的 `fw_update`：`0.1.0.2`。
 
 1. 编译与运行 build, flash and monitor
 
@@ -123,29 +121,19 @@
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
-1. 在 Things Board 执行 `OTA updates`
+1. 在 Things Board 执行 `OTA updates`。参考 [OTA updates](https://thingsboard.io/docs/user-guide/ota-updates/)
 
-   参考 [OTA updates](https://thingsboard.io/docs/user-guide/ota-updates/)
-
-   * 上传 F/W 文件: `OTA updates` --> `+` 添加包 --> 按下图填写 `0.1.0.2` 版本 F/W 信息 (**注意**: 检验算法只支持 `CRC32`) --> `Add`.
+   * 上传 F/W 文件: Login in ThingsBoard CE/PE` --> `OTA updates` --> `+` 添加包 --> 按下图填写 `0.1.0.2` 版本 F/W 信息 (**注意**: 检验算法只支持 `CRC32`) --> `Add`.
 
       ![image](./fw_ota_1_upload.png)
 
       ![image](./fw_ota_2_uploaded.png)
 
-   * 启动你的 ESP32 装置.
-
-   * OTA updates: `Device profiles` --> Click your ESP32 device's profile --> Modify (Toggle Edit Mode) ---> Assigned firmware `0.1.0.2` --> OK (Apply changes).
+   * 分配固件 F/W: `Login in ThingsBoard CE/PE` --> `Device profiles` --> Click your ESP32 device's profile --> Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
 
       ![image](./fw_ota_3_update.png)
-  
-   * OTA updates: `Dashboards` --> Click `Firmware` --> `Open dashboard` ---> OTA F/W status about your ESP32 device --> History firmware update --> Your device firmware history.
 
-      ![image](./fw_ota_4_updated.png)
-
-      ![image](./fw_ota_5_updated_history.png)
-
-   * 重复本步上述动作，升级到 `0.1.0.3` 和/或 `0.1.0.4`.
+1. 启动你的 ESP32 装置.
 
 ## 日志输出
 
@@ -681,9 +669,16 @@ I (335261) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (335261) MQTT_CLIENT: Client asked to stop, but was not started
 I (335361) OTA_UPDATE_EXAMPLE: Destroy tbcmh ...
 I (335361) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ...
 ```
+
+## ThingsBoard Data
+
+* `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
+
+   ![image](./fw_ota_4_updated.png)
+
+   ![image](./fw_ota_5_updated_history.png)
 
 ## 故障排除
 

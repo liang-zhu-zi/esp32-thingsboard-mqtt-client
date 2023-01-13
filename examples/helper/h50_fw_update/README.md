@@ -25,7 +25,7 @@ This example implements F/W OTA update related functions:
 
      Replace `{chunk_id}` with your chunk_id from `0`, then incremen.
 
-     Replace `chunk_size` with your chunk size, eg: `16384`
+     Replace `chunk_size` with your chunk size, eg: `8192`，`16384`
 
 * Subscirbe to and process F/W response of F/W chunk:
   * Topic: ``v2/fw/response/{request_id}/chunk/{chunk_id}``
@@ -69,9 +69,9 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    Configuration: Partition table, ThingsBoard MQTT URI, access token, Wi-Fi SSID, password:
 
    ```menuconfig
-    Serial flasher config  --->
-        Flash size (4 MB)  --->
-            (X) 4 MB 
+   Serial flasher config  --->
+       Flash size (4 MB)  --->
+           (X) 4 MB 
    Partition Table  --->
        Partition Table --->
            (X) Factory app, two OTA definitions 
@@ -98,12 +98,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    project(fw_update)
    ```
 
-   **Note（（: `fw_update` is your F/W title, `0.1.0.2` is your F/W version.
+   **Note:** `fw_update` is your F/W title, `0.1.0.2` is your F/W version.
 
    Run `idf.py build` to build the project, backup `build\fw_update.bin` to your directory.
-   Modify `0.1.0.2` to `0.1.0.3` and redo it once.
-   Modify `0.1.0.3` to `0.1.0.4` and redo it once.
-   Now you have 3 versions of `fw_update`, `0.1.0.2`, `0.1.0.3` and `0.1.0.4`.
+
+   Now you have a versions of `fw_update`: `0.1.0.2`.
 
 1. build, flash and monitor
 
@@ -123,34 +122,23 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-1. `OTA updates` in ThingsBoard
+1. `OTA updates` in ThingsBoard. Refer to [OTA updates](https://thingsboard.io/docs/user-guide/ota-updates/).
 
-   Referece [OTA updates](https://thingsboard.io/docs/user-guide/ota-updates/)
-
-   * Upload a F/W binary file: `OTA updates` --> `+` Add package --> Fill in the F/W information of `0.1.0.2` version below (**Note**: Checksum algorithm MUST be `CRC32`) --> `Add`.
+   * Add package: upload a F/W binary file: `Login in ThingsBoard CE/PE` --> `OTA updates` --> `+` Add package --> Fill in the F/W information of `0.1.0.2` version below (**Note**: Checksum algorithm MUST be `CRC32`) --> `Add`.
 
       ![image](./fw_ota_1_upload.png)
 
       ![image](./fw_ota_2_uploaded.png)
 
-   * Start your ESP32 device.
-
-   * OTA updates: `Device profiles` --> Click your ESP32 device's profile --> Modify (Toggle Edit Mode) ---> Assigned firmware `0.1.0.2` --> OK (Apply changes).
+   * Assign firmware: `Login in ThingsBoard CE/PE` --> `Device profiles` --> Click on *your ESP32 device's profile* --> `Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
 
       ![image](./fw_ota_3_update.png)
-  
-   * OTA updates: `Dashboards` --> Click `Firmware` --> `Open dashboard` ---> OTA F/W status about your ESP32 device --> History firmware update --> Your device firmware history.
 
-      ![image](./fw_ota_4_updated.png)
-
-      ![image](./fw_ota_5_updated_history.png)
-
-   * Repeat the above steps to update to `0.1.0.3` and `0.1.0.4`.
+1. Start your ESP32 device.
 
 ## Example Output
 
 ```none
-...
 ...
 0x40081194: call_start_cpu1 at C:/Espressif/frameworks/esp-idf-v4.4.1/components/esp_system/port/cpu_start.c:160
 
@@ -681,9 +669,16 @@ I (335261) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (335261) MQTT_CLIENT: Client asked to stop, but was not started
 I (335361) OTA_UPDATE_EXAMPLE: Destroy tbcmh ...
 I (335361) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ...
 ```
+
+## ThingsBoard Data
+
+* `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
+
+   ![image](./fw_ota_4_updated.png)
+
+   ![image](./fw_ota_5_updated_history.png)
 
 ## Troubleshooting
 
