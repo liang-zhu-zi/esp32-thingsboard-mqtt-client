@@ -24,29 +24,29 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Create a dashboard for claiming device in ThingsBoard
 
-   Referece [here](https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-widget).
+   Refer [here](https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-widget).
 
    * Create a dashboard: `Login in ThingsBoard CE/PE` --> `Dashboards` --> `+` Add Dashboard --> `Create new dashboard` --> Title: `Device Claiming` --> `Add`.
 
-   * Add Device Claiming Widget: `Dashboards` --> Click `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
+   * Add Device Claiming Widget: `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
 
       ![image](./1_device_claiming_dashboard.png)
 
 1. Assign this dashboard to `Customer A`:
 
-    * `Dashboards` --> Click icon: `Managment assigned customers` --> Select `Customer A` --> `Update`.
+   * `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click `Managment assigned customers` icon on `Device Claiming` --> Select `Customer A` --> `Update`.
 
       ![image](./2_assign_dashboard_to_customer.png)
 
-1. Get a device access token
-
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
-
 1. Unassign a device from cusotmer
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click `Unassign from cusotmer` icon in my device line.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click `Unassign from cusotmer` icon in my device line.
 
     ![image](./3_unassign_device_from_cusotmer.png)
+
+1. Get a device access token
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. set-targe (optional)
 
@@ -86,7 +86,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Claiming device as `Customer A`:
 
-    * `Login in ThingsBoard CE/PE` as  `Customer A`
+    * `Login in ThingsBoard CE/PE` as `Customer A`
 
     * `Dashboards` --> Click `Device Claiming` --> Input `device name` and `secret key` --> `Claim device`.
 

@@ -26,29 +26,27 @@
 
    参考 [这里](https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-widget).
 
-   * 创建一个 dashboard: `Dashboards` --> `+` Add Dashboard --> `Create new dashboard` --> Title: `Device Claiming` --> `Add`.
+   * 创建一个 dashboard: `Login in ThingsBoard CE/PE` --> `Dashboards` --> `+` Add Dashboard --> `Create new dashboard` --> Title: `Device Claiming` --> `Add`.
 
-   * 添加认领设备控件: `Dashboards` --> Click `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
+   * 添加认领设备控件: `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
 
       ![image](./1_device_claiming_dashboard.png)
 
 1. Assign this dashboard to `Customer A`:
 
-    * `Dashboards` --> Click icon: `Managment assigned customers` --> Select `Customer A` --> `Update`.
+   * `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click `Managment assigned customers` icon on `Device Claiming` --> Select `Customer A` --> `Update`.
 
       ![image](./2_assign_dashboard_to_customer.png)
 
+1. 取消分配给客户的设备
+
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> 在我的设备行单击 `Unassign from cusotmer` 图标.
+
+    ![image](./3_unassign_device_from_cusotmer.png)
 
 1. 获取 Access token
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
-
-1. 取消分配给客户的设备
-
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 在我的设备行单击 `Unassign from cusotmer` 图标.
-
-    ![image](./3_unassign_device_from_cusotmer.png)
-
 
 1. 设定 Target (optional)
 
