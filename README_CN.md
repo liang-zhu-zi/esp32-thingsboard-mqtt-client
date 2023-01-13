@@ -10,7 +10,7 @@
 
 一个使用 MQTT 协议连接到 ThingsBoard 物联网平台的 ESP32 库。它是对 ESP-MQTT 组件的简单包裹，可以在 ESP-IDF 和 ESP-ADF 下使用。
 
-当前客户端版本基于 ESP-IDF-v4.4.1，兼容 ThingsBoard 3.4.0 及更新版本。
+当前客户端版本基于 ESP-IDF-v4.4.x，兼容 ThingsBoard 3.4.x 及更新版本。
 
 ## 支持的 ThingsBoard MQTT API 特性
 
@@ -223,4 +223,4 @@
 
 ## 许可
 
-此代码在 Apache-2.0 许可证下发布。
+此代码在 [Apache-2.0](./LICENSE) 许可证下发布。

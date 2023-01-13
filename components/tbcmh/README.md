@@ -208,7 +208,7 @@
 
 This library for ESP32 to connect to ThingsBoard IoT platform over MQTT protocol, thin wrapper on ESP-MQTT component, which can be used under ESP-IDF and ESP-ADF.
 
-Current version is based on ESP-IDF-v4.4.1, and is compatible with ThingsBoard IoT platform starting from version 3.4.0.
+Current version is based on ESP-IDF-v4.4.x, and is compatible with ThingsBoard IoT platform starting from version 3.4.x.
 
 ### Supported ThingsBoard MQTT API Features
 

@@ -11,7 +11,7 @@
 
 它被封装成一个ESP-IDF组件，既可以在ESP-IDF和ESP-ADF下使用，也可以很简单移植到Arduino-ESP32。
 
-当前客户端版本基于 ESP-IDF-v4.4.1，兼容 ThingsBoard 3.4.0 及更新版本。
+当前客户端版本基于 ESP-IDF-v4.4.x，兼容 ThingsBoard 3.4.x 及更新版本。
 
 .. __: https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client
 
