@@ -5,8 +5,6 @@
 
 * [English Version](./README.md)
 
-本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 本示例实现了 Server-side RPC 相关功能：
 
 * 订阅并接收 Server-side RPC:
@@ -24,7 +22,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 1. 在 ThingsBoard 上使用 Rule Engine 周期发送 Server-side RPC
 

@@ -5,8 +5,6 @@
 
 * [English Version](./README.md)
 
-本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 本示例实现了以下功能：
 
 * 基于 X.509 证书的认证 - 相互认证
@@ -45,7 +43,7 @@
 
 1. Provision Client Public Key as Device Credentials
    
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Manage credentials`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> `Manage credentials`.
 
    Select X.509 Certificate device credentials, insert the contents of cert.pem file and click save. 
 

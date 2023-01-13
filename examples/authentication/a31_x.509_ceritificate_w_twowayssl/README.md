@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements some functions:
 
 * X.509 Certificate Based Authentication - two-way SSL
@@ -45,7 +43,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Provision Client Public Key as Device Credentials
    
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Manage credentials`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> `Manage credentials`.
 
    Select X.509 Certificate device credentials, insert the contents of cert.pem file and click save. 
 
@@ -90,7 +88,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Check out the latest Telemetry data on ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
 
    ![image](./x.509_ceritificate_w_twowayssl_2.png)
 
@@ -218,7 +216,7 @@ I (29456) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

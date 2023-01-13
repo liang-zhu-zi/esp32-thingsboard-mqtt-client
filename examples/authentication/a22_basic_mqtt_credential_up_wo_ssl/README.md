@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements some functions:
 
 * Basic MQTT authentication - Authentication based on Username and Password (without SSL)
@@ -25,7 +23,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
    ![image](./basic_mqtt_credential_up_wo_ssl_1.png)
 
@@ -69,7 +67,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 5. Check out the latest Telemetry data on ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
 
    ![image](./basic_mqtt_credential_up_wo_ssl_2.png)
 
@@ -191,7 +189,7 @@ I (28001) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

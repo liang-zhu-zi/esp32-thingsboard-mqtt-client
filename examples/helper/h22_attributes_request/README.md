@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements shared attributes related functions:
 
 * Request attribute values from the server: client-side attribute - setpoint, shared attribute - sntp_server
@@ -26,13 +24,13 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. add or update a shared attribute in ThingsBoard
 
    * Shared attributes `sntp_server`:
-     * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
-     * Or update: `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "uk.pool.ntp.org" --> `Update`.
+     * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
+     * Or update: `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "uk.pool.ntp.org" --> `Update`.
 
 1. set-targe (optional)
 

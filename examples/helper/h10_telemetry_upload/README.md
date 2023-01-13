@@ -1,11 +1,9 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# Send Telemetry and Client-side Attributes - ThingsBoard MQTT Client Example
+# Upload Telemetry - ThingsBoard MQTT Client Example
 
 * [中文版](./README_CN.md)
-
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
 This example implements telemetry related functions:
 
@@ -22,7 +20,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 2. set-targe (optional)
 
@@ -59,10 +57,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    (To exit the serial monitor, type ``Ctrl-]``.)
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
-
-5. Check out the latest Telemetry data on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data.
 
 ## Example Output
 
@@ -181,10 +175,12 @@ I (27998) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
+* Check out the latest Telemetry data on ThingsBoard
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+  * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest tememetry` --> Check out the latest Telemetry data. You can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 
 For any technical queries, please open an [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues) on GitHub. We will get back to you soon.
+
+

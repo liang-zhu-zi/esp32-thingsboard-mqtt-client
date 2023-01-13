@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements some functions:
 
 * Access Token based authentication - MQTTS (MQTT over SSL)
@@ -84,7 +82,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token from ThingsBoard CE/PE
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
    ![image](./access_token_w_onewayssl_1.png)
 
@@ -246,7 +244,7 @@ I (28031) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 * Check out the latest Telemetry data on ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest Telemetry data. You can find `humidity` and `temprature`. Their values change over time.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data. You can find `humidity` and `temprature`. Their values change over time.
 
    ![image](./access_token_w_onewayssl_2.png)
 

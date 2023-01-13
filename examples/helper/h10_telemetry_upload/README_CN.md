@@ -1,11 +1,9 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# 发送 Telemetry 和 Client-side Attributes - ThingsBoard MQTT Client Example
+# 上传 Telemetry - ThingsBoard MQTT Client Example
 
 * [English Version](./README.md)
-
-本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
 
 本示例实现了 telemetry 相关功能：
 
@@ -22,7 +20,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 2. 设定 Target (optional)
 
@@ -59,10 +57,6 @@
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
-
-5. 在 ThingsBoard 上查看最新的 telemetry data
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data.
 
 ## 日志输出
 
@@ -181,10 +175,11 @@ I (27998) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `model` 和 `setpoint` 两个 Client-side attributes.
+* ThingsBoard 上查看最新的 telemetry data
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data. 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
 ## 故障排除
 
 如有任何技术问题，请打开 [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues)。 我们会尽快回复您。
+

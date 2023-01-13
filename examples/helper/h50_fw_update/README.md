@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements F/W OTA update related functions:
 
 * Send attributes request of F/W info:
@@ -50,7 +48,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. set-targe (optional)
 

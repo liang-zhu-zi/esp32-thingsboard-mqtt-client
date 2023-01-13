@@ -5,8 +5,6 @@
 
 * [English Version](./README.md)
 
-本示例基于 [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 本示例实现了以下功能：
 
 * 基于 Access Token 的认证 - Plain MQTT (无 SSL)
@@ -25,7 +23,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
    ![image](./access_token_wo_ssl_1.png)
 

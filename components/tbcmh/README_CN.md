@@ -1,6 +1,6 @@
 # ESP32 ThingsBoard Client MQTT Helper library 设计文档
 
-* [English](./README.md)
+* [English Version](./README.md)
 
 <https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client>
 

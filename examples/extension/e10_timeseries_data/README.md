@@ -5,8 +5,6 @@
 
 * [中文版](./README_CN.md)
 
-This example is based on [`$ESP-IDF\examples\protocols\mqtt\tcp`](https://github.com/espressif/esp-idf/tree/master/examples/protocols/mqtt/tcp).
-
 This example implements time-series data related functions:
 
 * Publish time-series data: temprature, humidity
@@ -22,7 +20,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Details` --> `Copy Access Token`.
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 2. set-targe (optional)
 
@@ -62,7 +60,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 5. Check out the latest time-series data data on ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> click my device --> `Latest telemetry` --> Check out the latest time-series data.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest time-series data.
 
 ## Example Output
 
@@ -187,9 +185,9 @@ I (28029) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
+* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click my device --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

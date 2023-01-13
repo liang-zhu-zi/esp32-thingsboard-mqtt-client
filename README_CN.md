@@ -6,7 +6,7 @@
 
 # ESP32 ThingsBoard MQTT Client library
 
-* [English](README.md)
+* [English Version](README.md)
 
 一个使用 MQTT 协议连接到 ThingsBoard 物联网平台的 ESP32 库。它是对 ESP-MQTT 组件的简单包裹，可以在 ESP-IDF 和 ESP-ADF 下使用。
 

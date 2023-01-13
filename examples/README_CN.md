@@ -1,6 +1,6 @@
 # 示例
 
-* [English](README.md)
+* [English Version](README.md)
 
 1. 没有使用本库的 API -- (仅供测试组件编译)
 
