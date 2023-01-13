@@ -7,9 +7,9 @@
 
 This example implements shared attributes related functions:
 
-* Request attribute values from the server: client-side attribute - setpoint, shared attribute - sntp_server
-* Subscribe to and receive shared attribute updates from the server: sntp_server
-* Publish client-side attributes: setpoint
+* Request attribute values from the server:
+  * client-side attribute - setpoint
+  * shared attribute - sntp_server
   
 ## Hardware Required
 
@@ -20,7 +20,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-**Note: Please execute example [20_client_attribute](../20_client_attribute) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.**
+**Note: Please execute example [h20_attributes_update/](../h20_attributes_update/) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.**
 
 1. Get a device access token
 

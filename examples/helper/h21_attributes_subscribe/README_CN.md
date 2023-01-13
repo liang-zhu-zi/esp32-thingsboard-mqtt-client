@@ -165,7 +165,6 @@ I (28048) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (28048) MQTT_CLIENT: Client asked to stop, but was not started
 I (28148) ATTR_SUBSCRIBE_MAIN: Destroy tbcmh ...
 I (28148) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ```
 
 ## 故障排除

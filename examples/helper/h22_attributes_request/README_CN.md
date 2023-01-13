@@ -7,9 +7,9 @@
 
 本示例实现了 attributes 相关功能：
 
-* 从服务器请求属性值: client-side attribute - setpoint, shared attribute - sntp_server
-* 从服务器订阅并接收 shared attribute 更新: sntp_server
-* 发布 client-side attributes: setpoint
+* 从服务器请求属性值:
+  * client-side attribute - setpoint
+  * shared attribute - sntp_server
 
 ## 硬件需求
 
@@ -20,7 +20,7 @@
 
 ## 如何使用例子
 
-**注意: 请先执行示例 [20_client_attribute](../20_client_attribute), 再执行本示例. 否则当从服务器请求属性时，无法取得属性`setpoint`.**
+**注意: 请先执行示例 [h20_attributes_update/](../h20_attributes_update/), 再执行本示例. 否则当从服务器请求属性时，无法取得属性`setpoint`.**
 
 1. 获取 Access token
 
@@ -67,12 +67,6 @@
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
-
-1. 在 ThingsBoard 上添加并修改 shared attribute
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
 
 ## 日志输出
 
@@ -177,7 +171,6 @@ I (28078) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (28078) MQTT_CLIENT: Client asked to stop, but was not started
 I (28178) ATTR_REQUEST_EXAMPLE: Destroy tbcmh ...
 I (28178) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ```
 
 ## 故障排除
