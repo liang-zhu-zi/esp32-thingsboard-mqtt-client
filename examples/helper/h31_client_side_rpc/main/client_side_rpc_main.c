@@ -30,7 +30,7 @@ static const char *TAG = "CLIENT_RPC_EXAMPLE";
 static void _set_timezone(void)
 {
     // set timezone to China Standard Time
-    setenv("TZ", "CST-8", 1);
+    setenv("TZ", "CST-8", 1); // TODO: Replace it with your timezone! https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/system/system_time.html?highlight=timezone#timezones
     tzset();
 }
 /*static*/ void _set_timestamp(long timestamp) 

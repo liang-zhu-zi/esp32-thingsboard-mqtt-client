@@ -12,14 +12,14 @@
     * Publish: `{"method":"rpcPublishLocalTime","params":{"localTime":1664603252}}`
   * rpcGetCurrentTime (Two-way RPC):
     * Publish: `{"method":"rpcGetCurrentTime","params":{}}`
-    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}
+    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}`
   * rpcLoopback (Two-way RPC):
     * Publish: `{"method":"rpcLoopback","params":{"id":9002}}`
     * Receive: `{"method":"rpcLoopback","results":{"id":9002}}`
   * rpcNotImplementedTwoway (Two-way RPC, but NO response from the server):
     * Pubish: `{"method":"rpcNotImplementedTwoway","params":{"id":4002}}`
 
-***注意: 请使用 `params` (请求中) 与 `results` （响应中）, 否则会出现异常 !***
+***注意: 请在请求(request)中使用 `params`，在响应(response)中使用 `results`, 否则会出现异常!***
 
 ## 硬件需求
 
@@ -30,16 +30,13 @@
 
 ## 如何使用例子
 
+1. 在 ThingsBoard 上使用 Rule Engine 接收 Client-side RPC 并发送响应。参考 [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/) 和 and [Processing the client-side RPC by the platform](https://thingsboard.io/docs/user-guide/rpc/#processing-the-client-side-rpc-by-the-platform)。
 
-1. 获取 Access token
+   * 导入一个规则链 Rule Chain: 
+         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [规则链 ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`。
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
-
-1. 在 ThingsBoard 上使用 Rule Engine 接收 Client-side RPC 并发送响应
-
-   参考  [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/)
-
-   * 创建一个新的 Rule Chain: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain`, 或导入 Rule Chain [这里](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json)
+   * 创建一个新的 Rule Chain: 
+         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> 输入名称: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
 
        ![image](./ESP-IDF-Thingsboard-MQTT_Client-side_RPC_Test_Rule_Chain.png)
 
@@ -117,7 +114,9 @@
            };
            ```
 
-   * 修改 Root Rule Chain:
+   * 修改 `Root Rule Chain`:
+
+      `Login in ThingsBoard CE/PE` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标)。参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine)。
 
       ![image](./Root_Rule_Chain.png)
 
@@ -147,7 +146,11 @@
         * Type: Flow - rule chain
         * Rule Chain: ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain
 
-1. 设定 Target (optional)
+2. 获取 Access token
+
+   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+
+3. 设定 Target (optional)
 
    在项目 configuration 与 build 之前, 请务必使用设置正确的芯片目标:
 
@@ -155,7 +158,7 @@
    idf.py set-target <chip_name>
    ```
 
-1. 编译配置 menuconfig
+4. 编译配置 menuconfig
 
    项目 configuration:
 
@@ -175,21 +178,13 @@
        (MyPassword) WiFi Password                  
    ```
 
-1. 编译与运行 build, flash and monitor
+5. 编译与运行 build, flash and monitor
 
    运行 `idf.py -p PORT flash monitor` 来编译、烧录、监控项目.
 
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
-
-1. 在 ThingsBoard 上添加并修改 shared attribute
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
-
-1. 测试完成之后，请把 Root Rule Chain 恢复到原来的状态!
 
 ## 日志输出
 
@@ -342,6 +337,11 @@ I (52759) CLIENT_RPC_EXAMPLE: Client-side RPC timeout: method=rpcNotImplementedT
 I (52759) CLIENT_RPC_EXAMPLE: Destroy tbcmh ...
 I (52759) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
+
+## ThingsBoard CE/PE
+
+**注意:** 测试完成之后，请把 `Root Rule Chain` 恢复到原来的状态!
+
 
 ## 故障排除
 

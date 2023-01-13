@@ -12,14 +12,14 @@ This example implements server-side RPC related functions:
     * Publish: `{"method":"rpcPublishLocalTime","params":{"localTime":1664603252}}`
   * rpcGetCurrentTime (Two-way RPC):
     * Publish: `{"method":"rpcGetCurrentTime","params":{}}`
-    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}
+    * Receive: `{"method":"rpcGetCurrentTime","results":{"currentTime":1664603253888}}`
   * rpcLoopback (Two-way RPC):
     * Publish: `{"method":"rpcLoopback","params":{"id":9002}}`
     * Receive: `{"method":"rpcLoopback","results":{"id":9002}}`
   * rpcNotImplementedTwoway (Two-way RPC, but NO response from the server):
     * Pubish: `{"method":"rpcNotImplementedTwoway","params":{"id":4002}}`
 
-***Note: Please use `params` in a request and `results` in a response, otherwise you will get an exception !***
+***Note: Please use `params` in a request and `results` in a response, otherwise you will get an exception!***
 
 ## Hardware Required
 
@@ -30,15 +30,13 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-1. Get a device access token
+1. `RPC Reply with the Rule Engine` in ThingsBoard. Refer to [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/) and [Processing the client-side RPC by the platform](https://thingsboard.io/docs/user-guide/rpc/#processing-the-client-side-rpc-by-the-platform).
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   * Import a Rule Chain:
+         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`. 
 
-1. `RPC Reply with the Rule Engine` in ThingsBoard
-
-   Referece [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/)
-
-   * Create a new Rule Chain - `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain`, or import a Rule Chain from [here](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json)
+   * Or create a new Rule Chain：
+         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> Input name: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
 
        ![image](./ESP-IDF-Thingsboard-MQTT_Client-side_RPC_Test_Rule_Chain.png)
 
@@ -116,7 +114,9 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
            };
            ```
 
-   * Modify Root Rule Chain:
+   * Modify `Root Rule Chain`:
+
+      `Login in ThingsBoard CE/PE` --> `Rule chanins` --> Click on `Root Rule Chain` --> the modified content is as follows --> `Applys changes` (red icon). Refer to [Using the Rule Engine](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
       ![image](./Root_Rule_Chain.png)
 
@@ -146,7 +146,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
         * Type: Flow - rule chain
         * Rule Chain: ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain
 
-1. set-targe (optional)
+2. Get a device access token
+
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+
+3. set-targe (optional)
 
    Before project configuration and build, be sure to set the correct chip target using:
 
@@ -154,7 +158,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    idf.py set-target <chip_name>
    ```
 
-1. menuconfig
+4. menuconfig
 
    Then project configuration:
 
@@ -174,7 +178,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
        (MyPassword) WiFi Password                  
    ```
 
-1. build, flash and monitor
+5. build, flash and monitor
 
    Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
@@ -182,11 +186,10 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-1. Restore Root Rule Chain after the test is complete!
-
 ## Example Output
 
 ```none
+...
 I (451) cpu_start: Starting app cpu, entry point is 0x40081188
 0x40081188: call_start_cpu1 at C:/Espressif/frameworks/esp-idf-v4.4.1/components/esp_system/port/cpu_start.c:160
 
@@ -334,6 +337,10 @@ I (52759) CLIENT_RPC_EXAMPLE: Client-side RPC timeout: method=rpcNotImplementedT
 I (52759) CLIENT_RPC_EXAMPLE: Destroy tbcmh ...
 I (52759) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
+
+## ThingsBoard CE/PE
+
+**Note:** Restore `Root Rule Chain` after this test is complete!
 
 ## Troubleshooting
 

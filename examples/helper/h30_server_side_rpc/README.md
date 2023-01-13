@@ -20,10 +20,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-1. Get a device access token
-
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
-
 1. Modify `Root Rule Chain` in ThingsBoard, to send `server-side RPC` using `the Rule Engine`
 
    `Login in ThingsBoard CE/PE` --> `Rule chanins` --> Click on `Root Rule Chain` --> the modified content is as follows --> `Applys changes` (red icon). Refer to [here](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
@@ -70,6 +66,10 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
       return { msg: msg, metadata: metadata, msgType: msgType };
       ```
+
+1. Get a device access token
+
+   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. set-targe (optional)
 
