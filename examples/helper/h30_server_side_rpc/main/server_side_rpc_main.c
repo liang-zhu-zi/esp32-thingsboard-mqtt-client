@@ -91,14 +91,8 @@ void tb_on_disconnected(tbcmh_handle_t client, void *context)
 static void mqtt_app_start(void)
 {
 	tbc_err_t err;
-#if 0
-    const esp_mqtt_client_config_t config = {
-        .uri = CONFIG_BROKER_URL
-    };
-#else
     const char *access_token = CONFIG_ACCESS_TOKEN;
     const char *uri = CONFIG_BROKER_URL;
-#endif
 
 #if CONFIG_BROKER_URL_FROM_STDIN
     char line_uri[128];
@@ -150,12 +144,7 @@ static void mqtt_app_start(void)
     }
 #endif /* CONFIG_ACCESS_TOKEN_FROM_STDIN */
 
-#if 0
-    esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
-    /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
-    esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
-    esp_mqtt_client_start(client);
-#else
+
     ESP_LOGI(TAG, "Init tbcmh ...");
     tbcmh_handle_t client = tbcmh_init();
     if (!client) {
@@ -212,7 +201,6 @@ static void mqtt_app_start(void)
 exit_destroy:
     ESP_LOGI(TAG, "Destroy tbcmh ...");
     tbcmh_destroy(client);
-#endif
 }
 
 void app_main(void)

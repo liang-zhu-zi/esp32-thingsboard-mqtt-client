@@ -20,7 +20,7 @@
 
 ## 如何使用例子
 
-**注意:** 请先执行示例 [h20_attributes_update/](../h20_attributes_update/), 再执行本示例. 否则当从服务器请求属性时，无法取得属性`setpoint`.
+**注意:** 请先执行示例 [h20_attributes_update](../h20_attributes_update/), 再执行本示例. 否则当从服务器请求属性时，无法取得属性`setpoint`.
 
 1. 获取 Access token
 

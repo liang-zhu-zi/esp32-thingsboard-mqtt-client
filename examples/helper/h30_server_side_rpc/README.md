@@ -8,8 +8,8 @@
 This example implements server-side RPC related functions:
 
 * Subscribe to and receive server-side RPC from the server:
-  * rpcChangeSetpoint
-  * rpcQuerySetpoint
+  * rpcChangeSetpoint - One-way RPC
+  * rpcQuerySetpoint - Two-way RPC
 
 ## Hardware Required
 
@@ -24,54 +24,52 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
-1. `Sending server-side RPC` `Using the Rule Engine` in ThingsBoard
+1. Modify `Root Rule Chain` in ThingsBoard, to send `server-side RPC` using `the Rule Engine`
 
-   Referece [here](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
+   `Login in ThingsBoard CE/PE` --> `Rule chanins` --> Click on `Root Rule Chain` --> the modified content is as follows --> `Applys changes` (red icon). Refer to [here](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
-   * Modify Root Rule Chain:
+   ![image](./Root-Rule-Chain_4_Server-RPC.png)
 
-      ![image](./Root-Rule-Chain_4_Server-RPC.png)
+   * Generator rpcChangeSetpoint:
+      * Name: rpcChangeSetpoint
+      * Type: Action - generator
+      * Period in seconds: 15
+      * Originator Type: Device
+      * Device: *My Device*
+      * Generate:
 
-     * Generator rpcChangeSetpoint:
-       * Name: rpcChangeSetpoint
-       * Type: Action - generator
-       * Period in seconds: 15
-       * Originator Type: Device
-       * Device: *My Device*
-       * Generate:
+      ```json
+      var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
 
-         ```json
-         var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
+      var metadata = {
+         expirationTime: new Date().getTime() + 60000,
+         oneway: true,
+         persistent: false
+      };
+      var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-         var metadata = {
+      return { msg: msg, metadata: metadata, msgType: msgType };
+      ```
+
+   * Generator rpcQuerySetpoint:
+      * Name: rpcQuerySetpoint
+      * Type: Action - generator
+      * Period in seconds: 15
+      * Originator Type: Device
+      * Device: *My Device*
+      * Generate:
+
+      ```json
+      var msg = { method: "rpcQuerySetpoint", params: { } };
+      var metadata = { 
             expirationTime: new Date().getTime() + 60000,
-            oneway: true,
+            oneway: false,
             persistent: false
-         };
-         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+      };
+      var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-         return { msg: msg, metadata: metadata, msgType: msgType };
-         ```
-
-     * Generator rpcQuerySetpoint:
-       * Name: rpcQuerySetpoint
-       * Type: Action - generator
-       * Period in seconds: 15
-       * Originator Type: Device
-       * Device: *My Device*
-       * Generate:
-
-         ```json
-         var msg = { method: "rpcQuerySetpoint", params: { } };
-         var metadata = { 
-             expirationTime: new Date().getTime() + 60000,
-             oneway: false,
-             persistent: false
-         };
-         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
-
-         return { msg: msg, metadata: metadata, msgType: msgType };
-         ```
+      return { msg: msg, metadata: metadata, msgType: msgType };
+      ```
 
 1. set-targe (optional)
 
@@ -108,8 +106,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    (To exit the serial monitor, type ``Ctrl-]``.)
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
-
-1. Restore Root Rule Chain after the test is complete!
 
 ## Example Output
 
@@ -227,6 +223,11 @@ I (28098) SERVER_RPC_EXAMPLE: Destroy tbcmh ...
 I (28098) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
 
+## ThingsBoard CE/PE
+
+**Note:** Restore `Root Rule Chain` after this test is complete!
+
 ## Troubleshooting
 
 For any technical queries, please open an [issue](https://github.com/liang-zhu-zi/esp32-thingsboard-mqtt-client/issues) on GitHub. We will get back to you soon.
+

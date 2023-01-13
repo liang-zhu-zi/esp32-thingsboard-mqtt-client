@@ -20,7 +20,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-**Note:** Please execute example [h20_attributes_update/](../h20_attributes_update/) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.
+**Note:** Please execute example [h20_attributes_update](../h20_attributes_update/) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.
 
 1. Get a device access token
 
@@ -171,7 +171,6 @@ I (28078) tb_mqtt_wapper: tbcm_disconnect(): call esp_mqtt_client_destroy()...
 W (28078) MQTT_CLIENT: Client asked to stop, but was not started
 I (28178) ATTR_REQUEST_EXAMPLE: Destroy tbcmh ...
 I (28178) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ```
 
 ## Troubleshooting

@@ -133,12 +133,12 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Example Configuration
+# Example ThingsBoard MQTT Configuration
 #
 CONFIG_TBC_TRANSPORT_ADDRESS_HOST="192.168.0.210"
 CONFIG_TBC_TRANSPORT_ADDRESS_PORT=8883
 CONFIG_TBC_TRANSPORT_SKIP_CERT_COMMON_NAME_CHECK=y
-# end of Example Configuration
+# end of Example ThingsBoard MQTT Configuration
 
 #
 # Example Connection Configuration

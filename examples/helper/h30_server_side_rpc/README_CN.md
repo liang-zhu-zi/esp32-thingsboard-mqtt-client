@@ -8,8 +8,8 @@
 本示例实现了 Server-side RPC 相关功能：
 
 * 订阅并接收 Server-side RPC:
-  * rpcChangeSetpoint
-  * rpcQuerySetpoint
+  * rpcChangeSetpoint - One-way RPC
+  * rpcQuerySetpoint - Two-way RPC
 
 ## 硬件需求
 
@@ -24,54 +24,52 @@
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
-1. 在 ThingsBoard 上使用 Rule Engine 周期发送 Server-side RPC
+1. 在 ThingsBoard 上修改 Root Rule Chain，使用 Rule Engine 周期发送 Server-side RPC
 
-   参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
+   `Login in ThingsBoard CE/PE` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标). 参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
-   * 修改 Root Rule Chain:
+   ![image](./Root-Rule-Chain_4_Server-RPC.png)
 
-      ![image](./Root-Rule-Chain_4_Server-RPC.png)
+   * Generator rpcChangeSetpoint:
+      * Name: rpcChangeSetpoint
+      * Type: Action - generator
+      * Period in seconds: 15
+      * Originator Type: Device
+      * Device: *My Device*
+      * Generate:
 
-     * Generator rpcChangeSetpoint:
-       * Name: rpcChangeSetpoint
-       * Type: Action - generator
-       * Period in seconds: 20
-       * Originator Type: Device
-       * Device: *My Device*
-       * Generate:
+      ```json
+      var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
 
-         ```json
-         var msg = { method: "rpcChangeSetpoint", params: { setpoint: 26.0 } };
+      var metadata = {
+         expirationTime: new Date().getTime() + 60000,
+         oneway: true,
+         persistent: false
+      };
+      var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-         var metadata = {
+      return { msg: msg, metadata: metadata, msgType: msgType };
+      ```
+
+   * Generator rpcQuerySetpoint:
+      * Name: rpcQuerySetpoint
+      * Type: Action - generator
+      * Period in seconds: 15
+      * Originator Type: Device
+      * Device: *My Device*
+      * Generate:
+
+      ```json
+      var msg = { method: "rpcQuerySetpoint", params: { } };
+      var metadata = { 
             expirationTime: new Date().getTime() + 60000,
-            oneway: true,
+            oneway: false,
             persistent: false
-         };
-         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
+      };
+      var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
 
-         return { msg: msg, metadata: metadata, msgType: msgType };
-         ```
-
-     * Generator rpcQuerySetpoint:
-       * Name: rpcQuerySetpoint
-       * Type: Action - generator
-       * Period in seconds: 20
-       * Originator Type: Device
-       * Device: *My Device*
-       * Generate:
-
-         ```json
-         var msg = { method: "rpcQuerySetpoint", params: { } };
-         var metadata = { 
-             expirationTime: new Date().getTime() + 60000,
-             oneway: false,
-             persistent: false
-         };
-         var msgType = "RPC_CALL_FROM_SERVER_TO_DEVICE";
-
-         return { msg: msg, metadata: metadata, msgType: msgType };
-         ```
+      return { msg: msg, metadata: metadata, msgType: msgType };
+      ```
 
 1. 设定 Target (optional)
 
@@ -108,15 +106,6 @@
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
-
-1. 在 ThingsBoard 上添加并修改 shared attribute
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
-
-1. 测试完成之后，请把 Root Rule Chain 恢复到原来的状态!
-
 ## 日志输出
 
 ```none
@@ -232,6 +221,11 @@ W (27998) MQTT_CLIENT: Client asked to stop, but was not started
 I (28098) SERVER_RPC_EXAMPLE: Destroy tbcmh ...
 I (28098) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
 ```
+
+## ThingsBoard CE/PE
+
+**注意:** 测试完成之后，请把 `Root Rule Chain` 恢复到原来的状态!
+
 
 ## 故障排除
 
