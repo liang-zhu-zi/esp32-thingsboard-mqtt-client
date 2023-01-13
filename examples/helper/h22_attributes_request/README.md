@@ -20,13 +20,13 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-**Note: Please execute example [h20_attributes_update/](../h20_attributes_update/) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.**
+**Note:** Please execute example [h20_attributes_update/](../h20_attributes_update/) first, then extcute this one. Otherwise, `setpoint` cannot be obtained from the server when the attributes is requested.
 
 1. Get a device access token
 
    `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
-1. add or update a shared attribute in ThingsBoard
+1. Add or update a shared attribute in ThingsBoard
 
    * Shared attributes `sntp_server`:
      * Add: `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
