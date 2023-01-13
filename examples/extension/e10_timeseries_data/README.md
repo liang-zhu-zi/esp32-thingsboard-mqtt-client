@@ -58,10 +58,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-5. Check out the latest time-series data data on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest time-series data.
-
 ## Example Output
 
 ```none
@@ -180,14 +176,13 @@ I (28019) TIMESERIES_DATA_MAIN: Unregister time-series data: humidity!
 I (28019) TIMESERIES_DATA_MAIN: Destroy time-series data set!
 I (28029) TIMESERIES_DATA_MAIN: Destroy tbcmh ...
 I (28029) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT server!
-
 ```
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
+Check out the latest time-series data data on ThingsBoard:
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest tememetry`, Check out the latest time-series data. You can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

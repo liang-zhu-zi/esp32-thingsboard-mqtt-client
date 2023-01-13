@@ -58,10 +58,6 @@
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
-5. 在 ThingsBoard 上查看最新的 time-series data
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 time-series data.
-
 ## 日志输出
 
 ```none
@@ -184,9 +180,9 @@ I (28029) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `model` 和 `setpoint` 两个 Client-side attributes.
+在 ThingsBoard 上查看最新的 time-series data:
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry`, 查看最新的 time-series data。你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
 ## 故障排除
 
