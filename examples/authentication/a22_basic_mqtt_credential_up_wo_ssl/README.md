@@ -65,12 +65,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-5. Check out the latest Telemetry data on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
-
-   ![image](./basic_mqtt_credential_up_wo_ssl_2.png)
-
 ## Example Output
 
 ```none
