@@ -58,7 +58,7 @@
 
 1. Add device profile:
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input **Device Profile Name** --> `Device provisioning Optional`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input **Device Profile Name** --> `Device provisioning Optional`.
       ![image](.\server_generate_access_token_without_ssl_add_provision_1.png)
 
    * `Allow to create new devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Add`.
@@ -370,7 +370,7 @@
 
 1. Modify device profile （or add device profile):
 
-   * `Login in ThingsBoard CE/PE` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
+   * `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_1.png)
 
    * `Check for pre-provisoned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
@@ -378,7 +378,7 @@
   
 1. Pre-provisoned device
 
-   * `Login in ThingsBoard CE/PE` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
       ![image](pre-provisioned_server_generate_access_token_without_ssl-add_device_1.png) 
 
    * Checked `Add credentials` --> Select `Access token` --> Input *my access token* --> `Add`.
@@ -583,7 +583,7 @@ I (51155) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 1. Modify device profile （or add device profile):
 
-   * `Login in ThingsBoard CE/PE` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
+   * `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_1.png)
 
    * `Check for pre-provisoned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
@@ -591,7 +591,7 @@ I (51155) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
   
 1. Pre-provisoned device
 
-   * `Login in ThingsBoard CE/PE` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
       ![image](pre-provisioned_server_generate_access_token_without_ssl-add_device_1.png) 
 
    * Checked `Add credentials` --> Select `MQTT Basic` --> Input *my client id*, *my username* & *my password* --> `Add`.

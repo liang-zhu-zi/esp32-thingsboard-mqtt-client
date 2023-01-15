@@ -20,7 +20,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 2. 设定 Target (optional)
 
@@ -182,7 +182,7 @@ I (28029) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 在 ThingsBoard 上查看最新的 time-series data:
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry`, 查看最新的 time-series data。你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry`, 查看最新的 time-series data。你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
 
 ## 故障排除
 

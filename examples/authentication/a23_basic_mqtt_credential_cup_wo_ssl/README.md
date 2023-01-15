@@ -23,7 +23,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
    ![image](./basic_mqtt_credential_cup_wo_ssl_1.png)
 
@@ -68,7 +68,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 5. Check out the latest Telemetry data on ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
 
    ![image](./basic_mqtt_credential_cup_wo_ssl_2.png)
 
@@ -188,7 +188,7 @@ I (28001) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

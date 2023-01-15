@@ -20,7 +20,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 2. set-targe (optional)
 
@@ -182,7 +182,7 @@ I (28029) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 Check out the latest time-series data data on ThingsBoard:
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Latest tememetry`, Check out the latest time-series data. You can find `humidity` and `temprature`. Their values change over time.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest tememetry`, Check out the latest time-series data. You can find `humidity` and `temprature`. Their values change over time.
 
 ## Troubleshooting
 

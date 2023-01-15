@@ -33,10 +33,10 @@
 1. 在 ThingsBoard 上使用 Rule Engine 接收 Client-side RPC 并发送响应。参考 [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/) 和 and [Processing the client-side RPC by the platform](https://thingsboard.io/docs/user-guide/rpc/#processing-the-client-side-rpc-by-the-platform)。
 
    * 导入一个规则链 Rule Chain: 
-         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [规则链 ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`。
+         `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [规则链 ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`。
 
    * 创建一个新的 Rule Chain: 
-         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> 输入名称: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
+         `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> 输入名称: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
 
        ![image](./ESP-IDF-Thingsboard-MQTT_Client-side_RPC_Test_Rule_Chain.png)
 
@@ -116,7 +116,7 @@
 
    * 修改 `Root Rule Chain`:
 
-      `Login in ThingsBoard CE/PE` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标)。参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine)。
+      `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标)。参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine)。
 
       ![image](./Root_Rule_Chain.png)
 
@@ -148,7 +148,7 @@
 
 2. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 3. 设定 Target (optional)
 

@@ -21,7 +21,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 2. 设定 Target (optional)
 
@@ -58,10 +58,6 @@
    (如果要退出串口监控，请输入 ``Ctrl-]``.)
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
-
-5. 在 ThingsBoard 上查看最新的 client attributes
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Attributes`  --> `Client Attributes` --> 查看最新的 Attributes.
 
 ## 日志输出
 
@@ -194,9 +190,9 @@ I (27989) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Client attributesn`, 你能找到 `model` 和 `setpoint` 两个 Client-side attributes.
+在 ThingsBoard 上查看最新的 client attributes
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+* `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击并选择我的设备 --> `Attributes`  --> `Client Attributes` --> 查看最新的 Attributes, 你能找到 `model` 和 `setpoint` 两个 Client-side attributes.
 
 ## 故障排除
 

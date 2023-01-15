@@ -2,7 +2,7 @@
 
 ## Add a new device profile and allow to create new devices
 
-1. `Login in ThingsBoard CE/PE` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input *Device Profile Name* --> `Device provisioning Optional`.
+1. `Login in ThingsBoard CE/PE as tenant` --> `Devices` -->`Device profiles` --> `+`  --> `Create new device profiles` --> Input *Device Profile Name* --> `Device provisioning Optional`.
 
     ![image](images/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices/add-device-profile-1.png)
 
@@ -16,7 +16,7 @@
 
 ## Modify a device profile to allow to create new devices
 
-1. `Login in ThingsBoard CE/PE` --> `Device profiles` --> click *my device profile*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
+1. `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> click *my device profile*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
 
     ![image](images/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices/modify-device-profile-1.png)
 

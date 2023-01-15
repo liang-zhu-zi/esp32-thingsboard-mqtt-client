@@ -48,7 +48,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 1. 设定 Target (optional)
 
@@ -129,7 +129,7 @@
 
       ![image](./fw_ota_2_uploaded.png)
 
-   * 分配固件 F/W: `Login in ThingsBoard CE/PE` --> `Device profiles` --> Click your ESP32 device's profile --> Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
+   * 分配固件 F/W: `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> Click your ESP32 device's profile --> Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
 
       ![image](./fw_ota_3_update.png)
 
@@ -674,7 +674,7 @@ I (335361) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT 
 
 ## ThingsBoard Data
 
-* `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
+* `Login in ThingsBoard CE/PE as tenant` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
 
    ![image](./fw_ota_4_updated.png)
 

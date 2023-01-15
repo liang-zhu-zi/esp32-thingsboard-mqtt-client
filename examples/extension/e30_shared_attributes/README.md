@@ -21,9 +21,9 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
-2. set-targe (optional)
+1. set-targe (optional)
 
    Before project configuration and build, be sure to set the correct chip target using:
 
@@ -31,7 +31,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    idf.py set-target <chip_name>
    ```
 
-3. menuconfig
+1. menuconfig
 
    Then project configuration:
 
@@ -51,7 +51,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
        (MyPassword) WiFi Password                  
    ```
 
-4. build, flash and monitor
+1. build, flash and monitor
 
    Run `idf.py -p PORT flash monitor` to build, flash and monitor the project.
 
@@ -59,11 +59,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-5. add & modify a shared attribute in ThingsBoard
+1. add & modify a shared attribute in ThingsBoard
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `Add attribute` --> Key: "sntp_server", Value type: "String", String value: "uk.pool.ntp.org" --> `Add`.
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Attributes` --> `Shared attributes` --> `sntp_server` --> `Modify` --> Value type: "String", String value: "hk.pool.ntp.org" --> `Update`.
 
 ## Example Output
 

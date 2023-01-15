@@ -43,7 +43,7 @@
 
 1. Provision Client Public Key as Device Credentials
    
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> `Manage credentials`.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> `Manage credentials`.
 
    Select X.509 Certificate device credentials, insert the contents of cert.pem file and click save. 
 
@@ -88,7 +88,7 @@
 
 1. 在 ThingsBoard 上查看最新的 telemetry data
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data.
 
    ![image](./x.509_ceritificate_w_twowayssl_2.png)
 

@@ -26,27 +26,27 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    Refer [here](https://thingsboard.io/docs/user-guide/claiming-devices/#device-claiming-widget).
 
-   * Create a dashboard: `Login in ThingsBoard CE/PE` --> `Dashboards` --> `+` Add Dashboard --> `Create new dashboard` --> Title: `Device Claiming` --> `Add`.
+   * Create a dashboard: `Login in ThingsBoard CE/PE as tenant` --> `Dashboards` --> `+` Add Dashboard --> `Create new dashboard` --> Title: `Device Claiming` --> `Add`.
 
-   * Add Device Claiming Widget: `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
+   * Add Device Claiming Widget: `Login in ThingsBoard CE/PE as tenant` --> `Dashboards` --> Click on `Device Claiming` --> `Open dashboard` --> `Enter edit mode` --> `Add new widget` --> `Input widgets` --> `Device Claiming widget` --> `Add` --> `Apply Changes`.
 
       ![image](./1_device_claiming_dashboard.png)
 
 1. Assign this dashboard to `Customer A`:
 
-   * `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click `Managment assigned customers` icon on `Device Claiming` --> Select `Customer A` --> `Update`.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Dashboards` --> Click `Managment assigned customers` icon on `Device Claiming` --> Select `Customer A` --> `Update`.
 
       ![image](./2_assign_dashboard_to_customer.png)
 
 1. Unassign a device from cusotmer
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click `Unassign from cusotmer` icon in my device line.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click `Unassign from cusotmer` icon in my device line.
 
     ![image](./3_unassign_device_from_cusotmer.png)
 
 1. Get a device access token
 
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. set-targe (optional)
 

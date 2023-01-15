@@ -21,7 +21,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 2. set-targe (optional)
 
@@ -58,10 +58,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
    (To exit the serial monitor, type ``Ctrl-]``.)
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
-
-5. Check out the latest client attributes on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes`  --> `Client Attributes` --> Check out the latest client attributes.
 
 ## Example Output
 
@@ -194,9 +190,10 @@ I (27989) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Client attributesn`, your can find `model` and `setpoint`.
+Check out the latest client attributes on ThingsBoard
 
-* `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Attributes` --> `Client attributesn`, Check out the latest client attributes. You can find `model` and `setpoint`.
+
 
 ## Troubleshooting
 

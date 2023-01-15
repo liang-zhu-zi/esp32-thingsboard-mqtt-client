@@ -33,10 +33,10 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 1. `RPC Reply with the Rule Engine` in ThingsBoard. Refer to [RPC Reply With data from Related Device](https://thingsboard.io/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial/) and [Processing the client-side RPC by the platform](https://thingsboard.io/docs/user-guide/rpc/#processing-the-client-side-rpc-by-the-platform).
 
    * Import a Rule Chain:
-         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`. 
+         `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> `+` --> `Import Rule Chain` --> Drag and drop the JSON file [ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chains](./esp_idf_thingsboard_mqtt_client_side_rpc_test_rule_chain.json) --> `Import`. 
 
    * Or create a new Rule Chain：
-         `Login in ThingsBoard CE/PE` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> Input name: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
+         `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> `+` --> `Create a new Rule Chain` --> Input name: `ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain` --> `Add` --> Click on this new Rule chain --> the modified content is as follows --> `Applys changes` (red icon).
 
        ![image](./ESP-IDF-Thingsboard-MQTT_Client-side_RPC_Test_Rule_Chain.png)
 
@@ -116,7 +116,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    * Modify `Root Rule Chain`:
 
-      `Login in ThingsBoard CE/PE` --> `Rule chanins` --> Click on `Root Rule Chain` --> the modified content is as follows --> `Applys changes` (red icon). Refer to [Using the Rule Engine](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
+      `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> Click on `Root Rule Chain` --> the modified content is as follows --> `Applys changes` (red icon). Refer to [Using the Rule Engine](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
       ![image](./Root_Rule_Chain.png)
 
@@ -148,7 +148,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 2. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 3. set-targe (optional)
 

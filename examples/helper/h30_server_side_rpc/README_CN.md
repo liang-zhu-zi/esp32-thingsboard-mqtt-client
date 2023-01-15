@@ -22,7 +22,7 @@
 
 1. 在 ThingsBoard 上修改 Root Rule Chain，使用 Rule Engine 周期发送 Server-side RPC
 
-   `Login in ThingsBoard CE/PE` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标). 参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
+   `Login in ThingsBoard CE/PE as tenant` --> `Rule chanins` --> 点击 `Root Rule Chain` --> 修改以下内容 --> `Applys changes` (红色图标). 参考 [这里](https://thingsboard.io/docs/user-guide/rpc/#using-the-rule-engine).
 
    ![image](./Root-Rule-Chain_4_Server-RPC.png)
 
@@ -69,7 +69,7 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
 
 1. 设定 Target (optional)
 

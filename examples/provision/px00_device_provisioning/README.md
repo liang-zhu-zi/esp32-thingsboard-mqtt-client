@@ -32,7 +32,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. `RPC Reply with the Rule Engine` in ThingsBoard
 

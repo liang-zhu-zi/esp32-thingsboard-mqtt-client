@@ -48,7 +48,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Get a device access token
 
-   `Login in ThingsBoard CE/PE` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
 
 1. set-targe (optional)
 
@@ -124,13 +124,13 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. `OTA updates` in ThingsBoard. Refer to [OTA updates](https://thingsboard.io/docs/user-guide/ota-updates/).
 
-   * Add package: upload a F/W binary file: `Login in ThingsBoard CE/PE` --> `OTA updates` --> `+` Add package --> Fill in the F/W information of `0.1.0.2` version below (**Note**: Checksum algorithm MUST be `CRC32`) --> `Add`.
+   * Add package: upload a F/W binary file: `Login in ThingsBoard CE/PE as tenant` --> `OTA updates` --> `+` Add package --> Fill in the F/W information of `0.1.0.2` version below (**Note**: Checksum algorithm MUST be `CRC32`) --> `Add`.
 
       ![image](./fw_ota_1_upload.png)
 
       ![image](./fw_ota_2_uploaded.png)
 
-   * Assign firmware: `Login in ThingsBoard CE/PE` --> `Device profiles` --> Click on *your ESP32 device's profile* --> `Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
+   * Assign firmware: `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> Click on *your ESP32 device's profile* --> `Toggle Edit Mode` icon ---> Assigned firmware `0.1.0.2` --> `Apply changes` icon.
 
       ![image](./fw_ota_3_update.png)
 
@@ -674,7 +674,7 @@ I (335361) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT 
 
 ## ThingsBoard Data
 
-* `Login in ThingsBoard CE/PE` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
+* `Login in ThingsBoard CE/PE as tenant` --> `Dashboards` --> Click on `Firmware` --> `Open dashboard` ---> Look at OTA F/W status about your ESP32 device --> Click `History firmware update` icon on your ESP32 device --> Your device firmware history.
 
    ![image](./fw_ota_4_updated.png)
 
