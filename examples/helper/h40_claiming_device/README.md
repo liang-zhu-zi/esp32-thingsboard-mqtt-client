@@ -44,9 +44,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
     ![image](./3_unassign_device_from_cusotmer.png)
 
-1. Get a device access token
+1. Copy access token
 
-   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Copy access token`.
+
+   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
 
 1. set-targe (optional)
 

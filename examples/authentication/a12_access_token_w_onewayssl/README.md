@@ -80,11 +80,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. Copy `server.pem` and rename it to `main\mqtt_thingsboard_server_cert.pem`;
 
-1. Get a device token from ThingsBoard CE/PE
+1. Copy access token from ThingsBoard CE/PE
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Copy access token`.
 
-   ![image](./access_token_w_onewayssl_1.png)
+   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
 
 1. set-targe (optional)
 
@@ -242,11 +242,11 @@ I (28031) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* Check out the latest Telemetry data on ThingsBoard
+* Check out the latest Telemetry data.
 
-   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data. You can find `humidity` and `temprature`. Their values change over time.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest tememetry`. You can find `humidity` and `temprature`. Their values change over time.
 
-   ![image](./access_token_w_onewayssl_2.png)
+   ![image](../../.docs/images/check-latest-telemetry/check-latest-telemetry-1.png)
 
 ## Troubleshooting
 

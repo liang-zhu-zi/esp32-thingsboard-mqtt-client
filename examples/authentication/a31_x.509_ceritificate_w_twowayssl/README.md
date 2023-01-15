@@ -86,12 +86,6 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
    See the [Getting Started Guide](https://idf.espressif.com/) for full steps to configure and use ESP-IDF to build projects.
 
-1. Check out the latest Telemetry data on ThingsBoard
-
-   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest telemetry` --> Check out the latest Telemetry data.
-
-   ![image](./x.509_ceritificate_w_twowayssl_2.png)
-
 ## Example Output
 
 ```none
@@ -216,7 +210,11 @@ I (29456) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard CE/PE Data
 
-* `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Attributes` --> `Latest tememetry`, your can find `humidity` and `temprature`. Their values change over time.
+* Check out the latest Telemetry data.
+
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Latest tememetry`. You can find `humidity` and `temprature`. Their values change over time.
+
+   ![image](../../.docs/images/check-latest-telemetry/check-latest-telemetry-1.png)
 
 ## Troubleshooting
 

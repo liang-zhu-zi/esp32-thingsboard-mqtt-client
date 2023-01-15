@@ -64,12 +64,6 @@
 
    有关配置和使用 ESP-IDF 构建项目的完整步骤，请参阅 [入门指南](https://idf.espressif.com/)。
 
-5. 在 ThingsBoard 上查看最新的 telemetry data
-
-   * `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击并选择我的设备 --> `Latest telemetry` --> 查看最新的 Telemetry data.
-
-   ![image](./basic_mqtt_credential_c_wo_ssl_2.png)
-
 ## 日志输出
 
 ```none
@@ -187,7 +181,11 @@ I (28001) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Attributes` --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+* 在 ThingsBoard 上查看最新的 telemetry data.
+
+   Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+
+   ![image](../../.docs/images/check-latest-telemetry/check-latest-telemetry-1.png)
 
 ## 故障排除
 

@@ -43,7 +43,7 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 1. **ThingsBoard CE/PE**: add or modify a device profile for device provisioning - Allow to create new devices.
 
-   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices.md)
+   See [here](../../.docs/add-or-modify-device-profile-for-device-provisioning-that-allow-to-create-new-devices.md).
 
 1. set-targe (optional)
 

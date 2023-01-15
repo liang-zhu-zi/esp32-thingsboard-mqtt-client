@@ -82,9 +82,9 @@
 
 1. 获取 Access token
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Copy access token`.
 
-   ![image](./access_token_w_onewayssl_1.png)
+   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
 
 1. 设定 Target (optional)
 
@@ -243,9 +243,11 @@ I (28031) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
 
 ## ThingsBoard 输出
 
-* `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Latest tememetry` --> 查看最新的 Telemetry data. 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+* 在 ThingsBoard 上查看最新的 telemetry data.
 
-   ![image](./access_token_w_onewayssl_2.png)
+   Login in ThingsBoard CE/PE --> `Devices` --> 单击选择我的设备 --> `Latest tememetry`, 你能发现 `humidity` 和 `temprature`. 在本示例运行时，这两个值会随时变化。
+
+   ![image](../../.docs/images/check-latest-telemetry/check-latest-telemetry-1.png)
 
 ## 故障排除
 

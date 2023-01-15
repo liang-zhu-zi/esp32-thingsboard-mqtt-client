@@ -148,7 +148,9 @@
 
 2. 获取 Access token
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Copy access token`.
+
+   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
 
 3. 设定 Target (optional)
 

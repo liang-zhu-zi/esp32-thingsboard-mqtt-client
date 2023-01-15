@@ -146,9 +146,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
         * Type: Flow - rule chain
         * Rule Chain: ESP-IDF-Thingsboard-MQTT Client-side RPC Test Rule Chain
 
-2. Get a device access token
+2. Copy access token
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Copy access token`.
+
+   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
 
 3. set-targe (optional)
 
