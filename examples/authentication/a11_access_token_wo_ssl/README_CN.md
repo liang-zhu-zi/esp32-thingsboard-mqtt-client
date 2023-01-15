@@ -1,7 +1,7 @@
 | Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-H2 | ESP32-S3 |
 | ----------------- | ----- | -------- | -------- | -------- | -------- |
 
-# # Access Token based authentication - Plain MQTT (without SSL)
+# 基于 Access Token 的认证 - Plain MQTT (without SSL)
 
 * [English Version](./README.md)
 
