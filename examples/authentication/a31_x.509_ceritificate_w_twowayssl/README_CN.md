@@ -23,7 +23,7 @@
 
 1. ThingsBoard CE/PE SSL configuration using PEM certificates file
 
-   See [MQTT over SSL - using Self-signed PEM certificates file](../../.docs/mqtt-over-ssl-ssl-configuration-using-pem-certificates-file.md)
+   See [MQTT over SSL - using Self-signed PEM certificates file](../../.docs/mqtt-over-ssl-ssl-configuration-using-pem-certificates-file.md).
 
 1. Generate Client certificate
 
@@ -37,9 +37,9 @@
 
    The output of the command will be a private key file `key.pem` and a public certificate `cert.pem`. We will use them in next steps.
 
-1. Rename `cert.pem` to `client.crt`; Copy it to `main\client.crt`;
+1. Rename `cert.pem` to `client.crt`; Copy it to `main/client.crt`;
 
-1. Rename `key.pem` to `client.key`; Copy it to `main\client.key`;
+1. Rename `key.pem` to `client.key`; Copy it to `main/client.key`;
 
 1. Provision Client Public Key as Device Credentials
    

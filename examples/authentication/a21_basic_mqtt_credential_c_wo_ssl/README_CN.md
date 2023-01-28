@@ -21,9 +21,9 @@
 
 ## 如何使用例子
 
-1. 获取 Access token
+1. Modify device credentials - MQTT Basic
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Manage credentials` -> Select credentials type: *MQTT Basic* -> Input client ID: *MY_CLIENT_ID* -> `Save`.
 
    ![image](./basic_mqtt_credential_c_wo_ssl_1.png)
 

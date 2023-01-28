@@ -22,7 +22,8 @@
 ## 如何使用例子
 
 1. ThingsBoard CE/PE SSL configuration using PEM certificates file
-   Refer [here](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#ssl-configuration-using-pem-certificates-file)
+
+   Refer [here](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#ssl-configuration-using-pem-certificates-file).
 
    Configure the following environment variables via [configuration](https://thingsboard.io/docs/user-guide/install/config/) file, docker-compose or kubernetes scripts. We will use thingsboard.conf for example:
 
@@ -53,7 +54,7 @@
 
 1. Self-signed certificates generation - PEM certificate file
 
-   See [PEM certificate file](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#pem-certificate-file)
+   See [PEM certificate file](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#pem-certificate-file).
 
    Use instructions below to generate your own certificate files. Useful for tests, but time consuming and not recommended for production.
 
@@ -78,11 +79,11 @@
 
    * Linux: use `/etc/thingsboard/conf` folder. Make sure the files - server_key.pem & server.pem have same permissions as thingsboard.conf; Use relative file path, e.g. keystore.p12;
 
-1. 复制 `server.pem` 关重命名为 `main\mqtt_thingsboard_server_cert.pem`;
+1. 复制 `server.pem` 关重命名为 `main/mqtt_thingsboard_server_cert.pem`;
 
-1. 获取 Access token
+1. Modify device credentials - MQTT Basic
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> Copy *my Access Token*.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> 单击选择我的设备 --> `Details` --> `Manage credentials` -> Select credentials type: *MQTT Basic* -> Input client ID: *MY_CLIENT_ID* -> Input User name: *MY_USER_NAME* -> Input Password: *MY_PASSWORD* -> `Save`.
 
    ![image](./basic_mqtt_credential_cup_w_onewayssl_1.png)
 

@@ -21,11 +21,11 @@ See [Development Boards](https://www.espressif.com/en/products/devkits) for more
 
 ## How to Use Example
 
-1. Copy access token
+1. Modify device credentials - MQTT Basic
 
-   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Copy access token`.
+   `Login in ThingsBoard CE/PE as tenant` --> `Devices` --> Click on *my device* --> `Details` --> `Manage credentials` -> Select credentials type: *MQTT Basic* -> Input client ID: *MY_CLIENT_ID* -> Input User name: *MY_USER_NAME* -> Input Password: *MY_PASSWORD* -> `Save`.
 
-   ![image](../../.docs/images//copy-access-token/copy-access-token-1.png)
+   ![image](./basic_mqtt_credential_cup_wo_ssl_1.png)
 
 2. set-targe (optional)
 
