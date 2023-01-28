@@ -22,7 +22,8 @@
 ## 如何使用例子
 
 1. ThingsBoard CE/PE SSL configuration using PEM certificates file
-   Refer [here](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#ssl-configuration-using-pem-certificates-file)
+   
+   Refer [here](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#ssl-configuration-using-pem-certificates-file).
 
    Configure the following environment variables via [configuration](https://thingsboard.io/docs/user-guide/install/config/) file, docker-compose or kubernetes scripts. We will use thingsboard.conf for example:
 
@@ -53,7 +54,7 @@
 
 1. Self-signed certificates generation - PEM certificate file
 
-   See [PEM certificate file](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#pem-certificate-file)
+   See [PEM certificate file](https://thingsboard.io/docs/user-guide/mqtt-over-ssl/#pem-certificate-file).
 
    Use instructions below to generate your own certificate files. Useful for tests, but time consuming and not recommended for production.
 
@@ -78,7 +79,7 @@
 
    * Linux: use `/etc/thingsboard/conf` folder. Make sure the files - server_key.pem & server.pem have same permissions as thingsboard.conf; Use relative file path, e.g. keystore.p12;
 
-1. 复制 `server.pem` 关重命名为 `main\mqtt_thingsboard_server_cert.pem`;
+1. 复制 `server.pem` 关重命名为 `main/mqtt_thingsboard_server_cert.pem`;
 
 1. 获取 Access token
 
