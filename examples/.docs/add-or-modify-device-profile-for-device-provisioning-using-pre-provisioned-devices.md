@@ -21,6 +21,6 @@
 
     ![image](images/add-or-modify-device-profile-for-device-provisioning-using-pre-provisioned-devices/modify-device-profile-1.png)
 
-1. `Check for pre-provisoned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
+1. `Check for pre-provisioned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
 
     ![image](images/add-or-modify-device-profile-for-device-provisioning-using-pre-provisioned-devices/modify-device-profile-2.png)

@@ -373,10 +373,10 @@
    * `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_1.png)
 
-   * `Check for pre-provisoned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
+   * `Check for pre-provisioned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_2.png)
   
-1. Pre-provisoned device
+1. Pre-provisioned device
 
    * `Login in ThingsBoard CE/PE as tenant` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
       ![image](pre-provisioned_server_generate_access_token_without_ssl-add_device_1.png) 
@@ -586,10 +586,10 @@ I (51155) tb_mqtt_client_helper: It already disconnected from thingsboard MQTT s
    * `Login in ThingsBoard CE/PE as tenant` --> `Device profiles` --> click *my testing device profiles*  --> `Device provisioning` --> `Toggle edit mode` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_1.png)
 
-   * `Check for pre-provisoned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
+   * `Check for pre-provisioned devices` --> Input `Provision device key` & `Provision device secret`, copy to a safe place --> `Apply changes` (red icon).
       ![image](pre-provisioned_server_generate_access_token_without_ssl-modify_device_profile_2.png)
   
-1. Pre-provisoned device
+1. Pre-provisioned device
 
    * `Login in ThingsBoard CE/PE as tenant` --> `Device` --> `+` --> `Add new device` --> Input *device name* --> Select *my device profile* --> `Credentials Options`.
       ![image](pre-provisioned_server_generate_access_token_without_ssl-add_device_1.png) 
