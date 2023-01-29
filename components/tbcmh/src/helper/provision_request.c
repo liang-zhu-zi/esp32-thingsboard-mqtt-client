@@ -120,7 +120,7 @@ void _tbcmh_provision_on_disconnected(tbcmh_handle_t client)
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static tbc_err_t __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_credentials_generated_by_server(tbcmh_provision_params_t *params, const tbc_provision_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -141,7 +141,7 @@ static tbc_err_t __params_of_credentials_generated_by_server(tbcmh_provision_par
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static tbc_err_t __params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_access_token(tbcmh_provision_params_t *params, const tbc_provision_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -167,7 +167,7 @@ static tbc_err_t __params_of_devices_supplies_access_token(tbcmh_provision_param
 }
 
 // return ESP_OK on successful, ESP_FAIL on failure
-static tbc_err_t __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provision_params_t *params, const tbc_provision_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -203,7 +203,7 @@ static tbc_err_t __params_of_devices_supplies_basic_mqtt_credentials(tbcmh_provi
 
 // hash - Public key X509 hash for device in ThingsBoard.
 // return ESP_OK on successful, ESP_FAIL on failure
-static tbc_err_t __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provison_config_t *config)
+static tbc_err_t __params_of_devices_supplies_x509_certificate(tbcmh_provision_params_t *params, const tbc_provision_config_t *config)
 {
     TBC_CHECK_PTR_WITH_RETURN_VALUE(params, ESP_FAIL);
     TBC_CHECK_PTR_WITH_RETURN_VALUE(config, ESP_FAIL);
@@ -310,7 +310,7 @@ static tbc_err_t _provision_request_with_params(tbcmh_handle_t client,
 
 //return 0/ESP_OK on successful, otherwise return -1/ESP_FAIL
 tbc_err_t tbcmh_provision_request(tbcmh_handle_t client,
-                                    const tbc_provison_config_t *config,
+                                    const tbc_provision_config_t *config,
                                     void *context,
                                     tbcmh_provision_on_response_t on_response,
                                     tbcmh_provision_on_timeout_t on_timeout)

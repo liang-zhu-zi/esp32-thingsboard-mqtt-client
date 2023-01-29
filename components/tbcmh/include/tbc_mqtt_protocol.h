@@ -50,7 +50,7 @@ extern "C" {
 //Topic:  'v1/devices/me/rpc/response/$request_id'
 //Data:   '{"method":"getTime","results":{"utcDateime":"2020-05-29T08:02:30Z","utcTimestamp":1590739350}}'
 
-//send provison requeset:
+//send provision requeset:
 //Topic:  '/provision/request'
 //Data:   '{
 //            "deviceName": "DEVICE_NAME",
@@ -60,7 +60,7 @@ extern "C" {
 //            "token": "DEVICE_ACCESS_TOKEN"
 //          }'
 //+
-//receive provison Response:
+//receive provision Response:
 //Topic:  '/provision/response'
 //Data:   '{
 //            "credentialsType":"ACCESS_TOKEN",
@@ -126,7 +126,7 @@ extern "C" {
 #define TB_MQTT_TOPIC_PROVISION_REQUESTC    "/provision/request"  //publish
 #define TB_MQTT_TOPIC_PROVISION_RESPONSE    "/provision/response" //subscribe, receive
 
-#define TB_MQTT_PARAM_PROVISION_USERNAME    "provision"           //MQTT username for provison
+#define TB_MQTT_PARAM_PROVISION_USERNAME    "provision"           //MQTT username for provision
 
 //Key: request
 #define TB_MQTT_KEY_PROVISION_DEVICE_NAME               "deviceName"            //Device name in ThingsBoard

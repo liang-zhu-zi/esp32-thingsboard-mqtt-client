@@ -29,7 +29,7 @@
 static const char *TAG = "DEVICE_PROVISION_MAIN";
 
 extern tbcmh_handle_t tbcmh_frontconn_create(const tbc_transport_config_t *transport,
-                                            const tbc_provison_config_t *provision);
+                                            const tbc_provision_config_t *provision);
 extern tbcmh_handle_t tbcmh_normalconn_create(const tbc_transport_config_t *transport);
 
 /*
@@ -220,7 +220,7 @@ static tbc_transport_address_config_t _address = /*!< MQTT: broker, HTTP: server
             };
 
 #if CONFIG_TBC_TRANSPORT_WITH_PROVISION
-static tbc_provison_config_t  _provision = 
+static tbc_provision_config_t  _provision = 
             {
               .provisionType = _PROVISION_TYPE,                 // Generates/Supplies credentials type. // Hardcode or device profile.
              
