@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
+#include <time.h>
 
 /* using uri parser */
 #include "http_parser.h"
@@ -332,7 +333,7 @@ void tbcmh_disconnect(tbcmh_handle_t client)
           return;
      }
 
-     TBC_LOGI("disconnecting from %s://%s:%d ...", client->config.address.schema,
+     TBC_LOGI("disconnecting from %s://%s:%"PRIu16" ...", client->config.address.schema,
                 client->config.address.host, client->config.address.port);
      // empty msg queue
      while (tbcmh_has_events(client)) {

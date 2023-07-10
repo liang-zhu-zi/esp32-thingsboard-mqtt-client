@@ -1,4 +1,4 @@
-set(includes "include")
+set(includes ${COMPONENT_DIR}/include)
 
 set(priv_includes "src/transport"
                   "src/wapper"
@@ -7,7 +7,7 @@ set(priv_includes "src/transport"
 
 #set(priv_requires "mqtt")
 
-set(requires "mqtt" "json" "app_update")
+set(requires "mqtt" "json" "app_update" "esp_timer" "http_parser")
 
 set(srcs "src/transport/tbc_transport_config.c"
          "src/transport/tbc_transport_storage.c"
