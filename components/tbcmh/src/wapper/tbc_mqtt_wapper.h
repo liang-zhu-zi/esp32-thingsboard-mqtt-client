@@ -160,6 +160,12 @@ int tbcm_provision_request(tbcm_handle_t client, const char *payload,
 int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
                            uint32_t request_id, uint32_t chunk_id, const char *payload, //?payload
                            int qos /*= 1*/, int retain /*= 0*/);
+int tbcm_gatewayconnect_publish(tbcm_handle_t client, const char *attributes,
+                           int qos /*= 1*/, int retain /*= 0*/);
+int tbcm_gatewaydisconnect_publish(tbcm_handle_t client, const char *attributes,
+                           int qos /*= 1*/, int retain /*= 0*/);
+int tbcm_gatewaytelemetry_publish(tbcm_handle_t client, const char *telemetry,
+                           int qos /*= 1*/, int retain /*= 0*/);
 
 #define TBCM_TELEMETRY_PUBLISH(client, payload) \
           tbcm_telemetry_publish(client, payload, /*int qos =*/1, /*int retain =*/0)

@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "esp32/rom/crc.h"
 #include "esp_err.h"
@@ -351,11 +352,11 @@ static bool _otaupdate_checksum_verification(otaupdate_t *otaupdate)
     c = (checksum_int & 0x0000FF00) >> 8;
     d = (checksum_int & 0x000000FF) >> 0;
     checksum_int = (d<<24) | (c<<16) | (b<<8) | a;
-    sprintf(checksum_str, "%x", checksum_int);
+    sprintf(checksum_str, "%"PRIx32, checksum_int);
 
     uint32_t ota_checksum = 0;
     if (otaupdate->attribute.ota_checksum) {
-        sscanf(otaupdate->attribute.ota_checksum, "%x", &ota_checksum);
+        sscanf(otaupdate->attribute.ota_checksum, "%"PRIx32, &ota_checksum);
     }
     
     // CRC32 verify checksum
@@ -363,7 +364,7 @@ static bool _otaupdate_checksum_verification(otaupdate_t *otaupdate)
     if (checksum_int == ota_checksum) {
         return true;
     } else {
-        TBC_LOGW("checksum(%s, %#x) is NOT equal to otaupdate->attribute.ota_checksum(%s, %#x)!", 
+        TBC_LOGW("checksum(%s, %#"PRIx32") is NOT equal to otaupdate->attribute.ota_checksum(%s, %#"PRIx32")!", 
             checksum_str, checksum_int, 
             otaupdate->attribute.ota_checksum, ota_checksum);
         return false;
@@ -486,7 +487,7 @@ static tbc_err_t _otaupdate_chunk_request(otaupdate_t *otaupdate, bool isFirstCh
     } else {
         chunk_size = otaupdate->config.chunk_size;
     }
-    sprintf(payload, "%u", chunk_size);
+    sprintf(payload, "%"PRIu32, chunk_size);
 
     // Send msg to server
     uint32_t request_id;
@@ -509,7 +510,7 @@ static tbc_err_t _otaupdate_chunk_request(otaupdate_t *otaupdate, bool isFirstCh
                           payload, //chunk_size
                           1/*qos*/, 0/*retain*/);
     if (msg_id<0){
-        TBC_LOGW("Request OTA chunk(%u) failure! request_id=%u, msg_id=%d %s()",
+        TBC_LOGW("Request OTA chunk(%"PRIu32") failure! request_id=%"PRIu32", msg_id=%d %s()",
             otaupdate->state.chunk_id, request_id, msg_id, __FUNCTION__);
     }
     // First OTA request
@@ -533,12 +534,12 @@ static tbc_err_t _otaupdate_do_write(otaupdate_t *otaupdate, uint32_t chunk_id,
         return -1; //code error
     }
     if (chunk_id != otaupdate->state.chunk_id) {
-        TBC_LOGE("chunk_id(%u) is not equal to otaupdate->state.chunk_id(%u)!", chunk_id, otaupdate->state.chunk_id);
+        TBC_LOGE("chunk_id(%"PRIu32") is not equal to otaupdate->state.chunk_id(%"PRIu32")!", chunk_id, otaupdate->state.chunk_id);
         strncpy(ota_error, "Chunk ID is error!", error_size);
         return -1; //chunk_id error
     }
     if (!ota_data || !data_size) {
-        TBC_LOGE("ota_data(%p) or data_size(%u) is error!", ota_data, data_size);
+        TBC_LOGE("ota_data(%p) or data_size(%"PRIu32") is error!", ota_data, data_size);
         strncpy(ota_error, "OTA data is empty!", error_size);
         return -1; //ota_data is empty
     }
@@ -996,7 +997,7 @@ void _tbcmh_otaupdate_on_chunk_data(tbcmh_handle_t client,
      if (!otaupdate) {
           // Give semaphore
           // xSemaphoreGiveRecursive(client->_lock);
-          TBC_LOGW("Unable to find otaupdate:%u! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find otaupdate:%"PRIu32"! %s()", request_id, __FUNCTION__);
           return;
      }
 

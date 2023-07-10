@@ -84,9 +84,9 @@ extern "C" {
 #define TB_MQTT_TOPIC_CLIENT_ATTRIBUTES_PUBLISH       "v1/devices/me/attributes"  //publish
 
 // ======== Request client-side or shared device attributes from the server==================
-#define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN      "v1/devices/me/attributes/request/%u"  //publish, $request_id
+#define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN      "v1/devices/me/attributes/request/%"PRIu32  //publish, $request_id
 #define TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PREFIX       "v1/devices/me/attributes/request/"    //publish
-#define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PATTERN     "v1/devices/me/attributes/response/%u" //receive, $request_id
+#define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PATTERN     "v1/devices/me/attributes/response/%"PRIu32 //receive, $request_id
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX      "v1/devices/me/attributes/response/"   //receive
 #define TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_SUBSCRIBE   "v1/devices/me/attributes/response/+"  //subscribe
 
@@ -99,16 +99,16 @@ extern "C" {
 #define TB_MQTT_TOPIC_SHARED_ATTRIBUTES               "v1/devices/me/attributes"      //subscribe, receive
 
 // ======== Server-side RPC==================================================================
-#define TB_MQTT_TOPIC_SERVERRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%u"  //receive, $request_id
+#define TB_MQTT_TOPIC_SERVERRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%"PRIu32  //receive, $request_id
 #define TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX        "v1/devices/me/rpc/request/"    //receive
 #define TB_MQTT_TOPIC_SERVERRPC_REQUEST_SUBSCRIBE     "v1/devices/me/rpc/request/+"   //subscribe
-#define TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%u" //publish, $request_id
+#define TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%"PRIu32 //publish, $request_id
 #define TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PREFIX       "v1/devices/me/rpc/response/"   //publish
 
 // ======== Client-side RPC==================================================================
-#define TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%u"  //publish, $request_id
+#define TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN       "v1/devices/me/rpc/request/%"PRIu32  //publish, $request_id
 #define TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PREFIX        "v1/devices/me/rpc/request/"    //publish
-#define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%u" //receive, $request_id
+#define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PATTERN      "v1/devices/me/rpc/response/%"PRIu32 //receive, $request_id
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX       "v1/devices/me/rpc/response/"   //receive
 #define TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_SUBSCRIBE    "v1/devices/me/rpc/response/+"  //subscribe
 
@@ -154,12 +154,26 @@ extern "C" {
 #define TB_MQTT_VALUE_PROVISION_X509_CERTIFICATE    "X509_CERTIFICATE"  //TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE
 #define TB_MQTT_VALUE_PROVISION_SUCCESS             "SUCCESS"           //TB_MQTT_KEY_PROVISION_STATUS
 
+// ======== Publish Gatewey to the server==============================
+#define TB_MQTT_TOPIC_GATEWAY_CONNECT               "v1/gateway/connect"     //publish
+#define TB_MQTT_TOPIC_GATEWAY_DISCONNECT            "v1/gateway/disconnect"  //publish
+
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_PUBLISH    "v1/gateway/attributes"  //publish
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_REQUEST    "v1/gateway/attributes/request"  //request
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_RESPONSE   "v1/gateway/attributes/response"  //response
+
+#define TB_MQTT_TOPIC_GATEWAY_TELEMETRY_PUBLISH     "v1/gateway/telemetry"   //publish
+#define TB_MQTT_TOPIC_GATEWAY_TELEMETRY_PUBLISH     "v1/gateway/telemetry"   //publish
+
+#define TB_MQTT_TOPIC_GATEWAY_SERVERRPC_REQUEST_SUBSCRIBE     "v1/gateway/rpc"   //subscribe
+#define TB_MQTT_TOPIC_GATEWAY_CLAIMING_DEVICE        "v1/gateway/claim" //publish
+
 // ======== Firmware update =================================================================
 // receive some shared attributes after the device subscribes to "v1/devices/me/attributes/response/+":
 //         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm,
 //         sw_title, sw_version, sw_size, sw_checksum, sw_checksum_algorithm
-#define TB_MQTT_TOPIC_FW_REQUEST_PATTERN        "v2/fw/request/%u/chunk/%u"   //publish, ${requestId}, ${chunkId}
-#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN       "v2/fw/response/%u/chunk/"    //receive, ${requestId}
+#define TB_MQTT_TOPIC_FW_REQUEST_PATTERN        "v2/fw/request/%"PRIu32"/chunk/%"PRIu32   //publish, ${requestId}, ${chunkId}
+#define TB_MQTT_TOPIC_FW_RESPONSE_PATTERN       "v2/fw/response/%"PRIu32"/chunk/"    //receive, ${requestId}
 #define TB_MQTT_TOPIC_FW_RESPONSE_PREFIX        "v2/fw/response/"             //receive, ${requestId}, ${chunkId}
 #define TB_MQTT_TOPIC_FW_RESPONSE_SUBSCRIBE     "v2/fw/response/+/chunk/+"    //subsribe
 

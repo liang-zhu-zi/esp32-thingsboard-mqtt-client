@@ -51,7 +51,7 @@ typedef struct tbc_transport_address_config
 
     const char *schema;     /*!< MQTT: mqtt/mqtts/ws/wss, HTTP: http/https, CoAP: coap/coaps */
     const char *host;       /*!< MQTT/HTTP/CoAP server domain, hostname, to set ipv4 pass it as string */
-    uint32_t    port;       /*!< MQTT/HTTP/CoAP server port */
+    uint16_t    port;       /*!< MQTT/HTTP/CoAP server port */
     const char *path;       /*!< Path in the URI*/
 } tbc_transport_address_config_t;
 
