@@ -154,6 +154,20 @@ extern "C" {
 #define TB_MQTT_VALUE_PROVISION_X509_CERTIFICATE    "X509_CERTIFICATE"  //TB_MQTT_KEY_PROVISION_CREDENTIALS_TYPE
 #define TB_MQTT_VALUE_PROVISION_SUCCESS             "SUCCESS"           //TB_MQTT_KEY_PROVISION_STATUS
 
+// ======== Publish Gatewey to the server==============================
+#define TB_MQTT_TOPIC_GATEWAY_CONNECT               "v1/gateway/connect"     //publish
+#define TB_MQTT_TOPIC_GATEWAY_DISCONNECT            "v1/gateway/disconnect"  //publish
+
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_PUBLISH    "v1/gateway/attributes"  //publish
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_REQUEST    "v1/gateway/attributes/request"  //request
+#define TB_MQTT_TOPIC_GATEWAY_ATTRIBUTES_RESPONSE   "v1/gateway/attributes/response"  //response
+
+#define TB_MQTT_TOPIC_GATEWAY_TELEMETRY_PUBLISH     "v1/gateway/telemetry"   //publish
+#define TB_MQTT_TOPIC_GATEWAY_TELEMETRY_PUBLISH     "v1/gateway/telemetry"   //publish
+
+#define TB_MQTT_TOPIC_GATEWAY_SERVERRPC_REQUEST_SUBSCRIBE     "v1/gateway/rpc"   //subscribe
+#define TB_MQTT_TOPIC_GATEWAY_CLAIMING_DEVICE        "v1/gateway/claim" //publish
+
 // ======== Firmware update =================================================================
 // receive some shared attributes after the device subscribes to "v1/devices/me/attributes/response/+":
 //         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm,

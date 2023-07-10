@@ -926,6 +926,96 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
      return msg_id;
 }
 
+/**
+ * @brief Client to send a 'Gatawey' connect message to the broker
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/gateway/connect'
+ *      Data:  '{"device":"Device A"}'
+ *
+ * @param attributes    attributes. example: {"device":"Device A"} (字符串要符合 json 数据格式)
+ * @param qos           qos of publish message
+ * @param retain        ratain flag
+ *
+ * @return message_id of the subscribe message on success
+ *         0 if cannot publish
+ *        -1 if error
+ */
+int tbcm_gatewayconnect_publish(tbcm_handle_t client, const char *attributes,
+                                         int qos /*= 1*/, int retain /*= 0*/)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+
+     if (client->config.log_rxtx_package) {
+        TBC_LOGI("[Gateway Connect][Tx] %.*s", strlen(attributes), attributes);
+     }
+
+     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_GATEWAY_CONNECT, attributes, qos, retain);
+     return message_id;
+}
+
+/**
+ * @brief Client to send a 'Gatawey' disconnect message to the broker
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/gateway/disconnect'
+ *      Data:  '{"device":"Device A"}'
+ *
+ * @param attributes    attributes. example: {"device":"Device A"} (字符串要符合 json 数据格式)
+ * @param qos           qos of publish message
+ * @param retain        ratain flag
+ *
+ * @return message_id of the subscribe message on success
+ *         0 if cannot publish
+ *        -1 if error
+ */
+int tbcm_gatewaydisconnect_publish(tbcm_handle_t client, const char *attributes,
+                                         int qos /*= 1*/, int retain /*= 0*/)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+
+     if (client->config.log_rxtx_package) {
+        TBC_LOGI("[Gateway Connect][Tx] %.*s", strlen(attributes), attributes);
+     }
+
+     int message_id = _tbcm_publish(client, TB_MQTT_TOPIC_GATEWAY_DISCONNECT, attributes, qos, retain);
+     return message_id;
+}
+
+/**
+ * @brief Client to send a 'Gateway Telemetry' publish message to the broker
+ *
+ * Notes:
+ * - It is thread safe, please refer to `esp_mqtt_client_subscribe` for details
+ * - A ThingsBoard MQTT Protocol message example:
+ *      Topic: 'v1/gateway/telemetry'
+ *      Data:  '{"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}', '[{"key1":"value1"}, {"key2":true}]'
+ *
+ * @param telemetry  telemetry. example: {"key1":"value1", "key2":true, "key3": 3.0, "key4": 4}, (字符串要符合 json 数据格式)
+ * @param qos        qos of publish message
+ * @param retain     ratain flag
+ *
+ * @return msg_id of the subscribe message on success
+ *         0 if cannot publish
+ *        -1 if error
+ */
+int tbcm_gatewaytelemetry_publish(tbcm_handle_t client, const char *telemetry,
+                           int qos /*= 1*/, int retain /*= 0*/)
+{
+     TBC_CHECK_PTR_WITH_RETURN_VALUE(client, -1);
+
+     if (client->config.log_rxtx_package) {
+        TBC_LOGI("[Gateway Telemetry][Tx] %.*s", strlen(telemetry), telemetry);
+     }
+
+     int msg_id = _tbcm_publish(client, TB_MQTT_TOPIC_GATEWAY_TELEMETRY_PUBLISH, telemetry, qos, retain);
+     return msg_id;
+}
+
 static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_event,
                                       char *topic, int topic_len,
                                       char *payload, int payload_len)

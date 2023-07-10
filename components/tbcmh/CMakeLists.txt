@@ -24,6 +24,7 @@ set(srcs "src/transport/tbc_transport_config.c"
          "src/helper/ota_fwupdate.c"
          "src/helper/server_rpc.c"
          "src/helper/claiming_device.c"
+         "src/helper/gateway.c"
          "src/extension/tbc_extension_timeseriesdata.c"
          "src/extension/tbc_extension_clientattributes.c"
          "src/extension/tbc_extension_sharedattributes.c")

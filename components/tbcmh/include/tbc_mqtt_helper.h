@@ -846,6 +846,14 @@ tbc_err_t tbcmh_otaupdate_unsubscribe(
                                 tbcmh_handle_t client,
                                 const char *ota_description);
 
+
+int tbcmh_gateway_connect(tbcmh_handle_t client, const char *connect,
+                            int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_gateway_disconnect(tbcmh_handle_t client, const char *telemetry,
+                            int qos/*= 1*/, int retain/*= 0*/);
+int tbcmh_gatewaytelemetry_upload(tbcmh_handle_t client, const char *telemetry,
+                            int qos/*= 1*/, int retain/*= 0*/);
+
 #ifdef __cplusplus
 }
 #endif //__cplusplus
