@@ -15,6 +15,7 @@
 // This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
+#include <time.h>
 
 #include "esp_err.h"
 
@@ -441,7 +442,7 @@ void _tbcmh_attributesrequest_on_data(tbcmh_handle_t client, uint32_t request_id
      // xSemaphoreGiveRecursive(client->_lock);
 
      if (!attributesrequest) {
-          TBC_LOGW("Unable to find attribute request:%u! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find attribute request:%"PRIu32"! %s()", request_id, __FUNCTION__);
           return;
      }
 

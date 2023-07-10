@@ -15,6 +15,7 @@
 // This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
+#include <time.h>
 
 #include "esp_err.h"
 
@@ -495,10 +496,10 @@ void _tbcmh_provision_on_data(tbcmh_handle_t client, uint32_t request_id,
 
      if (!provision) {
 		if (!provision_results) {
-			TBC_LOGW("Unable to find provision:%u! %s()", request_id, __FUNCTION__);
+			TBC_LOGW("Unable to find provision:%"PRIu32"! %s()", request_id, __FUNCTION__);
 		} else {
 			char *response = cJSON_PrintUnformatted(provision_results); //cJSON_Print()
-			TBC_LOGW("Unable to find provision: request_id=%u, response=%s! %s()",
+			TBC_LOGW("Unable to find provision: request_id=%"PRIu32", response=%s! %s()",
 				request_id, response, __FUNCTION__);		 
 			cJSON_free(response); // free memory
 		}

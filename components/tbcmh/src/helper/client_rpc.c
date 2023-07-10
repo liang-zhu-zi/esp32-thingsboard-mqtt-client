@@ -15,6 +15,7 @@
 // This file is called by tbc_mqtt_helper.c/.h.
 
 #include <string.h>
+#include <time.h>
 
 #include "esp_err.h"
 
@@ -301,7 +302,7 @@ void _tbcmh_clientrpc_on_data(tbcmh_handle_t client, uint32_t request_id, const 
      // xSemaphoreGiveRecursive(client->_lock);
 
      if (!clientrpc) {
-          TBC_LOGW("Unable to find client-rpc:%u! %s()", request_id, __FUNCTION__);
+          TBC_LOGW("Unable to find client-rpc:%"PRIu32"! %s()", request_id, __FUNCTION__);
           return;
      }
 

@@ -21,6 +21,7 @@
 #include "freertos/FreeRTOS.h"
 #include "sys/queue.h"
 #include "esp_err.h"
+#include "esp_timer.h"
 #include "mqtt_client.h"
 
 #include "tbc_utils.h"
@@ -182,18 +183,18 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(
     // address
     bool tlsEnabled = false;
     if (strcmp(transport->address.schema, "mqtt") == 0) {
-        mqtt_config->transport = MQTT_TRANSPORT_OVER_TCP;
-        mqtt_config->port = 1883;
+        mqtt_config->broker.address.transport = MQTT_TRANSPORT_OVER_TCP;
+        mqtt_config->broker.address.port = 1883;
     } else if (strcmp(transport->address.schema, "mqtts") == 0) {
-        mqtt_config->transport = MQTT_TRANSPORT_OVER_SSL;
-        mqtt_config->port = 8883;
+        mqtt_config->broker.address.transport = MQTT_TRANSPORT_OVER_SSL;
+        mqtt_config->broker.address.port = 8883;
         tlsEnabled = true;
     } else if (strcmp(transport->address.schema, "ws") == 0) {
-        mqtt_config->transport = MQTT_TRANSPORT_OVER_WS;
-        mqtt_config->port = 80;
+        mqtt_config->broker.address.transport = MQTT_TRANSPORT_OVER_WS;
+        mqtt_config->broker.address.port = 80;
     } else if (strcmp(transport->address.schema, "wss") == 0) {
-        mqtt_config->transport = MQTT_TRANSPORT_OVER_WSS;
-        mqtt_config->port = 443;
+        mqtt_config->broker.address.transport = MQTT_TRANSPORT_OVER_WSS;
+        mqtt_config->broker.address.port = 443;
         tlsEnabled = true;
     } else {
         ESP_LOGE(TAG, "address->schema(%s) is error!", transport->address.schema);
@@ -201,43 +202,43 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(
     }
    
     if (transport->address.host) {
-        mqtt_config->host = transport->address.host;
+        mqtt_config->broker.address.hostname = transport->address.host;
     } else {
         ESP_LOGE(TAG, "mqtt_config->host is NULL!");
         return NULL;
     }
 
     if (transport->address.port) {
-        mqtt_config->port = transport->address.port;
+        mqtt_config->broker.address.port = transport->address.port;
     }
     if (transport->address.path) {
-        mqtt_config->path = transport->address.path;
+        mqtt_config->broker.address.path = transport->address.path;
     }
 
     //credentials
     switch (transport->credentials.type) {
     case TBC_TRANSPORT_CREDENTIALS_TYPE_NONE: // for provision
-        mqtt_config->username = transport->credentials.username; //"provision"
+        mqtt_config->credentials.username = transport->credentials.username; //"provision"
         break;
     case TBC_TRANSPORT_CREDENTIALS_TYPE_ACCESS_TOKEN: // Access Token
         if (!transport->credentials.token) {
              TBC_LOGE("credentials->token is NULL! %s()", __FUNCTION__);
              return NULL;
         }
-        mqtt_config->username = transport->credentials.token;
+        mqtt_config->credentials.username = transport->credentials.token;
         break;
-        
+
     case TBC_TRANSPORT_CREDENTIALS_TYPE_BASIC_MQTT: // Basic MQTT Credentials.for MQTT
         if (!transport->credentials.client_id && !transport->credentials.username) {
              TBC_LOGE("credentials->client_id && credentials->username are NULL in Basic MQTT authentication! %s()",
                 __FUNCTION__);
              return NULL;
         }
-        mqtt_config->client_id = transport->credentials.client_id;
-        mqtt_config->username = transport->credentials.username;
-        mqtt_config->password = transport->credentials.password;
+        mqtt_config->credentials.client_id = transport->credentials.client_id;
+        mqtt_config->credentials.username = transport->credentials.username;
+        mqtt_config->credentials.authentication.password = transport->credentials.password;
         break;
-        
+
     case TBC_TRANSPORT_CREDENTIALS_TYPE_X509:      // X.509 Certificate
         if (!tlsEnabled) {
             TBC_LOGE("credentials->type(%d) and address->schema(%s) is not match! ()%s",
@@ -246,7 +247,7 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(
         }
         // NOTE: transport->credentials.token: At TBC_TRANSPORT_CREDENTIALS_TYPE_X509 it's a client public key. DON'T USE IT! */
         break;
-        
+
     default:
         ESP_LOGE(TAG, "credentials->type(%d) is error!", transport->credentials.type);
         return NULL;
@@ -258,9 +259,9 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(
             TBC_LOGE("verification->cert_pem is request but it is NULL! %s()", __FUNCTION__);
             return NULL;
         }
-        mqtt_config->cert_pem = transport->verification.cert_pem;
-        mqtt_config->cert_len = transport->verification.cert_len;
-        mqtt_config->skip_cert_common_name_check = transport->verification.skip_cert_common_name_check;
+        mqtt_config->credentials.authentication.certificate = transport->verification.cert_pem;
+        mqtt_config->credentials.authentication.certificate_len = transport->verification.cert_len;
+        mqtt_config->broker.verification.skip_cert_common_name_check = transport->verification.skip_cert_common_name_check;
 
         // SSL mutual authentication (two-way SSL)
         if (transport->credentials.type == TBC_TRANSPORT_CREDENTIALS_TYPE_X509) {
@@ -272,12 +273,12 @@ static void *_tbc_transport_config_fill_to_mqtt_client_config(
                 TBC_LOGE("authentication->client_key_pem is request but it is NULL! %s()", __FUNCTION__);
                 return NULL;
             }
-            mqtt_config->client_cert_pem         = transport->authentication.client_cert_pem;
-            mqtt_config->client_cert_len         = transport->authentication.client_cert_len;
-            mqtt_config->client_key_pem          = transport->authentication.client_key_pem;
-            mqtt_config->client_key_len          = transport->authentication.client_key_len;
-            mqtt_config->clientkey_password      = transport->authentication.client_key_password;
-            mqtt_config->clientkey_password_len  = transport->authentication.client_key_password_len;
+            mqtt_config->credentials.authentication.certificate      = transport->authentication.client_cert_pem;
+            mqtt_config->credentials.authentication.certificate_len  = transport->authentication.client_cert_len;
+            mqtt_config->credentials.authentication.key              = transport->authentication.client_key_pem;
+            mqtt_config->credentials.authentication.key_len          = transport->authentication.client_key_len;
+            mqtt_config->credentials.authentication.password         = transport->authentication.client_key_password;
+            mqtt_config->credentials.authentication.key_password_len = transport->authentication.client_key_password_len;
         }
     }
 
@@ -602,7 +603,7 @@ int tbcm_attributes_request(tbcm_handle_t client, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_ATTRIBUTES_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Attributes Request][Tx] request_id=%u, %.*s",
+        TBC_LOGI("[Attributes Request][Tx] request_id=%"PRIu32", %.*s",
             request_id, strlen(payload), payload);
      }
 
@@ -713,7 +714,7 @@ int tbcm_serverrpc_response(tbcm_handle_t client,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_SERVERRPC_RESPONSE_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Server-Side RPC][Tx] request_id=%u Payload=%.*s",
+        TBC_LOGI("[Server-Side RPC][Tx] request_id=%"PRIu32" Payload=%.*s",
               request_id, strlen(response), response);
      }
 
@@ -759,7 +760,7 @@ int tbcm_clientrpc_request(tbcm_handle_t client, const char *payload,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_CLIENTRPC_REQUEST_PATTERN, request_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[Client-Side RPC][Tx] request_id=%u %.*s",
+        TBC_LOGI("[Client-Side RPC][Tx] request_id=%"PRIu32" %.*s",
               request_id, strlen(payload), payload);
      }
 
@@ -871,7 +872,7 @@ int tbcm_claiming_device_publish(tbcm_handle_t client, const char *claiming,
 
       if (client->config.log_rxtx_package)
       {
-           TBC_LOGI("[Provision][Tx] request_id=%u %.*s",
+           TBC_LOGI("[Provision][Tx] request_id=%"PRIu32" %.*s",
                     request_id, strlen(payload), payload);
       }
 
@@ -916,7 +917,7 @@ int tbcm_otaupdate_chunk_request(tbcm_handle_t client,
      snprintf(topic, size - 1, TB_MQTT_TOPIC_FW_REQUEST_PATTERN, request_id, chunk_id);
 
      if (client->config.log_rxtx_package) {
-        TBC_LOGI("[FW update][Tx] request_id=%u chunk_id=%u payload=%.*s",
+        TBC_LOGI("[FW update][Tx] request_id=%"PRIu32" chunk_id=%"PRIu32" payload=%.*s",
               request_id, chunk_id, strlen(payload), payload);
      }
 
@@ -949,9 +950,9 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX),
                  topic_len-strlen(TB_MQTT_TOPIC_ATTRIBUTES_RESPONSE_PREFIX));
          uint32_t request_id = 0;
-         sscanf(temp, "%u", &request_id);
+         sscanf(temp, "%"PRIu32, &request_id);
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[Attributes Request][Rx] request_id=%u %.*s",
+             TBC_LOGI("[Attributes Request][Rx] request_id=%"PRIu32" %.*s",
                   request_id, payload_len, payload);
          }
 
@@ -1016,9 +1017,9 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX),
                  topic_len-strlen(TB_MQTT_TOPIC_SERVERRPC_REQUEST_PREFIX));
          uint32_t request_id = 0;
-         sscanf(temp, "%u", &request_id);
+         sscanf(temp, "%"PRIu32, &request_id);
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[Server-Side RPC][Rx] request_id=%d Payload=%.*s",
+             TBC_LOGI("[Server-Side RPC][Rx] request_id=%"PRId32" Payload=%.*s",
                   request_id, payload_len, payload);
          }
 
@@ -1048,9 +1049,9 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
          strncpy(temp, topic+strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX),
                 topic_len-strlen(TB_MQTT_TOPIC_CLIENTRPC_RESPONSE_PREFIX));
          uint32_t request_id = 0;
-         sscanf(temp, "%u", &request_id);
+         sscanf(temp, "%"PRIu32, &request_id);
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[Client-Side RPC][Rx] request_id=%d %.*s",
+             TBC_LOGI("[Client-Side RPC][Rx] request_id=%"PRId32" %.*s",
                   request_id, payload_len, payload);
          }
 
@@ -1091,11 +1092,11 @@ static void _on_mqtt_data_handle(void *client_, esp_mqtt_event_handle_t src_even
              char temp[32] = {0};
              int offset = (uint32_t)chunk_str - (uint32_t)topic;
              strncpy(temp, topic+offset+strlen("/chunk/"), topic_len-offset-strlen("/chunk/"));
-             sscanf(temp, "%u", &chunk_id);
+             sscanf(temp, "%"PRIu32, &chunk_id);
          }
 
          if (client->config.log_rxtx_package) {
-             TBC_LOGI("[FW update][Rx] request_id=%u, chunk_id=%u, payload_len=%d",
+             TBC_LOGI("[FW update][Rx] request_id=%"PRIu32", chunk_id=%"PRIu32", payload_len=%d",
                    request_id, chunk_id, payload_len);
          }
 

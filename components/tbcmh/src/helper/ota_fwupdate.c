@@ -27,6 +27,7 @@
 #include "esp_ota_ops.h"
 #include "esp_flash_partitions.h"
 #include "esp_partition.h"
+#include "esp_app_format.h"
 
 #include "tbc_mqtt_helper.h"
 //#include "protocol_examples_common.h"
@@ -123,7 +124,7 @@ void *ota_fwupdate_init(void)
     }
 
     if (_fwupdate.configured_partition != _fwupdate.running_partition) {
-        ESP_LOGW(TAG, "Configured OTA boot partition at offset 0x%08x, but running from offset 0x%08x",
+        ESP_LOGW(TAG, "Configured OTA boot partition at offset 0x%08"PRIx32", but running from offset 0x%08"PRIx32,
                  _fwupdate.configured_partition->address, _fwupdate.running_partition->address);
         ESP_LOGW(TAG, "(This can happen if either the OTA boot data or preferred boot image become corrupted somehow.)");
     }
@@ -134,7 +135,7 @@ void *ota_fwupdate_init(void)
         if (esp_ota_get_partition_description(_fwupdate.running_partition, &running_app_info) == ESP_OK) {
             ESP_LOGI(TAG, "Current running F/W version: %s", running_app_info.version);
         }
-        ESP_LOGI(TAG, "Running partition type %d subtype %d (offset 0x%08x)",
+        ESP_LOGI(TAG, "Running partition type %d subtype %d (offset 0x%08"PRIx32")",
                 _fwupdate.running_partition->type, _fwupdate.running_partition->subtype, _fwupdate.running_partition->address);
     }
 
@@ -142,7 +143,7 @@ void *ota_fwupdate_init(void)
         ESP_LOGW(TAG, "_fwupdate.update_partition is NULL! Don't executive F/W update!");
         return NULL;
     }
-    ESP_LOGI(TAG, "Update partition type %d subtype %d (offset 0x%08x)",
+    ESP_LOGI(TAG, "Update partition type %d subtype %d (offset 0x%08"PRIx32")",
             _fwupdate.update_partition->type, _fwupdate.update_partition->subtype, _fwupdate.update_partition->address);
 
     return &_fwupdate;
@@ -158,7 +159,7 @@ tbc_err_t ota_fwupdate_negotiate(void *context_xw,
         char *fw_error, int error_size)
 {
     // TODO: division F/W or S/W !!!!
-    ESP_LOGI(TAG, "Receving F/W shared attributes: fw_title=%s, fw_version=%s, fw_size=%u, fw_checksum=%s, fw_checksum_algorithm=%s",
+    ESP_LOGI(TAG, "Receving F/W shared attributes: fw_title=%s, fw_version=%s, fw_size=%"PRIu32", fw_checksum=%s, fw_checksum_algorithm=%s",
         fw_title, fw_version, fw_size, fw_checksum, fw_checksum_algorithm);
 
     //check fw_title != current_fw_title
@@ -179,9 +180,9 @@ tbc_err_t ota_fwupdate_negotiate(void *context_xw,
     // check fw_size > update.size
     if (_fwupdate.update_partition) {
         if (fw_size > _fwupdate.update_partition->size) {
-            ESP_LOGI(TAG, "New F/W size(%u) is bigger than update partition size(%d)",
+            ESP_LOGI(TAG, "New F/W size(%"PRIu32") is bigger than update partition size(%"PRId32")",
                         fw_size, _fwupdate.update_partition->size);
-            snprintf(fw_error, error_size, "New F/W size(%u) is bigger than update partition size(%d)", 
+            snprintf(fw_error, error_size, "New F/W size(%"PRIu32") is bigger than update partition size(%"PRId32")", 
                         fw_size, _fwupdate.update_partition->size);
             return ESP_FAIL;
         }
@@ -201,7 +202,7 @@ tbc_err_t ota_fwupdate_write(void *context_xw,
 
     esp_err_t err;
 
-    ESP_LOGI(TAG, "Receving F/W response: fw_data=%p, data_read=%u", // request_id=%u, chunk_id=%u,
+    ESP_LOGI(TAG, "Receving F/W response: fw_data=%p, data_read=%"PRIu32, // request_id=%u, chunk_id=%u,
         fw_data, data_read); //request_id, chunk_id,
 
     // if (data_read < 0) {
